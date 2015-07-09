@@ -1,4 +1,4 @@
-package test;
+package sb2tests;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.List;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import msc.GeneTreeWithinSpeciesTree;
-import msc.MultispeciesPopulationModel;
+import starbeast2.GeneTreeWithinSpeciesTree;
+import starbeast2.MultispeciesPopulationModel;
 
 public class PopulationTestHelper {
     // commented out tree is to test species tree topology incompatible with gene tree topology

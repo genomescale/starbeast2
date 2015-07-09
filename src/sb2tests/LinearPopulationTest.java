@@ -1,4 +1,4 @@
-package test;
+package sb2tests;
 
 import static org.junit.Assert.assertEquals;
 
@@ -6,8 +6,8 @@ import org.junit.Test;
 
 import beast.core.State;
 import beast.core.parameter.RealParameter;
-import msc.LinearPopulation;
-import msc.MultispeciesCoalescent;
+import starbeast2.LinearPopulation;
+import starbeast2.MultispeciesCoalescent;
 import test.beast.BEASTTestCase;
 
 public class LinearPopulationTest extends PopulationTestHelper {

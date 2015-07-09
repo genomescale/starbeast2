@@ -1,4 +1,4 @@
-package msc;
+package starbeast2;
 
 
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import java.util.List;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.core.Input.Validate;
+import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
@@ -19,7 +20,9 @@ import beast.evolution.tree.TreeInterface;
 public class ConstantPopulationIO extends MultispeciesPopulationModel {
     public Input<RealParameter> invgammaShapeInput = new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
     public Input<RealParameter> invgammaScaleInput = new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+    public Input<Boolean> recordMathInput = new Input<Boolean>("recordMath", "Record the per-branch \"q\" and \"gamma\" intermediate calculations (default is false).", false);
 
+    private boolean recordMath;
     private RealParameter invgammaShape;
     private RealParameter invgammaScale;
     private double[] perBranchQ;
@@ -27,6 +30,7 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
 
     @Override
     public void initAndValidate() throws Exception {
+        recordMath = recordMathInput.get();
         invgammaShape = invgammaShapeInput.get();
         invgammaScale = invgammaScaleInput.get();
     }
@@ -87,9 +91,14 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
 
     @Override
     public String serialize(Node speciesTreeNode) {
-        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
+        String dmv;
 
-        final String dmv = String.format("q=%f,gamma=%f", perBranchQ[speciesTreeNodeNumber], perBranchGamma[speciesTreeNodeNumber]);
+        if (recordMath) {
+            final int speciesTreeNodeNumber = speciesTreeNode.getNr();
+            dmv = String.format("q=%f,gamma=%f", perBranchQ[speciesTreeNodeNumber], perBranchGamma[speciesTreeNodeNumber]);
+        } else {
+            dmv = "";
+        }
 
         return dmv;
     }

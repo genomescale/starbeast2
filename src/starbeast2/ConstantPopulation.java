@@ -1,4 +1,4 @@
-package msc;
+package starbeast2;
 
 
 import java.util.ArrayList;

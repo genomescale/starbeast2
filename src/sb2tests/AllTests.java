@@ -1,4 +1,4 @@
-package test;
+package sb2tests;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
