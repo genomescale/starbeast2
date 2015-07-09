@@ -17,13 +17,13 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
 /**
-* @author Huw Ogilvie
-* @author Joseph Heled
 * @author Remco Bouckaert
+* @author Joseph Heled
+* @author Huw Ogilvie
  */
 
 @Description("Logs tree annotated with metadata in StarBeast format")
-public class SpeciesTreeLogger extends BEASTObject implements Loggable {
+public class StarBeastTreeLogger extends BEASTObject implements Loggable {
     public Input<Tree> treeInput = new Input<Tree>("tree", "tree to be logged", Validate.REQUIRED);
     public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<MultispeciesPopulationModel>("populationModel", "The species tree population model.");
     public Input<List<Function>> metadataInput = new Input<List<Function>>("metadata", "meta data to be logged with the tree nodes",new ArrayList<>());

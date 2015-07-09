@@ -13,7 +13,6 @@ import beast.evolution.speciation.CalibratedYuleModel;
 import beast.evolution.speciation.CalibrationPoint;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeInterface;
 import beast.util.ClusterTree;
 
 import java.util.*;
@@ -21,13 +20,13 @@ import java.util.*;
 import static java.lang.Math.*;
 
 /**
+* @author Remco Bouckaert
 * @author Joseph Heled
 * @author Huw Ogilvie
-* @author Remco Bouckaert
  */
 
 @Description("Set a starting point for a *BEAST analysis from gene alignment data.")
-public class StarBeastStartState extends Tree implements StateNodeInitialiser {
+public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     static enum Method {
         POINT("point-estimate"),
