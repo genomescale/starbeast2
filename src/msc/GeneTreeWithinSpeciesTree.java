@@ -17,16 +17,16 @@ import beast.evolution.tree.TreeInterface;
 
 public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     public Input<Double> ploidyInput = new Input<Double>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
-    public double ploidy;
+    protected double ploidy;
 
     private List<Node> geneTreeLeafNodes;
     private int geneTreeNodeCount;
     private int speciesTreeNodeCount;
     private int[] geneTreeSpeciesAssignment;
-    
-    public int[] coalescentEventCounts; // this is typically given the pronumeral "k"
-    public int[] coalescentLineageCounts; // this is typically given the pronumeral "n"
-    public List<List<Double>> coalescentTimes;
+
+    protected int[] coalescentEventCounts; // this is typically given the pronumeral "k"
+    protected int[] coalescentLineageCounts; // this is typically given the pronumeral "n"
+    protected List<List<Double>> coalescentTimes;
 
     public void initAndValidate() throws Exception {
         if (treeInput.get() == null) {
