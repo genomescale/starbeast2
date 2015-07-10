@@ -8,7 +8,6 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import starbeast2.ConstantPopulationIO;
 import starbeast2.MultispeciesCoalescent;
-import test.beast.BEASTTestCase;
 
 public class ConstantIOTest extends PopulationTestHelper {
     private final double popSize = 0.3;
@@ -46,6 +45,6 @@ public class ConstantIOTest extends PopulationTestHelper {
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
 
         double calculatedLogP = msc.calculateLogP();
-        assertEquals(expectedLogP, calculatedLogP, BEASTTestCase.PRECISION);
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 }

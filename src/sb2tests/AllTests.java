@@ -5,7 +5,13 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ ConstantIOTest.class, ConstantPopulationTest.class, LinearPopulationTest.class, LinearWithConstantRootTest.class })
+@SuiteClasses({
+    ConstantIOTest.class,
+    ConstantPopulationTest.class,
+    LinearPopulationTest.class,
+    LinearWithConstantRootTest.class,
+    IncompatibleTreeTest.class
+})
 public class AllTests {
 
 }

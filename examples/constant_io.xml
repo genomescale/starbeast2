@@ -87,16 +87,16 @@ id="Primates">
         <parameter id="clockRate.c:secondhalf" name="stateNode">1.0</parameter>
     </state>
 
-    <init id="SBI" spec="msc.StarBeastInitializer" birthRate="@birthRate.t:Species" estimate="false" speciesTree="@Tree.t:Species">
+    <init id="SBI" spec="starbeast2.StarBeastInitializer" birthRate="@birthRate.t:Species" estimate="false" speciesTree="@Tree.t:Species">
         <gene idref="Tree.t:firsthalf"/>
         <gene idref="Tree.t:secondhalf"/>
-        <populationModel id="SpeciesTreePopModel" spec="msc.ConstantPopulationIO" alpha="@popAlpha" beta="@popBeta"/>
+        <populationModel id="SpeciesTreePopModel" spec="starbeast2.ConstantPopulationIO" alpha="@popAlpha" beta="@popBeta"/>
     </init>
 
     <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="speciescoalescent" spec="msc.MultispeciesCoalescent" tree="@Tree.t:Species" populationModel="@SpeciesTreePopModel" taxonSuperSet="@taxonsuperset">
-            <geneTree id="treePrior.t:firsthalf" spec="msc.GeneTreeWithinSpeciesTree" tree="@Tree.t:firsthalf"/>
-            <geneTree id="treePrior.t:secondhalf" spec="msc.GeneTreeWithinSpeciesTree" tree="@Tree.t:secondhalf"/>
+        <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" tree="@Tree.t:Species" populationModel="@SpeciesTreePopModel" taxonSuperSet="@taxonsuperset">
+            <geneTree id="treePrior.t:firsthalf" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree.t:firsthalf"/>
+            <geneTree id="treePrior.t:secondhalf" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree.t:secondhalf"/>
         </distribution>
         <distribution id="prior" spec="util.CompoundDistribution">
             <distribution id="YuleModel.t:Species" spec="beast.evolution.speciation.YuleModel" birthDiffRate="@birthRate.t:Species" tree="@Tree.t:Species"/>
@@ -219,7 +219,7 @@ id="Primates">
     </logger>
 
     <logger id="speciesTreeLogger" fileName="species_$(seed).trees" logEvery="5000" mode="tree">
-        <log id="SpeciesTreeLoggerX" spec="msc.StarBeastTreeLogger" populationModel="@SpeciesTreePopModel" tree="@Tree.t:Species"/>
+        <log id="SpeciesTreeLoggerX" spec="starbeast2.StarBeastTreeLogger" populationModel="@SpeciesTreePopModel" tree="@Tree.t:Species"/>
     </logger>
 
     <logger id="screenlog" logEvery="5000" model="@posterior">

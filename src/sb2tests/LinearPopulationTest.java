@@ -8,7 +8,6 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import starbeast2.LinearPopulation;
 import starbeast2.MultispeciesCoalescent;
-import test.beast.BEASTTestCase;
 
 public class LinearPopulationTest extends PopulationTestHelper {
     private final double popSize = 0.3;
@@ -42,6 +41,6 @@ public class LinearPopulationTest extends PopulationTestHelper {
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
 
         double calculatedLogP = msc.calculateLogP();
-        assertEquals(expectedLogP, calculatedLogP, BEASTTestCase.PRECISION);
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 }
