@@ -5,7 +5,9 @@
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. --><project basedir="." default="build" name="starbeast2">
     <property environment="env"/>
+    <property name="starbeast2.location" value="../starbeast2"/>
     <property name="ECLIPSE_HOME" value="../../eclipse/"/>
+    <property name="junit.output.dir" value="junit"/>
     <property name="beast2.location" value="../beast2"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.8"/>
@@ -23,6 +25,7 @@
         <pathelement location="${beast2.location}/lib/jam.jar"/>
         <pathelement location="${beast2.location}/lib/junit-4.8.2.jar"/>
         <pathelement location="${beast2.location}/release/common/tools/DensiTree.jar"/>
+        <pathelement location="${starbeast2.location}/lib/starbeast2.jar"/>
     </path>
     <path id="JUnit 4.libraryclasspath">
         <pathelement location="${ECLIPSE_HOME}plugins/org.junit_4.12.0.v201504281640/junit.jar"/>
@@ -75,5 +78,45 @@
     <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
+    </target>
+    <target name="AllTests">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="sb2tests.AllTests" todir="${junit.output.dir}"/>
+            <classpath refid="starbeast2.classpath"/>
+        </junit>
+    </target>
+    <target name="LinearPopulationTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="sb2tests.LinearPopulationTest" todir="${junit.output.dir}"/>
+            <classpath refid="starbeast2.classpath"/>
+        </junit>
+    </target>
+    <target name="LinearWithConstantRootTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="sb2tests.LinearWithConstantRootTest" todir="${junit.output.dir}"/>
+            <classpath refid="starbeast2.classpath"/>
+        </junit>
+    </target>
+    <target name="IncompatibleTreeTest">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="sb2tests.IncompatibleTreeTest" todir="${junit.output.dir}"/>
+            <classpath refid="starbeast2.classpath"/>
+        </junit>
+    </target>
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
     </target>
 </project>

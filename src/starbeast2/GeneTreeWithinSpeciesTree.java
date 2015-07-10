@@ -19,7 +19,6 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     public Input<Double> ploidyInput = new Input<Double>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
     protected double ploidy;
 
-    private List<Node> geneTreeLeafNodes;
     private int geneTreeNodeCount;
     private int speciesTreeNodeCount;
     private int[] geneTreeSpeciesAssignment;
@@ -40,7 +39,6 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
         ploidy = ploidyInput.get();
 
-        geneTreeLeafNodes = treeInput.get().getRoot().getAllLeafNodes();
         geneTreeNodeCount = treeInput.get().getNodeCount();
         geneTreeSpeciesAssignment = new int[geneTreeNodeCount];
         
@@ -59,6 +57,9 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     }
 
     public boolean computeCoalescentTimes(TreeInterface speciesTree, HashMap<String, Integer> tipNumberMap) {
+        final Node geneTreeRootNode = treeInput.get().getRoot();
+        final List<Node> geneTreeLeafNodes = geneTreeRootNode.getAllLeafNodes();
+
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
         Arrays.fill(coalescentEventCounts, 0);
         Arrays.fill(coalescentLineageCounts, 0);

@@ -23,20 +23,18 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
     public Input<Boolean> recordMathInput = new Input<Boolean>("recordMath", "Record the per-branch \"q\" and \"gamma\" intermediate calculations (default is false).", false);
 
     private boolean recordMath;
-    private RealParameter invgammaShape;
-    private RealParameter invgammaScale;
     private double[] perBranchQ;
     private double[] perBranchGamma;
 
     @Override
     public void initAndValidate() throws Exception {
         recordMath = recordMathInput.get();
-        invgammaShape = invgammaShapeInput.get();
-        invgammaScale = invgammaScaleInput.get();
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+        final RealParameter invgammaShape = invgammaShapeInput.get();
+        final RealParameter invgammaScale = invgammaScaleInput.get();
         final double alpha = invgammaShape.getValue();
         final double beta = invgammaScale.getValue();
         

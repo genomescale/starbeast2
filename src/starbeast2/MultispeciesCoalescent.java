@@ -26,8 +26,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
     public Input<TaxonSet> taxonSuperSetInput = new Input<TaxonSet>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
     public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<MultispeciesPopulationModel>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
-    private TreeInterface speciesTree;
-    private List<GeneTreeWithinSpeciesTree> geneTrees;
     private TaxonSet taxonSuperSet;
     private MultispeciesPopulationModel populationModel;
     private int nGeneTrees;
@@ -43,8 +41,9 @@ public class MultispeciesCoalescent extends TreeDistribution {
     public void initAndValidate() throws Exception {
         final HashMap<String, Integer> speciesNumberMap = new HashMap<String, Integer>();
 
-        speciesTree = treeInput.get();
-        geneTrees = geneTreeInput.get();
+        TreeInterface speciesTree = treeInput.get();
+        List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+
         nGeneTrees = geneTrees.size();
 
         taxonSuperSet = taxonSuperSetInput.get();
@@ -90,6 +89,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
     }
 
     public double calculateLogP() {
+        TreeInterface speciesTree = treeInput.get();
+        List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
         for (int i = 0; i < nSpeciesBranches; i++) {
@@ -146,10 +147,11 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         for (int i = 0; i < nSpeciesBranches; i++) {
+            final Node speciesTreeNode = speciesTree.getNode(i); 
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);
-            logP += populationModel.branchLogP(i, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+            logP += populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
         }
 
         return logP;

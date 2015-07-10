@@ -19,23 +19,18 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     public Input<RealParameter> topPopSizesInput = new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput = new Input<RealParameter>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
-    private RealParameter topPopSizes;
-    private RealParameter tipPopSizes;
-    
     private int nBranches;
     private int nSpecies;
-    private TreeInterface speciesTreeRef;
 
     @Override
     public void initAndValidate() throws Exception {
-        topPopSizes = topPopSizesInput.get();
-        tipPopSizes = tipPopSizesInput.get();
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+        final RealParameter topPopSizes = topPopSizesInput.get();
+        final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int nGenes = perGenePloidy.length;
-        final Node speciesTreeNode = speciesTreeRef.getNode(speciesTreeNodeNumber);
 
         final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
 
@@ -77,7 +72,8 @@ public class LinearPopulation extends MultispeciesPopulationModel {
 
     @Override
     public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
-        speciesTreeRef = speciesTree;
+        final RealParameter topPopSizes = topPopSizesInput.get();
+        final RealParameter tipPopSizes = tipPopSizesInput.get();
         nBranches = speciesTree.getNodeCount();
         nSpecies = speciesTree.getLeafNodeCount();
         final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
@@ -101,6 +97,8 @@ public class LinearPopulation extends MultispeciesPopulationModel {
 
     @Override
     public String serialize(Node speciesTreeNode) {
+        final RealParameter topPopSizes = topPopSizesInput.get();
+        final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int speciesTreeNodeNumber = speciesTreeNode.getNr();
 
         final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);

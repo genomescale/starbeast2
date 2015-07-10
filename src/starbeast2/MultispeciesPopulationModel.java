@@ -17,7 +17,7 @@ import beast.evolution.tree.TreeInterface;
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")
 public abstract class MultispeciesPopulationModel extends CalculationNode {
-    public abstract double branchLogP(int speciesTreeNodeNumber, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
+    public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
     // Set initial population sizes used by an implementation of this class,
     // then return population size state nodes to the caller for registration.

@@ -48,7 +48,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     public Input<Tree> speciesTreeInput = new Input<Tree>("speciesTree", "The species tree to initialize");
 
-    public Input<List<Tree>> genes = new Input<List<Tree>>("gene", "Gene trees to initialize", new ArrayList<Tree>());
+    public Input<List<Tree>> genes = new Input<List<Tree>>("geneTree", "Gene trees to initialize", new ArrayList<Tree>());
     //,
     //        Validate.REQUIRED);
 
