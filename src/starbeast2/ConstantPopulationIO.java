@@ -20,15 +20,9 @@ import beast.evolution.tree.TreeInterface;
 public class ConstantPopulationIO extends MultispeciesPopulationModel {
     public Input<RealParameter> invgammaShapeInput = new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
     public Input<RealParameter> invgammaScaleInput = new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
-    public Input<Boolean> recordMathInput = new Input<Boolean>("recordMath", "Record the per-branch \"q\" and \"gamma\" intermediate calculations (default is false).", false);
-
-    private boolean recordMath;
-    private double[] perBranchQ;
-    private double[] perBranchGamma;
 
     @Override
     public void initAndValidate() throws Exception {
-        recordMath = recordMathInput.get();
     }
 
     @Override
@@ -76,28 +70,7 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
 
     @Override
     public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
-        final int nBranches = speciesTree.getNodeCount();
-        perBranchQ = new double[nBranches];
-        perBranchGamma = new double[nBranches];
-
-        Arrays.fill(perBranchQ, 0.0);
-        Arrays.fill(perBranchGamma, 0.0);
-
         final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
         return popSizeVectors;
-    }
-
-    @Override
-    public String serialize(Node speciesTreeNode) {
-        String dmv;
-
-        if (recordMath) {
-            final int speciesTreeNodeNumber = speciesTreeNode.getNr();
-            dmv = String.format("q=%f,gamma=%f", perBranchQ[speciesTreeNodeNumber], perBranchGamma[speciesTreeNodeNumber]);
-        } else {
-            dmv = "";
-        }
-
-        return dmv;
     }
 }

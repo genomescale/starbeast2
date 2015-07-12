@@ -27,6 +27,13 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     protected int[] coalescentLineageCounts; // this is typically given the pronumeral "n"
     protected List<List<Double>> coalescentTimes;
 
+    public double getTreeHeight() {
+        final Node geneTreeRootNode = treeInput.get().getRoot();
+        final double geneTreeHeight = geneTreeRootNode.getHeight();
+        
+        return geneTreeHeight;
+    }
+
     public void initAndValidate() throws Exception {
         if (treeInput.get() == null) {
             final String thisID = getID();

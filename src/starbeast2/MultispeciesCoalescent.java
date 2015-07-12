@@ -10,9 +10,11 @@ import java.util.Set;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.Loggable;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
 
@@ -157,6 +159,20 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return logP;
     }
 
+    public double getRootHeight() {
+        double tallestGeneTreeHeight = 0.0;
+
+        for (final GeneTreeWithinSpeciesTree geneTree: geneTreeInput.get()) {
+            tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, geneTree.getTreeHeight());
+        }
+
+        return tallestGeneTreeHeight;
+    }
+
+    public String serializePopulation(Node node) {
+        return populationModel.serialize(node);
+    }
+
     @Override
     public boolean requiresRecalculation() {
         return true;
@@ -165,5 +181,9 @@ public class MultispeciesCoalescent extends TreeDistribution {
     @Override
     public boolean canHandleTipDates() {
         return false;
+    }
+
+    public Tree getSpeciesTree() {
+        return (Tree) treeInput.get();
     }
 }
