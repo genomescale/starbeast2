@@ -1,15 +1,12 @@
 package starbeast2;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Huw Ogilvie
@@ -71,28 +68,22 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
+    public void initPopSizes(double popInitial[]) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        nBranches = speciesTree.getNodeCount();
-        nSpecies = speciesTree.getLeafNodeCount();
-        final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
+        nBranches = popInitial.length;
+        nSpecies = (nBranches + 1) / 2;
 
         topPopSizes.setDimension(nBranches);
         tipPopSizes.setDimension(nSpecies);
 
-        popSizeVectors.add(topPopSizes);
-        popSizeVectors.add(tipPopSizes);
-
-        for (int i = 0; i < topPopSizes.getDimension(); i++) {
-            topPopSizes.setValue(i, popInitial / 2.0);
+        for (int i = 0; i < nBranches; i++) {
+            topPopSizes.setValue(i, popInitial[i] / 2.0);
         }
 
-        for (int i = 0; i < tipPopSizes.getDimension(); i++) {
-            tipPopSizes.setValue(i, popInitial);
+        for (int i = 0; i < nSpecies; i++) {
+            tipPopSizes.setValue(i, popInitial[i]);
         }
-
-        return popSizeVectors;
     }
 
     @Override

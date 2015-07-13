@@ -1,15 +1,12 @@
 package starbeast2;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Huw Ogilvie
@@ -32,20 +29,15 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
+    public void initPopSizes(double[] popInitial) {
         final RealParameter popSizes = popSizesInput.get();
-        final int nBranches = speciesTree.getNodeCount();
-        final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
+        final int nBranches = popInitial.length;
 
         popSizes.setDimension(nBranches);
 
-        popSizeVectors.add(popSizes);
-
         for (int i = 0; i < popSizes.getDimension(); i++) {
-            popSizes.setValue(i, popInitial);
+            popSizes.setValue(i, popInitial[i]);
         }
-
-        return popSizeVectors;
     }
 
     @Override

@@ -1,17 +1,11 @@
 package starbeast2;
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import beast.core.Input;
-import beast.core.StateNode;
 import beast.core.Input.Validate;
-import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Huw Ogilvie
@@ -66,11 +60,5 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
         final double logP = branchLogR + (alpha * Math.log(beta)) - ((alpha + branchQ) * Math.log(beta + branchGamma)) + logGammaRatio;
 
         return logP;
-    }
-
-    @Override
-    public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
-        final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
-        return popSizeVectors;
     }
 }

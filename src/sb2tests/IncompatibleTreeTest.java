@@ -3,6 +3,7 @@ package sb2tests;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -95,12 +96,15 @@ public class IncompatibleTreeTest extends PopulationTestHelper {
         state.initByName("stateNode", betaParameter);
         state.initialise();
 
+        final double[] popSizes = new double[nSpecies]; 
+        Arrays.fill(popSizes, popSize);
+
         populationModel = new ConstantPopulationIO();
         populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
-        populationModel.initializePopSizes(speciesTree, popSize);
 
         msc = new MultispeciesCoalescent();
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
+        populationModel.initPopSizes(popSizes);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(Double.NEGATIVE_INFINITY, calculatedLogP, 0.0);

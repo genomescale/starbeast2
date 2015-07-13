@@ -2,6 +2,8 @@ package sb2tests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
 import beast.core.State;
@@ -39,10 +41,12 @@ public class ConstantIOTest extends PopulationTestHelper {
 
         populationModel = new ConstantPopulationIO();
         populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
-        populationModel.initializePopSizes(speciesTree, popSize);
 
         msc = new MultispeciesCoalescent();
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
+
+        Arrays.fill(popSizes, popSize);
+        populationModel.initPopSizes(popSizes);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);

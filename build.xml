@@ -62,6 +62,7 @@
 
 		<!-- Compile the java code from ${srcstarbeast2} into ${buildstarbeast2} /bin -->
 		<javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath"
+			   debug="true"
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="256m"
@@ -84,6 +85,7 @@
 			</manifest>
 			<fileset dir="${buildstarbeast2}">
 				<include name="**/*.class" />
+				<include name="**/*.java" />
 			</fileset>
 		</jar>
 		<jar jarfile="${diststarbeast2}/starbeast2.src.jar">

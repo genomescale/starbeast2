@@ -19,6 +19,8 @@ import beast.evolution.tree.TreeDistribution;
 import beast.evolution.tree.TreeInterface;
 
 /**
+* @author Remco Bouckaert
+* @author Joseph Heled
 * @author Huw Ogilvie
  */
 
@@ -88,6 +90,21 @@ public class MultispeciesCoalescent extends TreeDistribution {
             geneTreeI.initCoalescentArrays(speciesTree);
             perGenePloidy[i] = ploidy;
         }
+
+        // initialize population sizes to equal average branch length
+        double speciesTreeLength = 0;
+
+        for (final Node n : speciesTreeRoot.getAllChildNodes()) {
+            if( ! n.isRoot() ) {
+                speciesTreeLength += n.getLength();
+            }
+        }
+
+        final double averageBranchLength = speciesTreeLength / (nSpeciesBranches - 1);
+        final double[] initialPopSizes = new double[nSpeciesBranches];
+        Arrays.fill(initialPopSizes, averageBranchLength);
+
+        populationModel.initPopSizes(initialPopSizes);
     }
 
     public double calculateLogP() {

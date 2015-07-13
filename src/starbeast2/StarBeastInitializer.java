@@ -49,8 +49,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     public Input<Tree> speciesTreeInput = new Input<Tree>("speciesTree", "The species tree to initialize");
 
     public Input<List<Tree>> genes = new Input<List<Tree>>("geneTree", "Gene trees to initialize", new ArrayList<Tree>());
-    //,
-    //        Validate.REQUIRED);
 
     public Input<CalibratedYuleModel> calibratedYule = new Input<CalibratedYuleModel>("calibratedYule",
             "The species tree (with calibrations) to initialize", Validate.XOR, speciesTreeInput);
@@ -58,13 +56,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     public Input<RealParameter> birthRate = new Input<RealParameter>("birthRate",
             "Tree prior birth rate to initialize");
 
-    public Input<MultispeciesPopulationModel> populationModelInput =
-            new Input<MultispeciesPopulationModel>("populationModel", "Population size parameters to initialise");
-
     public Input<Function> muInput = new Input<Function>("baseRate",
             "Main clock rate used to scale trees (default 1).");
-
-    private List<StateNode> popStateNodes;
 
     private boolean hasCalibrations;
 
@@ -291,19 +284,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 }
                 lambda.setValue((1 / rh) * l);
             }
-
-            double totBranches = 0;
-            final Node[] streeNodeas = stree.getNodesAsArray();
-            for( final Node n : streeNodeas ) {
-                if( ! n.isRoot() ) {
-                    totBranches += n.getLength();
-                }
-            }
-            totBranches /= 2* (streeNodeas.length - 1);
-            final MultispeciesPopulationModel populationModel = populationModelInput.get();
-            if( populationModel != null ) {
-                popStateNodes = populationModel.initializePopSizes(stree, 2*totBranches);
-            }
         }
     }
 
@@ -383,7 +363,5 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         if( brate != null ) {
             stateNodes.add(brate) ;
         }
-
-        stateNodes.addAll(popStateNodes);
     }
 }

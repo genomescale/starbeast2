@@ -19,12 +19,8 @@ import beast.evolution.tree.TreeInterface;
 public abstract class MultispeciesPopulationModel extends CalculationNode {
     public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
-    // Set initial population sizes used by an implementation of this class,
-    // then return population size state nodes to the caller for registration.
-    public List<StateNode> initializePopSizes(TreeInterface speciesTree, double popInitial) {
-        final List<StateNode> popSizeVectors = new ArrayList<StateNode>();
-
-        return popSizeVectors;
+    // Set initial population sizes used by an implementation of this class
+    public void initPopSizes(final double[] initialPopSizes) {
     }
 
     // Per-branch population size information which will be added to a Newick string.

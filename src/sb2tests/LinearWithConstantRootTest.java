@@ -2,6 +2,8 @@ package sb2tests;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
 import beast.core.State;
@@ -35,10 +37,12 @@ public class LinearWithConstantRootTest extends PopulationTestHelper {
 
         populationModel = new LinearWithConstantRoot();
         populationModel.initByName("topPopSizes", topPopSizesParameter, "tipPopSizes", tipPopSizesParameter);
-        populationModel.initializePopSizes(speciesTree, popSize);
 
         msc = new MultispeciesCoalescent();
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
+
+        Arrays.fill(popSizes, popSize);
+        populationModel.initPopSizes(popSizes);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
