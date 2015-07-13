@@ -149,14 +149,14 @@
       <geneTree idref="Tree:loc0001" />
       <geneTree idref="Tree:loc0002" />
       <geneTree idref="Tree:loc0003" />
+      <populationModel alpha="2.0" beta="@popMean" id="popFunction:species" spec="starbeast2.ConstantPopulationIO" />
     </init>
     <distribution id="posterior" spec="util.CompoundDistribution">
-      <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" taxonSuperSet="@taxonsuperset" tree="@Tree:species">
+      <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" taxonSuperSet="@taxonsuperset" tree="@Tree:species" populationModel="@popFunction:species">
         <geneTree id="treePrior:loc0000" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0000" />
         <geneTree id="treePrior:loc0001" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0001" />
         <geneTree id="treePrior:loc0002" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0002" />
         <geneTree id="treePrior:loc0003" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0003" />
-        <populationModel alpha="2.0" beta="@popMean" id="popFunction:species" spec="starbeast2.ConstantPopulationIO" />
       </distribution>
       <distribution id="prior" spec="util.CompoundDistribution">
         <distribution birthDiffRate="@birthRate:species" id="BirthDeath:species" relativeDeathRate="@deathRate:species" spec="beast.evolution.speciation.BirthDeathGernhard08Model" tree="@Tree:species" />
