@@ -29,14 +29,17 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public void initPopSizes(double[] popInitial) {
+    public void initPopSizes(int nBranches) {
         final RealParameter popSizes = popSizesInput.get();
-        final int nBranches = popInitial.length;
-
         popSizes.setDimension(nBranches);
+    }
+
+    @Override
+    public void initPopSizes(double popInitial) {
+        final RealParameter popSizes = popSizesInput.get();
 
         for (int i = 0; i < popSizes.getDimension(); i++) {
-            popSizes.setValue(i, popInitial[i]);
+            popSizes.setValue(i, popInitial);
         }
     }
 

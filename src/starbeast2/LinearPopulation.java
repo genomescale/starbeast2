@@ -68,21 +68,26 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public void initPopSizes(double popInitial[]) {
+    public void initPopSizes(int nBranches) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        nBranches = popInitial.length;
-        nSpecies = (nBranches + 1) / 2;
+        final int nSpecies = (nBranches + 1) / 2;
 
         topPopSizes.setDimension(nBranches);
         tipPopSizes.setDimension(nSpecies);
+    }
 
-        for (int i = 0; i < nBranches; i++) {
-            topPopSizes.setValue(i, popInitial[i] / 2.0);
+    @Override
+    public void initPopSizes(double popInitial) {
+        final RealParameter topPopSizes = topPopSizesInput.get();
+        final RealParameter tipPopSizes = tipPopSizesInput.get();
+
+        for (int i = 0; i < topPopSizes.getDimension(); i++) {
+            topPopSizes.setValue(i, popInitial / 2.0);
         }
 
-        for (int i = 0; i < nSpecies; i++) {
-            tipPopSizes.setValue(i, popInitial[i]);
+        for (int i = 0; i < tipPopSizes.getDimension(); i++) {
+            tipPopSizes.setValue(i, popInitial);
         }
     }
 

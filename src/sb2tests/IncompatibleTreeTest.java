@@ -104,7 +104,9 @@ public class IncompatibleTreeTest extends PopulationTestHelper {
 
         msc = new MultispeciesCoalescent();
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
-        populationModel.initPopSizes(popSizes);
+
+        populationModel.initPopSizes(nBranches);
+        populationModel.initPopSizes(popSize);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(Double.NEGATIVE_INFINITY, calculatedLogP, 0.0);

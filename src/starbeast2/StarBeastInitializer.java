@@ -59,6 +59,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     public Input<Function> muInput = new Input<Function>("baseRate",
             "Main clock rate used to scale trees (default 1).");
 
+    public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<MultispeciesPopulationModel>("populationModel", "The species tree population model.", Validate.REQUIRED);
+
     private boolean hasCalibrations;
 
     @Override
@@ -70,7 +72,25 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     @Override
     public void initStateNodes() throws Exception {
+        // initialize population sizes to equal average branch length
+        // this is equivalent to 2Ne = E[1/lambda]
+        final Node speciesTreeRoot = speciesTreeInput.get().getRoot();
 
+        double speciesTreeLength = 0;
+
+        for (final Node n : speciesTreeRoot.getAllChildNodes()) {
+            if( ! n.isRoot() ) {
+                speciesTreeLength += n.getLength();
+            }
+        }
+
+        final int nSpeciesTreeBranches = speciesTreeInput.get().getNodeCount();
+        final double averageBranchLength = speciesTreeLength / (nSpeciesTreeBranches - 1);
+
+        final MultispeciesPopulationModel populationModel = populationFunctionInput.get();
+        populationModel.initPopSizes(averageBranchLength);
+
+        // Do other stuff...
         if( hasCalibrations ) {
             initWithCalibrations();
         } else {

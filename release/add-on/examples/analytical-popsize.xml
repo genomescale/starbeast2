@@ -121,7 +121,6 @@
         </taxonset>
       </tree>
       <parameter id="popMean" lower="0.1" name="stateNode" upper="10.0">1.0</parameter>
-      <parameter id="popSizes" lower="0.0" name="stateNode">1.0</parameter>
       <tree id="Tree:loc0000" name="stateNode">
         <taxonset id="TaxonSet.loc0000" spec="TaxonSet">
           <alignment idref="loc0000" />
@@ -150,14 +149,14 @@
       <geneTree idref="Tree:loc0001" />
       <geneTree idref="Tree:loc0002" />
       <geneTree idref="Tree:loc0003" />
-      <populationModel id="popFunction:species" popSizes="@popSizes" spec="starbeast2.ConstantPopulation" />
     </init>
     <distribution id="posterior" spec="util.CompoundDistribution">
-      <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" taxonSuperSet="@taxonsuperset" tree="@Tree:species" populationModel="@popFunction:species">
+      <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" taxonSuperSet="@taxonsuperset" tree="@Tree:species">
         <geneTree id="treePrior:loc0000" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0000" />
         <geneTree id="treePrior:loc0001" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0001" />
         <geneTree id="treePrior:loc0002" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0002" />
         <geneTree id="treePrior:loc0003" spec="starbeast2.GeneTreeWithinSpeciesTree" tree="@Tree:loc0003" />
+        <populationModel alpha="2.0" beta="@popMean" id="popFunction:species" spec="starbeast2.ConstantPopulationIO" />
       </distribution>
       <distribution id="prior" spec="util.CompoundDistribution">
         <distribution birthDiffRate="@birthRate:species" id="BirthDeath:species" relativeDeathRate="@deathRate:species" spec="beast.evolution.speciation.BirthDeathGernhard08Model" tree="@Tree:species" />
@@ -166,9 +165,6 @@
         </prior>
         <prior id="popMean.prior" name="distribution" x="@popMean">
           <OneOnX id="OneOnX.1" name="distr" />
-        </prior>
-        <prior id="popSizes.prior" name="distribution" x="@popSizes">
-          <InverseGamma alpha="2.0" beta="@popMean" id="InverseGamma.0" name="distr" />
         </prior>
         <prior id="DeathRatePrior:species" name="distribution" x="@deathRate:species">
           <Beta alpha="10.0" beta="10.0" id="Beta.0" name="distr" />
@@ -186,25 +182,23 @@
         <distribution branchRateModel="@StrictClock.c:all" data="@loc0003" id="treeLikelihood.loc0003" siteModel="@SiteModel.s:all" spec="TreeLikelihood" tree="@Tree:loc0003" />
       </distribution>
     </distribution>
-    <operator id="Reheight:species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree:species" weight="32.2285714286">
+    <operator id="Reheight:species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree:species" weight="33.0146341463">
       <genetree idref="Tree:loc0000" />
       <genetree idref="Tree:loc0001" />
       <genetree idref="Tree:loc0002" />
       <genetree idref="Tree:loc0003" />
     </operator>
-    <operator id="PopMeanScaler:species" parameter="@popMean" scaleFactor="0.75" spec="ScaleOperator" weight="1.02857142857" />
-    <operator id="PopSizeScaler:species" parameter="@popSizes" scaleFactor="0.5" spec="ScaleOperator" weight="1.71428571429" />
-    <operator id="UpDown:all" scaleFactor="0.75" spec="UpDownOperator" weight="6.85714285714">
+    <operator id="PopMeanScaler:species" parameter="@popMean" scaleFactor="0.75" spec="ScaleOperator" weight="1.05365853659" />
+    <operator id="UpDown:all" scaleFactor="0.75" spec="UpDownOperator" weight="7.0243902439">
       <up idref="birthRate:species" />
       <down idref="Tree:species" />
     <down idref="popMean" />
-      <down idref="popSizes" />
       <down idref="Tree:loc0000" />
       <down idref="Tree:loc0001" />
       <down idref="Tree:loc0002" />
       <down idref="Tree:loc0003" />
     </operator>
-    <operator id="UpDown:species" scaleFactor="0.75" spec="UpDownOperator" weight="3.42857142857">
+    <operator id="UpDown:species" scaleFactor="0.75" spec="UpDownOperator" weight="3.51219512195">
       <up idref="birthRate:species" />
       <down idref="popMean" />
       <down idref="Tree:species" />
@@ -237,16 +231,16 @@
     <operator id="Narrow:loc0003" spec="Exchange" tree="@Tree:loc0003" weight="15.0" />
     <operator id="Wide:loc0003" isNarrow="false" spec="Exchange" tree="@Tree:loc0003" weight="3.0" />
     <operator id="WilsonBalding:loc0003" spec="WilsonBalding" tree="@Tree:loc0003" weight="3.0" />
-    <operator id="TreeScaler:species" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree:species" weight="1.02857142857" />
-    <operator id="TreeRootScaler:species" rootOnly="true" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree:species" weight="1.02857142857" />
-    <operator id="UniformOperator:species" spec="Uniform" tree="@Tree:species" weight="10.2857142857" />
-    <operator id="SubtreeSlide:species" spec="SubtreeSlide" tree="@Tree:species" weight="5.14285714286" />
-    <operator id="Narrow:species" spec="Exchange" tree="@Tree:species" weight="5.14285714286" />
-    <operator id="Wide:species" isNarrow="false" spec="Exchange" tree="@Tree:species" weight="1.02857142857" />
-    <operator id="WilsonBalding:species" spec="WilsonBalding" tree="@Tree:species" weight="1.02857142857" />
-    <operator id="BirthRateScaler:species" parameter="@birthRate:species" scaleFactor="0.75" spec="ScaleOperator" weight="1.02857142857" />
-    <operator id="DeathRateScaler:species" parameter="@deathRate:species" scaleFactor="0.75" spec="ScaleOperator" weight="1.02857142857" />
-    <logger fileName="estimated-popsize.log" id="tracelog" logEvery="8192" model="@posterior" sort="smart">
+    <operator id="TreeScaler:species" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree:species" weight="1.05365853659" />
+    <operator id="TreeRootScaler:species" rootOnly="true" scaleFactor="0.5" spec="ScaleOperator" tree="@Tree:species" weight="1.05365853659" />
+    <operator id="UniformOperator:species" spec="Uniform" tree="@Tree:species" weight="10.5365853659" />
+    <operator id="SubtreeSlide:species" spec="SubtreeSlide" tree="@Tree:species" weight="5.26829268293" />
+    <operator id="Narrow:species" spec="Exchange" tree="@Tree:species" weight="5.26829268293" />
+    <operator id="Wide:species" isNarrow="false" spec="Exchange" tree="@Tree:species" weight="1.05365853659" />
+    <operator id="WilsonBalding:species" spec="WilsonBalding" tree="@Tree:species" weight="1.05365853659" />
+    <operator id="BirthRateScaler:species" parameter="@birthRate:species" scaleFactor="0.75" spec="ScaleOperator" weight="1.05365853659" />
+    <operator id="DeathRateScaler:species" parameter="@deathRate:species" scaleFactor="0.75" spec="ScaleOperator" weight="1.05365853659" />
+    <logger fileName="analytical-popsize.log" id="tracelog" logEvery="8192" model="@posterior" sort="smart">
       <log idref="posterior" />
       <log idref="likelihood" />
       <log idref="prior" />
@@ -257,7 +251,7 @@
       <log idref="deathRate:species" />
       <log idref="popMean" />
     </logger>
-    <logger fileName="estimated-popsize.species_trees" id="speciesTreeLogger" logEvery="8192" mode="tree">
+    <logger fileName="analytical-popsize.species_trees" id="speciesTreeLogger" logEvery="8192" mode="tree">
       <log id="StarBeastLogger" logRootBranchLength="true" multispeciesCoalescent="@speciescoalescent" spec="starbeast2.MultispeciesCoalescentLogger" />
     </logger>
     <logger id="screenlog" logEvery="8192" model="@posterior">

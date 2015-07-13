@@ -37,8 +37,8 @@ public class ConstantPopulationTest extends PopulationTestHelper {
         msc = new MultispeciesCoalescent();
         msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
 
-        Arrays.fill(popSizes, popSize);
-        populationModel.initPopSizes(popSizes);
+        populationModel.initPopSizes(nBranches);
+        populationModel.initPopSizes(popSize);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
