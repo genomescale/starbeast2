@@ -4,6 +4,7 @@ package starbeast2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -68,13 +69,18 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         // generate map of gene tree tip node names to species tree tip node numbers
-        final Set<Taxon> speciesSet = taxonSuperSet.getTaxonSet();
+        /** replacement line for compatibility with BEAST 2.3.0 **/
+        // final Set<Taxon> speciesSet = taxonSuperSet.getTaxonSet();
+        final Set<Taxon> speciesSet = new HashSet<>(taxonSuperSet.taxonsetInput.get());
+
         for (Taxon species: speciesSet) {
             final String speciesName = species.getID();
             final int speciesNumber = speciesNumberMap.get(speciesName);
             final TaxonSet speciesTaxonSet = (TaxonSet) species;
-            final Set<Taxon> tipSet = speciesTaxonSet.getTaxonSet();
-            
+            /** replacement line for compatibility with BEAST 2.3.0 **/
+            // final Set<Taxon> tipSet = speciesTaxonSet.getTaxonSet();
+            final Set<Taxon> tipSet = new HashSet<>(speciesTaxonSet.taxonsetInput.get());
+      
             for (Taxon tip: tipSet) {
                 final String tipName = tip.getID();
                 tipNumberMap.put(tipName, speciesNumber);
