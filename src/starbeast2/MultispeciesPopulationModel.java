@@ -1,14 +1,11 @@
 package starbeast2;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
-import beast.core.StateNode;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Huw Ogilvie
@@ -67,7 +64,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
         return logP;
     }
 
-    // copied from *BEAST v2.3, with small modifications to work with *BEAST+
+    // copied from *BEAST v2.3, with small modifications to work with starbeast2
     protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
