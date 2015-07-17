@@ -4,7 +4,10 @@ package starbeast2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import beast.core.Input;
 import beast.evolution.tree.Node;
@@ -20,18 +23,30 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     protected double ploidy;
 
     private int geneTreeNodeCount;
+    private int geneTreeTipCount;
     private int speciesTreeNodeCount;
-    private int[] geneTreeSpeciesAssignment;
+    private int[] geneNodeSpeciesAssignment;
 
     protected int[] coalescentEventCounts; // this is typically given the pronumeral "k"
     protected int[] coalescentLineageCounts; // this is typically given the pronumeral "n"
-    protected List<List<Double>> coalescentTimes;
+    protected Node[] geneTreeNodesArray;
+    final protected List<Set<Double>> coalescentTimes = new ArrayList<Set<Double>>(); // the coalescent event times for this gene tree for all species tree branches
+    final protected List<Set<Node>> lineageOverlap = new ArrayList<Set<Node>>(); // species tree branches that overlap with each gene tree branch and descendant branches 
+    final protected List<Set<Node>> branchOverlap = new ArrayList<Set<Node>>(); // gene tree branches that overlap with each species tree branch
+    final protected List<Set<Node>> branchNodeMap = new ArrayList<Set<Node>>(); // gene tree nodes within each species tree branch
 
     public double getTreeHeight() {
         final Node geneTreeRootNode = treeInput.get().getRoot();
         final double geneTreeHeight = geneTreeRootNode.getHeight();
         
         return geneTreeHeight;
+    }
+
+    public double getNodeHeight(int nodeNumber) {
+        final Node arbitraryNode = treeInput.get().getNode(nodeNumber);
+        final double nodeHeight = arbitraryNode.getHeight();
+        
+        return nodeHeight;
     }
 
     public void initAndValidate() throws Exception {
@@ -47,9 +62,13 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         ploidy = ploidyInput.get();
 
         geneTreeNodeCount = treeInput.get().getNodeCount();
-        geneTreeSpeciesAssignment = new int[geneTreeNodeCount];
-        
-        coalescentTimes = new ArrayList<List<Double>>();
+        geneTreeTipCount = treeInput.get().getLeafNodeCount();
+        geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
+        for (int geneNodeNumber = 0; geneNodeNumber < geneTreeNodeCount; geneNodeNumber++) {
+            lineageOverlap.add(new HashSet<Node>());
+        }
+
+        geneTreeNodesArray = treeInput.get().getNodesAsArray();
     }
 
     public void initCoalescentArrays(TreeInterface speciesTree) {
@@ -57,9 +76,10 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         coalescentEventCounts = new int[speciesTreeNodeCount];
         coalescentLineageCounts = new int[speciesTreeNodeCount];
 
-        coalescentTimes = new ArrayList<List<Double>>();
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            coalescentTimes.add(new ArrayList<Double>());
+        for (int speciesNodeNumber = 0; speciesNodeNumber < speciesTreeNodeCount; speciesNodeNumber++) {
+            coalescentTimes.add(new HashSet<Double>());
+            branchOverlap.add(new HashSet<Node>());
+            branchNodeMap.add(new HashSet<Node>());
         }
     }
 
@@ -70,23 +90,32 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
         Arrays.fill(coalescentEventCounts, 0);
         Arrays.fill(coalescentLineageCounts, 0);
-        Arrays.fill(geneTreeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
+        Arrays.fill(geneNodeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
 
         // rebuild each list of per-branch coalescent times for the same reason
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             coalescentTimes.get(i).clear();
+            branchNodeMap.get(i).clear();
+            branchOverlap.get(i).clear();
         }
 
-        for (final Node geneTreeLeafNode: geneTreeLeafNodes) {
+        // rebuild each set of gene tree node inheriting species for the same reason
+        for (int i = 0; i < geneTreeNodeCount; i++) {
+            lineageOverlap.get(i).clear();
+        }
+
+        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeTipCount; geneTreeLeafNumber++) {
+            final Node geneTreeLeafNode = geneTreeLeafNodes.get(geneTreeLeafNumber);
             final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
             final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
+            branchNodeMap.get(speciesTreeLeafNumber).add(geneTreeLeafNode);
 
             coalescentLineageCounts[speciesTreeLeafNumber]++;
 
             final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
             final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
 
-            if (!recurseCoalescenceEvents(firstCoalescenceNode, speciesTreeLeafNode, firstCoalescenceNumber, speciesTreeLeafNumber)) {
+            if (!recurseCoalescenceEvents(firstCoalescenceNode, firstCoalescenceNumber, geneTreeLeafNode, geneTreeLeafNumber, speciesTreeLeafNode, speciesTreeLeafNumber)) {
                 // this gene tree IS NOT compatible with the species tree
                 return false;
             }
@@ -96,9 +125,11 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         return true;
     }
 
-    private boolean recurseCoalescenceEvents(Node geneTreeNode, Node speciesTreeNode, final int geneTreeNodeNumber, final int speciesTreeNodeNumber) {
-        final double geneTreeNodeHeight = geneTreeNode.getHeight();
+    private boolean recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final Node geneTreeChildNode, final int geneTreeChildNumber, final Node speciesTreeNode, final int speciesTreeNodeNumber) {
+        branchOverlap.get(speciesTreeNodeNumber).add(geneTreeChildNode);
+        lineageOverlap.get(geneTreeChildNumber).add(speciesTreeNode);
 
+        final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final Node speciesTreeParentNode = speciesTreeNode.getParent();
 
         double speciesTreeParentHeight;
@@ -109,19 +140,22 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         }
 
         if (geneTreeNodeHeight < speciesTreeParentHeight) { // this gene coalescence occurs on the species tree current branch
-            final int existingSpeciesAssignment = geneTreeSpeciesAssignment[geneTreeNodeNumber];
+            final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
-                geneTreeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
+                branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNode);
+                lineageOverlap.get(geneTreeNodeNumber).addAll(lineageOverlap.get(geneTreeChildNumber));
+                geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
                 coalescentEventCounts[speciesTreeNodeNumber]++;
                 coalescentTimes.get(speciesTreeNodeNumber).add(geneTreeNodeHeight);
 
                 final Node geneTreeParentNode = geneTreeNode.getParent();
-                if (geneTreeParentNode != null) {
-                    // if this is not the root of the gene tree, check the next coalescence
-                    final int geneTreeParentNodeNumber = geneTreeParentNode.getNr();
-                    return recurseCoalescenceEvents(geneTreeParentNode, speciesTreeNode, geneTreeParentNodeNumber, speciesTreeNodeNumber);
+                if (geneTreeParentNode == null) {
+                    // this is the root of the gene tree and no incompatibilities were detected
+                    return true;
                 } else {
-                    return true; // this is the root of the gene tree and no incompatibilities were detected
+                    // if this is not the root of the gene tree, check the next coalescence
+                    final int geneTreeParentNumber = geneTreeParentNode.getNr();
+                    return recurseCoalescenceEvents(geneTreeParentNode, geneTreeParentNumber, geneTreeNode, geneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
                 }
             } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
                 return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
@@ -132,7 +166,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
             final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
             coalescentLineageCounts[speciesTreeParentNodeNumber]++;
 
-            return recurseCoalescenceEvents(geneTreeNode, speciesTreeParentNode, geneTreeNodeNumber, speciesTreeParentNodeNumber);
+            return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, geneTreeChildNode, geneTreeChildNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
         }
     }
 }

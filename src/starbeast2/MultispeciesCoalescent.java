@@ -1,6 +1,5 @@
 package starbeast2;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,7 +10,6 @@ import java.util.Set;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.Loggable;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
@@ -101,8 +99,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
     }
 
     public double calculateLogP() {
-        TreeInterface speciesTree = treeInput.get();
-        List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        final TreeInterface speciesTree = treeInput.get();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
         for (int i = 0; i < nSpeciesBranches; i++) {
@@ -129,10 +127,10 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
-            GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
 
             if (geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
-                final List<List<Double>> coalescentTimes = geneTree.coalescentTimes;
+                final List<Set<Double>> coalescentTimes = geneTree.coalescentTimes;
                 final int[] eventCounts = geneTree.coalescentEventCounts;
                 final int[] lineageCounts = geneTree.coalescentLineageCounts;
 
@@ -140,12 +138,13 @@ public class MultispeciesCoalescent extends TreeDistribution {
                     final int geneBranchEventCount = eventCounts[i];
                     final int geneBranchLineageCount = lineageCounts[i];
 
-                    final List<Double> geneBranchTimes = coalescentTimes.get(i); // add the start and end times of each branch
-                    geneBranchTimes.add(speciesStartTimes[i]);
-                    geneBranchTimes.add(speciesEndTimes[i]);
+                    final List<Double> geneBranchTimes = new ArrayList<>();
+                    geneBranchTimes.add(speciesStartTimes[i]); // add the start time for each branch
+                    geneBranchTimes.addAll(coalescentTimes.get(i)); // add the coalescent event times for each branch
+                    geneBranchTimes.add(speciesEndTimes[i]); // add the end time for each branch
 
                     final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
-                    coalescentTimes.get(i).toArray(coalescentTimesIJ);
+                    geneBranchTimes.toArray(coalescentTimesIJ);
                     Arrays.sort(coalescentTimesIJ);
 
                     allLineageCounts.get(i)[j] = geneBranchLineageCount;
@@ -195,5 +194,17 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     public Tree getSpeciesTree() {
         return (Tree) treeInput.get();
+    }
+
+    public List<GeneTreeWithinSpeciesTree> getGeneTrees() {
+        return geneTreeInput.get();
+    }
+
+    public void computeCoalescentTimes() {
+        final TreeInterface speciesTree = treeInput.get();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (GeneTreeWithinSpeciesTree geneTree: geneTrees) {
+            geneTree.computeCoalescentTimes(speciesTree, tipNumberMap);
+        }
     }
 }
