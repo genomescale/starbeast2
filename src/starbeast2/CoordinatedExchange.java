@@ -1,3 +1,5 @@
+// Based on Exchange.java in BEAST2, which in turn was based on ExchangeOperator.java in BEAST.
+
 package starbeast2;
 
 import java.util.ArrayList;
@@ -14,7 +16,10 @@ import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
 /**
+* @author Remco Bouckaert
+* @author Alexei Drummond
 * @author Huw Ogilvie
+* @author Andrew Rambaut
  */
 
 @Description("Implements the co-ordinated species and gene tree operator described in Yang & Rannala 2015. "
@@ -23,10 +28,33 @@ import beast.util.Randomizer;
         + "See http://doi.org/10.1093/molbev/msu279 for full details.")
 public class CoordinatedExchange extends Operator {
     public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("speciescoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
-    MultispeciesCoalescent multispeciesCoalescent;
+
+    private Node parent;
+    private Node grandparent;
+    private Node brother;
+    private Node uncle;
 
     @Override
     public void initAndValidate() {
+    }
+
+    /**
+     * override this for proposals,
+     *
+     * @return log of Hastings Ratio, or Double.NEGATIVE_INFINITY if proposal should not be accepted *
+     */
+    @Override
+    public double proposal() {
+        final MultispeciesCoalescent msc = mscInput.get();
+
+        double fLogHastingsRatio = narrow(msc);
+
+        // only rearrange gene trees if the species tree has changed
+        if (fLogHastingsRatio != Double.NEGATIVE_INFINITY) {
+            fLogHastingsRatio += rearrangeGeneTrees(msc); 
+        }
+
+        return fLogHastingsRatio;
     }
 
     private int isg(final Node n) {
@@ -37,56 +65,56 @@ public class CoordinatedExchange extends Operator {
         return n.isLeaf() ? 0 : isg(n);
     }
 
-    // Based on the "narrow" method of the BEASTv2.3 Exchange operator.
-    @Override
-    public double proposal() {
-        final MultispeciesCoalescent msc = mscInput.get();
+    public double narrow(final MultispeciesCoalescent msc) {
         final Tree speciesTree = msc.getSpeciesTree();
-        final List<GeneTreeWithinSpeciesTree> geneTrees = msc.getGeneTrees();
-        final int nGeneTrees = geneTrees.size();
-        final List<Map<Integer, Integer>> forwardGraftCounts = new ArrayList<Map<Integer, Integer>>();
-        msc.computeCoalescentTimes(); // needs doing before any gene or species tree changes
-
         final int nInternalNodes = speciesTree.getInternalNodeCount();
         if (nInternalNodes <= 1) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        Node grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
+        grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
         while (grandparent.getLeft().isLeaf() && grandparent.getRight().isLeaf()) {
             grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
         }
 
-        Node parent = grandparent.getLeft();
-        Node uncle  = grandparent.getRight();
+        parent = grandparent.getLeft();
+        uncle = grandparent.getRight();
         if (parent.getHeight() < uncle.getHeight()) {
             parent = grandparent.getRight();
-            uncle  = grandparent.getLeft();
+            uncle = grandparent.getLeft();
+        }
+
+        if( parent.isLeaf() ) {
+            // tree with dated tips
+            return Double.NEGATIVE_INFINITY;
         }
 
         int validGP = 0;
-        for(int i = nInternalNodes + 1; i < 1 + 2*nInternalNodes; ++i) {
-            validGP += isg(speciesTree.getNode(i));
+        {
+            for(int i = nInternalNodes + 1; i < 1 + 2*nInternalNodes; ++i) {
+                validGP += isg(speciesTree.getNode(i));
+            }
         }
 
         final int c2 = sisg(parent) + sisg(uncle);
 
-        Node brother;
-        if (Randomizer.nextBoolean()) {
-            brother = parent.getLeft();
-        } else {
-            brother = parent.getRight();
-        }
-
-        replace(parent, brother, uncle);
-        replace(grandparent, uncle, brother);
+        brother = (Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight());
+        exchangeNodes(parent, grandparent, brother, uncle);
 
         final int validGPafter = validGP - c2 + sisg(parent) + sisg(uncle);
-        double fLogHastingsRatio = Math.log((float) validGP / validGPafter);
+
+        return Math.log((float)validGP/validGPafter);
+    }
+
+    public double rearrangeGeneTrees(final MultispeciesCoalescent msc) {
+        final List<GeneTreeWithinSpeciesTree> geneTrees = msc.getGeneTrees();
+        final int nGeneTrees = geneTrees.size();
+        final List<Map<Integer, Integer>> forwardGraftCounts = new ArrayList<Map<Integer, Integer>>();
 
         final int parentBranchNumber = parent.getNr();
         final int uncleBranchNumber = uncle.getNr();
         final int brotherBranchNumber = brother.getNr();
+
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             final Map<Integer, Integer> jForwardGraftCounts = new HashMap<Integer, Integer>();
@@ -112,32 +140,37 @@ public class CoordinatedExchange extends Operator {
                         // this gene tree node will be grafted to the branch defined by "chosenNode"
                         if (leftContainsBrother) { // the left child will be disowned and reattached directly to its grandparent
                             pruneAndRegraft(geneTreeNode, chosenNode, leftChildNode);
+                            rightChildNode.makeDirty(Tree.IS_FILTHY);
                         } else { // the right child will be disowned and reattached directly to its grandparent
                             pruneAndRegraft(geneTreeNode, chosenNode, rightChildNode);
+                            leftChildNode.makeDirty(Tree.IS_FILTHY);
                         }
                     }
                 }
             }
+
             forwardGraftCounts.add(jForwardGraftCounts);
         }
 
         msc.computeCoalescentTimes(); // rebuild the gene-trees-within-species-tree to account for the tree changes
 
+        double logHastingsRatio = 0.0;
+
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Map<Integer, Integer> jForwardGraftCounts = forwardGraftCounts.get(j);
-            for (int geneTreeNodeNumber: jForwardGraftCounts.keySet()) {
+            final Map<Integer, Integer> geneTreeForwardGraftCounts = forwardGraftCounts.get(j);
+            for (int geneTreeNodeNumber: geneTreeForwardGraftCounts.keySet()) {
                 final double nodeHeight = geneTree.getNodeHeight(geneTreeNodeNumber);
                 final List<Node> reverseGraftBranches = findGraftBranches(geneTree, brotherBranchNumber, nodeHeight);
 
-                final int forwardGraftCount = jForwardGraftCounts.get(geneTreeNodeNumber);
+                final int forwardGraftCount = geneTreeForwardGraftCounts.get(geneTreeNodeNumber);
                 final int reverseGraftCount = reverseGraftBranches.size();
 
-                fLogHastingsRatio += Math.log((float) forwardGraftCount / reverseGraftCount);
+                logHastingsRatio += Math.log((float) forwardGraftCount / reverseGraftCount);
             }
         }
 
-        return fLogHastingsRatio;
+        return logHastingsRatio;
     }
 
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
@@ -176,13 +209,21 @@ public class CoordinatedExchange extends Operator {
         nodeSPR.removeChild(disownedChild);
         nodeSPR.addChild(newChild);
         nodeSPR.makeDirty(Tree.IS_FILTHY);
+
+        newChild.makeDirty(Tree.IS_FILTHY);
+        disownedChild.makeDirty(Tree.IS_FILTHY);
     }
 
-    // Copied with minimal modifications from the BEASTv2.3 TreeOperator class.
-    private static void replace(final Node node, final Node child, final Node replacement) {
-        node.removeChild(child);
-        node.addChild(replacement);
-        node.makeDirty(Tree.IS_FILTHY);
-        replacement.makeDirty(Tree.IS_FILTHY);
+    private static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
+        parent.removeChild(brother);
+        parent.addChild(uncle);
+        parent.makeDirty(Tree.IS_FILTHY);
+
+        grandparent.removeChild(uncle);
+        grandparent.addChild(brother);
+        grandparent.makeDirty(Tree.IS_FILTHY);
+        
+        brother.makeDirty(Tree.IS_FILTHY);
+        uncle.makeDirty(Tree.IS_FILTHY);
     }
 }
