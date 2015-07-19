@@ -106,6 +106,20 @@ public class CoordinatedExchange extends Operator {
         return Math.log((float)validGP/validGPafter);
     }
 
+    // for testing purposes
+    public void manipulateSpeciesTree(Node argBrother) {
+        brother = argBrother;
+        parent = brother.getParent();
+        grandparent = parent.getParent();
+        if (grandparent.getLeft().getNr() == parent.getNr()) {
+            uncle = grandparent.getRight();
+        } else {
+            uncle = grandparent.getLeft();
+        }
+
+        exchangeNodes(parent, grandparent, brother, uncle);
+    }
+
     public double rearrangeGeneTrees(final MultispeciesCoalescent msc) {
         final List<GeneTreeWithinSpeciesTree> geneTrees = msc.getGeneTrees();
         final int nGeneTrees = geneTrees.size();
@@ -122,8 +136,8 @@ public class CoordinatedExchange extends Operator {
             for (Node geneTreeNode: parentBranchNodes) {
                 final Node leftChildNode = geneTreeNode.getLeft();
                 final Node rightChildNode = geneTreeNode.getRight();
-                final boolean leftContainsBrother = geneTree.lineageOverlap.get(leftChildNode.getNr()).contains(brother);
-                final boolean rightContainsBrother = geneTree.lineageOverlap.get(rightChildNode.getNr()).contains(brother);
+                final boolean leftContainsBrother = geneTree.lineageOverlap.get(leftChildNode.getNr()).contains(brotherBranchNumber);
+                final boolean rightContainsBrother = geneTree.lineageOverlap.get(rightChildNode.getNr()).contains(brotherBranchNumber);
 
                 // if exactly one gene tree node child branch exclusively descends via the "sister"
                 // then this gene tree node needs to be pruned and reattached
@@ -194,7 +208,7 @@ public class CoordinatedExchange extends Operator {
     // removes nodeSPR from the segmented line between its disownedChild and oldParent
     // reattaches it between the newChild node and the parent of the newChild node
     // does not change any node heights
-    private static void pruneAndRegraft(final Node nodeSPR, final Node newChild, final Node disownedChild) {
+    protected static void pruneAndRegraft(final Node nodeSPR, final Node newChild, final Node disownedChild) {
         final Node oldParent = nodeSPR.getParent();
         final Node newParent = newChild.getParent();
 
@@ -214,7 +228,7 @@ public class CoordinatedExchange extends Operator {
         disownedChild.makeDirty(Tree.IS_FILTHY);
     }
 
-    private static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
+    protected static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
         parent.removeChild(brother);
         parent.addChild(uncle);
         parent.makeDirty(Tree.IS_FILTHY);

@@ -10,7 +10,8 @@ import org.junit.runners.Suite.SuiteClasses;
     ConstantPopulationTest.class,
     LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
-    IncompatibleTreeTest.class
+    IncompatibleTreeTest.class,
+    CoordinatedExchangeTest.class
 })
 public class AllTests {
 

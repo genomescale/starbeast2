@@ -78,7 +78,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
             /** replacement line for compatibility with BEAST 2.3.0 **/
             // final Set<Taxon> tipSet = speciesTaxonSet.getTaxonSet();
             final Set<Taxon> tipSet = new HashSet<>(speciesTaxonSet.taxonsetInput.get());
-      
+
             for (Taxon tip: tipSet) {
                 final String tipName = tip.getID();
                 tipNumberMap.put(tipName, speciesNumber);
