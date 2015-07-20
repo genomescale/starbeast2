@@ -4,6 +4,7 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,6 +163,10 @@ public class CoordinatedExchange extends Operator {
                     }
                 }
             }
+            //System.out.println(geneTree.treeInput.get().getID());
+            //System.out.println(geneTree.treeInput.get().toString());
+            assert uniqueLeafNodes(geneTree.treeInput.get().getRoot());
+            assert strictlyBifurcating(geneTree.treeInput.get().getRoot());
 
             forwardGraftCounts.add(jForwardGraftCounts);
         }
@@ -187,12 +192,37 @@ public class CoordinatedExchange extends Operator {
         return logHastingsRatio;
     }
 
+    private boolean strictlyBifurcating(Node node) {
+        List<Node> children = node.getChildren();
+        assert node.isLeaf() || children.size() == 2;
+        for (Node childNode: children) {
+            assert childNode.getParent() == node;
+            strictlyBifurcating(childNode);
+        }
+        return true;
+    }
+
+    private boolean uniqueLeafNodes(Node rootNode) {
+        Set<Integer> nodesSet = new HashSet<Integer>();
+        List<Integer> nodesList = new ArrayList<Integer>();
+
+        for (Node leafNode: rootNode.getAllLeafNodes()) {
+            nodesSet.add(leafNode.getNr());
+            nodesList.add(leafNode.getNr());
+        }
+        
+        assert nodesSet.size() == nodesList.size();
+
+        return true;
+    }
+
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
         // identify branches in the former "uncle" (now "brother") which overlap with the height of the node to be moved
         final Set<Node> potentialGraftBranches = geneTree.branchOverlap.get(uncleNumber);
         final List<Node> validGraftBranches = new ArrayList<Node>();
         for (Node potentialGraftBranch: potentialGraftBranches) {
             final Node graftParent = potentialGraftBranch.getParent();
+            assert graftParent != null;
 
             final double tipwardHeight = potentialGraftBranch.getHeight();
             final double rootwardHeight = graftParent.getHeight();
@@ -205,38 +235,39 @@ public class CoordinatedExchange extends Operator {
         return validGraftBranches;
     }
 
-    // removes nodeSPR from the segmented line between its disownedChild and oldParent
+    // removes nodeToMove from the segmented line between its disownedChild and oldParent
     // reattaches it between the newChild node and the parent of the newChild node
     // does not change any node heights
-    protected static void pruneAndRegraft(final Node nodeSPR, final Node newChild, final Node disownedChild) {
-        final Node oldParent = nodeSPR.getParent();
+    protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
+        final Node oldParent = nodeToMove.getParent();
         final Node newParent = newChild.getParent();
+        System.out.println(String.format("ntm=%d nc=%d dc=%d op=%d np=%d", nodeToMove.getNr(), newChild.getNr(), disownedChild.getNr(), oldParent.getNr(), newParent.getNr()));
 
-        oldParent.removeChild(nodeSPR);
+        nodeToMove.removeChild(disownedChild);
         oldParent.addChild(disownedChild);
-        oldParent.makeDirty(Tree.IS_FILTHY);
+        disownedChild.makeDirty(Tree.IS_FILTHY);
+
+        oldParent.removeChild(nodeToMove);
+        newParent.addChild(nodeToMove);
+        nodeToMove.makeDirty(Tree.IS_FILTHY);
 
         newParent.removeChild(newChild);
-        newParent.addChild(nodeSPR);
-        newParent.makeDirty(Tree.IS_FILTHY);
-        
-        nodeSPR.removeChild(disownedChild);
-        nodeSPR.addChild(newChild);
-        nodeSPR.makeDirty(Tree.IS_FILTHY);
-
+        nodeToMove.addChild(newChild);
         newChild.makeDirty(Tree.IS_FILTHY);
-        disownedChild.makeDirty(Tree.IS_FILTHY);
+
+        oldParent.makeDirty(Tree.IS_FILTHY);
+        newParent.makeDirty(Tree.IS_FILTHY);
     }
 
     protected static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
-        parent.removeChild(brother);
-        parent.addChild(uncle);
-        parent.makeDirty(Tree.IS_FILTHY);
-
         grandparent.removeChild(uncle);
+        parent.addChild(uncle);
+
+        parent.removeChild(brother);
         grandparent.addChild(brother);
-        grandparent.makeDirty(Tree.IS_FILTHY);
-        
+
+        parent.makeDirty(Tree.IS_FILTHY);
+        grandparent.makeDirty(Tree.IS_FILTHY);        
         brother.makeDirty(Tree.IS_FILTHY);
         uncle.makeDirty(Tree.IS_FILTHY);
     }

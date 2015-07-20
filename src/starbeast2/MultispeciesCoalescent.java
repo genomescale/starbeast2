@@ -128,19 +128,15 @@ public class MultispeciesCoalescent extends TreeDistribution {
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-
             if (geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
-                final List<Set<Double>> coalescentTimes = geneTree.coalescentTimes;
-                final int[] eventCounts = geneTree.coalescentEventCounts;
-                final int[] lineageCounts = geneTree.coalescentLineageCounts;
-
                 for (int i = 0; i < nSpeciesBranches; i++) { // for each species tree node/branch "i"
-                    final int geneBranchEventCount = eventCounts[i];
-                    final int geneBranchLineageCount = lineageCounts[i];
+                    final List<Double> branchCoalescentTimes = geneTree.coalescentTimes.get(i);
+                    final int geneBranchEventCount = branchCoalescentTimes.size();;
+                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
 
                     final List<Double> geneBranchTimes = new ArrayList<>();
                     geneBranchTimes.add(speciesStartTimes[i]); // add the start time for each branch
-                    geneBranchTimes.addAll(coalescentTimes.get(i)); // add the coalescent event times for each branch
+                    geneBranchTimes.addAll(branchCoalescentTimes); // add the coalescent event times for each branch
                     geneBranchTimes.add(speciesEndTimes[i]); // add the end time for each branch
 
                     final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
