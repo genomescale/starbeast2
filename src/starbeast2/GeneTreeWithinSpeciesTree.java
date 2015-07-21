@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import beast.core.Input;
 import beast.evolution.tree.Node;
@@ -31,8 +30,8 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     protected Node[] geneTreeNodesArray;
     final protected List<List<Double>> coalescentTimes = new ArrayList<List<Double>>(); // the coalescent event times for this gene tree for all species tree branches
     final protected List<Set<Integer>> lineageOverlap = new ArrayList<Set<Integer>>(); // species tree branches that overlap with each gene tree branch or descendant gene tree branches 
-    final protected List<Set<Node>> branchOverlap = new ArrayList<Set<Node>>(); // gene tree branches that overlap with each species tree branch
-    final protected List<Set<Node>> branchNodeMap = new ArrayList<Set<Node>>(); // gene tree nodes within each species tree branch
+    final protected List<Set<Integer>> branchOverlap = new ArrayList<Set<Integer>>(); // gene tree branches that overlap with each species tree branch
+    final protected List<Set<Integer>> branchNodeMap = new ArrayList<Set<Integer>>(); // gene tree nodes within each species tree branch
 
     public double getTreeHeight() {
         final Node geneTreeRootNode = treeInput.get().getRoot();
@@ -76,8 +75,8 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
         for (int speciesNodeNumber = 0; speciesNodeNumber < speciesTreeNodeCount; speciesNodeNumber++) {
             coalescentTimes.add(new ArrayList<Double>());
-            branchOverlap.add(new HashSet<Node>());
-            branchNodeMap.add(new HashSet<Node>());
+            branchOverlap.add(new HashSet<Integer>());
+            branchNodeMap.add(new HashSet<Integer>());
         }
     }
 
@@ -104,7 +103,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
             final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
             final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
             final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
-            branchNodeMap.get(speciesTreeLeafNumber).add(geneTreeLeafNode);
+            branchNodeMap.get(speciesTreeLeafNumber).add(geneTreeLeafNumber);
 
             coalescentLineageCounts[speciesTreeLeafNumber]++;
 
@@ -131,7 +130,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     }
 
     private boolean recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final Node geneTreeChildNode, final int geneTreeChildNumber, final Node speciesTreeNode, final int speciesTreeNodeNumber) {
-        branchOverlap.get(speciesTreeNodeNumber).add(geneTreeChildNode);
+        branchOverlap.get(speciesTreeNodeNumber).add(geneTreeChildNumber);
         lineageOverlap.get(geneTreeChildNumber).add(speciesTreeNodeNumber);
 
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
@@ -148,7 +147,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
             lineageOverlap.get(geneTreeNodeNumber).addAll(lineageOverlap.get(geneTreeChildNumber));
             final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
-                branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNode);
+                branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNodeNumber);
                 geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
                 coalescentTimes.get(speciesTreeNodeNumber).add(geneTreeNodeHeight);
                 final Node geneTreeParentNode = geneTreeNode.getParent();
@@ -171,5 +170,13 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
             return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, geneTreeChildNode, geneTreeChildNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
         }
+    }
+
+    public Node[] getNodes() {
+        return treeInput.get().getNodesAsArray();
+    }
+
+    public Node getRoot() {
+        return treeInput.get().getRoot();
     }
 }

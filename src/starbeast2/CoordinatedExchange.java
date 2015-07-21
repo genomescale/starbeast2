@@ -4,7 +4,6 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,7 +85,6 @@ public class CoordinatedExchange extends Operator {
         }
 
         if( parent.isLeaf() ) {
-            // tree with dated tips
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -132,9 +130,14 @@ public class CoordinatedExchange extends Operator {
 
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final Node[] geneTreeNodes = geneTree.getNodes();
+
+            assert checkTreeSanity(geneTree.getRoot());
+
             final Map<Integer, Integer> jForwardGraftCounts = new HashMap<Integer, Integer>();
-            final Set<Node> parentBranchNodes = geneTree.branchNodeMap.get(parentBranchNumber);
-            for (Node geneTreeNode: parentBranchNodes) {
+            final Set<Integer> parentBranchNodes = geneTree.branchNodeMap.get(parentBranchNumber);
+            for (int geneTreeNodeNumber: parentBranchNodes) {
+                final Node geneTreeNode = geneTreeNodes[geneTreeNodeNumber];
                 final Node leftChildNode = geneTreeNode.getLeft();
                 final Node rightChildNode = geneTreeNode.getRight();
                 final boolean leftContainsBrother = geneTree.lineageOverlap.get(leftChildNode.getNr()).contains(brotherBranchNumber);
@@ -163,10 +166,8 @@ public class CoordinatedExchange extends Operator {
                     }
                 }
             }
-            //System.out.println(geneTree.treeInput.get().getID());
-            //System.out.println(geneTree.treeInput.get().toString());
-            assert uniqueLeafNodes(geneTree.treeInput.get().getRoot());
-            assert strictlyBifurcating(geneTree.treeInput.get().getRoot());
+
+            assert checkTreeSanity(geneTree.getRoot());
 
             forwardGraftCounts.add(jForwardGraftCounts);
         }
@@ -192,35 +193,32 @@ public class CoordinatedExchange extends Operator {
         return logHastingsRatio;
     }
 
-    private boolean strictlyBifurcating(Node node) {
+    private boolean checkTreeSanity(Node node) {
         List<Node> children = node.getChildren();
-        assert node.isLeaf() || children.size() == 2;
         for (Node childNode: children) {
             assert childNode.getParent() == node;
-            strictlyBifurcating(childNode);
+            assert childNode.getHeight() <= node.getHeight();
+            if (!node.isLeaf()) {
+                checkTreeSanity(childNode);
+            }
         }
-        return true;
-    }
 
-    private boolean uniqueLeafNodes(Node rootNode) {
-        Set<Integer> nodesSet = new HashSet<Integer>();
-        List<Integer> nodesList = new ArrayList<Integer>();
-
-        for (Node leafNode: rootNode.getAllLeafNodes()) {
-            nodesSet.add(leafNode.getNr());
-            nodesList.add(leafNode.getNr());
+        if (node.isLeaf()) {
+            assert children.size() == 0;
+        } else {
+            assert children.size() == 2;
         }
-        
-        assert nodesSet.size() == nodesList.size();
 
         return true;
     }
 
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
+        final Node[] geneTreeNodes = geneTree.getNodes();
         // identify branches in the former "uncle" (now "brother") which overlap with the height of the node to be moved
-        final Set<Node> potentialGraftBranches = geneTree.branchOverlap.get(uncleNumber);
+        final Set<Integer> potentialGraftBranches = geneTree.branchOverlap.get(uncleNumber);
         final List<Node> validGraftBranches = new ArrayList<Node>();
-        for (Node potentialGraftBranch: potentialGraftBranches) {
+        for (int potentialGraftNumber: potentialGraftBranches) {
+            final Node potentialGraftBranch = geneTreeNodes[potentialGraftNumber];
             final Node graftParent = potentialGraftBranch.getParent();
             assert graftParent != null;
 
@@ -241,20 +239,21 @@ public class CoordinatedExchange extends Operator {
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
         final Node oldParent = nodeToMove.getParent();
         final Node newParent = newChild.getParent();
-        System.out.println(String.format("ntm=%d nc=%d dc=%d op=%d np=%d", nodeToMove.getNr(), newChild.getNr(), disownedChild.getNr(), oldParent.getNr(), newParent.getNr()));
 
-        nodeToMove.removeChild(disownedChild);
         oldParent.addChild(disownedChild);
-        disownedChild.makeDirty(Tree.IS_FILTHY);
-
-        oldParent.removeChild(nodeToMove);
-        newParent.addChild(nodeToMove);
-        nodeToMove.makeDirty(Tree.IS_FILTHY);
-
-        newParent.removeChild(newChild);
+        nodeToMove.removeChild(disownedChild);
         nodeToMove.addChild(newChild);
-        newChild.makeDirty(Tree.IS_FILTHY);
+        newParent.removeChild(newChild);
 
+        if (oldParent != newParent) {
+            oldParent.removeChild(nodeToMove);
+            newParent.addChild(nodeToMove);
+        }
+
+
+        disownedChild.makeDirty(Tree.IS_FILTHY);
+        nodeToMove.makeDirty(Tree.IS_FILTHY);
+        newChild.makeDirty(Tree.IS_FILTHY);
         oldParent.makeDirty(Tree.IS_FILTHY);
         newParent.makeDirty(Tree.IS_FILTHY);
     }
