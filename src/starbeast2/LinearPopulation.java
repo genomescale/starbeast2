@@ -16,9 +16,6 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     public Input<RealParameter> topPopSizesInput = new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput = new Input<RealParameter>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
-    private int nBranches;
-    private int nSpecies;
-
     @Override
     public void initAndValidate() throws Exception {
     }
@@ -53,16 +50,15 @@ public class LinearPopulation extends MultispeciesPopulationModel {
 
         final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
 
-        /*// for debugging
-        if (speciesTreeNode.isRoot()) {
+        // for debugging
+        /*if (speciesTreeNode.isRoot()) {
             System.out.println(String.format("Tallest gene tree height = %f", tallestGeneTreeHeight));
             System.out.println(String.format("Root node %d logP = %f", speciesTreeNodeNumber, logP));
         } else if (speciesTreeNode.isLeaf()) {
             System.out.println(String.format("Leaf node %d logP = %f", speciesTreeNodeNumber, logP));
         } else { 
             System.out.println(String.format("Internal node %d logP = %f", speciesTreeNodeNumber, logP));
-        }
-        */
+        }*/
 
         return logP;
     }
