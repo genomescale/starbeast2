@@ -27,7 +27,7 @@ import beast.util.Randomizer;
         + "by the operation onto a valid contemporary branch (without changing node heights). "
         + "See http://doi.org/10.1093/molbev/msu279 for full details.")
 public class CoordinatedExchange extends Operator {
-    public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("speciescoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
+    public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
 
     private Node parent;
     private Node grandparent;
