@@ -46,6 +46,8 @@ public class CoordinatedExchange extends Operator {
     @Override
     public double proposal() {
         final MultispeciesCoalescent msc = mscInput.get();
+        final boolean allCompatible = msc.computeCoalescentTimes(); // must be done before any changes are made to the gene or species trees
+        assert allCompatible; // this move should always preserve gene-tree-within-species-tree compatibility
 
         double fLogHastingsRatio = narrow(msc);
 
@@ -140,8 +142,8 @@ public class CoordinatedExchange extends Operator {
                 final Node geneTreeNode = geneTreeNodes[geneTreeNodeNumber];
                 final Node leftChildNode = geneTreeNode.getLeft();
                 final Node rightChildNode = geneTreeNode.getRight();
-                final boolean leftContainsBrother = geneTree.lineageOverlap.get(leftChildNode.getNr()).contains(brotherBranchNumber);
-                final boolean rightContainsBrother = geneTree.lineageOverlap.get(rightChildNode.getNr()).contains(brotherBranchNumber);
+                final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
+                final boolean rightContainsBrother = geneTree.checkOverlap(rightChildNode, brotherBranchNumber);
 
                 // if exactly one gene tree node child branch exclusively descends via the "sister"
                 // then this gene tree node needs to be pruned and reattached
@@ -172,7 +174,8 @@ public class CoordinatedExchange extends Operator {
             forwardGraftCounts.add(jForwardGraftCounts);
         }
 
-        msc.computeCoalescentTimes(); // rebuild the gene-trees-within-species-tree to account for the tree changes
+        final boolean allCompatible = msc.computeCoalescentTimes(); // rebuild the gene-trees-within-species-tree to account for the tree changes
+        assert allCompatible; // this move should always preserve gene-tree-within-species-tree compatibility
 
         double logHastingsRatio = 0.0;
 
@@ -215,7 +218,7 @@ public class CoordinatedExchange extends Operator {
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
         final Node[] geneTreeNodes = geneTree.getNodes();
         // identify branches in the former "uncle" (now "brother") which overlap with the height of the node to be moved
-        final Set<Integer> potentialGraftBranches = geneTree.branchOverlap.get(uncleNumber);
+        final Set<Integer> potentialGraftBranches = geneTree.speciesGeneOverlap.get(uncleNumber);
         final List<Node> validGraftBranches = new ArrayList<Node>();
         for (int potentialGraftNumber: potentialGraftBranches) {
             final Node potentialGraftBranch = geneTreeNodes[potentialGraftNumber];
@@ -239,6 +242,9 @@ public class CoordinatedExchange extends Operator {
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
         final Node oldParent = nodeToMove.getParent();
         final Node newParent = newChild.getParent();
+        
+        assert oldParent != null;
+        assert newParent != null;
 
         oldParent.addChild(disownedChild);
         nodeToMove.removeChild(disownedChild);
@@ -249,7 +255,6 @@ public class CoordinatedExchange extends Operator {
             oldParent.removeChild(nodeToMove);
             newParent.addChild(nodeToMove);
         }
-
 
         disownedChild.makeDirty(Tree.IS_FILTHY);
         nodeToMove.makeDirty(Tree.IS_FILTHY);

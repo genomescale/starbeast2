@@ -196,11 +196,14 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return geneTreeInput.get();
     }
 
-    public void computeCoalescentTimes() {
+    public boolean computeCoalescentTimes() {
         final TreeInterface speciesTree = treeInput.get();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        boolean allCompatible = true;
         for (GeneTreeWithinSpeciesTree geneTree: geneTrees) {
-            geneTree.computeCoalescentTimes(speciesTree, tipNumberMap);
+            allCompatible = allCompatible && geneTree.computeCoalescentTimes(speciesTree, tipNumberMap);
         }
+        
+        return allCompatible;
     }
 }

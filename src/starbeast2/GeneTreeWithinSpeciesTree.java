@@ -24,14 +24,14 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     private int geneTreeLeafNodeCount;
     private int geneTreeNodeCount;
     private int speciesTreeNodeCount;
-    private int[] geneNodeSpeciesAssignment;
+
+    final protected List<List<Double>> coalescentTimes = new ArrayList<List<Double>>(); // the coalescent event times for this gene tree for all species tree branches
+    final protected List<Set<Integer>> branchNodeMap = new ArrayList<Set<Integer>>(); // gene tree nodes within each species tree branch
+    final protected List<Set<Integer>> geneSpeciesOverlap = new ArrayList<Set<Integer>>(); // species tree branches that overlap with each gene tree branch
+    final protected List<Set<Integer>> speciesGeneOverlap = new ArrayList<Set<Integer>>(); // gene tree branches that overlap with each species tree branch
 
     protected int[] coalescentLineageCounts; // the number of lineages at the tipward end of each branch
-    protected Node[] geneTreeNodesArray;
-    final protected List<List<Double>> coalescentTimes = new ArrayList<List<Double>>(); // the coalescent event times for this gene tree for all species tree branches
-    final protected List<Set<Integer>> lineageOverlap = new ArrayList<Set<Integer>>(); // species tree branches that overlap with each gene tree branch or descendant gene tree branches 
-    final protected List<Set<Integer>> branchOverlap = new ArrayList<Set<Integer>>(); // gene tree branches that overlap with each species tree branch
-    final protected List<Set<Integer>> branchNodeMap = new ArrayList<Set<Integer>>(); // gene tree nodes within each species tree branch
+    protected int[] geneNodeSpeciesAssignment;
 
     public double getTreeHeight() {
         final Node geneTreeRootNode = treeInput.get().getRoot();
@@ -61,12 +61,12 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
         geneTreeNodeCount = treeInput.get().getNodeCount();
         geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
-        for (int geneNodeNumber = 0; geneNodeNumber < geneTreeNodeCount; geneNodeNumber++) {
-            lineageOverlap.add(new HashSet<Integer>());
-        }
 
-        geneTreeNodesArray = treeInput.get().getNodesAsArray();
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
+        
+        for (int i = 0; i < geneTreeNodeCount; i++) {
+            geneSpeciesOverlap.add(new HashSet<Integer>());
+        }
     }
 
     public void initCoalescentArrays(TreeInterface speciesTree) {
@@ -75,7 +75,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
         for (int speciesNodeNumber = 0; speciesNodeNumber < speciesTreeNodeCount; speciesNodeNumber++) {
             coalescentTimes.add(new ArrayList<Double>());
-            branchOverlap.add(new HashSet<Integer>());
+            speciesGeneOverlap.add(new HashSet<Integer>());
             branchNodeMap.add(new HashSet<Integer>());
         }
     }
@@ -91,12 +91,11 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             coalescentTimes.get(i).clear();
             branchNodeMap.get(i).clear();
-            branchOverlap.get(i).clear();
+            speciesGeneOverlap.get(i).clear();
         }
 
-        // rebuild each set of gene tree node inheriting species for the same reason
         for (int i = 0; i < geneTreeNodeCount; i++) {
-            lineageOverlap.get(i).clear();
+            geneSpeciesOverlap.get(i).clear();
         }
 
         for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
@@ -130,21 +129,20 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     }
 
     private boolean recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final Node geneTreeChildNode, final int geneTreeChildNumber, final Node speciesTreeNode, final int speciesTreeNodeNumber) {
-        branchOverlap.get(speciesTreeNodeNumber).add(geneTreeChildNumber);
-        lineageOverlap.get(geneTreeChildNumber).add(speciesTreeNodeNumber);
+        speciesGeneOverlap.get(speciesTreeNodeNumber).add(geneTreeChildNumber);
+        geneSpeciesOverlap.get(geneTreeChildNumber).add(speciesTreeNodeNumber);
 
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final Node speciesTreeParentNode = speciesTreeNode.getParent();
 
         double speciesTreeParentHeight;
         if (speciesTreeParentNode == null) { // current node is the root node
-            speciesTreeParentHeight = Double.POSITIVE_INFINITY; // there are no ancestoral branches to consider
+            speciesTreeParentHeight = Double.POSITIVE_INFINITY; // there are no ancestral branches to consider
         } else {
             speciesTreeParentHeight = speciesTreeParentNode.getHeight();
         }
 
         if (geneTreeNodeHeight < speciesTreeParentHeight) { // this gene coalescence occurs on the species tree current branch
-            lineageOverlap.get(geneTreeNodeNumber).addAll(lineageOverlap.get(geneTreeChildNumber));
             final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
                 branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNodeNumber);
@@ -173,10 +171,26 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     }
 
     public Node[] getNodes() {
-        return treeInput.get().getNodesAsArray();
+        final TreeInterface geneTree = treeInput.get();
+        return geneTree.getNodesAsArray();
     }
 
     public Node getRoot() {
         return treeInput.get().getRoot();
+    }
+
+    public boolean checkOverlap(Node subtreeNode, int branchNumber) {
+        final int nodeNumber = subtreeNode.getNr();
+        if (geneSpeciesOverlap.get(nodeNumber).contains(branchNumber)) {
+            return true;
+        } else if (subtreeNode.isLeaf()) {
+            return false;
+        } else {
+            if (checkOverlap(subtreeNode.getLeft(), branchNumber) || checkOverlap(subtreeNode.getRight(), branchNumber)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }
