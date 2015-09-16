@@ -26,7 +26,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     private int speciesTreeNodeCount;
 
     final protected List<List<Double>> coalescentTimes = new ArrayList<List<Double>>(); // the coalescent event times for this gene tree for all species tree branches
-    final protected List<Set<Integer>> branchNodeMap = new ArrayList<Set<Integer>>(); // gene tree nodes within each species tree branch
+    final protected List<List<Node>> branchNodeMap = new ArrayList<List<Node>>(); // gene tree nodes within each species tree branch
     final protected List<Set<Integer>> geneSpeciesOverlap = new ArrayList<Set<Integer>>(); // species tree branches that overlap with each gene tree branch
     final protected List<Set<Integer>> speciesGeneOverlap = new ArrayList<Set<Integer>>(); // gene tree branches that overlap with each species tree branch
 
@@ -76,7 +76,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         for (int speciesNodeNumber = 0; speciesNodeNumber < speciesTreeNodeCount; speciesNodeNumber++) {
             coalescentTimes.add(new ArrayList<Double>());
             speciesGeneOverlap.add(new HashSet<Integer>());
-            branchNodeMap.add(new HashSet<Integer>());
+            branchNodeMap.add(new ArrayList<Node>());
         }
     }
 
@@ -102,7 +102,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
             final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
             final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
             final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
-            branchNodeMap.get(speciesTreeLeafNumber).add(geneTreeLeafNumber);
+            branchNodeMap.get(speciesTreeLeafNumber).add(geneTreeLeafNode);
 
             coalescentLineageCounts[speciesTreeLeafNumber]++;
 
@@ -145,7 +145,7 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         if (geneTreeNodeHeight < speciesTreeParentHeight) { // this gene coalescence occurs on the species tree current branch
             final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
-                branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNodeNumber);
+                branchNodeMap.get(speciesTreeNodeNumber).add(geneTreeNode);
                 geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
                 coalescentTimes.get(speciesTreeNodeNumber).add(geneTreeNodeHeight);
                 final Node geneTreeParentNode = geneTreeNode.getParent();

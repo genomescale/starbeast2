@@ -34,6 +34,9 @@ public class CoordinatedExchange extends Operator {
     private Node brother;
     private Node uncle;
 
+    // fuck Java
+    final static NodeHeightComparator nhc = new NodeHeightComparator();
+
     @Override
     public void initAndValidate() {
     }
@@ -132,14 +135,15 @@ public class CoordinatedExchange extends Operator {
 
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Node[] geneTreeNodes = geneTree.getNodes();
 
             assert checkTreeSanity(geneTree.getRoot());
 
             final Map<Integer, Integer> jForwardGraftCounts = new HashMap<Integer, Integer>();
-            final Set<Integer> parentBranchNodes = geneTree.branchNodeMap.get(parentBranchNumber);
-            for (int geneTreeNodeNumber: parentBranchNodes) {
-                final Node geneTreeNode = geneTreeNodes[geneTreeNodeNumber];
+            final List<Node> parentBranchNodes = geneTree.branchNodeMap.get(parentBranchNumber);
+            // must evaluate gene tree nodes oldest to youngest (in node age)
+            // otherwise destination graft branches will be severed below subsequent gene nodes
+            parentBranchNodes.sort(nhc);
+            for (final Node geneTreeNode: parentBranchNodes) {
                 final Node leftChildNode = geneTreeNode.getLeft();
                 final Node rightChildNode = geneTreeNode.getRight();
                 final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
@@ -217,7 +221,7 @@ public class CoordinatedExchange extends Operator {
 
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
         final Node[] geneTreeNodes = geneTree.getNodes();
-        // identify branches in the former "uncle" (now "brother") which overlap with the height of the node to be moved
+        // identify branches in the former "uncle" (proposed "brother") which overlap with the height of the node to be moved
         final Set<Integer> potentialGraftBranches = geneTree.speciesGeneOverlap.get(uncleNumber);
         final List<Node> validGraftBranches = new ArrayList<Node>();
         for (int potentialGraftNumber: potentialGraftBranches) {
