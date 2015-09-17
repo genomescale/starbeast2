@@ -155,6 +155,9 @@ public class CoordinatedExchange extends Operator {
                     final double nodeHeight = geneTreeNode.getHeight();
                     final List<Node> validGraftBranches = findGraftBranches(geneTree, uncleBranchNumber, nodeHeight);
                     final int forwardGraftCount = validGraftBranches.size();
+                    // there should always be a compatible branch...
+                    // ASSUMING NO MISSING DATA (so this assert is not valid for production starbeast2)
+                    assert forwardGraftCount != 0;
                     if (forwardGraftCount == 0) { // no compatible branches to graft this node on to
                         return Double.NEGATIVE_INFINITY;
                     } else {
