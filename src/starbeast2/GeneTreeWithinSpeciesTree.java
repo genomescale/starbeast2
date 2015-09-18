@@ -1,13 +1,15 @@
 package starbeast2;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Multiset;
 
 import beast.core.Input;
 import beast.evolution.tree.Node;
@@ -26,25 +28,9 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     private int geneTreeNodeCount;
 
     final protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
-    final protected ListMultimap<Integer, Node> branchNodeMap = ArrayListMultimap.create(); // gene tree nodes within each species tree branch
-    final protected SetMultimap<Integer, Node> speciesGeneDescent = HashMultimap.create(); // gene tree nodes within each species tree branch and descendants
+    final protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
 
-    protected int[] coalescentLineageCounts; // the number of lineages at the tipward end of each branch
     protected int[] geneNodeSpeciesAssignment;
-
-    public double getTreeHeight() {
-        final Node geneTreeRootNode = treeInput.get().getRoot();
-        final double geneTreeHeight = geneTreeRootNode.getHeight();
-        
-        return geneTreeHeight;
-    }
-
-    public double getNodeHeight(int nodeNumber) {
-        final Node arbitraryNode = treeInput.get().getNode(nodeNumber);
-        final double nodeHeight = arbitraryNode.getHeight();
-        
-        return nodeHeight;
-    }
 
     public void initAndValidate() throws Exception {
         if (treeInput.get() == null) {
@@ -64,25 +50,20 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
     }
 
-    public boolean computeCoalescentTimes(TreeInterface speciesTree, HashMap<String, Integer> tipNumberMap) {
+    protected boolean computeCoalescentTimes(TreeInterface speciesTree, HashMap<String, Integer> tipNumberMap) {
         final TreeInterface geneTree = treeInput.get();
 
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
-        coalescentLineageCounts = new int[speciesTree.getNodeCount()];
         Arrays.fill(geneNodeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
 
+        coalescentLineageCounts.clear();
         coalescentTimes.clear();
-        branchNodeMap.clear();
-        speciesGeneDescent.clear();
 
         for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
             final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
             final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
             final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
-            branchNodeMap.put(speciesTreeLeafNumber, geneTreeLeafNode);
-
-            coalescentLineageCounts[speciesTreeLeafNumber]++;
-            speciesGeneDescent.put(speciesTreeLeafNumber, geneTreeLeafNode);
+            coalescentLineageCounts.add(speciesTreeLeafNumber);
 
             final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
             final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
@@ -101,7 +82,6 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     }
 
     private boolean recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final Node speciesTreeNode, final int speciesTreeNodeNumber) {
-
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final Node speciesTreeParentNode = speciesTreeNode.getParent();
 
@@ -113,11 +93,8 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         }
 
         if (geneTreeNodeHeight < speciesTreeParentHeight) { // this gene coalescence occurs on the species tree current branch
-            speciesGeneDescent.put(speciesTreeNodeNumber, geneTreeNode);
-
             final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
-                branchNodeMap.put(speciesTreeNodeNumber, geneTreeNode);
                 geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
                 coalescentTimes.put(speciesTreeNodeNumber, geneTreeNodeHeight);
                 final Node geneTreeParentNode = geneTreeNode.getParent();
@@ -136,24 +113,64 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
             }
         } else { // this gene coalescence occurs on an ancestral branch
             final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
-            final Set<Node> descendantGeneNodes = speciesGeneDescent.get(speciesTreeNodeNumber);
-            speciesGeneDescent.putAll(speciesTreeParentNodeNumber, descendantGeneNodes);
-            coalescentLineageCounts[speciesTreeParentNodeNumber]++;
+            coalescentLineageCounts.add(speciesTreeParentNodeNumber);
 
             return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
         }
     }
 
-    protected void subtreeOverlap(final Node geneTreeNode, final int speciesTreeNodeNumber) {
-        
+    protected Set<Integer> findAssociatedNodes(Node geneTreeNode, Set<Node> associatedNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, double lowerHeight, double upperHeight, double topHeight) {
+        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+        final double bottomHeight = geneTreeNode.getHeight();
+
+        if (geneTreeNode.isLeaf()) {
+            leafSpeciesNumbers.add(tipNumberMap.get(geneTreeNode.getID()));
+        } else {
+            final Node leftChild = geneTreeNode.getLeft();
+            final Node rightChild = geneTreeNode.getRight();
+
+            leafSpeciesNumbers.addAll(findAssociatedNodes(leftChild, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, bottomHeight));
+            leafSpeciesNumbers.addAll(findAssociatedNodes(rightChild, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, bottomHeight));
+        }
+
+        // the subtree defined by this gene tree node overlaps with the subtree defined by the species tree node of interest
+        final boolean subtreeOverlap = !Collections.disjoint(associatedLeafSpecies, leafSpeciesNumbers);
+        if (bottomHeight <= upperHeight && topHeight >= lowerHeight && subtreeOverlap) {
+            associatedNodes.add(geneTreeNode);
+        }
+
+        return leafSpeciesNumbers;
     }
 
-    public Node[] getNodes() {
-        final TreeInterface geneTree = treeInput.get();
-        return geneTree.getNodesAsArray();
+    protected Set<Integer> findBranchNodes(Node geneTreeNode, Set<Node> branchNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, double lowerHeight, double upperHeight) {
+        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+        final double nodeHeight = geneTreeNode.getHeight();
+
+        if (geneTreeNode.isLeaf()) {
+            leafSpeciesNumbers.add(tipNumberMap.get(geneTreeNode.getID()));
+        } else {
+            final Node leftChild = geneTreeNode.getLeft();
+            final Node rightChild = geneTreeNode.getRight();
+
+            leafSpeciesNumbers.addAll(findBranchNodes(leftChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
+            leafSpeciesNumbers.addAll(findBranchNodes(rightChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
+        }
+
+        // the subtree defined by this gene tree node overlaps with the subtree defined by the species tree node of interest
+        final boolean subtreeOverlap = !Collections.disjoint(associatedLeafSpecies, leafSpeciesNumbers);
+        if (nodeHeight <= upperHeight && nodeHeight >= lowerHeight && subtreeOverlap) {
+            branchNodes.add(geneTreeNode);
+        }
+
+        return leafSpeciesNumbers;
     }
 
-    public Node getRoot() {
+    protected Node getRoot() {
         return treeInput.get().getRoot();
     }
+
+    protected double getTreeHeight() {
+        return treeInput.get().getRoot().getHeight();
+    }
+
 }

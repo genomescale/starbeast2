@@ -7,6 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.SetMultimap;
+
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
@@ -26,23 +31,23 @@ import beast.evolution.tree.TreeInterface;
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends TreeDistribution {
     public Input<List<GeneTreeWithinSpeciesTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
-    public Input<TaxonSet> taxonSuperSetInput = new Input<TaxonSet>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
-    public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<MultispeciesPopulationModel>("populationModel", "The species tree population model.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
     private TaxonSet taxonSuperSet;
     private MultispeciesPopulationModel populationModel;
     private int nGeneTrees;
-    private int nSpeciesBranches;
+    private int speciesTreeNodeCount;
     private double[] perGenePloidy;
 
     private Double[] speciesStartTimes;
     private Double[] speciesEndTimes;
 
-    final private HashMap<String, Integer> tipNumberMap = new HashMap<String, Integer>();
+    final private HashMap<String, Integer> tipNumberMap = new HashMap<>();
 
     @Override
     public void initAndValidate() throws Exception {
-        final HashMap<String, Integer> speciesNumberMap = new HashMap<String, Integer>();
+        final HashMap<String, Integer> speciesNumberMap = new HashMap<>();
 
         TreeInterface speciesTree = treeInput.get();
         List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
@@ -52,10 +57,10 @@ public class MultispeciesCoalescent extends TreeDistribution {
         taxonSuperSet = taxonSuperSetInput.get();
         populationModel = populationFunctionInput.get();
 
-        nSpeciesBranches = speciesTree.getNodeCount();
+        speciesTreeNodeCount = speciesTree.getNodeCount();
 
-        speciesStartTimes = new Double[nSpeciesBranches]; // the earlier date (rootward end)
-        speciesEndTimes = new Double[nSpeciesBranches]; // the later date (tipward end)
+        speciesStartTimes = new Double[speciesTreeNodeCount]; // the earlier date (rootward end)
+        speciesEndTimes = new Double[speciesTreeNodeCount]; // the later date (tipward end)
 
         // generate map of species tree tip node names to node numbers
         Node speciesTreeRoot = speciesTree.getRoot();
@@ -92,7 +97,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
             perGenePloidy[i] = geneTreeI.ploidy;
         }
 
-        populationModel.initPopSizes(nSpeciesBranches);
+        populationModel.initPopSizes(speciesTreeNodeCount);
     }
 
     public double calculateLogP() {
@@ -100,7 +105,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
-        for (int i = 0; i < nSpeciesBranches; i++) {
+        for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesNode = speciesTree.getNode(i);
             final Node parentNode = speciesNode.getParent();
 
@@ -113,32 +118,34 @@ public class MultispeciesCoalescent extends TreeDistribution {
             }
         }
 
-        final List<int[]> allLineageCounts = new ArrayList<int[]>();
-        final List<int[]> allEventCounts = new ArrayList<int[]>();
-        final List<List<Double[]>> allCoalescentTimes = new ArrayList<List<Double[]>>();
-        for (int i = 0; i < nSpeciesBranches; i++) {
+        final List<int[]> allLineageCounts = new ArrayList<>();
+        final List<int[]> allEventCounts = new ArrayList<>();
+        final List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
+        for (int i = 0; i < speciesTreeNodeCount; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
-            allCoalescentTimes.add(new ArrayList<Double[]>());
+            allCoalescentTimes.add(new ArrayList<>());
         }
 
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             if (geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
-                for (int i = 0; i < nSpeciesBranches; i++) { // for each species tree node/branch "i"
-                    final List<Double> branchCoalescentTimes = geneTree.coalescentTimes.get(i);
-                    final int geneBranchEventCount = branchCoalescentTimes.size();;
-                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
+                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
+                    final List<Double> timesView = geneTree.coalescentTimes.get(i);
+                    final int geneBranchEventCount = timesView.size();
+                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
+                    timesView.toArray(geneBranchCoalescentTimes);
+                    Arrays.sort(geneBranchCoalescentTimes);
 
-                    final List<Double> geneBranchTimes = new ArrayList<>();
-                    geneBranchTimes.add(speciesStartTimes[i]); // add the start time for each branch
-                    geneBranchTimes.addAll(branchCoalescentTimes); // add the coalescent event times for each branch
-                    geneBranchTimes.add(speciesEndTimes[i]); // add the end time for each branch
+                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts.count(i);
 
                     final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
-                    geneBranchTimes.toArray(coalescentTimesIJ);
-                    Arrays.sort(coalescentTimesIJ);
+                    coalescentTimesIJ[0] = speciesStartTimes[i];
+                    for (int k = 0; k < geneBranchEventCount; k++) {
+                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
+                    }
+                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesEndTimes[i];
 
                     allLineageCounts.get(i)[j] = geneBranchLineageCount;
                     allEventCounts.get(i)[j] = geneBranchEventCount;
@@ -150,7 +157,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
             }
         }
 
-        for (int i = 0; i < nSpeciesBranches; i++) {
+        for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesTreeNode = speciesTree.getNode(i); 
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
@@ -196,11 +203,75 @@ public class MultispeciesCoalescent extends TreeDistribution {
     public boolean computeCoalescentTimes() {
         final TreeInterface speciesTree = treeInput.get();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
-        boolean allCompatible = true;
         for (GeneTreeWithinSpeciesTree geneTree: geneTrees) {
-            allCompatible = allCompatible && geneTree.computeCoalescentTimes(speciesTree, tipNumberMap);
+            if (!geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
+                // this gene tree IS NOT compatible with the species tree
+                return false;
+            }
         }
+
+        return true;
+    }
+
+    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
+    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by subtreeOverlapNodeNumber
+    // (2) they define a branch with overlaps with the species tree branch defined by branchOverlapNodeNumber
+    protected SetMultimap<Integer, Node> getAssociatedNodes(Integer subtreeOverlapNodeNumber, Integer branchOverlapNodeNumber) {
+        final Node subtreeOverlapNode = treeInput.get().getNode(subtreeOverlapNodeNumber);
+        final Set<Integer> associatedLeafSpecies = findLeafSpecies(subtreeOverlapNode);
+
+        final Node branchOverlapNode = treeInput.get().getNode(branchOverlapNodeNumber);
+        final double lowerHeight = branchOverlapNode.getHeight();
+        final double upperHeight = branchOverlapNode.getParent().getHeight();
         
-        return allCompatible;
+        final SetMultimap<Integer, Node> allAssociatedNodes = HashMultimap.create();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
+            final Set<Node> associatedNodes = new HashSet<Node>();
+            geneTree.findAssociatedNodes(geneTreeRootNode, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, Double.POSITIVE_INFINITY);
+            allAssociatedNodes.putAll(j, associatedNodes);
+        }
+
+        return allAssociatedNodes;
+    }
+
+    // find gene tree nodes within a species tree branch (not valid for species tree root branch)
+    protected ListMultimap<Integer, Node> getBranchNodes(Integer speciesTreeNodeNumber) {
+        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
+        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+
+        final double lowerHeight = speciesTreeNode.getHeight();
+        final double upperHeight = speciesTreeNode.getParent().getHeight();
+
+        final ListMultimap<Integer, Node> allBranchNodes = ArrayListMultimap.create();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
+            final Set<Node> branchNodes = new HashSet<Node>();
+            geneTree.findBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight);
+            allBranchNodes.putAll(j, branchNodes);
+        }
+
+        return allBranchNodes;
+    }
+
+    private Set<Integer> findLeafSpecies(Node speciesTreeNode) {
+        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
+        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+
+        if (speciesTreeNode.isLeaf()) {
+            leafSpeciesNumbers.add(speciesTreeNodeNumber);
+        } else {
+            final Node leftChild = speciesTreeNode.getLeft();
+            final Node rightChild = speciesTreeNode.getRight();
+
+            leafSpeciesNumbers.addAll(findLeafSpecies(leftChild));
+            leafSpeciesNumbers.addAll(findLeafSpecies(rightChild));
+        }
+
+        return leafSpeciesNumbers;
     }
 }

@@ -108,7 +108,6 @@ public class CoordinatedExchangeTest {
 
         CoordinatedExchange coex = new CoordinatedExchange();
         coex.initByName("multispeciesCoalescent", msc);
-        msc.computeCoalescentTimes();
         coex.manipulateSpeciesTree(brother);
         final double calculatedLogHR = coex.rearrangeGeneTrees(msc);
 
