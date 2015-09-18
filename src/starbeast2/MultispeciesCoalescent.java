@@ -89,10 +89,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
         perGenePloidy = new double[nGeneTrees];
         for (int i = 0; i < nGeneTrees; i++) {
             final GeneTreeWithinSpeciesTree geneTreeI = geneTrees.get(i);
-            final double ploidy = geneTreeI.ploidy;
-
-            geneTreeI.initCoalescentArrays(speciesTree);
-            perGenePloidy[i] = ploidy;
+            perGenePloidy[i] = geneTreeI.ploidy;
         }
 
         populationModel.initPopSizes(nSpeciesBranches);

@@ -146,8 +146,10 @@ public class CoordinatedExchange extends Operator {
             for (final Node geneTreeNode: parentBranchNodes) {
                 final Node leftChildNode = geneTreeNode.getLeft();
                 final Node rightChildNode = geneTreeNode.getRight();
-                final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
-                final boolean rightContainsBrother = geneTree.checkOverlap(rightChildNode, brotherBranchNumber);
+                // final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
+                // final boolean rightContainsBrother = geneTree.checkOverlap(rightChildNode, brotherBranchNumber);
+                final boolean leftContainsBrother = geneTree.speciesGeneDescent.containsEntry(leftChildNode, brotherBranchNumber);
+                final boolean rightContainsBrother = geneTree.speciesGeneDescent.containsEntry(rightChildNode, brotherBranchNumber);
 
                 // if exactly one gene tree node child branch exclusively descends via the "sister"
                 // then this gene tree node needs to be pruned and reattached
@@ -223,12 +225,10 @@ public class CoordinatedExchange extends Operator {
     }
 
     private static List<Node> findGraftBranches(final GeneTreeWithinSpeciesTree geneTree, final int uncleNumber, final double reattachHeight) {
-        final Node[] geneTreeNodes = geneTree.getNodes();
         // identify branches in the former "uncle" (proposed "brother") which overlap with the height of the node to be moved
-        final Set<Integer> potentialGraftBranches = geneTree.speciesGeneOverlap.get(uncleNumber);
+        final Set<Node> potentialGraftBranches = geneTree.speciesGeneDescent.get(uncleNumber);
         final List<Node> validGraftBranches = new ArrayList<Node>();
-        for (int potentialGraftNumber: potentialGraftBranches) {
-            final Node potentialGraftBranch = geneTreeNodes[potentialGraftNumber];
+        for (final Node potentialGraftBranch: potentialGraftBranches) {
             final Node graftParent = potentialGraftBranch.getParent();
             assert graftParent != null;
 
