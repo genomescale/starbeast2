@@ -11,7 +11,7 @@ import org.junit.runners.Suite.SuiteClasses;
     LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,
-    CoordinatedExchangeTest.class
+    SmallCoordinatedExchangeTest.class
 })
 public class AllTests {
 

@@ -19,7 +19,7 @@ import starbeast2.GeneTreeWithinSpeciesTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
 
-public class CoordinatedExchangeTest {
+public class SmallCoordinatedExchangeTest {
     private final String newickSpeciesTree = "((A:1.0,B:1.0):2.0,C:3.0)";
     private final String newickGeneTreeA = "(((A1:1.5,B1:1.5):1.0,(A2:2.0,B2:2.0):0.5):1.5,C1:4.0)";
 

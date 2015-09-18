@@ -141,11 +141,11 @@ public class MultispeciesCoalescent extends TreeDistribution {
                     final int geneBranchLineageCount = geneTree.coalescentLineageCounts.count(i);
 
                     final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
-                    coalescentTimesIJ[0] = speciesStartTimes[i];
+                    coalescentTimesIJ[0] = speciesEndTimes[i];
                     for (int k = 0; k < geneBranchEventCount; k++) {
                         coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
                     }
-                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesEndTimes[i];
+                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
 
                     allLineageCounts.get(i)[j] = geneBranchLineageCount;
                     allEventCounts.get(i)[j] = geneBranchEventCount;
