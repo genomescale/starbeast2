@@ -169,16 +169,15 @@ public class CoordinatedExchange extends Operator {
                 final Node rightChildNode = geneTreeNode.getRight();
                 // final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
                 // final boolean rightContainsBrother = geneTree.checkOverlap(rightChildNode, brotherBranchNumber);
-                final boolean leftContainsBrother = fraternalNodes.contains(leftChildNode);
-                final boolean rightContainsBrother = fraternalNodes.contains(rightChildNode);
+                final boolean leftDescendsViaBrother = fraternalNodes.contains(leftChildNode);
+                final boolean rightDescendsViaBrother = fraternalNodes.contains(rightChildNode);
 
                 // if exactly one gene tree node child branch exclusively descends via the "sister"
                 // then this gene tree node needs to be pruned and reattached
-                if (leftContainsBrother ^ rightContainsBrother) {
+                if (leftDescendsViaBrother ^ rightDescendsViaBrother) {
                     final double nodeHeight = geneTreeNode.getHeight();
 
                     final List<Node> validGraftBranches = new ArrayList<>();
-                    int forwardGraftCount = 0;
                     for (Node potentialGraft: avuncularNodes) {
                         final double potentialGraftBottom = potentialGraft.getHeight();
                         double potentialGraftTop;
@@ -187,23 +186,22 @@ public class CoordinatedExchange extends Operator {
                         } else {
                             potentialGraftTop = potentialGraft.getParent().getHeight();
                         }
-
                         if (nodeHeight >= potentialGraftBottom && nodeHeight <= potentialGraftTop) {
-                            forwardGraftCount++;
+                            jForwardGraftCounts.add(geneTreeNode);
                             validGraftBranches.add(potentialGraft);
                         }
                     }
                     // there should always be a compatible branch...
                     // ASSUMING NO MISSING DATA (so this assert is not valid for production starbeast2)
+                    final int forwardGraftCount = jForwardGraftCounts.count(geneTreeNode);
                     assert forwardGraftCount != 0;
                     if (forwardGraftCount == 0) { // no compatible branches to graft this node on to
                         return Double.NEGATIVE_INFINITY;
                     } else {
-                        jForwardGraftCounts.add(geneTreeNode);
                         final Node chosenNode = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
 
                         // this gene tree node will be grafted to the branch defined by "chosenNode"
-                        if (leftContainsBrother) { // the left child will be disowned and reattached directly to its grandparent
+                        if (leftDescendsViaBrother) { // the left child will be disowned and reattached directly to its grandparent
                             pruneAndRegraft(geneTreeNode, chosenNode, leftChildNode);
                             rightChildNode.makeDirty(Tree.IS_FILTHY);
                         } else { // the right child will be disowned and reattached directly to its grandparent
@@ -226,6 +224,7 @@ public class CoordinatedExchange extends Operator {
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
             final Multiset<Node> jForwardGraftCounts = forwardGraftCounts.get(j);
+            System.out.println(jForwardGraftCounts.size());
             final Set<Node> avuncularNodes = reverseAvuncularNodes.get(j);
             for (Node geneTreeNode: jForwardGraftCounts.elementSet()) {
                 final double geneTreeNodeHeight = geneTreeNode.getHeight();
