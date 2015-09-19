@@ -217,14 +217,12 @@ public class CoordinatedExchange extends Operator {
             forwardGraftCounts.add(jForwardGraftCounts);
         }
 
-        final boolean allCompatible = msc.computeCoalescentTimes(); // rebuild the gene-trees-within-species-tree to account for the tree changes
-        assert allCompatible; // this move should always preserve gene-tree-within-species-tree compatibility
+        assert msc.computeCoalescentTimes(); // this move should always preserve gene-tree-within-species-tree compatibility
 
         final SetMultimap<Integer, Node> reverseAvuncularNodes = msc.getAssociatedNodes(brotherBranchNumber, brotherBranchNumber);
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
             final Multiset<Node> jForwardGraftCounts = forwardGraftCounts.get(j);
-            System.out.println(jForwardGraftCounts.size());
             final Set<Node> avuncularNodes = reverseAvuncularNodes.get(j);
             for (Node geneTreeNode: jForwardGraftCounts.elementSet()) {
                 final double geneTreeNodeHeight = geneTreeNode.getHeight();
