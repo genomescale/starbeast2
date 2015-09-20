@@ -213,30 +213,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return true;
     }
 
-    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
-    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by subtreeOverlapNodeNumber
-    // (2) they define a branch with overlaps with the species tree branch defined by branchOverlapNodeNumber
-    protected SetMultimap<Integer, Node> getAssociatedNodes(Integer subtreeOverlapNodeNumber, Integer branchOverlapNodeNumber) {
-        final Node subtreeOverlapNode = treeInput.get().getNode(subtreeOverlapNodeNumber);
-        final Set<Integer> associatedLeafSpecies = findLeafSpecies(subtreeOverlapNode);
-
-        final Node branchOverlapNode = treeInput.get().getNode(branchOverlapNodeNumber);
-        final double lowerHeight = branchOverlapNode.getHeight();
-        final double upperHeight = branchOverlapNode.getParent().getHeight();
-        
-        final SetMultimap<Integer, Node> allAssociatedNodes = HashMultimap.create();
-        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
-        for (int j = 0; j < nGeneTrees; j++) {
-            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Node geneTreeRootNode = geneTree.getRoot();
-            final Set<Node> associatedNodes = new HashSet<Node>();
-            geneTree.findAssociatedNodes(geneTreeRootNode, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, Double.POSITIVE_INFINITY);
-            allAssociatedNodes.putAll(j, associatedNodes);
-        }
-
-        return allAssociatedNodes;
-    }
-
     // find gene tree nodes within a species tree branch (not valid for species tree root branch)
     protected ListMultimap<Integer, Node> getBranchNodes(Integer speciesTreeNodeNumber) {
         final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
@@ -256,6 +232,55 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         return allBranchNodes;
+    }
+
+    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
+    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by speciesTreeNodeNumber
+    // (2) they are a child of one of the nodes in the set parentNodes
+    protected SetMultimap<Integer, Node> getDescendantNodes(Integer speciesTreeNodeNumber, ListMultimap<Integer, Node> parentNodes) {
+        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
+        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+
+        final SetMultimap<Integer, Node> allDescendantNodes = HashMultimap.create();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final List<Node> geneParentNodes = parentNodes.get(j);
+            final Set<Node> descendantNodes = new HashSet<Node>();
+
+            // find associated descendant nodes beginning at either child of the root node
+            final Node geneTreeRootNode = geneTree.getRoot();
+            final Node leftChild = geneTreeRootNode.getLeft();
+            final Node rightChild = geneTreeRootNode.getRight();
+            geneTree.findDescendantNodes(leftChild, geneTreeRootNode, descendantNodes, associatedLeafSpecies, tipNumberMap, geneParentNodes);
+            geneTree.findDescendantNodes(rightChild, geneTreeRootNode, descendantNodes, associatedLeafSpecies, tipNumberMap, geneParentNodes);
+            allDescendantNodes.putAll(j, descendantNodes);
+        }
+
+        return allDescendantNodes;
+    }
+
+    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
+    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by speciesTreeNodeNumber
+    // (2) they define a branch with overlaps with the species tree branch defined by speciesTreeNodeNumber
+    protected SetMultimap<Integer, Node> getGraftBranches(Integer speciesTreeNodeNumber) {
+        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
+        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+
+        final double lowerHeight = speciesTreeNode.getHeight();
+        final double upperHeight = speciesTreeNode.getParent().getHeight();
+        
+        final SetMultimap<Integer, Node> allAssociatedNodes = HashMultimap.create();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
+            final Set<Node> associatedNodes = new HashSet<Node>();
+            geneTree.findAssociatedNodes(geneTreeRootNode, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, Double.POSITIVE_INFINITY);
+            allAssociatedNodes.putAll(j, associatedNodes);
+        }
+
+        return allAssociatedNodes;
     }
 
     private Set<Integer> findLeafSpecies(Node speciesTreeNode) {

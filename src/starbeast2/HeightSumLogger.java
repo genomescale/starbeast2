@@ -11,9 +11,9 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.core.Input.Validate;
 
-@Description("Logger to report height of a tree")
+@Description("Logger to report sum of node heights of a tree")
 public class HeightSumLogger extends CalculationNode implements Loggable, Function {
-    public Input<Tree> treeInput = new Input<Tree>("tree", "Tree to report height for.", Validate.REQUIRED);
+    public Input<Tree> treeInput = new Input<Tree>("tree", "Tree to report sum of node heights for.", Validate.REQUIRED);
     public Input<Boolean> boolInput = new Input<Boolean>("logXform", "Log-transform node heights before summation.", false);
 
     @Override

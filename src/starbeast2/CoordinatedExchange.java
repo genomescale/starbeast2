@@ -104,8 +104,8 @@ public class CoordinatedExchange extends Operator {
 
         // must be done before any changes are made to the gene or species trees
         forwardParentalNodes = msc.getBranchNodes(parentBranchNumber);
-        forwardFraternalNodes = msc.getAssociatedNodes(brotherBranchNumber, parentBranchNumber);
-        forwardAvuncularNodes = msc.getAssociatedNodes(uncleBranchNumber, uncleBranchNumber);
+        forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
+        forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
 
         int validGP = 0;
         {
@@ -141,8 +141,8 @@ public class CoordinatedExchange extends Operator {
         uncleBranchNumber = uncle.getNr();
 
         forwardParentalNodes = msc.getBranchNodes(parentBranchNumber);
-        forwardFraternalNodes = msc.getAssociatedNodes(brotherBranchNumber, parentBranchNumber);
-        forwardAvuncularNodes = msc.getAssociatedNodes(uncleBranchNumber, uncleBranchNumber);
+        forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
+        forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
 
         exchangeNodes(parent, grandparent, brother, uncle);
     }
@@ -191,11 +191,11 @@ public class CoordinatedExchange extends Operator {
                             validGraftBranches.add(potentialGraft);
                         }
                     }
-                    // there should always be a compatible branch...
-                    // ASSUMING NO MISSING DATA (so this assert is not valid for production starbeast2)
+
+                    // no compatible branches to graft this node on to
+                    // this only occurs when there is missing data and the gene tree root is in the "parent" branch
                     final int forwardGraftCount = jForwardGraftCounts.count(geneTreeNode);
-                    assert forwardGraftCount != 0;
-                    if (forwardGraftCount == 0) { // no compatible branches to graft this node on to
+                    if (forwardGraftCount == 0) {
                         return Double.NEGATIVE_INFINITY;
                     } else {
                         final Node chosenNode = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
@@ -219,7 +219,7 @@ public class CoordinatedExchange extends Operator {
 
         assert msc.computeCoalescentTimes(); // this move should always preserve gene-tree-within-species-tree compatibility
 
-        final SetMultimap<Integer, Node> reverseAvuncularNodes = msc.getAssociatedNodes(brotherBranchNumber, brotherBranchNumber);
+        final SetMultimap<Integer, Node> reverseAvuncularNodes = msc.getGraftBranches(brotherBranchNumber);
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
             final Multiset<Node> jForwardGraftCounts = forwardGraftCounts.get(j);

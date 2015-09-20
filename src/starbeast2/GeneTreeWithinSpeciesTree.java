@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -119,6 +120,55 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         }
     }
 
+    protected Set<Integer> findBranchNodes(Node geneTreeNode, Set<Node> branchNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, double lowerHeight, double upperHeight) {
+        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+
+        if (geneTreeNode.isLeaf()) {
+            leafSpeciesNumbers.add(tipNumberMap.get(geneTreeNode.getID()));
+        } else {
+            final Node leftChild = geneTreeNode.getLeft();
+            final Node rightChild = geneTreeNode.getRight();
+
+            leafSpeciesNumbers.addAll(findBranchNodes(leftChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
+            leafSpeciesNumbers.addAll(findBranchNodes(rightChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
+        }
+
+        // if the subtree defined by this gene tree node overlaps with the subtree defined by the species tree node of interest
+        if (!Collections.disjoint(associatedLeafSpecies, leafSpeciesNumbers)) {
+            final double nodeHeight = geneTreeNode.getHeight();
+            // if the branch defined by this gene tree node overlaps with the range defined by lowerHeight and upperHeight
+            if (nodeHeight >= lowerHeight && nodeHeight <= upperHeight) {
+                branchNodes.add(geneTreeNode);
+            }
+        }
+
+        return leafSpeciesNumbers;
+    }
+
+    public Set<Integer> findDescendantNodes(Node geneTreeNode, Node geneTreeParentNode, Set<Node> descendantNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, List<Node> parentNodes) {
+        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+
+        if (geneTreeNode.isLeaf()) {
+            leafSpeciesNumbers.add(tipNumberMap.get(geneTreeNode.getID()));
+        } else {
+            final Node leftChild = geneTreeNode.getLeft();
+            final Node rightChild = geneTreeNode.getRight();
+
+            leafSpeciesNumbers.addAll(findDescendantNodes(leftChild, geneTreeNode, descendantNodes, associatedLeafSpecies, tipNumberMap, parentNodes));
+            leafSpeciesNumbers.addAll(findDescendantNodes(rightChild, geneTreeNode, descendantNodes, associatedLeafSpecies, tipNumberMap, parentNodes));
+        }
+
+        // if the current parent node is in the defined set of parentNodes
+        if (parentNodes.contains(geneTreeParentNode)) {
+            // if the subtree defined by this gene tree node overlaps with the subtree defined by the species tree node of interest
+            if (!Collections.disjoint(associatedLeafSpecies, leafSpeciesNumbers)) {
+                descendantNodes.add(geneTreeNode);
+            }
+        }
+
+        return leafSpeciesNumbers;
+    }
+
     protected Set<Integer> findAssociatedNodes(Node geneTreeNode, Set<Node> associatedNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, double lowerHeight, double upperHeight, double topHeight) {
         final Set<Integer> leafSpeciesNumbers = new HashSet<>();
         final double bottomHeight = geneTreeNode.getHeight();
@@ -142,29 +192,6 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         return leafSpeciesNumbers;
     }
 
-    protected Set<Integer> findBranchNodes(Node geneTreeNode, Set<Node> branchNodes, Set<Integer> associatedLeafSpecies, HashMap<String, Integer> tipNumberMap, double lowerHeight, double upperHeight) {
-        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
-        final double nodeHeight = geneTreeNode.getHeight();
-
-        if (geneTreeNode.isLeaf()) {
-            leafSpeciesNumbers.add(tipNumberMap.get(geneTreeNode.getID()));
-        } else {
-            final Node leftChild = geneTreeNode.getLeft();
-            final Node rightChild = geneTreeNode.getRight();
-
-            leafSpeciesNumbers.addAll(findBranchNodes(leftChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
-            leafSpeciesNumbers.addAll(findBranchNodes(rightChild, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight));
-        }
-
-        // the subtree defined by this gene tree node overlaps with the subtree defined by the species tree node of interest
-        final boolean subtreeOverlap = !Collections.disjoint(associatedLeafSpecies, leafSpeciesNumbers);
-        if (nodeHeight <= upperHeight && nodeHeight >= lowerHeight && subtreeOverlap) {
-            branchNodes.add(geneTreeNode);
-        }
-
-        return leafSpeciesNumbers;
-    }
-
     protected Node getRoot() {
         return treeInput.get().getRoot();
     }
@@ -172,5 +199,4 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
     protected double getTreeHeight() {
         return treeInput.get().getRoot().getHeight();
     }
-
 }
