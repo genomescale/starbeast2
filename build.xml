@@ -131,7 +131,7 @@
 
 	<target name="addon"
 	        depends="build_jar_all_starbeast2_NoJUnitTest"
-	        description="release BEAST 2 add-on version of Sampled Ancestor project">
+	        description="release starbeast2 add-on">
 
 		<delete dir="${Add_on_dir}" />
 		<!-- Create the release directory -->
@@ -153,9 +153,9 @@
 		<copy todir="${Add_on_dir}">
 			<fileset dir="${diststarbeast2}" includes="starbeast2.src.jar" />
 		</copy>
-		<copy todir="${Add_on_dir}/templates">
+		<!--<copy todir="${Add_on_dir}/templates">
 			<fileset file="templates/FBD.xml" />
-		</copy>
+		</copy>-->
 
 		<jar jarfile="${diststarbeast2}/starbeast2.addon.zip">
 			<fileset dir="${Add_on_dir}">
