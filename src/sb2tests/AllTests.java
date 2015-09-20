@@ -12,7 +12,9 @@ import org.junit.runners.Suite.SuiteClasses;
     LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,
     SmallCoordinatedExchangeTest.class,
-    BigCoordinatedExchangeTest.class
+    BigCoordinatedExchangeTest.class,
+    MissingDataConstantIO.class,
+    MissingDataCoordinatedExchange.class
 })
 public class AllTests {
 
