@@ -84,39 +84,36 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
 
     private boolean recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final Node speciesTreeNode, final int speciesTreeNodeNumber) {
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
-        final Node speciesTreeParentNode = speciesTreeNode.getParent();
 
-        double speciesTreeParentHeight;
-        if (speciesTreeParentNode == null) { // current node is the root node
-            speciesTreeParentHeight = Double.POSITIVE_INFINITY; // there are no ancestral branches to consider
-        } else {
-            speciesTreeParentHeight = speciesTreeParentNode.getHeight();
+        // check if the next coalescence event occurs in an ancestral branch
+        if (!speciesTreeNode.isRoot()) {
+            final Node speciesTreeParentNode = speciesTreeNode.getParent();
+            if (geneTreeNodeHeight >= speciesTreeParentNode.getHeight()) {
+                final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
+                coalescentLineageCounts.add(speciesTreeParentNodeNumber);
+
+                return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
+            }
         }
 
-        if (geneTreeNodeHeight < speciesTreeParentHeight) { // this gene coalescence occurs on the species tree current branch
-            final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
-            if (existingSpeciesAssignment == -1) {
-                geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
-                coalescentTimes.put(speciesTreeNodeNumber, geneTreeNodeHeight);
-                final Node geneTreeParentNode = geneTreeNode.getParent();
-                if (geneTreeParentNode == null) {
-                    // this is the root of the gene tree and no incompatibilities were detected
-                    return true;
-                } else {
-                    // if this is not the root of the gene tree, check the next coalescence
-                    final int geneTreeParentNumber = geneTreeParentNode.getNr();
-                    return recurseCoalescenceEvents(geneTreeParentNode, geneTreeParentNumber, speciesTreeNode, speciesTreeNodeNumber);
-                }
-            } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
-                return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
+        // this code executes if the next coalescence event occurs within the current branch
+        final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
+        if (existingSpeciesAssignment == -1) {
+            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
+            coalescentTimes.put(speciesTreeNodeNumber, geneTreeNodeHeight);
+            final Node geneTreeParentNode = geneTreeNode.getParent();
+            if (geneTreeParentNode == null) {
+                // this is the root of the gene tree and no incompatibilities were detected
+                return true;
             } else {
-                return false; // this gene tree IS NOT compatible with the species tree
+                // if this is not the root of the gene tree, check the next coalescence
+                final int geneTreeParentNumber = geneTreeParentNode.getNr();
+                return recurseCoalescenceEvents(geneTreeParentNode, geneTreeParentNumber, speciesTreeNode, speciesTreeNodeNumber);
             }
-        } else { // this gene coalescence occurs on an ancestral branch
-            final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
-            coalescentLineageCounts.add(speciesTreeParentNodeNumber);
-
-            return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
+        } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
+            return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
+        } else {
+            return false; // this gene tree IS NOT compatible with the species tree
         }
     }
 
