@@ -213,8 +213,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return true;
     }
 
-    // find gene tree nodes within a species tree branch (not valid for species tree root branch)
-    protected ListMultimap<Integer, Node> getBranchNodes(Integer speciesTreeNodeNumber) {
+    // find gene tree nodes within an internal species tree branch
+    protected ListMultimap<Integer, Node> getInternalBranchNodes(Integer speciesTreeNodeNumber) {
         final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
         final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
 
@@ -227,9 +227,39 @@ public class MultispeciesCoalescent extends TreeDistribution {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             final Node geneTreeRootNode = geneTree.getRoot();
             final Set<Node> branchNodes = new HashSet<Node>();
-            geneTree.findBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight);
+            geneTree.findInternalBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight);
             allBranchNodes.putAll(j, branchNodes);
         }
+
+        return allBranchNodes;
+    }
+
+    // find gene tree nodes within an internal species tree branch
+    // also find the maximum tipward or rootward movement that can be applied to the species and gene tree nodes while preserving tree topology
+    protected List<Node> getInternalBranchNodes(Integer speciesTreeNodeNumber, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
+        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
+        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+
+        final double nodeHeight = speciesTreeNode.getHeight();
+        final double parentHeight = speciesTreeNode.getParent().getHeight();
+        final Node leftChild = speciesTreeNode.getLeft();
+        final Node rightChild = speciesTreeNode.getRight();
+        final double leftChildBranchLength = nodeHeight - leftChild.getHeight();
+        final double rightChildBranchLength = nodeHeight - rightChild.getHeight();
+
+        final List<Node> allBranchNodes = new ArrayList<>();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (GeneTreeWithinSpeciesTree geneTree: geneTrees) {
+            final Node geneTreeRootNode = geneTree.getRoot();
+            final Set<Node> branchNodes = new HashSet<Node>();
+            geneTree.findInternalBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipwardFreedom, rootwardFreedom, tipNumberMap, nodeHeight, parentHeight);
+            allBranchNodes.addAll(branchNodes);
+        }
+
+        // upper and lower limits for node movement also determined by species tree 
+        tipwardFreedom.set(leftChildBranchLength);
+        tipwardFreedom.set(rightChildBranchLength);
+        rootwardFreedom.set(parentHeight - nodeHeight);
 
         return allBranchNodes;
     }

@@ -4,7 +4,7 @@ import java.util.Comparator;
 
 import beast.evolution.tree.Node;
 
-public class NodeHeightComparator implements Comparator<Node> {
+class NodeHeightComparator implements Comparator<Node> {
 
     @Override
     public int compare(Node nodeA, Node nodeB) {

@@ -103,7 +103,7 @@ public class CoordinatedExchange extends Operator {
         brotherBranchNumber = brother.getNr();
 
         // must be done before any changes are made to the gene or species trees
-        forwardParentalNodes = msc.getBranchNodes(parentBranchNumber);
+        forwardParentalNodes = msc.getInternalBranchNodes(parentBranchNumber);
         forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
         forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
 
@@ -140,7 +140,7 @@ public class CoordinatedExchange extends Operator {
         parentBranchNumber = parent.getNr();
         uncleBranchNumber = uncle.getNr();
 
-        forwardParentalNodes = msc.getBranchNodes(parentBranchNumber);
+        forwardParentalNodes = msc.getInternalBranchNodes(parentBranchNumber);
         forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
         forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
 
