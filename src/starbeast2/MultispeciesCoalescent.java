@@ -5,11 +5,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 
 import beast.core.Description;
@@ -43,7 +45,10 @@ public class MultispeciesCoalescent extends TreeDistribution {
     private Double[] speciesStartTimes;
     private Double[] speciesEndTimes;
 
-    final private HashMap<String, Integer> tipNumberMap = new HashMap<>();
+    final private Map<String, Integer> tipNumberMap = new HashMap<>();
+    final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
+
+    final static NodeHeightComparator nhc = new NodeHeightComparator();
 
     @Override
     public void initAndValidate() throws Exception {
@@ -87,6 +92,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
             for (Taxon tip: tipSet) {
                 final String tipName = tip.getID();
                 tipNumberMap.put(tipName, speciesNumber);
+                numberTipMap.put(speciesNumber, tipName);
             }
         }
 
@@ -213,120 +219,61 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return true;
     }
 
-    // find gene tree nodes within an internal species tree branch
-    protected ListMultimap<Integer, Node> getInternalBranchNodes(Integer speciesTreeNodeNumber) {
-        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
-        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+    // identify children to be moved with parent nodes as part of a coordinated exchange move
+    protected List<SortedMap<Node, Node>> getMovedChildren(Node brotherNode) {
+        final int brotherNodeNumber = brotherNode.getNr();
+        final Set<String> brotherDescendants = findDescendants(brotherNode, brotherNodeNumber);
 
-        final double lowerHeight = speciesTreeNode.getHeight();
-        final double upperHeight = speciesTreeNode.getParent().getHeight();
+        final double lowerHeight = brotherNode.getParent().getHeight(); // parent height (bottom of parent branch)
+        final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
 
-        final ListMultimap<Integer, Node> allBranchNodes = ArrayListMultimap.create();
+        final List<SortedMap<Node, Node>> allBranchNodes = new ArrayList<>();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             final Node geneTreeRootNode = geneTree.getRoot();
-            final Set<Node> branchNodes = new HashSet<Node>();
-            geneTree.findInternalBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight);
-            allBranchNodes.putAll(j, branchNodes);
+            final SortedMap<Node, Node> movedNodes = new TreeMap<>(nhc);
+            geneTree.findMovedChildren(geneTreeRootNode, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+            allBranchNodes.add(movedNodes);
         }
 
         return allBranchNodes;
     }
 
-    // find gene tree nodes within an internal species tree branch
-    // also find the maximum tipward or rootward movement that can be applied to the species and gene tree nodes while preserving tree topology
-    protected List<Node> getInternalBranchNodes(Integer speciesTreeNodeNumber, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
-        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
-        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
+    // identify nodes that can serve as graft branches as part of a coordinated exchange move
+    protected SetMultimap<Integer, Node> getGraftBranches(Node uncleNode) {
+        final int uncleNodeNumber = uncleNode.getNr();
+        final Set<String> uncleDescendants = findDescendants(uncleNode, uncleNodeNumber);
 
-        final double nodeHeight = speciesTreeNode.getHeight();
-        final double parentHeight = speciesTreeNode.getParent().getHeight();
-        final Node leftChild = speciesTreeNode.getLeft();
-        final Node rightChild = speciesTreeNode.getRight();
-        final double leftChildBranchLength = nodeHeight - leftChild.getHeight();
-        final double rightChildBranchLength = nodeHeight - rightChild.getHeight();
-
-        final List<Node> allBranchNodes = new ArrayList<>();
-        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
-        for (GeneTreeWithinSpeciesTree geneTree: geneTrees) {
-            final Node geneTreeRootNode = geneTree.getRoot();
-            final Set<Node> branchNodes = new HashSet<Node>();
-            geneTree.findInternalBranchNodes(geneTreeRootNode, branchNodes, associatedLeafSpecies, tipwardFreedom, rootwardFreedom, tipNumberMap, nodeHeight, parentHeight);
-            allBranchNodes.addAll(branchNodes);
-        }
-
-        // upper and lower limits for node movement also determined by species tree 
-        tipwardFreedom.set(leftChildBranchLength);
-        tipwardFreedom.set(rightChildBranchLength);
-        rootwardFreedom.set(parentHeight - nodeHeight);
-
-        return allBranchNodes;
-    }
-
-    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
-    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by speciesTreeNodeNumber
-    // (2) they are a child of one of the nodes in the set parentNodes
-    protected SetMultimap<Integer, Node> getDescendantNodes(Integer speciesTreeNodeNumber, ListMultimap<Integer, Node> parentNodes) {
-        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
-        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
-
-        final SetMultimap<Integer, Node> allDescendantNodes = HashMultimap.create();
-        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
-        for (int j = 0; j < nGeneTrees; j++) {
-            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final List<Node> geneParentNodes = parentNodes.get(j);
-            final Set<Node> descendantNodes = new HashSet<Node>();
-
-            // find associated descendant nodes beginning at either child of the root node
-            final Node geneTreeRootNode = geneTree.getRoot();
-            final Node leftChild = geneTreeRootNode.getLeft();
-            final Node rightChild = geneTreeRootNode.getRight();
-            geneTree.findDescendantNodes(leftChild, geneTreeRootNode, descendantNodes, associatedLeafSpecies, tipNumberMap, geneParentNodes);
-            geneTree.findDescendantNodes(rightChild, geneTreeRootNode, descendantNodes, associatedLeafSpecies, tipNumberMap, geneParentNodes);
-            allDescendantNodes.putAll(j, descendantNodes);
-        }
-
-        return allDescendantNodes;
-    }
-
-    // find gene tree nodes which satisfy two conditions (not valid for species tree root branch):
-    // (1) they define a gene tree subtree which overlaps with the species tree subtree defined by speciesTreeNodeNumber
-    // (2) they define a branch with overlaps with the species tree branch defined by speciesTreeNodeNumber
-    protected SetMultimap<Integer, Node> getGraftBranches(Integer speciesTreeNodeNumber) {
-        final Node speciesTreeNode = treeInput.get().getNode(speciesTreeNodeNumber);
-        final Set<Integer> associatedLeafSpecies = findLeafSpecies(speciesTreeNode);
-
-        final double lowerHeight = speciesTreeNode.getHeight();
-        final double upperHeight = speciesTreeNode.getParent().getHeight();
-        
-        final SetMultimap<Integer, Node> allAssociatedNodes = HashMultimap.create();
+        final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             final Node geneTreeRootNode = geneTree.getRoot();
-            final Set<Node> associatedNodes = new HashSet<Node>();
-            geneTree.findAssociatedNodes(geneTreeRootNode, associatedNodes, associatedLeafSpecies, tipNumberMap, lowerHeight, upperHeight, Double.POSITIVE_INFINITY);
-            allAssociatedNodes.putAll(j, associatedNodes);
+            final Set<Node> graftBranches = new HashSet<Node>();
+            geneTree.findGraftBranches(geneTreeRootNode, graftBranches, uncleDescendants);
+            allGraftBranches.putAll(j, graftBranches);
         }
 
-        return allAssociatedNodes;
+        return allGraftBranches;
     }
 
-    private Set<Integer> findLeafSpecies(Node speciesTreeNode) {
-        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
-        final Set<Integer> leafSpeciesNumbers = new HashSet<>();
+    private Set<String> findDescendants(Node speciesTreeNode, int speciesTreeNodeNumber) {
+        final Set<String> descendantNames = new HashSet<>();
 
         if (speciesTreeNode.isLeaf()) {
-            leafSpeciesNumbers.add(speciesTreeNodeNumber);
+            descendantNames.addAll(numberTipMap.get(speciesTreeNodeNumber));
         } else {
             final Node leftChild = speciesTreeNode.getLeft();
             final Node rightChild = speciesTreeNode.getRight();
+            final int leftChildNumber = leftChild.getNr();
+            final int rightChildNumber = rightChild.getNr();
 
-            leafSpeciesNumbers.addAll(findLeafSpecies(leftChild));
-            leafSpeciesNumbers.addAll(findLeafSpecies(rightChild));
+            descendantNames.addAll(findDescendants(leftChild, leftChildNumber));
+            descendantNames.addAll(findDescendants(rightChild, rightChildNumber));
         }
 
-        return leafSpeciesNumbers;
+        return descendantNames;
     }
 }
+

@@ -3,12 +3,13 @@
 package starbeast2;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multiset;
 import com.google.common.collect.SetMultimap;
 
 import beast.core.Description;
@@ -32,15 +33,12 @@ import beast.util.Randomizer;
 public class CoordinatedExchange extends Operator {
     public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
 
-    private int parentBranchNumber;
-    private int uncleBranchNumber;
-    private int brotherBranchNumber;
+    private Node brother;
+    private Node parent;
+    private Node uncle;
 
-    private ListMultimap<Integer, Node> forwardParentalNodes;
-    private SetMultimap<Integer, Node> forwardFraternalNodes;
-    private SetMultimap<Integer, Node> forwardAvuncularNodes;
-
-    final static NodeHeightComparator nhc = new NodeHeightComparator();
+    private List<SortedMap<Node, Node>> forwardMovedNodes;
+    private SetMultimap<Integer, Node> forwardGraftNodes;
 
     @Override
     public void initAndValidate() {
@@ -85,8 +83,8 @@ public class CoordinatedExchange extends Operator {
             grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
         }
 
-        Node parent = grandparent.getLeft();
-        Node uncle = grandparent.getRight();
+        parent = grandparent.getLeft();
+        uncle = grandparent.getRight();
         if (parent.getHeight() < uncle.getHeight()) {
             parent = grandparent.getRight();
             uncle = grandparent.getLeft();
@@ -96,16 +94,11 @@ public class CoordinatedExchange extends Operator {
             return Double.NEGATIVE_INFINITY;
         }
 
-        Node brother = (Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight());
-
-        parentBranchNumber = parent.getNr();
-        uncleBranchNumber = uncle.getNr();
-        brotherBranchNumber = brother.getNr();
+        brother = (Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight());
 
         // must be done before any changes are made to the gene or species trees
-        forwardParentalNodes = msc.getInternalBranchNodes(parentBranchNumber);
-        forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
-        forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
+        forwardMovedNodes = msc.getMovedChildren(brother);
+        forwardGraftNodes = msc.getGraftBranches(uncle);
 
         int validGP = 0;
         {
@@ -125,24 +118,19 @@ public class CoordinatedExchange extends Operator {
 
     // for testing purposes
     public void manipulateSpeciesTree(Node argBrother) {
+        brother = argBrother;
+        parent = brother.getParent();
+
         final MultispeciesCoalescent msc = mscInput.get();
-        final Node brother = argBrother;
-        final Node parent = brother.getParent();
         final Node grandparent = parent.getParent();
-        Node uncle;
         if (grandparent.getLeft().getNr() == parent.getNr()) {
             uncle = grandparent.getRight();
         } else {
             uncle = grandparent.getLeft();
         }
 
-        brotherBranchNumber = brother.getNr();
-        parentBranchNumber = parent.getNr();
-        uncleBranchNumber = uncle.getNr();
-
-        forwardParentalNodes = msc.getInternalBranchNodes(parentBranchNumber);
-        forwardFraternalNodes = msc.getDescendantNodes(brotherBranchNumber, forwardParentalNodes);
-        forwardAvuncularNodes = msc.getGraftBranches(uncleBranchNumber);
+        forwardMovedNodes = msc.getMovedChildren(brother);
+        forwardGraftNodes = msc.getGraftBranches(uncle);
 
         exchangeNodes(parent, grandparent, brother, uncle);
     }
@@ -150,65 +138,47 @@ public class CoordinatedExchange extends Operator {
     public double rearrangeGeneTrees(final MultispeciesCoalescent msc) {
         final List<GeneTreeWithinSpeciesTree> geneTrees = msc.getGeneTrees();
         final int nGeneTrees = geneTrees.size();
-        final List<Multiset<Node>> forwardGraftCounts = new ArrayList<Multiset<Node>>();
+        final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
 
         for (int j = 0; j < nGeneTrees; j++) {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Multiset<Node> jForwardGraftCounts = HashMultiset.create();
+            final Map<Node, Integer> jForwardGraftCounts = new HashMap<>();
 
-            final Set<Node> fraternalNodes = forwardFraternalNodes.get(j);
-            final Set<Node> avuncularNodes = forwardAvuncularNodes.get(j);
+            final Set<Node> jForwardGraftNodes = forwardGraftNodes.get(j);
+            final SortedMap<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
 
-            // must evaluate gene tree nodes oldest to youngest (in node age)
-            // otherwise destination graft branches will be severed below subsequent gene nodes
-            final List<Node> parentBranchNodes = forwardParentalNodes.get(j);
-            parentBranchNodes.sort(nhc);
+            for (Entry<Node, Node> nodeEntry: jForwardMovedNodes.entrySet()) {
+                final Node movedNode = nodeEntry.getKey();
+                final Node disownedChild = nodeEntry.getValue();
+                final double movedNodeHeight = movedNode.getHeight();
 
-            for (final Node geneTreeNode: parentBranchNodes) {
-                final Node leftChildNode = geneTreeNode.getLeft();
-                final Node rightChildNode = geneTreeNode.getRight();
-                // final boolean leftContainsBrother = geneTree.checkOverlap(leftChildNode, brotherBranchNumber);
-                // final boolean rightContainsBrother = geneTree.checkOverlap(rightChildNode, brotherBranchNumber);
-                final boolean leftDescendsViaBrother = fraternalNodes.contains(leftChildNode);
-                final boolean rightDescendsViaBrother = fraternalNodes.contains(rightChildNode);
+                final List<Node> validGraftBranches = new ArrayList<>();
+                int forwardGraftCount = 0;
+                for (Node potentialGraft: jForwardGraftNodes) {
+                    final double potentialGraftBottom = potentialGraft.getHeight();
+                    double potentialGraftTop;
 
-                // if exactly one gene tree node child branch exclusively descends via the "sister"
-                // then this gene tree node needs to be pruned and reattached
-                if (leftDescendsViaBrother ^ rightDescendsViaBrother) {
-                    final double nodeHeight = geneTreeNode.getHeight();
-
-                    final List<Node> validGraftBranches = new ArrayList<>();
-                    for (Node potentialGraft: avuncularNodes) {
-                        final double potentialGraftBottom = potentialGraft.getHeight();
-                        double potentialGraftTop;
-                        if (potentialGraft.isRoot()) {
-                            potentialGraftTop = Double.POSITIVE_INFINITY;
-                        } else {
-                            potentialGraftTop = potentialGraft.getParent().getHeight();
-                        }
-                        if (nodeHeight >= potentialGraftBottom && nodeHeight <= potentialGraftTop) {
-                            jForwardGraftCounts.add(geneTreeNode);
-                            validGraftBranches.add(potentialGraft);
-                        }
-                    }
-
-                    // no compatible branches to graft this node on to
-                    // this only occurs when there is missing data and the gene tree root is in the "parent" branch
-                    final int forwardGraftCount = jForwardGraftCounts.count(geneTreeNode);
-                    if (forwardGraftCount == 0) {
-                        return Double.NEGATIVE_INFINITY;
+                    if (potentialGraft.isRoot()) {
+                        potentialGraftTop = Double.POSITIVE_INFINITY;
                     } else {
-                        final Node chosenNode = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
-
-                        // this gene tree node will be grafted to the branch defined by "chosenNode"
-                        if (leftDescendsViaBrother) { // the left child will be disowned and reattached directly to its grandparent
-                            pruneAndRegraft(geneTreeNode, chosenNode, leftChildNode);
-                            rightChildNode.makeDirty(Tree.IS_FILTHY);
-                        } else { // the right child will be disowned and reattached directly to its grandparent
-                            pruneAndRegraft(geneTreeNode, chosenNode, rightChildNode);
-                            leftChildNode.makeDirty(Tree.IS_FILTHY);
-                        }
+                        potentialGraftTop = potentialGraft.getParent().getHeight();
                     }
+
+                    if (movedNodeHeight >= potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
+                        forwardGraftCount++;
+                        validGraftBranches.add(potentialGraft);
+                    }
+                }
+
+                // no compatible branches to graft this node on to
+                // this only occurs when there is missing data and the gene tree root is in the "parent" branch
+                if (forwardGraftCount == 0) {
+                    return Double.NEGATIVE_INFINITY;
+                } else {
+                    final Node chosenGraft = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
+                    pruneAndRegraft(movedNode, chosenGraft, disownedChild);
+                    movedNode.makeDirty(Tree.IS_FILTHY);
+                    jForwardGraftCounts.put(movedNode, forwardGraftCount);
                 }
             }
 
@@ -219,26 +189,27 @@ public class CoordinatedExchange extends Operator {
 
         assert msc.computeCoalescentTimes(); // this move should always preserve gene-tree-within-species-tree compatibility
 
-        final SetMultimap<Integer, Node> reverseAvuncularNodes = msc.getGraftBranches(brotherBranchNumber);
+        SetMultimap<Integer, Node> reverseGraftNodes = msc.getGraftBranches(brother);
+
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
-            final Multiset<Node> jForwardGraftCounts = forwardGraftCounts.get(j);
-            final Set<Node> avuncularNodes = reverseAvuncularNodes.get(j);
-            for (Node geneTreeNode: jForwardGraftCounts.elementSet()) {
-                final double geneTreeNodeHeight = geneTreeNode.getHeight();
-                final int forwardGraftCount = jForwardGraftCounts.count(geneTreeNode);
+            final Map<Node, Integer> jForwardGraftCounts = forwardGraftCounts.get(j);
+            final Set<Node> jReverseGraftNodes = reverseGraftNodes.get(j);
+            for (Node movedNode: jForwardGraftCounts.keySet()) {
+                final double movedNodeHeight = movedNode.getHeight();
+                final int forwardGraftCount = jForwardGraftCounts.get(movedNode);
                 int reverseGraftCount = 0;
 
-                for (Node potentialGraftBranch: avuncularNodes) {
-                    final double lowerHeight = potentialGraftBranch.getHeight();
-                    double upperHeight;
-                    if (potentialGraftBranch.isRoot()) {
-                        upperHeight = Double.POSITIVE_INFINITY;
+                for (Node potentialGraft: jReverseGraftNodes) {
+                    final double potentialGraftBottom = potentialGraft.getHeight();
+                    double potentialGraftTop;
+                    if (potentialGraft.isRoot()) {
+                        potentialGraftTop = Double.POSITIVE_INFINITY;
                     } else {
-                        upperHeight = potentialGraftBranch.getParent().getHeight();
+                        potentialGraftTop = potentialGraft.getParent().getHeight();
                     }
 
-                    if (geneTreeNodeHeight >= lowerHeight && geneTreeNodeHeight <= upperHeight) {
+                    if (movedNodeHeight >= potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
                         reverseGraftCount++;
                     }
                 }
@@ -272,7 +243,6 @@ public class CoordinatedExchange extends Operator {
     // removes nodeToMove from the segmented line between its disownedChild and oldParent
     // reattaches it between the newChild node and the parent of the newChild node
     // does not change any node heights
-    // TODO get this working when the source or destination nodes are the root node
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
         final Node oldParent = nodeToMove.getParent();
         final Node newParent = newChild.getParent();

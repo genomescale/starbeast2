@@ -34,7 +34,7 @@ public class CoordinatedShift extends Operator {
         final double fLogHastingsRatio = 0.0; // this move is uniform in both directions
 
         final MultispeciesCoalescent msc = mscInput.get();
-        final Tree speciesTree = msc.getSpeciesTree();
+        /*final Tree speciesTree = msc.getSpeciesTree();
         final int nInternalNodes = speciesTree.getInternalNodeCount() - 1; // does not include root node
         final int speciesTreeNodeNumber = nInternalNodes + 2 + Randomizer.nextInt(nInternalNodes);
         final Node speciesTreeNode = speciesTree.getNode(speciesTreeNodeNumber);
@@ -53,7 +53,7 @@ public class CoordinatedShift extends Operator {
         speciesTreeNode.setHeight(speciesTreeNode.getHeight() + uniformShift);
         for (Node geneTreeNode: parentalNodes) {
             geneTreeNode.setHeight(geneTreeNode.getHeight() + uniformShift);
-        }
+        }*/
 
         assert msc.computeCoalescentTimes(); // this move should always preserve gene-tree-within-species-tree compatibility
 
