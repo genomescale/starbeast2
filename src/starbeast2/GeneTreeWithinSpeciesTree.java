@@ -2,8 +2,6 @@ package starbeast2;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultiset;
@@ -113,59 +111,6 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         } else {
             return false; // this gene tree IS NOT compatible with the species tree
         }
-    }
-
-    // identify nodes to be moved as part of a coordinated exchange move
-    protected boolean findMovedChildren(Node geneTreeNode, SortedMap<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
-        if (geneTreeNode.isLeaf()) {
-            final String descendantName = geneTreeNode.getID();
-            return brotherDescendants.contains(descendantName);
-        }
-
-        final Node leftChild = geneTreeNode.getLeft();
-        final Node rightChild = geneTreeNode.getRight();
-
-        final boolean leftOverlapsBrother = findMovedChildren(leftChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
-        final boolean rightOverlapsBrother = findMovedChildren(rightChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
-
-        final double nodeHeight = geneTreeNode.getHeight();
-        if (nodeHeight >= lowerHeight && nodeHeight < upperHeight) {
-            if (leftOverlapsBrother && !rightOverlapsBrother) {
-                movedNodes.put(geneTreeNode, leftChild);
-            } else if (!leftOverlapsBrother && rightOverlapsBrother) {
-                movedNodes.put(geneTreeNode, rightChild);
-            }
-        }
-
-        return leftOverlapsBrother || rightOverlapsBrother;
-    }
-
-    // identify nodes that can serve as graft branches as part of a coordinated exchange move
-    protected boolean findGraftBranches(Node geneTreeNode, Set<Node> graftNodes, Set<String> branchDescendants) {
-        if (geneTreeNode.isLeaf()) {
-            final String descendantName = geneTreeNode.getID();
-            return branchDescendants.contains(descendantName);
-        }
-
-        final Node leftChild = geneTreeNode.getLeft();
-        final Node rightChild = geneTreeNode.getRight();
-        final boolean leftOverlaps = findGraftBranches(leftChild, graftNodes, branchDescendants);
-        final boolean rightOverlaps = findGraftBranches(rightChild, graftNodes, branchDescendants);
-
-        // subtree defined by a child node overlaps species subtree defined by branch
-        if (leftOverlaps || rightOverlaps) {
-            if (leftOverlaps) {
-                graftNodes.add(leftChild);
-            }
-
-            if (rightOverlaps) {
-                graftNodes.add(rightChild);
-            }
-
-            return true;
-        }
-
-        return false;
     }
 
     protected Node getRoot() {

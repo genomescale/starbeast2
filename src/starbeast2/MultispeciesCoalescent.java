@@ -50,6 +50,10 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     final static NodeHeightComparator nhc = new NodeHeightComparator();
 
+    private enum descendsThrough {
+       LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
+    }
+
     @Override
     public void initAndValidate() throws Exception {
         final HashMap<String, Integer> speciesNumberMap = new HashMap<>();
@@ -227,17 +231,16 @@ public class MultispeciesCoalescent extends TreeDistribution {
         final double lowerHeight = brotherNode.getParent().getHeight(); // parent height (bottom of parent branch)
         final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
 
-        final List<SortedMap<Node, Node>> allBranchNodes = new ArrayList<>();
+        final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
-            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Node geneTreeRootNode = geneTree.getRoot();
-            final SortedMap<Node, Node> movedNodes = new TreeMap<>(nhc);
-            geneTree.findMovedChildren(geneTreeRootNode, movedNodes, brotherDescendants, lowerHeight, upperHeight);
-            allBranchNodes.add(movedNodes);
+            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);
+            findMovedChildren(geneTreeRootNode, jMovedNodes, brotherDescendants, lowerHeight, upperHeight);
+            allMovedNodes.add(jMovedNodes);
         }
 
-        return allBranchNodes;
+        return allMovedNodes;
     }
 
     // identify nodes that can serve as graft branches as part of a coordinated exchange move
@@ -248,14 +251,35 @@ public class MultispeciesCoalescent extends TreeDistribution {
         final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
-            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
-            final Node geneTreeRootNode = geneTree.getRoot();
-            final Set<Node> graftBranches = new HashSet<Node>();
-            geneTree.findGraftBranches(geneTreeRootNode, graftBranches, uncleDescendants);
-            allGraftBranches.putAll(j, graftBranches);
+            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Set<Node> jGraftBranches = new HashSet<Node>();
+            findGraftBranches(geneTreeRootNode, jGraftBranches, uncleDescendants);
+            allGraftBranches.putAll(j, jGraftBranches);
         }
 
         return allGraftBranches;
+    }
+
+    // identify gene tree nodes which descend through both (and also descend exclusively through)
+    // the left and right children of the species tree node of interest
+    protected SetMultimap<Integer, Node> getConnectingNodes(Node speciesTreeNode, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
+        final Node leftChildNode = speciesTreeNode.getLeft();
+        final Node rightChildNode = speciesTreeNode.getRight();
+        final int leftChildNodeNumber = leftChildNode.getNr();
+        final int rightChildNodeNumber = rightChildNode.getNr();
+        final Set<String> leftChildDescendants = findDescendants(leftChildNode, leftChildNodeNumber);
+        final Set<String> rightChildDescendants = findDescendants(rightChildNode, rightChildNodeNumber);
+
+        final SetMultimap<Integer, Node> allConnectingNodes = HashMultimap.create();
+        final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Set<Node> jConnectingNodes = new HashSet<Node>();
+            findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
+            allConnectingNodes.putAll(j, jConnectingNodes);
+        }
+
+        return allConnectingNodes;
     }
 
     private Set<String> findDescendants(Node speciesTreeNode, int speciesTreeNodeNumber) {
@@ -274,6 +298,122 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         return descendantNames;
+    }
+
+    // identify nodes to be moved as part of a coordinated exchange move
+    private boolean findMovedChildren(Node geneTreeNode, SortedMap<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
+        if (geneTreeNode.isLeaf()) {
+            final String descendantName = geneTreeNode.getID();
+            return brotherDescendants.contains(descendantName);
+        }
+
+        final Node leftChild = geneTreeNode.getLeft();
+        final Node rightChild = geneTreeNode.getRight();
+
+        final boolean leftOverlapsBrother = findMovedChildren(leftChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+        final boolean rightOverlapsBrother = findMovedChildren(rightChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+
+        final double nodeHeight = geneTreeNode.getHeight();
+        if (nodeHeight >= lowerHeight && nodeHeight < upperHeight) {
+            if (leftOverlapsBrother && !rightOverlapsBrother) {
+                movedNodes.put(geneTreeNode, leftChild);
+            } else if (!leftOverlapsBrother && rightOverlapsBrother) {
+                movedNodes.put(geneTreeNode, rightChild);
+            }
+        }
+
+        return leftOverlapsBrother || rightOverlapsBrother;
+    }
+
+    // identify nodes that can serve as graft branches as part of a coordinated exchange move
+    private boolean findGraftBranches(Node geneTreeNode, Set<Node> graftNodes, Set<String> branchDescendants) {
+        if (geneTreeNode.isLeaf()) {
+            final String descendantName = geneTreeNode.getID();
+            return branchDescendants.contains(descendantName);
+        }
+
+        final Node leftChild = geneTreeNode.getLeft();
+        final Node rightChild = geneTreeNode.getRight();
+        final boolean leftOverlaps = findGraftBranches(leftChild, graftNodes, branchDescendants);
+        final boolean rightOverlaps = findGraftBranches(rightChild, graftNodes, branchDescendants);
+
+        // subtree defined by a child node overlaps species subtree defined by branch
+        if (leftOverlaps || rightOverlaps) {
+            if (leftOverlaps) {
+                graftNodes.add(leftChild);
+            }
+
+            if (rightOverlaps) {
+                graftNodes.add(rightChild);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private descendsThrough findConnectingNodes(Node geneTreeNode, Set<Node> connectingNodes, Set<String> leftChildDescendants, Set<String> rightChildDescendants, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
+        if (geneTreeNode.isLeaf()) {
+            final String descendantName = geneTreeNode.getID();
+            if (leftChildDescendants.contains(descendantName)) {
+                return descendsThrough.LEFT_ONLY;
+            } else if (rightChildDescendants.contains(descendantName)) {
+                return descendsThrough.RIGHT_ONLY;
+            } else {
+                return descendsThrough.NEITHER;
+            }
+        }
+
+        final Node leftChild = geneTreeNode.getLeft();
+        final Node rightChild = geneTreeNode.getRight();
+        final descendsThrough leftDescent = findConnectingNodes(leftChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
+        final descendsThrough rightDescent = findConnectingNodes(rightChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
+
+        if (leftDescent == rightDescent) {
+            if (leftDescent == descendsThrough.BOTH) {
+                connectingNodes.add(geneTreeNode);
+            }
+
+            return leftDescent;
+        }
+
+        // this code only executes when the left and right gene tree child nodes descend through different species tree node of interest children
+        final double geneTreeNodeHeight = geneTreeNode.getHeight();
+        if (leftDescent == descendsThrough.BOTH) { // the gene tree node left child is a member of a connected component
+            if (rightDescent == descendsThrough.NEITHER) { // the gene tree node left child is the root node of a connected component
+                final double connectedComponentRootFreedom = geneTreeNodeHeight - leftChild.getHeight();
+                rootwardFreedom.set(connectedComponentRootFreedom);
+                return descendsThrough.NEITHER;
+            } else { // the gene tree node right child descends exclusively through the left XOR right child of the species tree node of interest
+                // so the current gene tree node is part of a connected component but the right child is not
+                final double connectedComponentDescendantBranchLength = geneTreeNodeHeight - rightChild.getHeight();
+                tipwardFreedom.set(connectedComponentDescendantBranchLength);
+                connectingNodes.add(geneTreeNode);
+                return descendsThrough.BOTH;
+            }
+        } else if (rightDescent == descendsThrough.BOTH) { // the gene tree node right child is a member of a connected component
+            if (leftDescent == descendsThrough.NEITHER) { // the gene tree node right child is the root node of a connected component
+                final double connectedComponentRootFreedom = geneTreeNodeHeight - rightChild.getHeight();
+                rootwardFreedom.set(connectedComponentRootFreedom);
+                return descendsThrough.NEITHER;
+            } else { // the gene tree node left child descends exclusively through the left XOR right child of the species tree node of interest
+             // so the current gene tree node is part of a connected component but the left child is not
+                final double connectedComponentTipFreedom = geneTreeNodeHeight - leftChild.getHeight();
+                tipwardFreedom.set(connectedComponentTipFreedom);
+                connectingNodes.add(geneTreeNode);
+                return descendsThrough.BOTH;
+            }
+        } else if (leftDescent == descendsThrough.NEITHER || rightDescent == descendsThrough.NEITHER) {
+            return descendsThrough.NEITHER; // the current gene tree node does not descend exclusively through the species tree node of interest
+        } else { // this is a tip node of a connected component
+            final double leftChildBranchLength = geneTreeNodeHeight - leftChild.getHeight();
+            final double rightChildBranchLength = geneTreeNodeHeight - rightChild.getHeight();
+            tipwardFreedom.set(leftChildBranchLength);
+            tipwardFreedom.set(rightChildBranchLength);
+            connectingNodes.add(geneTreeNode);
+            return descendsThrough.BOTH;
+        }
     }
 }
 

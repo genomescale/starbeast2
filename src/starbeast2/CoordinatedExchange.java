@@ -94,7 +94,7 @@ public class CoordinatedExchange extends Operator {
             return Double.NEGATIVE_INFINITY;
         }
 
-        brother = (Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight());
+        brother = Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight();
 
         // must be done before any changes are made to the gene or species trees
         forwardMovedNodes = msc.getMovedChildren(brother);
