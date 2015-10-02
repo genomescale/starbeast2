@@ -115,6 +115,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
+        assert checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
+
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesNode = speciesTree.getNode(i);
             final Node parentNode = speciesNode.getParent();
@@ -140,6 +142,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
+            assert checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
             if (geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
                 for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
                     final List<Double> timesView = geneTree.coalescentTimes.get(i);
@@ -414,6 +417,25 @@ public class MultispeciesCoalescent extends TreeDistribution {
             connectingNodes.add(geneTreeNode);
             return descendsThrough.BOTH;
         }
+    }
+    
+    private boolean checkTreeSanity(Node node) {
+        List<Node> children = node.getChildren();
+        for (Node childNode: children) {
+            assert childNode.getParent() == node;
+            assert childNode.getHeight() <= node.getHeight();
+            if (!node.isLeaf()) {
+                checkTreeSanity(childNode);
+            }
+        }
+
+        if (node.isLeaf()) {
+            assert children.size() == 0;
+        } else {
+            assert children.size() == 2;
+        }
+
+        return true;
     }
 }
 

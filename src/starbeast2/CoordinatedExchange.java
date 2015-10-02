@@ -141,9 +141,7 @@ public class CoordinatedExchange extends Operator {
         final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
 
         for (int j = 0; j < nGeneTrees; j++) {
-            final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             final Map<Node, Integer> jForwardGraftCounts = new HashMap<>();
-
             final Set<Node> jForwardGraftNodes = forwardGraftNodes.get(j);
             final SortedMap<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
 
@@ -182,12 +180,8 @@ public class CoordinatedExchange extends Operator {
                 }
             }
 
-            assert checkTreeSanity(geneTree.getRoot());
-
             forwardGraftCounts.add(jForwardGraftCounts);
         }
-
-        assert msc.computeCoalescentTimes(); // this move should always preserve gene-tree-within-species-tree compatibility
 
         SetMultimap<Integer, Node> reverseGraftNodes = msc.getGraftBranches(brother);
 
@@ -221,34 +215,12 @@ public class CoordinatedExchange extends Operator {
         return logHastingsRatio;
     }
 
-    private boolean checkTreeSanity(Node node) {
-        List<Node> children = node.getChildren();
-        for (Node childNode: children) {
-            assert childNode.getParent() == node;
-            assert childNode.getHeight() <= node.getHeight();
-            if (!node.isLeaf()) {
-                checkTreeSanity(childNode);
-            }
-        }
-
-        if (node.isLeaf()) {
-            assert children.size() == 0;
-        } else {
-            assert children.size() == 2;
-        }
-
-        return true;
-    }
-
     // removes nodeToMove from the segmented line between its disownedChild and oldParent
     // reattaches it between the newChild node and the parent of the newChild node
     // does not change any node heights
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
         final Node oldParent = nodeToMove.getParent();
         final Node newParent = newChild.getParent();
-        
-        assert oldParent != null;
-        assert newParent != null;
 
         oldParent.addChild(disownedChild);
         nodeToMove.removeChild(disownedChild);

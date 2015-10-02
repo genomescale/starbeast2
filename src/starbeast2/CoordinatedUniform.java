@@ -17,7 +17,7 @@ import beast.util.Randomizer;
         + "Specifically, this operator moves a species tree node and a set of gene tree nodes related to the"
         + "species tree node by a uniform amount chosen from a range which preserves the topology of all trees."
         + "See http://dx.doi.org/10.1101/010199 for full details.")
-public class CoordinatedShift extends Operator {
+public class CoordinatedUniform extends Operator {
     public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
 
     @Override
