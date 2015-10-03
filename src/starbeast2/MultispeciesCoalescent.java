@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -47,8 +45,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
-
-    final static NodeHeightComparator nhc = new NodeHeightComparator();
 
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
@@ -227,18 +223,18 @@ public class MultispeciesCoalescent extends TreeDistribution {
     }
 
     // identify children to be moved with parent nodes as part of a coordinated exchange move
-    protected List<SortedMap<Node, Node>> getMovedChildren(Node brotherNode) {
+    protected List<Map<Node, Node>> getMovedChildren(Node brotherNode) {
         final int brotherNodeNumber = brotherNode.getNr();
         final Set<String> brotherDescendants = findDescendants(brotherNode, brotherNodeNumber);
 
         final double lowerHeight = brotherNode.getParent().getHeight(); // parent height (bottom of parent branch)
         final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
 
-        final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
+        final List<Map<Node, Node>> allMovedNodes = new ArrayList<>();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
-            final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);
+            final Map<Node, Node> jMovedNodes = new HashMap<>();
             findMovedChildren(geneTreeRootNode, jMovedNodes, brotherDescendants, lowerHeight, upperHeight);
             allMovedNodes.add(jMovedNodes);
         }
@@ -304,7 +300,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
     }
 
     // identify nodes to be moved as part of a coordinated exchange move
-    private boolean findMovedChildren(Node geneTreeNode, SortedMap<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
+    private boolean findMovedChildren(Node geneTreeNode, Map<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
         if (geneTreeNode.isLeaf()) {
             final String descendantName = geneTreeNode.getID();
             return brotherDescendants.contains(descendantName);
@@ -318,10 +314,12 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
         final double nodeHeight = geneTreeNode.getHeight();
         if (nodeHeight >= lowerHeight && nodeHeight < upperHeight) {
-            if (leftOverlapsBrother && !rightOverlapsBrother) {
-                movedNodes.put(geneTreeNode, leftChild);
-            } else if (!leftOverlapsBrother && rightOverlapsBrother) {
-                movedNodes.put(geneTreeNode, rightChild);
+            if (leftOverlapsBrother ^ rightOverlapsBrother) {
+                if (leftOverlapsBrother) {
+                    movedNodes.put(geneTreeNode, leftChild);
+                } else {
+                    movedNodes.put(geneTreeNode, rightChild);
+                }
             }
         }
 
@@ -418,9 +416,11 @@ public class MultispeciesCoalescent extends TreeDistribution {
             return descendsThrough.BOTH;
         }
     }
-    
+
     private boolean checkTreeSanity(Node node) {
-        List<Node> children = node.getChildren();
+        final List<Node> children = node.getChildren();
+        final int nChildren = children.size();
+
         for (Node childNode: children) {
             assert childNode.getParent() == node;
             assert childNode.getHeight() <= node.getHeight();
@@ -430,9 +430,9 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         if (node.isLeaf()) {
-            assert children.size() == 0;
+            assert nChildren == 0;
         } else {
-            assert children.size() == 2;
+            assert nChildren == 2;
         }
 
         return true;

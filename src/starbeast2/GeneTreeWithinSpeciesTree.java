@@ -47,6 +47,11 @@ public class GeneTreeWithinSpeciesTree extends TreeDistribution {
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
     }
 
+    public String toString() {
+        final String geneTreeString = treeInput.get().getRoot().toNewick(); 
+        return geneTreeString;
+    }
+
     protected boolean computeCoalescentTimes(TreeInterface speciesTree, Map<String, Integer> tipNumberMap) {
         final TreeInterface geneTree = treeInput.get();
 

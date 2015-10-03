@@ -3,12 +3,11 @@
 package starbeast2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
 
 import com.google.common.collect.SetMultimap;
 
@@ -37,8 +36,10 @@ public class CoordinatedExchange extends Operator {
     private Node parent;
     private Node uncle;
 
-    private List<SortedMap<Node, Node>> forwardMovedNodes;
+    private List<Map<Node, Node>> forwardMovedNodes;
     private SetMultimap<Integer, Node> forwardGraftNodes;
+
+    final static NodeHeightComparator nhc = new NodeHeightComparator();
 
     @Override
     public void initAndValidate() {
@@ -143,11 +144,12 @@ public class CoordinatedExchange extends Operator {
         for (int j = 0; j < nGeneTrees; j++) {
             final Map<Node, Integer> jForwardGraftCounts = new HashMap<>();
             final Set<Node> jForwardGraftNodes = forwardGraftNodes.get(j);
-            final SortedMap<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
-
-            for (Entry<Node, Node> nodeEntry: jForwardMovedNodes.entrySet()) {
-                final Node movedNode = nodeEntry.getKey();
-                final Node disownedChild = nodeEntry.getValue();
+            final Map<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
+            final Node[] sortedMovedNodes = new Node[jForwardMovedNodes.size()];
+            jForwardMovedNodes.keySet().toArray(sortedMovedNodes);
+            Arrays.sort(sortedMovedNodes, nhc);
+            for (final Node movedNode: sortedMovedNodes) {
+                final Node disownedChild = jForwardMovedNodes.get(movedNode);
                 final double movedNodeHeight = movedNode.getHeight();
 
                 final List<Node> validGraftBranches = new ArrayList<>();
@@ -162,7 +164,7 @@ public class CoordinatedExchange extends Operator {
                         potentialGraftTop = potentialGraft.getParent().getHeight();
                     }
 
-                    if (movedNodeHeight >= potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
+                    if (movedNodeHeight > potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
                         forwardGraftCount++;
                         validGraftBranches.add(potentialGraft);
                     }
@@ -170,6 +172,7 @@ public class CoordinatedExchange extends Operator {
 
                 // no compatible branches to graft this node on to
                 // this only occurs when there is missing data and the gene tree root is in the "parent" branch
+                // or if two gene tree nodes which need moving are of equal height
                 if (forwardGraftCount == 0) {
                     return Double.NEGATIVE_INFINITY;
                 } else {
@@ -203,7 +206,7 @@ public class CoordinatedExchange extends Operator {
                         potentialGraftTop = potentialGraft.getParent().getHeight();
                     }
 
-                    if (movedNodeHeight >= potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
+                    if (movedNodeHeight > potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
                         reverseGraftCount++;
                     }
                 }
@@ -215,28 +218,26 @@ public class CoordinatedExchange extends Operator {
         return logHastingsRatio;
     }
 
-    // removes nodeToMove from the segmented line between its disownedChild and oldParent
-    // reattaches it between the newChild node and the parent of the newChild node
-    // does not change any node heights
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
-        final Node oldParent = nodeToMove.getParent();
-        final Node newParent = newChild.getParent();
+        final Node sourceParent = nodeToMove.getParent();
+        final Node destinationParent = newChild.getParent();
 
-        oldParent.addChild(disownedChild);
+        // debug string
+        // System.out.println(String.format("%d-%d-%d > %d-%d", sourceParent.getNr(), nodeToMove.getNr(), disownedChild.getNr(), destinationParent.getNr(), newChild.getNr()));
+
         nodeToMove.removeChild(disownedChild);
+        sourceParent.removeChild(nodeToMove);
+        destinationParent.removeChild(newChild);
+
         nodeToMove.addChild(newChild);
-        newParent.removeChild(newChild);
+        sourceParent.addChild(disownedChild);
+        destinationParent.addChild(nodeToMove);
 
-        if (oldParent != newParent) {
-            oldParent.removeChild(nodeToMove);
-            newParent.addChild(nodeToMove);
-        }
-
-        disownedChild.makeDirty(Tree.IS_FILTHY);
         nodeToMove.makeDirty(Tree.IS_FILTHY);
         newChild.makeDirty(Tree.IS_FILTHY);
-        oldParent.makeDirty(Tree.IS_FILTHY);
-        newParent.makeDirty(Tree.IS_FILTHY);
+        disownedChild.makeDirty(Tree.IS_FILTHY);
+        sourceParent.makeDirty(Tree.IS_FILTHY);
+        destinationParent.makeDirty(Tree.IS_FILTHY);
     }
 
     protected static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
