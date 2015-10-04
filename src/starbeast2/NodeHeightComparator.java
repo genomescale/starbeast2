@@ -4,7 +4,12 @@ import java.util.Comparator;
 
 import beast.evolution.tree.Node;
 
+// unambiguous, so only identical nodes are considered equal
+// if height is equal, consider distance from root (depth)
+// if depth is equal, consider assigned node number
 class NodeHeightComparator implements Comparator<Node> {
+    final int lessThan = -1;
+    final int greaterThan = 1;
 
     @Override
     public int compare(Node nodeA, Node nodeB) {
@@ -14,18 +19,24 @@ class NodeHeightComparator implements Comparator<Node> {
             final int depthA = calculateNodeDepth(nodeA);
             final int depthB = calculateNodeDepth(nodeB);
             if (depthA == depthB) {
-                return 0;
+                final int nodeNumberA = nodeA.getNr();
+                final int nodeNumberB = nodeB.getNr();
+                if (nodeNumberA == nodeNumberB) {
+                    return 0;
+                }
+                return nodeNumberA > nodeNumberB ? greaterThan : lessThan;
             }
-            return depthA > depthB ? 1 : -1;
+            return depthA > depthB ? greaterThan : lessThan;
         }
-        return heightA < heightB ? 1 : -1;
+        return heightA > heightB ? greaterThan : lessThan;
     }
 
     private int calculateNodeDepth(Node node) {
         if (node.isRoot()) {
-            return 1;
+            return 0;
         }
 
-        return calculateNodeDepth(node.getParent()) + 1;
+        return calculateNodeDepth(node.getParent()) - 1;
     }
 }
+

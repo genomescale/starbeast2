@@ -3,11 +3,12 @@
 package starbeast2;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
 
 import com.google.common.collect.SetMultimap;
 
@@ -36,10 +37,8 @@ public class CoordinatedExchange extends Operator {
     private Node parent;
     private Node uncle;
 
-    private List<Map<Node, Node>> forwardMovedNodes;
+    private List<SortedMap<Node, Node>> forwardMovedNodes;
     private SetMultimap<Integer, Node> forwardGraftNodes;
-
-    final static NodeHeightComparator nhc = new NodeHeightComparator();
 
     @Override
     public void initAndValidate() {
@@ -98,7 +97,7 @@ public class CoordinatedExchange extends Operator {
         brother = Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight();
 
         // must be done before any changes are made to the gene or species trees
-        forwardMovedNodes = msc.getMovedChildren(brother);
+        forwardMovedNodes = msc.getMovedPairs(brother);
         forwardGraftNodes = msc.getGraftBranches(uncle);
 
         int validGP = 0;
@@ -130,7 +129,7 @@ public class CoordinatedExchange extends Operator {
             uncle = grandparent.getLeft();
         }
 
-        forwardMovedNodes = msc.getMovedChildren(brother);
+        forwardMovedNodes = msc.getMovedPairs(brother);
         forwardGraftNodes = msc.getGraftBranches(uncle);
 
         exchangeNodes(parent, grandparent, brother, uncle);
@@ -144,12 +143,10 @@ public class CoordinatedExchange extends Operator {
         for (int j = 0; j < nGeneTrees; j++) {
             final Map<Node, Integer> jForwardGraftCounts = new HashMap<>();
             final Set<Node> jForwardGraftNodes = forwardGraftNodes.get(j);
-            final Map<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
-            final Node[] sortedMovedNodes = new Node[jForwardMovedNodes.size()];
-            jForwardMovedNodes.keySet().toArray(sortedMovedNodes);
-            Arrays.sort(sortedMovedNodes, nhc);
-            for (final Node movedNode: sortedMovedNodes) {
-                final Node disownedChild = jForwardMovedNodes.get(movedNode);
+            final SortedMap<Node, Node> jForwardMovedNodes = forwardMovedNodes.get(j);
+            for (final Entry<Node, Node> nodePair: jForwardMovedNodes.entrySet()) {
+                final Node movedNode = nodePair.getKey();
+                final Node disownedChild = nodePair.getValue();
                 final double movedNodeHeight = movedNode.getHeight();
 
                 final List<Node> validGraftBranches = new ArrayList<>();

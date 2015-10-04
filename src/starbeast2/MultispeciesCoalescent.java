@@ -2,11 +2,14 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -45,6 +48,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
+
+    final static Comparator<Node> nhc = new NodeHeightComparator().reversed();
 
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
@@ -222,20 +227,20 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return true;
     }
 
-    // identify children to be moved with parent nodes as part of a coordinated exchange move
-    protected List<Map<Node, Node>> getMovedChildren(Node brotherNode) {
+    // identify nodes to be grafted in a narrow move, and children to be "disowned" (joined directly to their grandparent)
+    protected List<SortedMap<Node, Node>> getMovedPairs(Node brotherNode) {
         final int brotherNodeNumber = brotherNode.getNr();
         final Set<String> brotherDescendants = findDescendants(brotherNode, brotherNodeNumber);
 
         final double lowerHeight = brotherNode.getParent().getHeight(); // parent height (bottom of parent branch)
         final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
 
-        final List<Map<Node, Node>> allMovedNodes = new ArrayList<>();
+        final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
-            final Map<Node, Node> jMovedNodes = new HashMap<>();
-            findMovedChildren(geneTreeRootNode, jMovedNodes, brotherDescendants, lowerHeight, upperHeight);
+            final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);
+            findMovedPairs(geneTreeRootNode, jMovedNodes, brotherDescendants, lowerHeight, upperHeight);
             allMovedNodes.add(jMovedNodes);
         }
 
@@ -300,7 +305,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
     }
 
     // identify nodes to be moved as part of a coordinated exchange move
-    private boolean findMovedChildren(Node geneTreeNode, Map<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
+    private boolean findMovedPairs(Node geneTreeNode, Map<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
         if (geneTreeNode.isLeaf()) {
             final String descendantName = geneTreeNode.getID();
             return brotherDescendants.contains(descendantName);
@@ -309,8 +314,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
         final Node leftChild = geneTreeNode.getLeft();
         final Node rightChild = geneTreeNode.getRight();
 
-        final boolean leftOverlapsBrother = findMovedChildren(leftChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
-        final boolean rightOverlapsBrother = findMovedChildren(rightChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+        final boolean leftOverlapsBrother = findMovedPairs(leftChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+        final boolean rightOverlapsBrother = findMovedPairs(rightChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
 
         final double nodeHeight = geneTreeNode.getHeight();
         if (nodeHeight >= lowerHeight && nodeHeight < upperHeight) {
