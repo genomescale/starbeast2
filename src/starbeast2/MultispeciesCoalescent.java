@@ -37,17 +37,24 @@ public class MultispeciesCoalescent extends TreeDistribution {
     public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
     public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
+    private boolean needsUpdate;
+    private boolean allTreesCompatible;
+    private TreeInterface speciesTree;
     private TaxonSet taxonSuperSet;
     private MultispeciesPopulationModel populationModel;
     private int nGeneTrees;
     private int speciesTreeNodeCount;
     private double[] perGenePloidy;
 
-    private Double[] speciesStartTimes;
-    private Double[] speciesEndTimes;
+    private double[] speciesStartTimes;
+    private double[] speciesEndTimes;
 
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
+    final private Map<Node, double[]> speciesOccupancy = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
+    final private List<int[]> allLineageCounts = new ArrayList<>();
+    final private List<int[]> allEventCounts = new ArrayList<>();
+    final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
 
     final static Comparator<Node> nhc = new NodeHeightComparator().reversed();
 
@@ -69,8 +76,8 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
         speciesTreeNodeCount = speciesTree.getNodeCount();
 
-        speciesStartTimes = new Double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        speciesEndTimes = new Double[speciesTreeNodeCount]; // the later date (tipward end)
+        speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
+        speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
 
         // generate map of species tree tip node names to node numbers
         Node speciesTreeRoot = speciesTree.getRoot();
@@ -109,10 +116,12 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         populationModel.initPopSizes(speciesTreeNodeCount);
+        
+        needsUpdate = true;
     }
 
-    public double calculateLogP() {
-        final TreeInterface speciesTree = treeInput.get();
+    void update() {
+        speciesTree = treeInput.get();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
@@ -131,9 +140,11 @@ public class MultispeciesCoalescent extends TreeDistribution {
             }
         }
 
-        final List<int[]> allLineageCounts = new ArrayList<>();
-        final List<int[]> allEventCounts = new ArrayList<>();
-        final List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
+        allLineageCounts.clear();
+        allEventCounts.clear();
+        allCoalescentTimes.clear();
+        speciesOccupancy.clear();
+
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
@@ -145,6 +156,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
             final GeneTreeWithinSpeciesTree geneTree = geneTrees.get(j);
             assert checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
             if (geneTree.computeCoalescentTimes(speciesTree, tipNumberMap)) {
+                geneTree.addSpeciesOccupancy(speciesOccupancy);
                 for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
                     final List<Double> timesView = geneTree.coalescentTimes.get(i);
                     final int geneBranchEventCount = timesView.size();
@@ -166,11 +178,26 @@ public class MultispeciesCoalescent extends TreeDistribution {
                     allCoalescentTimes.get(i).add(coalescentTimesIJ);
                 }
             } else { // this gene tree IS NOT compatible with the species tree
-                logP = Double.NEGATIVE_INFINITY;
-                return logP;
+                allTreesCompatible = false;
+                return;
             }
         }
 
+        allTreesCompatible = true;
+    }
+
+    public double calculateLogP() {
+        if (needsUpdate) {
+            update();
+            needsUpdate = false;
+        }
+
+        if (!allTreesCompatible) {
+            logP = Double.NEGATIVE_INFINITY;
+            return logP;
+        }
+
+        logP = 0.0;
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesTreeNode = speciesTree.getNode(i); 
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
@@ -201,6 +228,11 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return true;
     }
 
+    public void restore() {
+        needsUpdate = true;
+        super.restore();
+    }
+
     @Override
     public boolean canHandleTipDates() {
         return false;
@@ -214,6 +246,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return geneTreeInput.get();
     }
 
+    // for testing purposes (called by assert statement)
     public boolean computeCoalescentTimes() {
         final TreeInterface speciesTree = treeInput.get();
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
@@ -441,6 +474,15 @@ public class MultispeciesCoalescent extends TreeDistribution {
         }
 
         return true;
+    }
+
+    public double[] getOccupancy(Node node) {
+        if (needsUpdate) {
+            update();
+            needsUpdate = false;
+        }
+
+        return speciesOccupancy.get(node);
     }
 }
 
