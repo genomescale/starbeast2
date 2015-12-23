@@ -219,10 +219,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return tallestGeneTreeHeight;
     }
 
-    public String serializePopulation(Node node) {
-        return populationModel.serialize(node);
-    }
-
     @Override
     public boolean requiresRecalculation() {
         return true;

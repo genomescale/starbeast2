@@ -1,6 +1,7 @@
 package starbeast2;
 
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.parameter.RealParameter;
@@ -36,7 +37,7 @@ public class LinearWithConstantRoot extends LinearPopulation {
     }
 
     @Override
-    public String serialize(Node speciesTreeNode) {
+    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int speciesTreeNodeNumber = speciesTreeNode.getNr();
@@ -55,8 +56,15 @@ public class LinearWithConstantRoot extends LinearPopulation {
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
-        final String dmv = String.format("dmv={%f,%f}", branchTopPopSize, branchTipPopSize);
-
-        return dmv;
-    }
+        buf.append("dmv={");
+        if (df == null) {
+            buf.append(branchTopPopSize);
+            buf.append(",");
+            buf.append(branchTipPopSize);
+        } else {
+            buf.append(df.format(branchTopPopSize));
+            buf.append(",");
+            buf.append(df.format(branchTipPopSize));
+        }
+        buf.append("}");    }
 }

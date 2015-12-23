@@ -1,6 +1,7 @@
 package starbeast2;
 
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.CalculationNode;
@@ -28,9 +29,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
 
     // Per-branch population size information which will be added to a Newick string.
     // If no information is available, do not override the superclass method
-    public String serialize(Node speciesTreeNode) {
-        final String emptyString = "";
-        return emptyString;
+    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
     }
 
     protected static double constantLogP(double popSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {

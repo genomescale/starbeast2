@@ -1,10 +1,7 @@
 package starbeast2;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import beast.core.Input;
@@ -16,8 +13,6 @@ public class ContinuousRates extends SpeciesTreeRates {
     public Input<TreeInterface> speciesTreeInput = new Input<>("tree", "Species tree to apply per-branch rates to.");
     public Input<RealParameter> branchRatesInput = new Input<>("rates", "Per-branch rates.");
 
-    final private Map<Node, Integer> nodeIndexMap = new HashMap<>();
-
     @Override
     public void initAndValidate() throws Exception {
         final RealParameter branchRates = branchRatesInput.get();
@@ -26,41 +21,21 @@ public class ContinuousRates extends SpeciesTreeRates {
         final int nNodes = speciesNodes.length;
 
         branchRates.setDimension(nNodes);
-
-        for (int i = 0; i < nNodes; i++) {
-            final Node nodeI = speciesNodes[i];
-            final int stableNodeIndex = nodeI.getNr();
-            nodeIndexMap.put(nodeI, stableNodeIndex);
-        }
     }
 
     @Override
-    double[] getRatesArray() {
-        final Double[] branchRates = branchRatesInput.get().getValues();
-        final TreeInterface speciesTree = speciesTreeInput.get();
-        final Node[] speciesNodes = speciesTree.getNodesAsArray();
-        final int nNodes = speciesNodes.length;
-
-        final double[] newNodeRates = new double[nNodes];
-
-        for (int i = 0; i < nNodes; i++) {
-            final Node nodeI = speciesNodes[i];
-            final int newNodeIndex = nodeI.getNr();
-            final int stableNodeIndex = nodeIndexMap.get(nodeI);
-            newNodeRates[newNodeIndex] = branchRates[stableNodeIndex];
-        }
-
-        return newNodeRates;
+    Double[] getRatesArray() {
+        return branchRatesInput.get().getValues();
     }
 
     // for testing purposes
     public boolean setRate(String[] targetNames, double newRate) {
         final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
         final RealParameter branchRates = branchRatesInput.get();
+        final Node[] nodeArray = speciesTreeInput.get().getNodesAsArray();
 
-        for (Entry<Node, Integer> e: nodeIndexMap.entrySet()) {
-            final Node n = e.getKey();
-            final int stableNodeIndex = e.getValue();
+        for (int i = 0; i < nodeArray.length; i++) {
+            Node n = nodeArray[i];
             final HashSet<String> comparison = new HashSet<>();
             if (n.isLeaf()) {
                 final String leafName = n.getID();
@@ -73,7 +48,7 @@ public class ContinuousRates extends SpeciesTreeRates {
             }
 
             if (s.equals(comparison)) {
-                branchRates.setValue(stableNodeIndex, newRate);;
+                branchRates.setValue(i, newRate);;
                 return true;
             }
         }

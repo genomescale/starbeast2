@@ -27,7 +27,7 @@ public class StarBeastClock extends CalculationNode implements BranchRateModel {
             return geneTreeRate;
         }
 
-        final double[] speciesTreeRates = speciesTreeRatesInput.get().getRatesArray();
+        final Double[] speciesTreeRates = speciesTreeRatesInput.get().getRatesArray();
         final double[] speciesTreeOccupancy = multispeciesCoalescentInput.get().getOccupancy(node);
 
         final int nRates = speciesTreeRates.length;

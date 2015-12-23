@@ -1,6 +1,7 @@
 package starbeast2;
 
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.Input;
@@ -44,12 +45,17 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public String serialize(Node speciesTreeNode) {
+    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
         final RealParameter popSizes = popSizesInput.get();
         final int speciesTreeNodeNumber = speciesTreeNode.getNr();
         final double branchPopSize = popSizes.getValue(speciesTreeNodeNumber);
-        final String dmv = String.format("dmv=%f", branchPopSize);
 
-        return dmv;
+        buf.append("dmv={");
+        if (df == null) {
+            buf.append(branchPopSize);
+        } else {
+            buf.append(df.format(branchPopSize));
+        }
+        buf.append("}");
     }
 }
