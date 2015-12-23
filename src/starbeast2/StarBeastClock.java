@@ -1,10 +1,15 @@
 package starbeast2;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.TreeInterface;
 
 public class StarBeastClock extends CalculationNode implements BranchRateModel {
     public Input<MultispeciesCoalescent> multispeciesCoalescentInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "The multispecies coalescent calculation node.", Input.Validate.REQUIRED);
@@ -37,6 +42,30 @@ public class StarBeastClock extends CalculationNode implements BranchRateModel {
         final double geneTreeBranchRate = relaxedRate * geneTreeRate / totalOccupancy;
 
         return geneTreeBranchRate;
+    }
+
+    // for testing purposes
+    public double getRate(TreeInterface geneTree, String[] targetNames) {
+        final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
+
+        for (Node n: geneTree.getNodesAsArray()) {
+            final HashSet<String> comparison = new HashSet<>();
+            if (n.isLeaf()) {
+                final String leafName = n.getID();
+                comparison.add(leafName);
+            } else {
+                for (Node l: n.getAllLeafNodes()) {
+                    final String leafName = l.getID();
+                    comparison.add(leafName);
+                }
+            }
+
+            if (s.equals(comparison)) {
+                return getRateForBranch(n);
+            }
+        }
+
+        return Double.NEGATIVE_INFINITY;
     }
 }
 

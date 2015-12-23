@@ -81,6 +81,10 @@ public class IncompatibleTreeTest extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
+        nSpecies = 4;
+        nBranches = (nSpecies * 2) - 1;
+        popSizes = new double[nBranches];
+
         initializeSpeciesTree();
         initializeGeneTrees();
 

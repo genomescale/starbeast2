@@ -10,9 +10,9 @@ import starbeast2.GeneTreeWithinSpeciesTree;
 import starbeast2.MultispeciesPopulationModel;
 
 public class PopulationTestHelper {
-    final int nSpecies = 4;
-    final int nBranches = (nSpecies * 2) - 1;
-    final double[] popSizes = new double[nBranches];
+    int nSpecies;
+    int nBranches;
+    double[] popSizes;
 
     final int individualsPerSpecies = 2;
     GeneTreeWithinSpeciesTree geneTreeTestA;

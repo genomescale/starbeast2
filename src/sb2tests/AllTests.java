@@ -8,6 +8,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     ConstantIOTest.class,
     ConstantPopulationTest.class,
+    ContinuousRatesTest.class,
     LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,

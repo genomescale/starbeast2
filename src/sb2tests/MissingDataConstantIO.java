@@ -26,6 +26,10 @@ public class MissingDataConstantIO extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
+        nSpecies = 4;
+        nBranches = (nSpecies * 2) - 1;
+        popSizes = new double[nBranches];
+
         initializeTrees(newickSpeciesTree, newickGeneTreeA, newickGeneTreeB);
 
         alphaParameter = new RealParameter();

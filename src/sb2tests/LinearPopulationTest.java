@@ -23,6 +23,10 @@ public class LinearPopulationTest extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
+        nSpecies = 4;
+        nBranches = (nSpecies * 2) - 1;
+        popSizes = new double[nBranches];
+
         initializeTrees(newickSpeciesTree, newickGeneTreeA, newickGeneTreeB);
 
         topPopSizesParameter = new RealParameter();

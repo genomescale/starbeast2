@@ -1,7 +1,11 @@
 package starbeast2;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
@@ -47,5 +51,33 @@ public class ContinuousRates extends SpeciesTreeRates {
         }
 
         return newNodeRates;
+    }
+
+    // for testing purposes
+    public boolean setRate(String[] targetNames, double newRate) {
+        final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
+        final RealParameter branchRates = branchRatesInput.get();
+
+        for (Entry<Node, Integer> e: nodeIndexMap.entrySet()) {
+            final Node n = e.getKey();
+            final int stableNodeIndex = e.getValue();
+            final HashSet<String> comparison = new HashSet<>();
+            if (n.isLeaf()) {
+                final String leafName = n.getID();
+                comparison.add(leafName);
+            } else {
+                for (Node l: n.getAllLeafNodes()) {
+                    final String leafName = l.getID();
+                    comparison.add(leafName);
+                }
+            }
+
+            if (s.equals(comparison)) {
+                branchRates.setValue(stableNodeIndex, newRate);;
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

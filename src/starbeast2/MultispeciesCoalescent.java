@@ -485,4 +485,3 @@ public class MultispeciesCoalescent extends TreeDistribution {
         return speciesOccupancy.get(node);
     }
 }
-
