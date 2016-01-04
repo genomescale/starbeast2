@@ -148,7 +148,7 @@
 		</copy>
 		<copy todir="${Add_on_dir}/lib">
 			<fileset dir="${diststarbeast2}" includes="starbeast2.addon.jar" />
-			<fileset dir="${libstarbeast2}" includes="guava-19.0-rc2.jar" />
+			<fileset dir="${libstarbeast2}" includes="guava-19.0.jar" />
 		</copy>
 		<copy todir="${Add_on_dir}">
 			<fileset dir="${diststarbeast2}" includes="starbeast2.src.jar" />

@@ -4,17 +4,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import beast.core.CalculationNode;
 import beast.core.Input;
-import beast.core.parameter.RealParameter;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
-public class StarBeastClock extends CalculationNode implements BranchRateModel {
+public class StarBeastClock extends BranchRateModel.Base {
     public Input<MultispeciesCoalescent> multispeciesCoalescentInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "The multispecies coalescent calculation node.", Input.Validate.REQUIRED);
     public Input<SpeciesTreeRates> speciesTreeRatesInput = new Input<>("speciesTreeRates", "The per-branch rates for the species tree", Input.Validate.REQUIRED);
-    public Input<RealParameter> geneTreeRateInput = new Input<>("geneTreeRate", "Clock rate multiplier for this gene tree.", Input.Validate.REQUIRED);
 
     @Override
     public void initAndValidate() throws Exception {
@@ -22,7 +19,7 @@ public class StarBeastClock extends CalculationNode implements BranchRateModel {
 
     @Override
     public double getRateForBranch(Node node) {
-        final double geneTreeRate = geneTreeRateInput.get().getValue();
+        final double geneTreeRate = meanRateInput.get().getValue();
         if (node.isRoot()) {
             return geneTreeRate;
         }
