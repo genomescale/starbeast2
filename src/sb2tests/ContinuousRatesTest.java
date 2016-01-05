@@ -77,7 +77,7 @@ public class ContinuousRatesTest extends PopulationTestHelper {
         initializeRates();
 
         clockModel = new StarBeastClock();
-        clockModel.initByName("multispeciesCoalescent", msc, "speciesTreeRates", speciesRates, "geneTreeRate", geneRateParameter);
+        clockModel.initByName("multispeciesCoalescent", msc, "speciesTreeRates", speciesRates, "clock.rate", geneRateParameter);
         checkRates();
     }
     

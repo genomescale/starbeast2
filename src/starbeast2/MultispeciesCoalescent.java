@@ -179,17 +179,18 @@ public class MultispeciesCoalescent extends TreeDistribution {
                 }
             } else { // this gene tree IS NOT compatible with the species tree
                 allTreesCompatible = false;
+                needsUpdate = false;
                 return;
             }
         }
 
         allTreesCompatible = true;
+        needsUpdate = false;
     }
 
     public double calculateLogP() {
         if (needsUpdate) {
             update();
-            needsUpdate = false;
         }
 
         if (!allTreesCompatible) {
@@ -221,6 +222,7 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     @Override
     public boolean requiresRecalculation() {
+        needsUpdate = true;
         return true;
     }
 
@@ -475,7 +477,15 @@ public class MultispeciesCoalescent extends TreeDistribution {
     public double[] getOccupancy(Node node) {
         if (needsUpdate) {
             update();
-            needsUpdate = false;
+        }
+
+        if (speciesOccupancy.get(node) == null) {
+            System.out.println(String.format("%s: %d %d", node.getTree().getID(), node.getNr(), node.hashCode()));
+            for (Node n: speciesOccupancy.keySet()) {
+                if (n.getTree() == node.getTree()) {
+                    System.out.println(String.format("%s: %d %d", n.getTree().getID(), n.getNr(), n.hashCode()));
+                }
+            }
         }
 
         return speciesOccupancy.get(node);

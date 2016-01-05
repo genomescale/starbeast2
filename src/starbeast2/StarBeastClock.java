@@ -28,6 +28,8 @@ public class StarBeastClock extends BranchRateModel.Base {
         final double[] speciesTreeOccupancy = multispeciesCoalescentInput.get().getOccupancy(node);
 
         final int nRates = speciesTreeRates.length;
+        
+        assert speciesTreeOccupancy != null;
 
         double relaxedRate = 0.0;
         double totalOccupancy = 0.0;
