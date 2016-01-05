@@ -46,9 +46,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
     private int speciesTreeNodeCount;
     private double[] perGenePloidy;
 
-    private double[] speciesStartTimes;
-    private double[] speciesEndTimes;
-
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Map<Node, double[]> speciesOccupancy = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
@@ -75,9 +72,6 @@ public class MultispeciesCoalescent extends TreeDistribution {
         populationModel = populationFunctionInput.get();
 
         speciesTreeNodeCount = speciesTree.getNodeCount();
-
-        speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
 
         // generate map of species tree tip node names to node numbers
         Node speciesTreeRoot = speciesTree.getRoot();
@@ -122,6 +116,10 @@ public class MultispeciesCoalescent extends TreeDistribution {
 
     void update() {
         speciesTree = treeInput.get();
+        speciesTreeNodeCount = speciesTree.getNodeCount();
+        double[] speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
+
         final List<GeneTreeWithinSpeciesTree> geneTrees = geneTreeInput.get();
         logP = 0.0;
 
