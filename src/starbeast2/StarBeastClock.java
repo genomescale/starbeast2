@@ -10,7 +10,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
 public class StarBeastClock extends BranchRateModel.Base {
-    public Input<MultispeciesCoalescent> multispeciesCoalescentInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "The multispecies coalescent calculation node.", Input.Validate.REQUIRED);
+    public Input<GeneTree> geneTreeInput = new Input<>("geneTree", "The gene tree this relaxed clock is associated with.", Input.Validate.REQUIRED);
     public Input<SpeciesTreeRates> speciesTreeRatesInput = new Input<>("speciesTreeRates", "The per-branch rates for the species tree", Input.Validate.REQUIRED);
 
     @Override
@@ -25,10 +25,10 @@ public class StarBeastClock extends BranchRateModel.Base {
         }
 
         final Double[] speciesTreeRates = speciesTreeRatesInput.get().getRatesArray();
-        final double[] speciesTreeOccupancy = multispeciesCoalescentInput.get().getOccupancy(node);
+        final double[] speciesTreeOccupancy = geneTreeInput.get().getOccupancy(node);
 
         final int nRates = speciesTreeRates.length;
-        
+
         assert speciesTreeOccupancy != null;
 
         double relaxedRate = 0.0;
@@ -39,7 +39,6 @@ public class StarBeastClock extends BranchRateModel.Base {
         }
 
         final double geneTreeBranchRate = relaxedRate * geneTreeRate / totalOccupancy;
-
         return geneTreeBranchRate;
     }
 

@@ -19,8 +19,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
 @Description("Logs tree annotated with metadata and/or rates")
-public class MultispeciesCoalescentLogger extends BEASTObject implements Loggable {
-    public Input<MultispeciesCoalescent> multispeciesCoalescentInput = new Input<>("multispeciesCoalescent", "the multispecies coalescent (for the species tree and root branch length)", Validate.REQUIRED);
+public class SpeciesTreeLogger extends BEASTObject implements Loggable {
+    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "the species tree", Validate.REQUIRED);
     public Input<List<Function>> parameterInput = new Input<>("metadata", "meta data to be logged with the tree nodes",new ArrayList<>());
     public Input<BranchRateModel.Base> clockModelInput = new Input<>("branchratemodel", "rate to be logged with branches of the tree");
     public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree");
@@ -58,16 +58,16 @@ public class MultispeciesCoalescentLogger extends BEASTObject implements Loggabl
 
     @Override
     public void init(PrintStream out) throws Exception {
-        final MultispeciesCoalescent msc = multispeciesCoalescentInput.get();
-        msc.getSpeciesTree().init(out);
+        final Tree speciesTree = (Tree) speciesTreeInput.get().getTree();
+        speciesTree.init(out);
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
-        final MultispeciesCoalescent msc = multispeciesCoalescentInput.get();
+        final SpeciesTree speciesTree = speciesTreeInput.get();
+        final Tree tree = (Tree) speciesTree.getTree();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
         // make sure we get the current version of the inputs
-        Tree tree = (Tree) msc.getSpeciesTree().getCurrent();
         List<Function> metadata = parameterInput.get();
         for (int i = 0; i < metadata.size(); i++) {
         	if (metadata.get(i) instanceof StateNode) {
@@ -78,7 +78,7 @@ public class MultispeciesCoalescentLogger extends BEASTObject implements Loggabl
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
         tree.getRoot().sort();
-        out.print(toNewick(tree.getRoot(), metadata, branchRateModel, populationModel, msc));
+        out.print(toNewick(tree.getRoot(), metadata, branchRateModel, populationModel, speciesTree));
         //out.print(tree.getRoot().toShortNewick(false));
         out.print(";");
     }
@@ -99,14 +99,14 @@ public class MultispeciesCoalescentLogger extends BEASTObject implements Loggabl
         }
     }
 
-    String toNewick(Node node, List<Function> metadataList, BranchRateModel.Base branchRateModel, MultispeciesPopulationModel populationModel, MultispeciesCoalescent msc) {
+    String toNewick(Node node, List<Function> metadataList, BranchRateModel.Base branchRateModel, MultispeciesPopulationModel populationModel, SpeciesTree tree) {
         StringBuffer buf = new StringBuffer();
         if (node.getLeft() != null) {
             buf.append("(");
-            buf.append(toNewick(node.getLeft(), metadataList, branchRateModel, populationModel, msc));
+            buf.append(toNewick(node.getLeft(), metadataList, branchRateModel, populationModel, tree));
             if (node.getRight() != null) {
                 buf.append(',');
-                buf.append(toNewick(node.getRight(), metadataList, branchRateModel, populationModel, msc));
+                buf.append(toNewick(node.getRight(), metadataList, branchRateModel, populationModel, tree));
             }
             buf.append(")");
         } else {
@@ -163,7 +163,7 @@ public class MultispeciesCoalescentLogger extends BEASTObject implements Loggabl
 
         double nodeLength;
         if (node.isRoot()) {
-            nodeLength = node.getHeight() - msc.getRootHeight();
+            nodeLength = node.getHeight() - tree.getTreeHeight();
         } else {
             nodeLength = node.getLength();
         }
@@ -180,8 +180,8 @@ public class MultispeciesCoalescentLogger extends BEASTObject implements Loggabl
 
     @Override
     public void close(PrintStream out) {
-        final MultispeciesCoalescent msc = multispeciesCoalescentInput.get();
-        msc.getSpeciesTree().close(out);
+        final Tree speciesTree = (Tree) speciesTreeInput.get().getTree();
+        speciesTree.close(out);
     }
 
 }

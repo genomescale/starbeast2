@@ -12,21 +12,36 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
+import beast.evolution.tree.Tree;
+import beast.util.TreeParser;
 import starbeast2.ConstantPopulationIO;
 import starbeast2.ContinuousRates;
-import starbeast2.GeneTreeWithinSpeciesTree;
+import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
+import starbeast2.MultispeciesPopulationModel;
+import starbeast2.SpeciesTree;
 import starbeast2.StarBeastClock;
 
-public class ContinuousRatesTest extends PopulationTestHelper {
-    private final String newickSpeciesTree = "((a:1.5,b:1.5):0.5,c:2.0)";
-    private final String newickGeneTreeA = "((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)";
+public class ContinuousRatesTest {
+    private String newickSpeciesTree;
+    private List<String> newickGeneTrees = new ArrayList<>();
 
+    private TreeParser speciesTree = new TreeParser();
+    private List<TreeParser> geneTrees = new ArrayList<>();
+    
+    private SpeciesTree speciesTreeWrapper = new SpeciesTree();
+    private List<GeneTree> geneTreeWrappers = new ArrayList<>();
+
+    private final int nSpecies = 3;
+    private final int individualsPerSpecies = 2;
     private final double popSize = 0.3;
     private final double alpha = 1.5;
     private final double beta = 2.5;
     private final double geneRate = 1.5;
     private final double initialSpeciesRate = 1.0;
+    private final double ploidy = 2.0;
+
+    final double allowedError = 10e-6;
 
     private RealParameter alphaParameter;
     private RealParameter betaParameter;
@@ -38,13 +53,17 @@ public class ContinuousRatesTest extends PopulationTestHelper {
 
     MultispeciesCoalescent msc;
 
-    @Test
-    public void testLogP() throws Exception {
-        nSpecies = 3;
-        nBranches = (nSpecies * 2) - 1;
-        popSizes = new double[nBranches];
+    public ContinuousRatesTest() {
+        newickSpeciesTree = "((a:1.5,b:1.5):0.5,c:2.0)";
+        newickGeneTrees.add("((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)");
+    }
 
-        initializeTrees(newickSpeciesTree, newickGeneTreeA);
+    @Test
+    public void testRates() throws Exception {
+        TaxonSet speciesSuperSet = generateSuperset();
+        
+        initializeSpeciesTree(speciesSuperSet);
+        initializeGeneTrees();
 
         alphaParameter = new RealParameter();
         betaParameter = new RealParameter();
@@ -64,28 +83,27 @@ public class ContinuousRatesTest extends PopulationTestHelper {
         state.initByName("stateNode", speciesRateParameter);
         state.initialise();
 
-        populationModel = new ConstantPopulationIO();
+        final int nBranches = (2 * nSpecies) - 1;
+        MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
         populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);
 
         msc = new MultispeciesCoalescent();
-        msc.initByName("tree", speciesTree, "geneTree", geneTreeList, "taxonSuperSet", speciesSuperSet, "populationModel", populationModel);
+        msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
 
         speciesRates = new ContinuousRates();
         speciesRates.initByName("tree", speciesTree, "rates", speciesRateParameter);
         initializeRates();
 
         clockModel = new StarBeastClock();
-        clockModel.initByName("multispeciesCoalescent", msc, "speciesTreeRates", speciesRates, "clock.rate", geneRateParameter);
+        clockModel.initByName("geneTree", geneTreeWrappers.get(0), "speciesTreeRates", speciesRates, "clock.rate", geneRateParameter);
+
         checkRates();
     }
     
-    private void initializeTrees(final String newickSpeciesTree, final String newickGeneTree) throws Exception {
+    private TaxonSet generateSuperset() throws Exception {
         String speciesCodes = "abc";
-        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
-        geneTreeA.initByName("newick", newickGeneTree, "IsLabelledNewick", true);
-
         List<Taxon> superSetList = new ArrayList<>();
         for (int i = 0; i < nSpecies; i++) {
             final String speciesName = speciesCodes.substring(i, i + 1);
@@ -96,15 +114,12 @@ public class ContinuousRatesTest extends PopulationTestHelper {
             }
             superSetList.add(new TaxonSet(speciesName, taxonList));
         }
-        speciesSuperSet = new TaxonSet(superSetList);
 
-        geneTreeTestA = new GeneTreeWithinSpeciesTree();
-
-        geneTreeTestA.initByName("tree", geneTreeA, "ploidy", ploidy);
+        TaxonSet speciesSuperSet = new TaxonSet(superSetList);
         
-        geneTreeList.add(geneTreeTestA);
+        return speciesSuperSet;
     }
-    
+
     private void initializeRates() {
         String[] node0 = {"a"};
         String[] node1 = {"b"};
@@ -150,16 +165,36 @@ public class ContinuousRatesTest extends PopulationTestHelper {
         double rate09 = 0.75;
         double rate10 = 1.5;
 
-        assertEquals(rate00, clockModel.getRate(geneTreeA, node00), allowedError);
-        assertEquals(rate01, clockModel.getRate(geneTreeA, node01), allowedError);
-        assertEquals(rate02, clockModel.getRate(geneTreeA, node02), allowedError);
-        assertEquals(rate03, clockModel.getRate(geneTreeA, node03), allowedError);
-        assertEquals(rate04, clockModel.getRate(geneTreeA, node04), allowedError);
-        assertEquals(rate05, clockModel.getRate(geneTreeA, node05), allowedError);
-        assertEquals(rate06, clockModel.getRate(geneTreeA, node06), allowedError);
-        assertEquals(rate07, clockModel.getRate(geneTreeA, node07), allowedError);
-        assertEquals(rate08, clockModel.getRate(geneTreeA, node08), allowedError);
-        assertEquals(rate09, clockModel.getRate(geneTreeA, node09), allowedError);
-        assertEquals(rate10, clockModel.getRate(geneTreeA, node10), allowedError);
+        Tree geneTree = geneTrees.get(0);
+        assertEquals(rate00, clockModel.getRate(geneTree, node00), allowedError);
+        assertEquals(rate01, clockModel.getRate(geneTree, node01), allowedError);
+        assertEquals(rate02, clockModel.getRate(geneTree, node02), allowedError);
+        assertEquals(rate03, clockModel.getRate(geneTree, node03), allowedError);
+        assertEquals(rate04, clockModel.getRate(geneTree, node04), allowedError);
+        assertEquals(rate05, clockModel.getRate(geneTree, node05), allowedError);
+        assertEquals(rate06, clockModel.getRate(geneTree, node06), allowedError);
+        assertEquals(rate07, clockModel.getRate(geneTree, node07), allowedError);
+        assertEquals(rate08, clockModel.getRate(geneTree, node08), allowedError);
+        assertEquals(rate09, clockModel.getRate(geneTree, node09), allowedError);
+        assertEquals(rate10, clockModel.getRate(geneTree, node10), allowedError);
+    }
+
+    public void initializeSpeciesTree(TaxonSet speciesSuperSet) throws Exception {
+        speciesTree = new TreeParser();
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
+        speciesTreeWrapper = new SpeciesTree();
+        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperSet);
+    }
+
+    public void initializeGeneTrees() throws Exception {
+        for (String geneTreeNewick: newickGeneTrees) {
+            TreeParser geneTree = new TreeParser();
+            geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
+            geneTrees.add(geneTree);
+
+            GeneTree geneTreeWrapper = new GeneTree();
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
+            geneTreeWrappers.add(geneTreeWrapper);
+        }
     }
 }

@@ -10,7 +10,6 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
 public class ContinuousRates extends SpeciesTreeRates {
-    public Input<TreeInterface> speciesTreeInput = new Input<>("tree", "Species tree to apply per-branch rates to.");
     public Input<RealParameter> branchRatesInput = new Input<>("rates", "Per-branch rates.");
 
     @Override

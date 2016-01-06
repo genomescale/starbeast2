@@ -3,20 +3,23 @@
 package starbeast2;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
 import beast.core.Description;
-import beast.core.Input;
-import beast.core.Operator;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
 /**
@@ -30,9 +33,7 @@ import beast.util.Randomizer;
         + "This performs a narrow exchange operation, then prunes-and-regrafts gene tree nodes made invalid "
         + "by the operation onto a valid contemporary branch (without changing node heights). "
         + "See http://doi.org/10.1093/molbev/msu279 for full details.")
-public class CoordinatedExchange extends Operator {
-    public Input<MultispeciesCoalescent> mscInput = new Input<MultispeciesCoalescent>("multispeciesCoalescent", "Multispecies coalescent (gene trees contained within a species tree).");
-
+public class CoordinatedExchange extends CoordinatedOperator {
     private Node brother;
     private Node parent;
     private Node uncle;
@@ -40,9 +41,7 @@ public class CoordinatedExchange extends Operator {
     private List<SortedMap<Node, Node>> forwardMovedNodes;
     private SetMultimap<Integer, Node> forwardGraftNodes;
 
-    @Override
-    public void initAndValidate() {
-    }
+    final static Comparator<Node> nhc = new NodeHeightComparator().reversed();
 
     /**
      * override this for proposals,
@@ -51,13 +50,11 @@ public class CoordinatedExchange extends Operator {
      */
     @Override
     public double proposal() {
-        final MultispeciesCoalescent msc = mscInput.get();
-
-        double fLogHastingsRatio = narrow(msc);
+        double fLogHastingsRatio = narrow();
 
         // only rearrange gene trees if the species tree has changed
         if (fLogHastingsRatio != Double.NEGATIVE_INFINITY) {
-            fLogHastingsRatio += rearrangeGeneTrees(msc);
+            fLogHastingsRatio += rearrangeGeneTrees();
         }
 
         return fLogHastingsRatio;
@@ -71,8 +68,8 @@ public class CoordinatedExchange extends Operator {
         return n.isLeaf() ? 0 : isg(n);
     }
 
-    public double narrow(final MultispeciesCoalescent msc) {
-        final Tree speciesTree = msc.getSpeciesTree();
+    public double narrow() {
+        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         final int nInternalNodes = speciesTree.getInternalNodeCount();
         if (nInternalNodes <= 1) {
             return Double.NEGATIVE_INFINITY;
@@ -97,8 +94,8 @@ public class CoordinatedExchange extends Operator {
         brother = Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight();
 
         // must be done before any changes are made to the gene or species trees
-        forwardMovedNodes = msc.getMovedPairs(brother);
-        forwardGraftNodes = msc.getGraftBranches(uncle);
+        forwardMovedNodes = getMovedPairs(brother);
+        forwardGraftNodes = getGraftBranches(uncle);
 
         int validGP = 0;
         {
@@ -121,7 +118,6 @@ public class CoordinatedExchange extends Operator {
         brother = argBrother;
         parent = brother.getParent();
 
-        final MultispeciesCoalescent msc = mscInput.get();
         final Node grandparent = parent.getParent();
         if (grandparent.getLeft().getNr() == parent.getNr()) {
             uncle = grandparent.getRight();
@@ -129,14 +125,14 @@ public class CoordinatedExchange extends Operator {
             uncle = grandparent.getLeft();
         }
 
-        forwardMovedNodes = msc.getMovedPairs(brother);
-        forwardGraftNodes = msc.getGraftBranches(uncle);
+        forwardMovedNodes = getMovedPairs(brother);
+        forwardGraftNodes = getGraftBranches(uncle);
 
         exchangeNodes(parent, grandparent, brother, uncle);
     }
 
-    public double rearrangeGeneTrees(final MultispeciesCoalescent msc) {
-        final List<GeneTreeWithinSpeciesTree> geneTrees = msc.getGeneTrees();
+    public double rearrangeGeneTrees() {
+        final List<GeneTree> geneTrees = geneTreeInput.get();
         final int nGeneTrees = geneTrees.size();
         final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
 
@@ -183,7 +179,7 @@ public class CoordinatedExchange extends Operator {
             forwardGraftCounts.add(jForwardGraftCounts);
         }
 
-        SetMultimap<Integer, Node> reverseGraftNodes = msc.getGraftBranches(brother);
+        SetMultimap<Integer, Node> reverseGraftNodes = getGraftBranches(brother);
 
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
@@ -248,5 +244,97 @@ public class CoordinatedExchange extends Operator {
         grandparent.makeDirty(Tree.IS_FILTHY);        
         brother.makeDirty(Tree.IS_FILTHY);
         uncle.makeDirty(Tree.IS_FILTHY);
+    }
+
+    // identify nodes that can serve as graft branches as part of a coordinated exchange move
+    protected SetMultimap<Integer, Node> getGraftBranches(Node uncleNode) {
+        final int uncleNodeNumber = uncleNode.getNr();
+        final Set<String> uncleDescendants = findDescendants(uncleNode, uncleNodeNumber);
+
+        final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
+        final List<GeneTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Set<Node> jGraftBranches = new HashSet<Node>();
+            findGraftBranches(geneTreeRootNode, jGraftBranches, uncleDescendants);
+            allGraftBranches.putAll(j, jGraftBranches);
+        }
+
+        return allGraftBranches;
+    }
+
+    // identify nodes that can serve as graft branches as part of a coordinated exchange move
+    private boolean findGraftBranches(Node geneTreeNode, Set<Node> graftNodes, Set<String> branchDescendants) {
+        if (geneTreeNode.isLeaf()) {
+            final String descendantName = geneTreeNode.getID();
+            return branchDescendants.contains(descendantName);
+        }
+
+        final Node leftChild = geneTreeNode.getLeft();
+        final Node rightChild = geneTreeNode.getRight();
+        final boolean leftOverlaps = findGraftBranches(leftChild, graftNodes, branchDescendants);
+        final boolean rightOverlaps = findGraftBranches(rightChild, graftNodes, branchDescendants);
+
+        // subtree defined by a child node overlaps species subtree defined by branch
+        if (leftOverlaps || rightOverlaps) {
+            if (leftOverlaps) {
+                graftNodes.add(leftChild);
+            }
+
+            if (rightOverlaps) {
+                graftNodes.add(rightChild);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // identify nodes to be grafted in a narrow move, and children to be "disowned" (joined directly to their grandparent)
+    private List<SortedMap<Node, Node>> getMovedPairs(Node brotherNode) {
+        final int brotherNodeNumber = brotherNode.getNr();
+        final Set<String> brotherDescendants = findDescendants(brotherNode, brotherNodeNumber);
+
+        final double lowerHeight = brotherNode.getParent().getHeight(); // parent height (bottom of parent branch)
+        final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
+
+        final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
+        final List<GeneTree> geneTrees = geneTreeInput.get();
+        for (int j = 0; j < nGeneTrees; j++) {
+            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);
+            findMovedPairs(geneTreeRootNode, jMovedNodes, brotherDescendants, lowerHeight, upperHeight);
+            allMovedNodes.add(jMovedNodes);
+        }
+
+        return allMovedNodes;
+    }
+
+    // identify nodes to be moved as part of a coordinated exchange move
+    private boolean findMovedPairs(Node geneTreeNode, Map<Node, Node> movedNodes, Set<String> brotherDescendants, double lowerHeight, double upperHeight) {
+        if (geneTreeNode.isLeaf()) {
+            final String descendantName = geneTreeNode.getID();
+            return brotherDescendants.contains(descendantName);
+        }
+
+        final Node leftChild = geneTreeNode.getLeft();
+        final Node rightChild = geneTreeNode.getRight();
+
+        final boolean leftOverlapsBrother = findMovedPairs(leftChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+        final boolean rightOverlapsBrother = findMovedPairs(rightChild, movedNodes, brotherDescendants, lowerHeight, upperHeight);
+
+        final double nodeHeight = geneTreeNode.getHeight();
+        if (nodeHeight >= lowerHeight && nodeHeight < upperHeight) {
+            if (leftOverlapsBrother ^ rightOverlapsBrother) {
+                if (leftOverlapsBrother) {
+                    movedNodes.put(geneTreeNode, leftChild);
+                } else {
+                    movedNodes.put(geneTreeNode, rightChild);
+                }
+            }
+        }
+
+        return leftOverlapsBrother || rightOverlapsBrother;
     }
 }

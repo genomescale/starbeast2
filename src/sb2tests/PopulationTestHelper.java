@@ -1,59 +1,75 @@
 package sb2tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import beast.evolution.alignment.Taxon;
+import org.junit.Test;
+
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import starbeast2.GeneTreeWithinSpeciesTree;
+import starbeast2.GeneTree;
+import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
+import starbeast2.SpeciesTree;
 
-public class PopulationTestHelper {
+abstract class PopulationTestHelper {
+    String newickSpeciesTree;
+    List<String> newickGeneTrees = new ArrayList<>();
+
+    TreeParser speciesTree;
+    List<TreeParser> geneTrees = new ArrayList<>();
+    
+    SpeciesTree speciesTreeWrapper;
+    List<GeneTree> geneTreeWrappers = new ArrayList<>();
+
+    MultispeciesCoalescent msc;
+
+    double ploidy;
+    double popSize;
+    double expectedLogP;
     int nSpecies;
-    int nBranches;
-    double[] popSizes;
 
-    final int individualsPerSpecies = 2;
-    GeneTreeWithinSpeciesTree geneTreeTestA;
-    GeneTreeWithinSpeciesTree geneTreeTestB;
-    TaxonSet speciesSuperSet;
     final double allowedError = 10e-6;
 
-    final TreeParser speciesTree = new TreeParser();
-    final TreeParser geneTreeA = new TreeParser();
-    final TreeParser geneTreeB = new TreeParser();
-    
-    final List<GeneTreeWithinSpeciesTree> geneTreeList = new ArrayList<GeneTreeWithinSpeciesTree>();
-    
-    MultispeciesPopulationModel populationModel;
+    abstract public TaxonSet generateSuperset() throws Exception;
+    abstract public MultispeciesPopulationModel generatePopulationModel() throws Exception;
 
-    final double ploidy = 2.0;
+    @Test
+    public void testLogP() throws Exception {
+        TaxonSet speciesSuperset = generateSuperset();
+        initializeSpeciesTree(speciesSuperset);
+        initializeGeneTrees();
 
-    public void initializeTrees(final String newickSpeciesTree, final String newickGeneTreeA, final String newickGeneTreeB) throws Exception {
+        final int nBranches = (nSpecies * 2) - 1;
+        final MultispeciesPopulationModel populationModel = generatePopulationModel();
+        populationModel.initPopSizes(nBranches);
+        populationModel.initPopSizes(popSize);
+
+        msc = new MultispeciesCoalescent();
+        msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
+
+        double calculatedLogP = msc.calculateLogP();
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
+    }
+
+    public void initializeSpeciesTree(TaxonSet speciesSuperset) throws Exception {
+        speciesTree = new TreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
-        geneTreeA.initByName("newick", newickGeneTreeA, "IsLabelledNewick", true);
-        geneTreeB.initByName("newick", newickGeneTreeB, "IsLabelledNewick", true);
+        speciesTreeWrapper = new SpeciesTree();
+        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperset);
+    }
 
-        List<Taxon> superSetList = new ArrayList<>();
-        for (int i = 0; i < nSpecies; i++) {
-            final String speciesName = String.format("s%d", i);
-            List<Taxon> taxonList = new ArrayList<>();
-            for (int j = 0; j < individualsPerSpecies; j++) {
-                final String taxonName = String.format("s%d_tip%d", i, j);
-                taxonList.add(new Taxon(taxonName));
-            }
-            superSetList.add(new TaxonSet(speciesName, taxonList));
+    public void initializeGeneTrees() throws Exception {
+        for (String geneTreeNewick: newickGeneTrees) {
+            TreeParser geneTree = new TreeParser();
+            geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
+            geneTrees.add(geneTree);
+
+            GeneTree geneTreeWrapper = new GeneTree();
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
+            geneTreeWrappers.add(geneTreeWrapper);
         }
-        speciesSuperSet = new TaxonSet(superSetList);
-
-        geneTreeTestA = new GeneTreeWithinSpeciesTree();
-        geneTreeTestB = new GeneTreeWithinSpeciesTree();
-
-        geneTreeTestA.initByName("tree", geneTreeA, "ploidy", ploidy);
-        geneTreeTestB.initByName("tree", geneTreeB, "ploidy", ploidy);
-        
-        geneTreeList.add(geneTreeTestA);
-        geneTreeList.add(geneTreeTestB);
     }
 }
