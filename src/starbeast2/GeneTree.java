@@ -81,11 +81,15 @@ public class GeneTree extends TreeWrapper {
             update();
         }
 
+        System.out.println(String.format("%d = %d - %d", coalescentTimes.size(), geneTreeNodeCount, geneTreeLeafNodeCount));
         // the number of coalescent times should equal the number of internal gene tree nodes (each a coalescent event)
-        assert coalescentTimes.size() == geneTreeNodeCount - geneTreeLeafNodeCount;
-
-        // this gene tree IS compatible with the species tree
-        return geneTreeCompatible;
+        if (geneTreeCompatible) {
+            assert coalescentTimes.size() == geneTreeNodeCount - geneTreeLeafNodeCount;
+            // this gene tree IS compatible with the species tree
+            return true;
+        } else {
+            return false;
+        }
     }
 
     void update() {
