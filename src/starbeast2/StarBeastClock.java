@@ -29,8 +29,6 @@ public class StarBeastClock extends BranchRateModel.Base {
 
         final int nRates = speciesTreeRates.length;
 
-        assert speciesTreeOccupancy != null;
-
         double relaxedRate = 0.0;
         double totalOccupancy = 0.0;
         for (int i = 0; i < nRates; i++) {
