@@ -25,7 +25,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
     final public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree");
     // TODO: make this input a list of valuables
     final public Input<List<Function>> parameterInput = new Input<>("metadata", "meta data to be logged with the tree nodes",new ArrayList<>());
-    final public Input<BranchRateModel.Base> clockModelInput = new Input<>("branchratemodel", "rate to be logged with branches of the tree");
+    final public Input<BranchRateModel> clockModelInput = new Input<>("branchratemodel", "rate to be logged with branches of the tree");
     final public Input<Boolean> substitutionsInput = new Input<>("substitutions", "report branch lengths as substitutions (branch length times clock rate for the branch)", false);
     final public Input<Integer> decimalPlacesInput = new Input<>("dp", "the number of decimal places to use writing branch lengths and rates, use -1 for full precision (default = full precision)", -1);
 
@@ -76,7 +76,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
                 metadata.set(i, ((StateNode) metadata.get(i)).getCurrent());
             }
         }
-        BranchRateModel.Base branchRateModel = clockModelInput.get();
+        BranchRateModel branchRateModel = clockModelInput.get();
         MultispeciesPopulationModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
@@ -102,7 +102,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
         }
     }
 
-    String toNewick(Node node, List<Function> metadataList, BranchRateModel.Base branchRateModel, MultispeciesPopulationModel populationModel) {
+    String toNewick(Node node, List<Function> metadataList, BranchRateModel branchRateModel, MultispeciesPopulationModel populationModel) {
         StringBuffer buf = new StringBuffer();
         if (node.getLeft() != null) {
             buf.append("(");
@@ -165,7 +165,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
         double nodeLength;
         if (node.isRoot()) {
-            nodeLength = node.getHeight() - getTreeHeight();
+            nodeLength = getTreeHeight() - node.getHeight();
         } else {
             nodeLength = node.getLength();
         }
