@@ -1,8 +1,23 @@
 package starbeast2;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
-import beast.core.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import beast.core.Description;
+import beast.core.Function;
+import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.StateNode;
+import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Taxon;
@@ -15,12 +30,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.ClusterTree;
 
-import java.util.*;
-
-import static java.lang.Math.*;
-
 /**
-* @author Remco Bouckaert
 * @author Joseph Heled
 * @author Huw Ogilvie
  */
@@ -36,30 +46,33 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             this.ename = name;
         }
 
-        public String toString() {
+        @Override
+		public String toString() {
             return ename;
         }
 
         private final String ename;
     }
-    public Input<Method> initMethod = new Input<Method>("method", "Initialise either with a totally random " +
+    final public Input<Method> initMethod = new Input<>("method", "Initialise either with a totally random " +
             "state or a point estimate based on alignments data (default point-estimate)",
             Method.POINT, Method.values());
 
-    public Input<Tree> speciesTreeInput = new Input<Tree>("speciesTree", "The species tree to initialize");
+    final public Input<Tree> speciesTreeInput = new Input<>("speciesTree", "The species tree to initialize");
 
-    public Input<List<Tree>> genes = new Input<List<Tree>>("geneTree", "Gene trees to initialize", new ArrayList<Tree>());
+    final public Input<List<Tree>> genes = new Input<>("geneTree", "Gene trees to initialize", new ArrayList<>());
+    //,
+    //        Validate.REQUIRED);
 
-    public Input<CalibratedYuleModel> calibratedYule = new Input<CalibratedYuleModel>("calibratedYule",
+    final public Input<CalibratedYuleModel> calibratedYule = new Input<>("calibratedYule",
             "The species tree (with calibrations) to initialize", Validate.XOR, speciesTreeInput);
 
-    public Input<RealParameter> birthRate = new Input<RealParameter>("birthRate",
+    final public Input<RealParameter> birthRate = new Input<>("birthRate",
             "Tree prior birth rate to initialize");
 
-    public Input<Function> muInput = new Input<Function>("baseRate",
+    final public Input<Function> muInput = new Input<>("baseRate",
             "Main clock rate used to scale trees (default 1).");
 
-    public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<MultispeciesPopulationModel>("populationModel", "The species tree population model.", Validate.REQUIRED);
+    final public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
     private boolean hasCalibrations;
 
@@ -109,9 +122,10 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     private double[] firstMeetings(final Tree gtree, final Map<String, Integer> tipName2Species, final int nSpecies) {
         final Node[] nodes = gtree.listNodesPostOrder(null, null);
-        final Set<Integer>[] tipsSpecies = new Set[nodes.length];
+        @SuppressWarnings("unchecked")
+		final Set<Integer>[] tipsSpecies = new Set[nodes.length];
         for(int k = 0; k < tipsSpecies.length; ++k) {
-            tipsSpecies[k] = new HashSet<Integer>();
+            tipsSpecies[k] = new HashSet<>();
         }
         // d[i,j] = minimum height of node which has tips belonging to species i and j
         // d is is upper triangular
@@ -123,10 +137,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 tipsSpecies[n.getNr()].add(tipName2Species.get(n.getID()));
             } else {
                 assert n.getChildCount() == 2;
-                final Set<Integer>[] sps = new Set[2];
+                @SuppressWarnings("unchecked")
+				final Set<Integer>[] sps = new Set[2];
                 sps[0] = tipsSpecies[n.getChild(0).getNr()];
                 sps[1] = tipsSpecies[n.getChild(1).getNr()];
-                final Set<Integer> u = new HashSet<Integer>(sps[0]);
+                final Set<Integer> u = new HashSet<>(sps[0]);
                 u.retainAll(sps[1]);
                 sps[0].removeAll(u);
                 sps[1].removeAll(u);
@@ -165,7 +180,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final List<Tree> geneTrees = genes.get();
 
         //final List<Alignment> alignments = genes.get();
-        //final List<Tree> geneTrees = new ArrayList<Tree>(alignments.size());
+        //final List<Tree> geneTrees = new ArrayList<>(alignments.size());
         double maxNsites = 0;
         //for( final Alignment alignment : alignments)  {
         for (final Tree gtree : geneTrees) {
@@ -178,7 +193,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
             maxNsites = max(maxNsites, alignment.getSiteCount());
         }
-        final Map<String, Integer> geneTips2Species = new HashMap<String, Integer>();
+        final Map<String, Integer> geneTips2Species = new HashMap<>();
         final List<Taxon> taxonSets = species.taxonsetInput.get();
 
         for(int k = 0; k < speciesNames.size(); ++k) {
@@ -243,7 +258,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         };
         ctree.initByName("initial", stree, "taxonset", species,"clusterType", "upgma", "distance", distance);
 
-        final Map<String, Integer> sptips2SpeciesIndex = new HashMap<String, Integer>();
+        final Map<String, Integer> sptips2SpeciesIndex = new HashMap<>();
         for(int i = 0; i < speciesNames.size(); ++i) {
             sptips2SpeciesIndex.put(speciesNames.get(i), i);
         }
@@ -265,7 +280,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 final List<String> taxaNames = alignment.getTaxaNames();
                 final int nTaxa =  taxaNames.size();
                 // speedup
-                final Map<Integer,Integer> g2s = new HashMap<Integer, Integer>();
+                final Map<Integer,Integer> g2s = new HashMap<>();
                 for(int i = 0; i < nTaxa; ++i) {
                     g2s.put(i, geneTips2Species.get(taxaNames.get(i)));
                 }
@@ -368,7 +383,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     @Override
-    public void getInitialisedStateNodes(final List<StateNode> stateNodes) {
+    public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         if( hasCalibrations ) {
             stateNodes.add((Tree) calibratedYule.get().treeInput.get());
         } else {

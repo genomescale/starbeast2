@@ -55,8 +55,6 @@ public class SpeciesTree extends TreeWrapper {
             final String speciesName = species.getID();
             final int speciesNumber = speciesNumberMap.get(speciesName);
             final TaxonSet speciesTaxonSet = (TaxonSet) species;
-            /** replacement line for compatibility with BEAST 2.3.0 **/
-            // final Set<Taxon> tipSet = speciesTaxonSet.getTaxonSet();
             final Set<Taxon> tipSet = new HashSet<>(speciesTaxonSet.taxonsetInput.get());
 
             for (Taxon tip: tipSet) {
