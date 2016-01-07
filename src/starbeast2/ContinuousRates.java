@@ -10,21 +10,58 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
 public class ContinuousRates extends SpeciesTreeRates {
-    public Input<RealParameter> branchRatesInput = new Input<>("rates", "Per-branch rates.");
+    public Input<RealParameter> branchRatesInput = new Input<>("rates", "Per-branch rates.", Input.Validate.REQUIRED);
+
+    private Double[] ratesArray;
+    private int nRates;
+    private boolean needsUpdate;
+
+    @Override
+    public boolean requiresRecalculation() {
+        needsUpdate = branchRatesInput.isDirty();
+        return needsUpdate;
+    }
+
+    public void restore() {
+        needsUpdate = true;
+        super.restore();
+    }
 
     @Override
     public void initAndValidate() throws Exception {
         final RealParameter branchRates = branchRatesInput.get();
         final TreeInterface speciesTree = speciesTreeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();
-        final int nNodes = speciesNodes.length;
 
-        branchRates.setDimension(nNodes);
+        nRates = speciesNodes.length;
+
+        branchRates.setDimension(nRates);
+
+        needsUpdate = true;
+    }
+
+    private void update() {
+        ratesArray = branchRatesInput.get().getValues();
+
+        needsUpdate = false;
     }
 
     @Override
     Double[] getRatesArray() {
-        return branchRatesInput.get().getValues();
+        if (needsUpdate) {
+            update();
+        }
+
+        return ratesArray;
+    }
+
+    @Override
+    public double getRateForBranch(Node node) {
+        if (needsUpdate) {
+            update();
+        }
+
+        return ratesArray[node.getNr()];
     }
 
     // for testing purposes
