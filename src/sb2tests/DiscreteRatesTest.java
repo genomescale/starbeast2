@@ -9,20 +9,22 @@ import java.util.List;
 import org.junit.Test;
 
 import beast.core.State;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Tree;
+import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
 import starbeast2.ConstantPopulationIO;
-import starbeast2.ContinuousRates;
+import starbeast2.DiscreteRates;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
 import starbeast2.SpeciesTree;
 import starbeast2.StarBeastClock;
 
-public class ContinuousRatesTest {
+public class DiscreteRatesTest {
     private String newickSpeciesTree;
     private List<String> newickGeneTrees = new ArrayList<>();
 
@@ -38,7 +40,7 @@ public class ContinuousRatesTest {
     private final double alpha = 1.5;
     private final double beta = 2.5;
     private final double geneRate = 1.5;
-    private final double initialSpeciesRate = 1.0;
+    private final int initialSpeciesRate = 1;
     private final double ploidy = 2.0;
 
     final double allowedError = 10e-6;
@@ -46,14 +48,15 @@ public class ContinuousRatesTest {
     private RealParameter alphaParameter;
     private RealParameter betaParameter;
     private RealParameter geneRateParameter;
-    private RealParameter speciesRateParameter;
+    private IntegerParameter speciesRateParameter;
 
     private StarBeastClock clockModel;
-    private ContinuousRates speciesRates;
+    private DiscreteRates speciesRates;
+    private LogNormalDistributionModel speciesRateDistribution;
 
     MultispeciesCoalescent msc;
 
-    public ContinuousRatesTest() {
+    public DiscreteRatesTest() {
         newickSpeciesTree = "((a:1.5,b:1.5):0.5,c:2.0)";
         newickGeneTrees.add("((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)");
     }
@@ -68,7 +71,7 @@ public class ContinuousRatesTest {
         alphaParameter = new RealParameter();
         betaParameter = new RealParameter();
         geneRateParameter = new RealParameter();
-        speciesRateParameter = new RealParameter();
+        speciesRateParameter = new IntegerParameter();
 
         alphaParameter.initByName("value", String.valueOf(alpha));
         betaParameter.initByName("value", String.valueOf(beta));
@@ -92,8 +95,11 @@ public class ContinuousRatesTest {
         msc = new MultispeciesCoalescent();
         msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
 
-        speciesRates = new ContinuousRates();
-        speciesRates.initByName("tree", speciesTree, "rates", speciesRateParameter);
+        speciesRateDistribution = new LogNormalDistributionModel();
+        speciesRateDistribution.initByName("M", "1.0", "S", "1.0", "meanInRealSpace", true);
+
+        speciesRates = new DiscreteRates();
+        speciesRates.initByName("tree", speciesTree, "rates", speciesRateParameter, "distr", speciesRateDistribution);
         initializeRates();
 
         clockModel = new StarBeastClock();
@@ -127,11 +133,11 @@ public class ContinuousRatesTest {
         String[] node3 = {"a", "b"};
         String[] node4 = {"a", "b", "c"};
 
-        double rate0 = 0.8;
-        double rate1 = 1.2;
-        double rate2 = 1.0;
-        double rate3 = 1.6;
-        double rate4 = 0.5;
+        int rate0 = 4;
+        int rate1 = 0;
+        int rate2 = 3;
+        int rate3 = 2;
+        int rate4 = 1;
 
         assertTrue(speciesRates.setRate(node0, rate0));
         assertTrue(speciesRates.setRate(node1, rate1));
@@ -154,16 +160,16 @@ public class ContinuousRatesTest {
         String[] node10 = {"a1", "a2", "b1", "b2", "c1", "c2"};
 
         // correct gene tree rates were calculated by hand
-        double rate00 = 1.2;
-        double rate01 = 1.2;
-        double rate02 = 1.9;
-        double rate03 = 1.9;
-        double rate04 = 1.375;
-        double rate05 = 1.25;
-        double rate06 = 1.5;
-        double rate07 = 2.4;
-        double rate08 = 1.08;
-        double rate09 = 0.75;
+        double rate00 = 3.2772894;
+        double rate01 = 3.2772894;
+        double rate02 = 0.3621035;
+        double rate03 = 0.3621035;
+        double rate04 = 1.370629;
+        double rate05 = 1.204206;
+        double rate06 = 2.685416;
+        double rate07 = 0.909796;
+        double rate08 = 0.6127731;
+        double rate09 = 0.5385174;
         double rate10 = 1.5;
 
         Tree geneTree = geneTrees.get(0);
