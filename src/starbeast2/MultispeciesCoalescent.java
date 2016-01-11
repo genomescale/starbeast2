@@ -50,7 +50,7 @@ public class MultispeciesCoalescent extends Distribution {
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         speciesTreeNodeCount = speciesTree.getNodeCount();
-        populationModel.initPopSizes(speciesTreeNodeCount);
+        populationModel.initPopSizes(speciesTreeNodeCount * 2);
     }
 
     public double calculateLogP() throws Exception {
@@ -58,8 +58,8 @@ public class MultispeciesCoalescent extends Distribution {
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 
         speciesTreeNodeCount = speciesTree.getNodeCount();
-        double[] speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        double[] speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
+        double[] speciesStartTimes = new double[2*speciesTreeNodeCount]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[2*speciesTreeNodeCount]; // the later date (tipward end)
 
         final List<GeneTree> geneTrees = geneTreeInput.get();
 
@@ -67,14 +67,16 @@ public class MultispeciesCoalescent extends Distribution {
 
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesNode = speciesTree.getNode(i);
-            final Node parentNode = speciesNode.getParent();
+            final Node leftParent = speciesNode.getParent();
+            final Node rightParent = null; // speciesNode.getLeftParent();
 
-            speciesEndTimes[i] = speciesNode.getHeight();
-            
-            if (parentNode == null) {
-                speciesStartTimes[i] = Double.POSITIVE_INFINITY;
+            speciesEndTimes[i*2+1] = speciesEndTimes[i*2] = speciesNode.getHeight();
+            if (speciesNode.isRoot()) {
+                speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = Double.POSITIVE_INFINITY;
             } else {
-                speciesStartTimes[i] = parentNode.getHeight();
+                speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = leftParent.getHeight();
+                if (rightParent != null)
+                    speciesStartTimes[i*2+1] = rightParent.getHeight();
             }
         }
 
@@ -82,7 +84,7 @@ public class MultispeciesCoalescent extends Distribution {
         allEventCounts.clear();
         allCoalescentTimes.clear();
 
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
+        for (int i = 0; i < 2 * speciesTreeNodeCount; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
             allCoalescentTimes.add(new ArrayList<>());
@@ -92,8 +94,9 @@ public class MultispeciesCoalescent extends Distribution {
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTree geneTree = geneTrees.get(j);
             assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
+
             if (geneTree.computeCoalescentTimes()) {
-                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
+                for (int i = 0; i < 2 * speciesTreeNodeCount; i++) { // for each species tree branch "i"
                     final List<Double> timesView = geneTree.coalescentTimes.get(i);
                     final int geneBranchEventCount = timesView.size();
                     final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
@@ -120,8 +123,9 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         logP = 0.0;
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            final Node speciesTreeNode = speciesTree.getNode(i); 
+        for (int i = 0; i < 2 * speciesTreeNodeCount; i++) {
+            // linearPopulation uses i and speciesTreeNode, which needs double check later???
+            final Node speciesTreeNode = speciesTree.getNode(i/2);
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);

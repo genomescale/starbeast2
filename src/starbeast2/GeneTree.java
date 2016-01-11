@@ -97,7 +97,7 @@ public class GeneTree extends TreeWrapper {
         final Map<String, Integer> tipNumberMap = speciesTreeWrapper.getTipNumberMap();
 
         final int speciesTreeNodeCount = speciesTree.getNodeCount();
-        speciesOccupancy = new double[geneTreeNodeCount][speciesTreeNodeCount];
+        speciesOccupancy = new double[geneTreeNodeCount][2*speciesTreeNodeCount];
 
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
         Arrays.fill(geneNodeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
@@ -110,13 +110,13 @@ public class GeneTree extends TreeWrapper {
             final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
             final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
             final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
-            coalescentLineageCounts.add(speciesTreeLeafNumber);
+            coalescentLineageCounts.add(2 * speciesTreeLeafNumber);
 
             final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
             final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
             final double lastHeight = 0.0;
 
-            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode, firstCoalescenceNumber, speciesTreeLeafNode, speciesTreeLeafNumber)) {
+            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode, firstCoalescenceNumber, speciesTreeLeafNode, 2 * speciesTreeLeafNumber)) {
                 // this gene tree IS NOT compatible with the species tree
                 geneTreeCompatible = false;
                 needsUpdate = false;
@@ -133,11 +133,11 @@ public class GeneTree extends TreeWrapper {
 
         // check if the next coalescence event occurs in an ancestral branch
         if (!speciesTreeNode.isRoot()) {
-            final Node speciesTreeParentNode = speciesTreeNode.getParent();
+            final Node speciesTreeParentNode = speciesTreeNode.getParent(); // (geneTreeNodeNumber);
             final double speciesTreeParentHeight = speciesTreeParentNode.getHeight();
             if (geneTreeNodeHeight >= speciesTreeParentHeight) {
                 speciesOccupancy[lastGeneTreeNodeNumber][speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
-                final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
+                final int speciesTreeParentNodeNumber = 2 * speciesTreeParentNode.getNr(); // + speciesTreeParentNode.getOffset();
                 coalescentLineageCounts.add(speciesTreeParentNodeNumber);
 
                 return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesTreeParentHeight, geneTreeNode, geneTreeNodeNumber, speciesTreeParentNode, speciesTreeParentNodeNumber);
@@ -159,10 +159,10 @@ public class GeneTree extends TreeWrapper {
                 final int nextGeneTreeNodeNumber = nextGeneTreeNode.getNr();
                 return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
             }
-        } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
-            return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
         } else {
-            return false; // this gene tree IS NOT compatible with the species tree
+            // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
+            // otherwise, this gene tree IS NOT compatible with the species tree
+            return (existingSpeciesAssignment == speciesTreeNodeNumber);
         }
     }
 
