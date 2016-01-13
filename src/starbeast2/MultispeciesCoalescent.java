@@ -21,12 +21,12 @@ import beast.evolution.tree.TreeInterface;
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends Distribution {
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
-    public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
-    public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
+    public Input<SpeciesNetwork> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
+    public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
+    public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
 
     private int nGeneTrees;
-    private int speciesTreeNodeCount;
+    private int speciesNetworkNodeCount;
     private double[] perGenePloidy;
 
     final private List<int[]> allLineageCounts = new ArrayList<>();
@@ -40,7 +40,6 @@ public class MultispeciesCoalescent extends Distribution {
         final List<GeneTree> geneTrees = geneTreeInput.get();
         nGeneTrees = geneTrees.size();
 
-        // initialize gene trees and store ploidy
         perGenePloidy = new double[nGeneTrees];
         for (int i = 0; i < nGeneTrees; i++) {
             final GeneTree geneTreeI = geneTrees.get(i);
@@ -48,27 +47,26 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
-        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
-        speciesTreeNodeCount = speciesTree.getNodeCount();
-        populationModel.initPopSizes(speciesTreeNodeCount * 2);
+        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        speciesNetworkNodeCount = speciesNetwork.getNodeCount();
+        populationModel.initPopSizes(speciesNetworkNodeCount * 2);
     }
 
     public double calculateLogP() throws Exception {
-        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
+        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
-
-        speciesTreeNodeCount = speciesTree.getNodeCount();
-        double[] speciesStartTimes = new double[2*speciesTreeNodeCount]; // the earlier date (rootward end)
-        double[] speciesEndTimes = new double[2*speciesTreeNodeCount]; // the later date (tipward end)
+        speciesNetworkNodeCount = speciesNetwork.getNodeCount();
+        double[] speciesStartTimes = new double[2*speciesNetworkNodeCount]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[2*speciesNetworkNodeCount]; // the later date (tipward end)
 
         final List<GeneTree> geneTrees = geneTreeInput.get();
+        // assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
 
-        assert sc.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
-
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            final Node speciesNode = speciesTree.getNode(i);
-            final Node leftParent = speciesNode.getParent();
-            final Node rightParent = null; // speciesNode.getLeftParent();
+        // [2*i] for the left branch and [2i+1] for the right branch (if right branch exists)
+        for (int i = 0; i < speciesNetworkNodeCount; i++) {
+            final NetworkNode speciesNode = speciesNetwork.getNode(i);
+            final NetworkNode leftParent = speciesNode.getLeftParent();
+            final NetworkNode rightParent = speciesNode.getLeftParent();
 
             speciesEndTimes[i*2+1] = speciesEndTimes[i*2] = speciesNode.getHeight();
             if (speciesNode.isRoot()) {
@@ -84,7 +82,7 @@ public class MultispeciesCoalescent extends Distribution {
         allEventCounts.clear();
         allCoalescentTimes.clear();
 
-        for (int i = 0; i < 2 * speciesTreeNodeCount; i++) {
+        for (int i = 0; i < 2 * speciesNetworkNodeCount; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
             allCoalescentTimes.add(new ArrayList<>());
@@ -93,10 +91,10 @@ public class MultispeciesCoalescent extends Distribution {
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTree geneTree = geneTrees.get(j);
-            assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
+            // assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
 
             if (geneTree.computeCoalescentTimes()) {
-                for (int i = 0; i < 2 * speciesTreeNodeCount; i++) { // for each species tree branch "i"
+                for (int i = 0; i < 2 * speciesNetworkNodeCount; i++) { // for each species network branch "i"
                     final List<Double> timesView = geneTree.coalescentTimes.get(i);
                     final int geneBranchEventCount = timesView.size();
                     final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
@@ -123,13 +121,14 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         logP = 0.0;
-        for (int i = 0; i < 2 * speciesTreeNodeCount; i++) {
-            // linearPopulation uses i and speciesTreeNode, which needs double check later???
-            final Node speciesTreeNode = speciesTree.getNode(i/2);
+        for (int i = 0; i < 2 * speciesNetworkNodeCount; i++) {
+            final NetworkNode speciesNetworkNode = speciesNetwork.getNode(i/2);
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);
-            final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+
+            // linearPopulation uses i and speciesTreeNode, which needs double check later???
+            final double branchLogP = populationModel.branchLogP(i, speciesNetworkNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
             logP += branchLogP;
 
             /* for (int j = 0; j < branchCoalescentTimes.size(); j++) {
