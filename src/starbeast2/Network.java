@@ -1,6 +1,6 @@
 package starbeast2;
 
-import java.io.*;
+import java.io.PrintStream;
 import java.util.*;
 
 import beast.core.*;
@@ -15,7 +15,8 @@ import beast.evolution.tree.*;
 
 @Description("Network representing reticulate evolution of species")
 public class Network extends StateNode {  //implements TreeInterface
-    public Input<Network> networkInput = new Input<>("initial", "species network to start with");
+    final public Input<Network> networkInput = new Input<>("initial", "network to start with");
+    final public Input<String> nodeTypeInput = new Input<>("nodetype", "type of the node in the network", NetworkNode.class.getName());
 
     /**
      * state of dirtiness of a node in the tree
@@ -26,14 +27,18 @@ public class Network extends StateNode {  //implements TreeInterface
     public static final int IS_CLEAN = 0, IS_DIRTY = 1, IS_FILTHY = 2;
 
     // number of nodes
-    // protected int nodeCount = -1;
+    protected int nodeCount = -1;
+    protected int internalNodeCount = -1;
+    protected int leafNodeCount = -1;
 
     protected NetworkNode root;
+    protected NetworkNode storedRoot;
 
     /**
-     * array of all nodes in the network *
+     * array of all nodes in the network
      */
     protected NetworkNode[] networkNodes = null;
+    protected NetworkNode[] storedNetworkNodes = null;
 
     @Override
     public void initAndValidate() throws Exception {
@@ -52,6 +57,14 @@ public class Network extends StateNode {  //implements TreeInterface
     public Network(final String sNewick) {
     }
 
+    protected NetworkNode newNode() {
+        try {
+            return (NetworkNode) Class.forName(nodeTypeInput.get()).newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot create node of type " + nodeTypeInput.get() + ": " + e.getMessage());
+        }
+    }
+
     public NetworkNode getRoot() {
         return root;
     }
@@ -64,7 +77,23 @@ public class Network extends StateNode {  //implements TreeInterface
      * @return the number of nodes
      */
     public int getNodeCount() {
-        return this.root.getNodeCount();
+        if (nodeCount < 0)
+            nodeCount = this.root.getNodeCount();
+        return nodeCount;
+    }
+
+    public int getInternalNodeCount() {
+        if (internalNodeCount < 0) {
+            internalNodeCount = root.getInternalNodeCount();
+        }
+        return internalNodeCount;
+    }
+
+    public int getLeafNodeCount() {
+        if (leafNodeCount < 0) {
+            leafNodeCount = root.getLeafNodeCount();
+        }
+        return leafNodeCount;
     }
 
     /**
@@ -72,7 +101,7 @@ public class Network extends StateNode {  //implements TreeInterface
      */
     public List<NetworkNode> getLeafNodes() {
         final ArrayList<NetworkNode> lNodes = new ArrayList<>();
-        for (final NetworkNode node: networkNodes) {
+        for (final NetworkNode node : networkNodes) {
             if (node.isLeaf()) lNodes.add(node);
         }
         return lNodes;
@@ -94,20 +123,18 @@ public class Network extends StateNode {  //implements TreeInterface
     public void setEverythingDirty(final boolean isDirty) {
         setSomethingIsDirty(isDirty);
         if (!isDirty) {
-            for( Node n : m_nodes ) {
+            for(NetworkNode n : networkNodes) {
                 n.isDirty = IS_CLEAN;
             }
-            //  root.makeAllDirty(IS_CLEAN);
         } else {
-            for( Node n : m_nodes ) {
+            for(NetworkNode n : networkNodes) {
                 n.isDirty = IS_FILTHY;
             }
-            //    root.makeAllDirty(IS_FILTHY);
         }
     }
 
     /**
-     * @return a deep copy of this network.
+     * @return a deep copy of this network
      */
     @Override
     public Network copy() {
@@ -115,71 +142,75 @@ public class Network extends StateNode {  //implements TreeInterface
         network.setID(getID());
         network.index = index;
         network.root = root.copy();
+        network.nodeCount = nodeCount;
+        network.internalNodeCount = internalNodeCount;
+        network.leafNodeCount = leafNodeCount;
         return network;
     }
 
     /**
-     * copy of all values into existing tree *
+     * copy of all values into existing network
      */
     @Override
     public void assignTo(final StateNode other) {
-        final Tree tree = (Tree) other;
-        final Node[] nodes = new Node[nodeCount];
-        listNodes(tree.root, nodes);
-        tree.setID(getID());
+        final Network network = (Network) other;
+        final NetworkNode[] nodes = new NetworkNode[nodeCount];
+        // ??? listNodes(network.root, nodes);
+        network.setID(getID());
         //tree.index = index;
         root.assignTo(nodes);
-        tree.root = nodes[root.getNr()];
-        tree.nodeCount = nodeCount;
-        tree.internalNodeCount = internalNodeCount;
-        tree.leafNodeCount = leafNodeCount;
+        network.root = nodes[root.getNr()];
+        network.nodeCount = nodeCount;
+        network.internalNodeCount = internalNodeCount;
+        network.leafNodeCount = leafNodeCount;
     }
 
     /**
-     * copy of all values from existing tree *
+     * copy of all values from existing network
      */
     @Override
     public void assignFrom(final StateNode other) {
-        final Tree tree = (Tree) other;
-        final Node[] nodes = new Node[tree.getNodeCount()];//tree.getNodesAsArray();
-        for (int i = 0; i < tree.getNodeCount(); i++) {
+        final Network network = (Network) other;
+        final NetworkNode[] nodes = new NetworkNode[network.getNodeCount()];
+        for (int i = 0; i < network.getNodeCount(); i++) {
             nodes[i] = newNode();
         }
-        setID(tree.getID());
+        setID(network.getID());
         //index = tree.index;
-        root = nodes[tree.root.getNr()];
-        root.assignFrom(nodes, tree.root);
-        root.parent = null;
-        nodeCount = tree.nodeCount;
-        internalNodeCount = tree.internalNodeCount;
-        leafNodeCount = tree.leafNodeCount;
+        root = nodes[network.root.getNr()];
+        root.assignFrom(nodes, network.root);
+        root.parents = null;
+        nodeCount = network.nodeCount;
+        internalNodeCount = network.internalNodeCount;
+        leafNodeCount = network.leafNodeCount;
+
         initArrays();
     }
 
     /**
-     * as assignFrom, but only copy tree structure *
+     * as assignFrom, but only copy network structure
      */
     @Override
     public void assignFromFragile(final StateNode other) {
-        final Tree tree = (Tree) other;
-        if (m_nodes == null) {
+        final Network network = (Network) other;
+        if (networkNodes == null) {
             initArrays();
         }
-        root = m_nodes[tree.root.getNr()];
-        final Node[] otherNodes = tree.m_nodes;
+        root = networkNodes[network.root.getNr()];
+        final NetworkNode[] otherNodes = network.networkNodes;
         final int rootNr = root.getNr();
         assignFrom(0, rootNr, otherNodes);
         root.height = otherNodes[rootNr].height;
-        root.parent = null;
-        if (otherNodes[rootNr].getLeft() != null) {
-            root.setLeft(m_nodes[otherNodes[rootNr].getLeft().getNr()]);
+        root.parents = null;
+        if (otherNodes[rootNr].getLeftChild() != null) {
+            root.setLeftChild(networkNodes[otherNodes[rootNr].getLeftChild().getNr()]);
         } else {
-            root.setLeft(null);
+            root.setLeftChild(null);
         }
-        if (otherNodes[rootNr].getRight() != null) {
-            root.setRight(m_nodes[otherNodes[rootNr].getRight().getNr()]);
+        if (otherNodes[rootNr].getRightChild() != null) {
+            root.setRightChild(networkNodes[otherNodes[rootNr].getRightChild().getNr()]);
         } else {
-            root.setRight(null);
+            root.setRightChild(null);
         }
         assignFrom(rootNr + 1, nodeCount, otherNodes);
     }
@@ -187,18 +218,24 @@ public class Network extends StateNode {  //implements TreeInterface
     /**
      * helper to assignFromFragile *
      */
-    private void assignFrom(final int start, final int end, final Node[] otherNodes) {
+    private void assignFrom(final int start, final int end, final NetworkNode[] otherNodes) {
         for (int i = start; i < end; i++) {
-            Node sink = m_nodes[i];
-            Node src = otherNodes[i];
+            NetworkNode sink = networkNodes[i];
+            NetworkNode src = otherNodes[i];
             sink.height = src.height;
-            sink.parent = m_nodes[src.parent.getNr()];
-            if (src.getLeft() != null) {
-                sink.setLeft(m_nodes[src.getLeft().getNr()]);
-                if (src.getRight() != null) {
-                    sink.setRight(m_nodes[src.getRight().getNr()]);
+            if (src.getLeftParent() != null) {
+                sink.setLeftParent(networkNodes[src.getLeftParent().getNr()]);
+                if (src.getRightParent() != null)
+                    sink.setRightParent(networkNodes[src.getRightParent().getNr()]);
+                else
+                    sink.setRightParent(null);
+            }
+            if (src.getLeftChild() != null) {
+                sink.setLeftChild(networkNodes[src.getLeftChild().getNr()]);
+                if (src.getRightChild() != null) {
+                    sink.setRightChild(networkNodes[src.getRightChild().getNr()]);
                 } else {
-                    sink.setRight(null);
+                    sink.setRightChild(null);
                 }
             }
         }
@@ -207,7 +244,8 @@ public class Network extends StateNode {  //implements TreeInterface
     @Override
     public int scale(final double scale) throws Exception {
         root.scale(scale);
-        return getInternalNodeCount()- getDirectAncestorNodeCount();
+        // is this number correct??? no
+        return getInternalNodeCount();
     }
 
     /**
@@ -220,23 +258,9 @@ public class Network extends StateNode {  //implements TreeInterface
 
     @Override
     protected void store() {
-
-        // this condition can only be true for sampled ancestor trees
-        if (m_storedNodes.length != nodeCount) {
-            final Node[] tmp = new Node[nodeCount];
-            System.arraycopy(m_storedNodes, 0, tmp, 0, m_storedNodes.length - 1);
-            if (nodeCount > m_storedNodes.length) {
-                tmp[m_storedNodes.length - 1] = m_storedNodes[m_storedNodes.length - 1];
-                tmp[nodeCount - 1] = newNode();
-                tmp[nodeCount - 1].setNr(nodeCount - 1);
-            }
-            m_storedNodes = tmp;
-        }
-
         storeNodes(0, nodeCount);
-        storedRoot = m_storedNodes[root.getNr()];
+        storedRoot = storedNetworkNodes[root.getNr()];
     }
-
 
     /**
      * Stores nodes with index i, for start <= i < end
@@ -246,78 +270,50 @@ public class Network extends StateNode {  //implements TreeInterface
      * @param end   nodes are stored up to but not including this index
      */
     private void storeNodes(final int start, final int end) {
-        // Use direct members for speed (we are talking 5-7% or more from total time for large trees :)
         for (int i = start; i < end; i++) {
-            final Node sink = m_storedNodes[i];
-            final Node src = m_nodes[i];
+            final NetworkNode sink = storedNetworkNodes[i];
+            final NetworkNode src = networkNodes[i];
             sink.height = src.height;
-
-            if ( src.parent != null ) {
-                sink.parent = m_storedNodes[src.parent.getNr()];
-            } else {
-                // currently only called in the case of sampled ancestor trees
-                // where root node is not always last in the list
-                sink.parent = null;
-            }
-
-            final List<Node> children = sink.children;
-            final List<Node> srcChildren = src.children;
-
-            if( children.size() == srcChildren.size() ) {
-                // shave some more time by avoiding list clear and add
-                for (int k = 0; k < children.size(); ++k) {
-                    final Node srcChild = srcChildren.get(k);
-                    // don't call addChild, which calls  setParent(..., true);
-                    final Node c = m_storedNodes[srcChild.getNr()];
-                    c.parent = sink;
-                    children.set(k, c);
-                }
-            } else {
-                children.clear();
-                //sink.removeAllChildren(false);
-                for (final Node srcChild : srcChildren) {
-                    // don't call addChild, which calls  setParent(..., true);
-                    final Node c = m_storedNodes[srcChild.getNr()];
-                    c.parent = sink;
-                    children.add(c);
-                    //sink.addChild(c);
-                }
-            }
+            // ???
         }
     }
 
     @Override
     public void restore() {
+        nodeCount = storedNetworkNodes.length;
 
-        // necessary for sampled ancestor trees
-        nodeCount = m_storedNodes.length;
+        final NetworkNode[] tmp = storedNetworkNodes;
+        storedNetworkNodes = networkNodes;
+        networkNodes = tmp;
+        root = networkNodes[storedRoot.getNr()];
 
-        final Node[] tmp = m_storedNodes;
-        m_storedNodes = m_nodes;
-        m_nodes = tmp;
-        root = m_nodes[storedRoot.getNr()];
-
-        // necessary for sampled ancestor trees,
-        // we have the nodes, no need for expensive recursion
-        leafNodeCount = 0;
-        for( Node n : m_nodes ) {
-            leafNodeCount += n.isLeaf() ? 1 : 0;
-        }
-
-        //leafNodeCount = root.getLeafNodeCount();
+        // leafNodeCount = root.getLeafNodeCount();
 
         hasStartedEditing = false;
 
-        for( Node n : m_nodes ) {
-            n.isDirty = Tree.IS_CLEAN;
+        for(NetworkNode n : networkNodes) {
+            n.isDirty = Network.IS_CLEAN;
         }
 
-        postCache = null;
+        // postCache = null;
+    }
+
+    public static void printTranslate(NetworkNode node, PrintStream out, int nodeCount) {
+    }
+
+    public static void printTaxa(final NetworkNode node, final PrintStream out, final int nodeCount) {
+        final List<String> translateLines = new ArrayList<>();
+        printTranslate(node, out, nodeCount);
+        Collections.sort(translateLines);
+        for (String line : translateLines) {
+            line = line.split("\\s+")[2];
+            out.println("\t\t\t" + line.replace(',', ' '));
+        }
     }
 
     @Override
     public void init(PrintStream out) throws Exception {
-        Node node = getRoot();
+        NetworkNode node = getRoot();
         out.println("#NEXUS\n");
         out.println("Begin taxa;");
         out.println("\tDimensions ntax=" + getLeafNodeCount() + ";");
@@ -326,7 +322,7 @@ public class Network extends StateNode {  //implements TreeInterface
         out.println("\t\t\t;");
         out.println("End;");
 
-        out.println("Begin trees;");
+        out.println("Begin networks;");
         out.println("\tTranslate");
         printTranslate(node, out, getNodeCount() / 2);
         out.print(";");
@@ -334,12 +330,11 @@ public class Network extends StateNode {  //implements TreeInterface
 
     @Override
     public void log(int sample, PrintStream out) {
-        Tree tree = (Tree) getCurrent();
-        out.print("tree STATE_" + sample + " = ");
+        Network network = (Network) getCurrent();
+        out.print("network STATE_" + sample + " = ");
         // Don't sort, this can confuse CalculationNodes relying on the tree
-        //tree.getRoot().sort();
         final int[] dummy = new int[1];
-        final String newick = tree.getRoot().toSortedNewick(dummy);
+        final String newick = network.getRoot().toSortedNewick(dummy);
         out.print(newick);
         out.print(";");
     }
