@@ -16,9 +16,11 @@ public class NetworkNode extends BEASTObject {
 
     /**
      * label nr of node
-     * use even number for the left parent (0, 2, ...), odd number (+1) for the right (1, 3, ...)
      */
     protected int labelNr;
+
+    // whether the node has been visited, say by a recursive method
+    protected boolean visited = false;
 
     /**
      * height of this node
@@ -48,12 +50,12 @@ public class NetworkNode extends BEASTObject {
     /**
      * arbitrarily labeled metadata on this node
      */
-    protected Map<String, Object> metaData = new TreeMap<String, Object>();
+    protected Map<String, Object> metaData = new TreeMap<>();
 
     /**
-     * the species network that this node is a part of
+     * the network that this node is a part of
      */
-    protected SpeciesNetwork speciesNetwork;
+    protected Network network;
 
     public NetworkNode() {
     }
@@ -68,16 +70,16 @@ public class NetworkNode extends BEASTObject {
         // do nothing
     }
 
-    public SpeciesNetwork getSpeciesNetwork() {
-        return speciesNetwork;
+    public Network getNetwork() {
+        return network;
     }
 
     public int getNr() {
         return labelNr;
     }
 
-    public void setNr(final int iLabel) {
-        labelNr = iLabel;
+    public void setNr(final int nr) {
+        labelNr = nr;
     }
 
     public double getHeight() {
@@ -85,9 +87,9 @@ public class NetworkNode extends BEASTObject {
     }
 
     /**
-     * A Node is IS_DIRTY if its value (like height) has changed.
-     * A Node is IS_FILTHY if its parent or child has changed.
-     * Otherwise the node is IS_CLEAN.
+     * A Node IS_DIRTY if its value (like height) has changed.
+     * A Node IS_FILTHY if its parent or child has changed.
+     * Otherwise the node IS_CLEAN.
      */
     public int isDirty() {
         return isDirty;
@@ -95,17 +97,6 @@ public class NetworkNode extends BEASTObject {
 
     public void makeDirty(final int nDirty) {
         isDirty |= nDirty;
-    }
-
-    /* This recursion needs revision: duplicated visit */
-    public void makeAllDirty(final int nDirty) {
-        isDirty = nDirty;
-        if (!isLeaf()) {
-            getLeftChild().makeAllDirty(nDirty);
-            if (getRightChild() != null) {
-                getRightChild().makeAllDirty(nDirty);
-            }
-        }
     }
 
     public int getParentCount() {
@@ -198,7 +189,6 @@ public class NetworkNode extends BEASTObject {
     public boolean isRoot() {
         return parents.size() == 0;
     }
-
     /**
      * @return true if current node is leaf node
      */
@@ -206,39 +196,69 @@ public class NetworkNode extends BEASTObject {
         return children.size() == 0;
     }
 
-    /**
-     * get all leaf node under this node, if this node is leaf then list.size() = 0.
-     *
-     * @return
-     */
-    public List<NetworkNode> getAllLeafNodes() {
-        final List<NetworkNode> leafNodes = new ArrayList<>();
-        if (!this.isLeaf()) getAllLeafNodes(leafNodes);
-        return leafNodes;
-    }
+    public boolean isVisited() {return visited;}
 
-    // recursive
-    public void getAllLeafNodes(final List<NetworkNode> leafNodes) {
-        if (this.isLeaf()) {
-            leafNodes.add(this);
+    public void setVisited () {visited = true;}
+
+    public void resetVisited () {visited = false;}
+
+    /* reset the visited indicators */
+    public void resetAllVisited () {
+        for (final NetworkNode child : children) {
+            child.resetVisited();
         }
-        for (NetworkNode child : children)
-            child.getAllLeafNodes(leafNodes);
+        resetVisited ();
     }
 
     public int getNodeCount() {
-        return getLeafNodeCount() + getBifurcationNodeCount() + getReticulationNodeCount();
+        resetAllVisited ();
+        return recurseNodeCount();
+    }
+
+    public int recurseNodeCount() {
+        int nodes = 1;
+        setVisited();
+        for (final NetworkNode child : children) {
+            if (!child.isVisited())
+                nodes += child.recurseNodeCount();
+        }
+        return nodes;
+    }
+
+    public int getLeafNodeCount() {
+        resetAllVisited ();
+        return recurseLeafNodeCount();
+    }
+
+    public int recurseLeafNodeCount() {
+        if (isLeaf()) return 1;
+        int nodes = 0;
+        setVisited();
+        for (final NetworkNode child : children) {
+            if (!child.isVisited())
+                nodes += child.recurseLeafNodeCount();
+        }
+        return nodes;
+    }
+
+    public int getInternalNodeCount() {
+        resetAllVisited ();
+        return recurseInternalNodeCount();
+    }
+
+    public int recurseInternalNodeCount() {
+        if (isLeaf()) return 0;
+        int nodes = 1;
+        setVisited();
+        for (final NetworkNode child : children) {
+            if (!child.isVisited())
+                nodes += child.recurseInternalNodeCount();
+        }
+        return nodes;
     }
 
     /**
      * many other methods below
-     */
-    /*
-
-
-    public String toString() {
-    }
-
      */
 
 }

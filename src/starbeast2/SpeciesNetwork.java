@@ -30,8 +30,7 @@ public class SpeciesNetwork extends CalculationNode {
         final Network speciesNetwork = networkInput.get();
         final HashMap<String, Integer> speciesNumberMap = new HashMap<>();
 
-        NetworkNode speciesNetworkRoot = speciesNetwork.getRoot();
-        for (NetworkNode leafNode: speciesNetworkRoot.getAllLeafNodes()) {
+        for (NetworkNode leafNode: speciesNetwork.getLeafNodes()) {
             final String speciesName = leafNode.getID();
             final int speciesNumber = leafNode.getNr();
 

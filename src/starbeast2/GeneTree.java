@@ -74,9 +74,8 @@ public class GeneTree extends CalculationNode {
     }
 
     void update() {
-        final SpeciesNetwork mapping = speciesNetworkInput.get();
-        final Network speciesNetwork = mapping.getNetwork();
-        final Map<String, Integer> tipNumberMap = mapping.getTipNumberMap();
+        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        final Map<String, Integer> tipNumberMap = speciesNetworkInput.get().getTipNumberMap();
 
         final int speciesNetworkNodeCount = speciesNetwork.getNodeCount();
         speciesOccupancy = new double[geneTreeNodeCount][2*speciesNetworkNodeCount];
