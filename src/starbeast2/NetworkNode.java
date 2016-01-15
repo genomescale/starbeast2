@@ -1,6 +1,9 @@
 package starbeast2;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import beast.core.BEASTObject;
 import beast.core.Description;
@@ -196,11 +199,17 @@ public class NetworkNode extends BEASTObject {
         return children.size() == 0;
     }
 
-    public boolean isVisited() {return visited;}
+    public boolean isVisited() {
+        return visited;
+    }
 
-    public void setVisited () {visited = true;}
+    public void setVisited () {
+        visited = true;
+    }
 
-    public void resetVisited () {visited = false;}
+    public void resetVisited () {
+        visited = false;
+    }
 
     /* reset the visited indicators */
     public void resetAllVisited () {

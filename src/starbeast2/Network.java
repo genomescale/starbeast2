@@ -1,12 +1,13 @@
 package starbeast2;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
-import beast.core.*;
-import beast.evolution.alignment.TaxonSet;
-import beast.util.TreeParser;
-import beast.evolution.tree.*;
+import beast.core.Description;
+import beast.core.Input;
+import beast.core.StateNode;
 
 /**
  * Network class to replace Tree class
@@ -244,8 +245,7 @@ public class Network extends StateNode {  //implements TreeInterface
     @Override
     public int scale(final double scale) throws Exception {
         root.scale(scale);
-        // is this number correct??? no
-        return getInternalNodeCount();
+        return getInternalNodeCount(); // is this number correct??? should return nBifurcationNode+2*nReticulationNode?
     }
 
     /**
