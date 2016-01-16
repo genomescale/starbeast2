@@ -132,8 +132,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
     }
 
     public double rearrangeGeneTrees() {
-        final List<GeneTree> geneTrees = geneTreeInput.get();
-        final int nGeneTrees = geneTrees.size();
         final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
 
         for (int j = 0; j < nGeneTrees; j++) {
@@ -252,7 +250,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         final Set<String> uncleDescendants = findDescendants(uncleNode, uncleNodeNumber);
 
         final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
-        final List<GeneTree> geneTrees = geneTreeInput.get();
+        final List<TreeInterface> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final Set<Node> jGraftBranches = new HashSet<Node>();
@@ -300,7 +298,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         final double upperHeight = brotherNode.getParent().getParent().getHeight(); // grandparent height (top of parent branch)
 
         final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
-        final List<GeneTree> geneTrees = geneTreeInput.get();
+        final List<TreeInterface> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);
