@@ -108,12 +108,41 @@ public class Network extends StateNode {  //implements TreeInterface
         return lNodes;
     }
 
+    /**
+     * @return a list of internal nodes contained in this network
+     */
+    public List<NetworkNode> getInternalNodes() {
+        final ArrayList<NetworkNode> iNodes = new ArrayList<>();
+        for (final NetworkNode node : networkNodes) {
+            if (!node.isLeaf()) iNodes.add(node);
+        }
+        return iNodes;
+    }
+
     public NetworkNode getNode(final int nr) {
         return networkNodes[nr];
     }
 
-    public NetworkNode[] getNodesAsArray() {
+    /**
+     * @return an array of all the nodes in this network
+     */
+    public NetworkNode[] getAllNodesAsArray() {
         return networkNodes;
+    }
+
+    /**
+     * @return the number of branches at the given time
+     */
+    public int getBranchCount(double time) {
+        final Network network = networkInput.get();
+        int nB = 1;
+        for (NetworkNode node : network.getInternalNodes()) {
+            if (node.getHeight() > time) {
+                if (node.isReticulation()) nB++;
+                else nB--;
+            }
+        }
+        return  nB;
     }
 
     public String toString() {

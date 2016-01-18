@@ -10,8 +10,6 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Remco Bouckaert
@@ -52,6 +50,7 @@ public class MultispeciesCoalescent extends Distribution {
         populationModel.initPopSizes(speciesNetworkNodeCount * 2);
     }
 
+    @Override
     public double calculateLogP() throws Exception {
         final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();

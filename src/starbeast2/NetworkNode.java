@@ -199,6 +199,13 @@ public class NetworkNode extends BEASTObject {
         return children.size() == 0;
     }
 
+    /**
+     * @return true if current node is reticulation node
+     */
+    boolean isReticulation() {
+        return parents.size() >= 2;
+    }
+
     public boolean isVisited() {
         return visited;
     }
@@ -224,7 +231,7 @@ public class NetworkNode extends BEASTObject {
         return recurseNodeCount();
     }
 
-    public int recurseNodeCount() {
+    private int recurseNodeCount() {
         int nodes = 1;
         setVisited();
         for (final NetworkNode child : children) {
@@ -239,7 +246,7 @@ public class NetworkNode extends BEASTObject {
         return recurseLeafNodeCount();
     }
 
-    public int recurseLeafNodeCount() {
+    private int recurseLeafNodeCount() {
         if (isLeaf()) return 1;
         int nodes = 0;
         setVisited();
@@ -255,7 +262,7 @@ public class NetworkNode extends BEASTObject {
         return recurseInternalNodeCount();
     }
 
-    public int recurseInternalNodeCount() {
+    private int recurseInternalNodeCount() {
         if (isLeaf()) return 0;
         int nodes = 1;
         setVisited();
