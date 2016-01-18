@@ -55,7 +55,7 @@ public class YuleHybridModel extends Distribution {
         // final double rho = rhoProbInput.get() == null ? 1.0 : rhoProbInput.get().getValue();
 
         // sort the internal nodes according to their heights
-        final List<NetworkNode> nodes = network.getInternalNodes();
+        List<NetworkNode> nodes = network.getInternalNodes();
         Collections.sort(nodes, new heightComparator());
 
         double logP= 0;
@@ -64,7 +64,7 @@ public class YuleHybridModel extends Distribution {
             final double nodeHeight = nodes.get(i).getHeight();
             final double nextHeight;
             if (i == 0)  // the youngest internal node
-                nextHeight = 0.0;
+                nextHeight = 0.0;  // the tip
             else
                 nextHeight = nodes.get(i-1).getHeight();
 
@@ -77,7 +77,7 @@ public class YuleHybridModel extends Distribution {
         }
         return logP;
     }
-
+    /* customized comparator */
     private class heightComparator implements Comparator<NetworkNode> {
         @Override
         public int compare(NetworkNode n1, NetworkNode n2) {

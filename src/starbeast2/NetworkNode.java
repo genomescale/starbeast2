@@ -1,5 +1,6 @@
 package starbeast2;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -187,6 +188,13 @@ public class NetworkNode extends BEASTObject {
     }
 
     /**
+     * @return unmodifiable list of children of this node
+     */
+    public List<NetworkNode> getChildren() {
+        return Collections.unmodifiableList(children);
+    }
+
+    /**
      * @return true if current node is root node
      */
     public boolean isRoot() {
@@ -206,19 +214,18 @@ public class NetworkNode extends BEASTObject {
         return parents.size() >= 2;
     }
 
+    /* get and (re)set the visited indicator */
     public boolean isVisited() {
         return visited;
     }
-
     public void setVisited () {
         visited = true;
     }
-
     public void resetVisited () {
         visited = false;
     }
 
-    /* reset the visited indicators */
+    /* reset all the visited indicators */
     public void resetAllVisited () {
         for (final NetworkNode child : children) {
             child.resetVisited();
@@ -230,7 +237,6 @@ public class NetworkNode extends BEASTObject {
         resetAllVisited ();
         return recurseNodeCount();
     }
-
     private int recurseNodeCount() {
         int nodes = 1;
         setVisited();
@@ -245,7 +251,6 @@ public class NetworkNode extends BEASTObject {
         resetAllVisited ();
         return recurseLeafNodeCount();
     }
-
     private int recurseLeafNodeCount() {
         if (isLeaf()) return 1;
         int nodes = 0;
@@ -261,7 +266,6 @@ public class NetworkNode extends BEASTObject {
         resetAllVisited ();
         return recurseInternalNodeCount();
     }
-
     private int recurseInternalNodeCount() {
         if (isLeaf()) return 0;
         int nodes = 1;
@@ -271,6 +275,23 @@ public class NetworkNode extends BEASTObject {
                 nodes += child.recurseInternalNodeCount();
         }
         return nodes;
+    }
+
+    /**
+     * @return (deep) copy of node
+     */
+    public NetworkNode copy() {  // wrong currently
+        final NetworkNode node = new NetworkNode();
+        node.height = height;
+        node.labelNr = labelNr;
+        node.metaDataString = metaDataString;
+        node.metaData = new TreeMap<>(metaData);
+        node.parents = null;
+        node.setID(getID());
+        for (final NetworkNode child : children) {
+            node.addChild(child.copy());
+        }
+        return node;
     }
 
     /**
