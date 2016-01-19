@@ -276,11 +276,12 @@ public class NetworkNode extends BEASTObject {
     }
 
     /**
+     * @return 
      * @return (deep) copy of node
      */
-    public void copy() {
+    public NetworkNode copy() {
         recursiveResetClones();
-        recursiveCopy();
+        return recursiveCopy();
     }
 
     private void recursiveResetClones() {
