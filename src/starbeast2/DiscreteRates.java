@@ -74,10 +74,11 @@ public class DiscreteRates extends SpeciesTreeRates {
 
     private void updateBinRates() {
         final ParametricDistribution rateDistribution = rateDistributionInput.get();
+        final Double differenceInMeans = meanRateInput.get().getValue() - rateDistribution.getMean();
 
         try {
             for (int i = 0; i < nBins; i++) {
-                binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins);
+                binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins) + differenceInMeans;
             }
         } catch (MathException e) {
             throw new RuntimeException("Failed to compute inverse cumulative probability!");
