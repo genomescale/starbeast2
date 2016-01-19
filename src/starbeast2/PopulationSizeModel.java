@@ -6,7 +6,6 @@ import java.util.List;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
-import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
@@ -14,8 +13,9 @@ import beast.evolution.tree.Node;
  */
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")
-public abstract class MultispeciesPopulationModel extends CalculationNode {
-    public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
+public abstract class PopulationSizeModel extends CalculationNode {
+    public abstract double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+                                      List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
     // Sets the appropriate dimension size of each population size state node
     // To successfully resume from a saved state, this must be called via an initAndValidate method
@@ -29,10 +29,11 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
 
     // Per-branch population size information which will be added to a Newick string.
     // If no information is available, do not override the superclass method
-    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
     }
 
-    protected static double constantLogP(double popSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    protected static double constantLogP(double popSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes,
+                                         int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
         int branchQ = 0;
@@ -64,7 +65,8 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     }
 
     // copied from *BEAST v2.3, with small modifications to work with starbeast2
-    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes,
+                                       int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
         double logP = 0.0;

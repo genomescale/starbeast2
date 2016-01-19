@@ -7,13 +7,12 @@ import java.util.List;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulation extends MultispeciesPopulationModel {
+public class ConstantPopulationSize extends PopulationSizeModel {
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     @Override
@@ -21,9 +20,10 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+                             List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter popSizes = popSizesInput.get();
-        final double popSize = popSizes.getValue(speciesTreeNodeNumber);
+        final double popSize = popSizes.getValue(speciesNetworkNodeNumber);
         double logP = constantLogP(popSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
 
         return logP;
@@ -45,10 +45,10 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
         final RealParameter popSizes = popSizesInput.get();
-        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
-        final double branchPopSize = popSizes.getValue(speciesTreeNodeNumber);
+        final int speciesNetworkNodeNumber = speciesNetworkNode.getNr();
+        final double branchPopSize = popSizes.getValue(speciesNetworkNodeNumber);
 
         buf.append("dmv={");
         if (df == null) {

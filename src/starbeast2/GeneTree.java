@@ -2,6 +2,8 @@ package starbeast2;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -20,9 +22,12 @@ import beast.evolution.tree.TreeInterface;
  */
 
 public class GeneTree extends CalculationNode {
-    public Input<SpeciesNetwork> speciesNetworkInput = new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
-    public Input<Tree> geneTreeInput = new Input<>("geneTree", "Gene tree embedded in the Species network.", Validate.REQUIRED);
-    public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
+    public Input<SpeciesNetwork> speciesNetworkInput =
+            new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
+    public Input<Tree> geneTreeInput =
+            new Input<>("geneTree", "Gene tree embedded in the Species network.", Validate.REQUIRED);
+    public Input<Double> ploidyInput =
+            new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     protected double ploidy;
 
     private int geneTreeLeafNodeCount;
@@ -32,10 +37,19 @@ public class GeneTree extends CalculationNode {
 
     // the coalescent event times for this gene tree for all species network branches
     final protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create();
-    final protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
+    // the number of lineages at the tipward end of each branch
+    final protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create();
 
     protected int[] geneNodeSpeciesAssignment;
     protected boolean geneTreeCompatible;
+
+    /**
+     * gene tree lineage inheritance probability
+     * Tracing backward in time, true -> left parent and false -> right parent.
+     * The length of the boolean array (1st dimension) equals the number of gene tips.
+     * The length of the list (2 dimension) equals the number of reticulation (hybridization) nodes.
+     */
+    public List<boolean[]> lineageInheritance = new ArrayList<>();
 
     @Override
     public boolean requiresRecalculation() {
@@ -81,7 +95,8 @@ public class GeneTree extends CalculationNode {
         speciesOccupancy = new double[geneTreeNodeCount][2*speciesNetworkNodeCount];
 
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
-        Arrays.fill(geneNodeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
+        Arrays.fill(geneNodeSpeciesAssignment, -1);
+        // -1 means no species assignment for that gene tree node has been made yet
 
         coalescentLineageCounts.clear();
         coalescentTimes.clear();
@@ -97,7 +112,8 @@ public class GeneTree extends CalculationNode {
             final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
             final double lastHeight = 0.0;
 
-            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode, firstCoalescenceNumber, speciesNetworkLeafNode, 2*speciesNetworkLeafNumber)) {
+            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode, firstCoalescenceNumber,
+                                            speciesNetworkLeafNode, 2*speciesNetworkLeafNumber)) {
                 // this gene tree IS NOT compatible with the species tree
                 geneTreeCompatible = false;
                 needsUpdate = false;
@@ -109,7 +125,9 @@ public class GeneTree extends CalculationNode {
         needsUpdate = false;
     }
 
-    private boolean recurseCoalescenceEvents(final int lastGeneTreeNodeNumber, final double lastHeight, final Node geneTreeNode, final int geneTreeNodeNumber, final NetworkNode speciesNetworkNode, final int speciesNetworkNodeNumber) {
+    private boolean recurseCoalescenceEvents(final int lastGeneTreeNodeNumber, final double lastHeight,
+                                             final Node geneTreeNode, final int geneTreeNodeNumber,
+                                             final NetworkNode speciesNetworkNode, final int speciesNetworkNodeNumber) {
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
 
         // check if the next coalescence event occurs in an ancestral branch
@@ -118,10 +136,11 @@ public class GeneTree extends CalculationNode {
             final double speciesNetworkParentHeight = speciesNetworkParentNode.getHeight();
             if (geneTreeNodeHeight >= speciesNetworkParentHeight) {
                 speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkNodeNumber] = speciesNetworkParentHeight - lastHeight;
-                final int speciesNetworkParentNodeNumber = 2 * speciesNetworkParentNode.getNr(); // + speciesNetworkParentNode.getOffset();
+                final int speciesNetworkParentNodeNumber = 2 * speciesNetworkParentNode.getNr() + speciesNetworkParentNode.getOffset();
                 coalescentLineageCounts.add(speciesNetworkParentNodeNumber);
 
-                return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesNetworkParentHeight, geneTreeNode, geneTreeNodeNumber, speciesNetworkParentNode, speciesNetworkParentNodeNumber);
+                return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesNetworkParentHeight, geneTreeNode,
+                                                 geneTreeNodeNumber, speciesNetworkParentNode, speciesNetworkParentNodeNumber);
             }
         }
 
@@ -138,7 +157,8 @@ public class GeneTree extends CalculationNode {
             } else {
                 // if this is not the root of the gene tree, check the subsequent (back in time) coalescence event
                 final int nextGeneTreeNodeNumber = nextGeneTreeNode.getNr();
-                return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesNetworkNode, speciesNetworkNodeNumber);
+                return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode,
+                                                nextGeneTreeNodeNumber, speciesNetworkNode, speciesNetworkNodeNumber);
             }
         } else {
             // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed

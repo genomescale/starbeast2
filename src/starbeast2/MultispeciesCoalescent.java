@@ -19,9 +19,12 @@ import beast.core.State;
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends Distribution {
-    public Input<SpeciesNetwork> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
-    public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
-    public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
+    public Input<SpeciesNetwork> speciesNetworkInput =
+            new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
+    public Input<List<GeneTree>> geneTreeInput =
+            new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
+    public Input<MultispeciesPopulationModel> populationModelInput =
+            new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
 
     private int nGeneTrees;
     private int speciesNetworkNodeCount;
@@ -80,7 +83,6 @@ public class MultispeciesCoalescent extends Distribution {
         allLineageCounts.clear();
         allEventCounts.clear();
         allCoalescentTimes.clear();
-
         for (int i = 0; i < 2 * speciesNetworkNodeCount; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
@@ -127,17 +129,9 @@ public class MultispeciesCoalescent extends Distribution {
             final int[] branchEventCounts = allEventCounts.get(i);
 
             // linearPopulation uses i and speciesTreeNode, which needs double check later???
-            final double branchLogP = populationModel.branchLogP(i, speciesNetworkNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+            final double branchLogP = populationModel.branchLogP(i, speciesNetworkNode, perGenePloidy,
+                                                branchCoalescentTimes, branchLineageCounts, branchEventCounts);
             logP += branchLogP;
-
-            /* for (int j = 0; j < branchCoalescentTimes.size(); j++) {
-                Double[] geneTimes = branchCoalescentTimes.get(j);
-                for (int k = 0; k < geneTimes.length; k++) {
-                    System.out.println(String.format("%d/%d/%d: %f", i, j, k, geneTimes[k]));
-                }
-                System.out.println(String.format("%d/%d: %d, %d", i, j, branchLineageCounts[j], branchEventCounts[j]));
-            }
-            System.out.println(String.format("%d: %f", i, branchLogP)); */
         }
 
         return logP;

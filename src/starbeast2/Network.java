@@ -16,8 +16,10 @@ import beast.core.StateNode;
 
 @Description("Network representing reticulate evolution of species")
 public class Network extends StateNode {  //implements TreeInterface
-    final public Input<Network> networkInput = new Input<>("initial", "network to start with");
-    final public Input<String> nodeTypeInput = new Input<>("nodetype", "type of the node in the network", NetworkNode.class.getName());
+    final public Input<Network> networkInput =
+            new Input<>("initial", "network to start with");
+    final public Input<String> nodeTypeInput =
+            new Input<>("nodetype", "type of the node in the network", NetworkNode.class.getName());
 
     /**
      * state of dirtiness of a node in the tree

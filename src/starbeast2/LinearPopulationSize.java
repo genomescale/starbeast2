@@ -7,40 +7,42 @@ import java.util.List;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class LinearPopulation extends MultispeciesPopulationModel {
-    public Input<RealParameter> topPopSizesInput = new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
-    public Input<RealParameter> tipPopSizesInput = new Input<RealParameter>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
+public class LinearPopulationSize extends PopulationSizeModel {
+    public Input<RealParameter> topPopSizesInput =
+            new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
+    public Input<RealParameter> tipPopSizesInput =
+            new Input<RealParameter>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() throws Exception {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+                             List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int nGenes = perGenePloidy.length;
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
 
         double branchTipPopSize;
-        if (speciesTreeNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+        if (speciesNetworkNode.isLeaf()) {
+            branchTipPopSize = tipPopSizes.getValue(speciesNetworkNodeNumber);
         } else {
-            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
+            final int leftChildNodeNumber = speciesNetworkNode.getLeftChild().getNr();
+            final int rightChildNodeNumber = speciesNetworkNode.getRightChild().getNr();
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
         // set the root branch heights for each gene tree (to equal the highest gene tree root node)
         double tallestGeneTreeHeight = 0.0;
-        if (speciesTreeNode.isRoot()) {
+        if (speciesNetworkNode.isRoot()) {
             for (int j = 0; j < nGenes; j++) {
                 tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes.get(j)[branchEventCounts[j]]);
             }
@@ -49,7 +51,8 @@ public class LinearPopulation extends MultispeciesPopulationModel {
             }
         }
 
-        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy,
+                                        branchCoalescentTimes, branchLineageCounts, branchEventCounts);
 
         // for debugging
         /*if (speciesTreeNode.isRoot()) {
@@ -89,19 +92,19 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
+        final int speciesNetworkNodeNumber = speciesNetworkNode.getNr();
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
 
         double branchTipPopSize;
-        if (speciesTreeNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+        if (speciesNetworkNode.isLeaf()) {
+            branchTipPopSize = tipPopSizes.getValue(speciesNetworkNodeNumber);
         } else {
-            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
+            final int leftChildNodeNumber = speciesNetworkNode.getLeftChild().getNr();
+            final int rightChildNodeNumber = speciesNetworkNode.getRightChild().getNr();
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 

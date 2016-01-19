@@ -22,10 +22,6 @@ public class NetworkNode extends BEASTObject {
      */
     protected int labelNr;
 
-    // whether the node has been visited, say by a recursive method
-    protected boolean visited = false;
-    private NetworkNode clone;
-
     /**
      * height of this node
      */
@@ -45,6 +41,11 @@ public class NetworkNode extends BEASTObject {
 
     protected int nParents;
     protected int nChildren;
+
+    private NetworkNode clone;
+
+    // whether the node has been visited, say by a recursive method
+    protected boolean visited = false;
     /**
      * status of this node after an operation is performed on the state
      */
@@ -58,6 +59,7 @@ public class NetworkNode extends BEASTObject {
         if (leftChild   != null) nChildren++;
         if (rightChild  != null) nChildren++;
     }
+
     /**
      * meta-data contained in square brackets in Newick
      */
@@ -229,9 +231,7 @@ public class NetworkNode extends BEASTObject {
         return recurseNodeCount();
     }
     private int recurseNodeCount() {
-        if (visited) {
-            return 0;
-        }
+        if (visited) return 0;
 
         int nodeCount = 1;
         if (leftChild != null) nodeCount += leftChild.recurseNodeCount();
@@ -276,7 +276,6 @@ public class NetworkNode extends BEASTObject {
     }
 
     /**
-     * @return 
      * @return (deep) copy of node
      */
     public NetworkNode copy() {
@@ -302,7 +301,6 @@ public class NetworkNode extends BEASTObject {
             if (leftChild != null) clone.setLeftChild(getLeftChild().recursiveCopy());
             if (rightChild != null) clone.setRightChild(getRightChild().recursiveCopy());
         }
-
         return clone;
     }
 

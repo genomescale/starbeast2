@@ -5,22 +5,24 @@ import java.util.List;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulationIO extends MultispeciesPopulationModel {
-    public Input<RealParameter> invgammaShapeInput = new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
-    public Input<RealParameter> invgammaScaleInput = new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+public class ConstantPopulationSizeIO extends PopulationSizeModel {
+    public Input<RealParameter> invgammaShapeInput =
+            new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+    public Input<RealParameter> invgammaScaleInput =
+            new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() throws Exception {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+                             List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter invgammaShape = invgammaShapeInput.get();
         final RealParameter invgammaScale = invgammaScaleInput.get();
         final double alpha = invgammaShape.getValue();

@@ -19,8 +19,10 @@ import beast.evolution.alignment.TaxonSet;
  */
 
 public class SpeciesNetwork extends CalculationNode {
-    public Input<Network> networkInput = new Input<>("network", "Species network for embedding the gene tree.", Validate.REQUIRED);
-    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<Network> networkInput =
+            new Input<>("network", "Species network for embedding the gene tree.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput =
+            new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
 
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();

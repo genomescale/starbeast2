@@ -5,29 +5,29 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class LinearWithConstantRoot extends LinearPopulation {
+public class LinearWithConstantRoot extends LinearPopulationSize {
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+                             List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
 
         double logP;
-        if (speciesTreeNode.isRoot()) {
+        if (speciesNetworkNode.isRoot()) {
             logP = constantLogP(branchTopPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
         } else {
             double branchTipPopSize;
-            if (speciesTreeNode.isLeaf()) {
-                branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+            if (speciesNetworkNode.isLeaf()) {
+                branchTipPopSize = tipPopSizes.getValue(speciesNetworkNodeNumber);
             } else {
-                final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-                final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
+                final int leftChildNodeNumber = speciesNetworkNode.getLeftChild().getNr();
+                final int rightChildNodeNumber = speciesNetworkNode.getRightChild().getNr();
                 branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
             }
             logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
@@ -37,22 +37,22 @@ public class LinearWithConstantRoot extends LinearPopulation {
     }
 
     @Override
-    public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        final int speciesTreeNodeNumber = speciesTreeNode.getNr();
+        final int speciesNetworkNodeNumber = speciesNetworkNode.getNr();
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
 
         double branchTipPopSize;
         
-        if (speciesTreeNode.isRoot()) {
+        if (speciesNetworkNode.isRoot()) {
             branchTipPopSize = branchTopPopSize;
-        } else if (speciesTreeNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+        } else if (speciesNetworkNode.isLeaf()) {
+            branchTipPopSize = tipPopSizes.getValue(speciesNetworkNodeNumber);
         } else {
-            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
+            final int leftChildNodeNumber = speciesNetworkNode.getLeftChild().getNr();
+            final int rightChildNodeNumber = speciesNetworkNode.getRightChild().getNr();
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
