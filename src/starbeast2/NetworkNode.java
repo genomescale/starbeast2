@@ -1,6 +1,5 @@
 package starbeast2;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -25,6 +24,7 @@ public class NetworkNode extends BEASTObject {
 
     // whether the node has been visited, say by a recursive method
     protected boolean visited = false;
+    private NetworkNode clone;
 
     /**
      * height of this node
@@ -32,20 +32,32 @@ public class NetworkNode extends BEASTObject {
     protected double height = Double.MAX_VALUE;
 
     /**
-     * list of children of this node
+     * children of this node
      */
-    List<NetworkNode> children = new ArrayList<>();
+    NetworkNode leftChild;
+    NetworkNode rightChild;
 
     /**
-     * list of parents of this node
+     * parents of this node
      */
-    List<NetworkNode> parents = new ArrayList<>();
+    NetworkNode leftParent;
+    NetworkNode rightParent;
 
+    protected int nParents;
+    protected int nChildren;
     /**
      * status of this node after an operation is performed on the state
      */
     int isDirty = Network.IS_CLEAN;
 
+    private void updateSizes() {
+        nParents = 0;
+        nChildren = 0;
+        if (leftParent  != null) nParents++;
+        if (rightParent != null) nParents++;
+        if (leftChild   != null) nChildren++;
+        if (rightChild  != null) nChildren++;
+    }
     /**
      * meta-data contained in square brackets in Newick
      */
@@ -104,114 +116,94 @@ public class NetworkNode extends BEASTObject {
     }
 
     public int getParentCount() {
-        return parents.size();
+        return nParents;
     }
 
     public int getChildCount() {
-        return children.size();
+        return nChildren;
     }
 
     /* parents */
     public NetworkNode getLeftParent() {
-        if (parents.size() == 0) {
-            return null;
-        }
-        return parents.get(0);
+        return leftParent;
     }
 
     public NetworkNode getRightParent() {
-        if (parents.size() <= 1) {
-            return null;
-        }
-        return parents.get(1);
+        return rightParent;
     }
 
-    void setLeftParent(final NetworkNode leftParent) {
+    void setLeftParent(final NetworkNode newLeftParent) {
         // startEditing();
-        if (parents.size() == 0) {
-            parents.add(leftParent);
-        } else {
-            parents.set(0, leftParent);
-        }
+        leftParent = newLeftParent;
+        leftParent.leftChild = this;
         isDirty = Network.IS_FILTHY;
+        updateSizes();
     }
 
-    void setRightParent(final NetworkNode rightParent) {
+    void setRightParent(final NetworkNode newRightParent) {
         // startEditing();
-        switch (parents.size()) {
-            case 0:
-                parents.add(null);
-            case 1:
-                parents.add(rightParent);
-                break;
-            default:
-                parents.set(1, rightParent);
-                break;
-        }
+        rightParent = newRightParent;
+        rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
+        updateSizes();
     }
 
     /* children */
     public NetworkNode getLeftChild() {
-        if (children.size() == 0) {
-            return null;
-        }
-        return children.get(0);
+        return leftChild;
     }
 
     public NetworkNode getRightChild() {
-        if (children.size() <= 1) {
-            return null;
-        }
-        return children.get(1);
+        return rightChild;
     }
 
-    public void setLeftChild(final NetworkNode leftChild) {
-        if (children.size() == 0) {
-            children.add(leftChild);
-        } else {
-            children.set(0, leftChild);
-        }
+    public void setLeftChild(final NetworkNode newLeftChild) {
+        leftChild = newLeftChild;
+        leftChild.leftParent = this;
+        updateSizes();
     }
 
-    public void setRightChild(final NetworkNode rightChild) {
-        switch (children.size()) {
-            case 0:
-                children.add(null);
-            case 1:
-                children.add(rightChild);
-                break;
-            default:
-                children.set(1, rightChild);
-                break;
-        }
+    public void setRightChild(final NetworkNode newRightChild) {
+        rightChild = newRightChild;
+        rightChild.rightParent = this;
+        updateSizes();
     }
 
     /**
      * @return unmodifiable list of children of this node
      */
     public List<NetworkNode> getChildren() {
-        return Collections.unmodifiableList(children);
+        List<NetworkNode> children = new ArrayList<>();
+        if (leftChild != null) children.add(leftChild);
+        if (rightChild != null) children.add(rightChild);
+        return children;
+    }
+
+    public List<NetworkNode> getParents() {
+        List<NetworkNode> parents = new ArrayList<>();
+        if (leftParent != null) parents.add(leftParent);
+        if (rightParent != null) parents.add(rightParent);
+        return parents;
     }
 
     /**
      * @return true if current node is root node
      */
     public boolean isRoot() {
-        return parents.size() == 0;
+        return nParents == 0;
     }
     /**
      * @return true if current node is leaf node
      */
     public boolean isLeaf() {
-        return children.size() == 0;
+        return nChildren == 0;
     }
 
     /**
      * @return true if current node is reticulation node
      */
     boolean isReticulation() {
-        return parents.size() >= 2;
+        return nParents == 2;
     }
 
     /* get and (re)set the visited indicator */
@@ -226,72 +218,91 @@ public class NetworkNode extends BEASTObject {
     }
 
     /* reset all the visited indicators */
-    public void resetAllVisited () {
-        for (final NetworkNode child : children) {
-            child.resetVisited();
-        }
-        resetVisited ();
+    public void recursiveResetVisited () {
+        visited = false;
+        if (leftChild != null) leftChild.recursiveResetVisited();
+        if (rightChild != null) rightChild.recursiveResetVisited();
     }
 
     public int getNodeCount() {
-        resetAllVisited ();
+        recursiveResetVisited ();
         return recurseNodeCount();
     }
     private int recurseNodeCount() {
-        int nodes = 1;
-        setVisited();
-        for (final NetworkNode child : children) {
-            if (!child.isVisited())
-                nodes += child.recurseNodeCount();
+        if (visited) {
+            return 0;
         }
-        return nodes;
+
+        int nodeCount = 1;
+        if (leftChild != null) nodeCount += leftChild.recurseNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseNodeCount();
+
+        setVisited();
+        return nodeCount;
     }
 
     public int getLeafNodeCount() {
-        resetAllVisited ();
+        recursiveResetVisited ();
         return recurseLeafNodeCount();
     }
     private int recurseLeafNodeCount() {
-        if (isLeaf()) return 1;
-        int nodes = 0;
-        setVisited();
-        for (final NetworkNode child : children) {
-            if (!child.isVisited())
-                nodes += child.recurseLeafNodeCount();
+        if (visited) {
+            return 0;
+        } else if (nChildren == 0) {
+            return 1;
         }
-        return nodes;
+
+        int nodeCount = 0;
+        if (leftChild != null) nodeCount += leftChild.recurseLeafNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseLeafNodeCount();
+
+        setVisited();
+        return nodeCount;
     }
 
     public int getInternalNodeCount() {
-        resetAllVisited ();
+        recursiveResetVisited ();
         return recurseInternalNodeCount();
     }
     private int recurseInternalNodeCount() {
-        if (isLeaf()) return 0;
-        int nodes = 1;
+        if (visited || nChildren == 0) return 0;
+
+        int nodeCount = 1;
+        if (leftChild != null) nodeCount += leftChild.recurseInternalNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseInternalNodeCount();
+
         setVisited();
-        for (final NetworkNode child : children) {
-            if (!child.isVisited())
-                nodes += child.recurseInternalNodeCount();
-        }
-        return nodes;
+        return nodeCount;
     }
 
     /**
      * @return (deep) copy of node
      */
-    public NetworkNode copy() {  // wrong currently
-        final NetworkNode node = new NetworkNode();
-        node.height = height;
-        node.labelNr = labelNr;
-        node.metaDataString = metaDataString;
-        node.metaData = new TreeMap<>(metaData);
-        node.parents = null;
-        node.setID(getID());
-        for (final NetworkNode child : children) {
-            node.addChild(child.copy());
+    public void copy() {
+        recursiveResetClones();
+        recursiveCopy();
+    }
+
+    private void recursiveResetClones() {
+        clone = null;
+        if (leftChild != null) leftChild.recursiveResetClones();
+        if (rightChild != null) rightChild.recursiveResetClones();
+    }
+
+    private NetworkNode recursiveCopy() {
+        final String nodeLabel = getID();
+        if (clone == null) {
+            final NetworkNode clone = new NetworkNode();
+            clone.height = height;
+            clone.labelNr = labelNr;
+            clone.metaDataString = metaDataString;
+            clone.metaData = new TreeMap<>(metaData);
+            clone.setID(nodeLabel);
+            if (leftChild != null) clone.setLeftChild(getLeftChild().recursiveCopy());
+            if (rightChild != null) clone.setRightChild(getRightChild().recursiveCopy());
         }
-        return node;
+
+        return clone;
     }
 
     /**

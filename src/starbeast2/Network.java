@@ -171,7 +171,7 @@ public class Network extends StateNode {  //implements TreeInterface
         Network network = new Network();
         network.setID(getID());
         network.index = index;
-        network.root = root.copy();
+        network.root = root.recursiveCopy();
         network.nodeCount = nodeCount;
         network.internalNodeCount = internalNodeCount;
         network.leafNodeCount = leafNodeCount;
