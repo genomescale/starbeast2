@@ -55,9 +55,22 @@ public class DiscreteRates extends SpeciesTreeRates {
         needsUpdate = true;
     }
 
-    private void update() {
+    private synchronized void update() {
+        if (!needsUpdate) return; // in case this method has been called and completed already by another likelihood thread
+
         if (binRatesNeedsUpdate) {
-            updateBinRates();
+            final ParametricDistribution rateDistribution = rateDistributionInput.get();
+            final Double differenceInMeans = meanRateInput.get().getValue() - rateDistribution.getMean();
+
+            try {
+                for (int i = 0; i < nBins; i++) {
+                    binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins) + differenceInMeans;
+                }
+            } catch (MathException e) {
+                throw new RuntimeException("Failed to compute inverse cumulative probability!");
+            }
+
+            binRatesNeedsUpdate = false;
         }
 
         final Integer[] branchRatePointers = branchRatesInput.get().getValues();
@@ -72,35 +85,16 @@ public class DiscreteRates extends SpeciesTreeRates {
         needsUpdate = false;
     }
 
-    private void updateBinRates() {
-        final ParametricDistribution rateDistribution = rateDistributionInput.get();
-        final Double differenceInMeans = meanRateInput.get().getValue() - rateDistribution.getMean();
-
-        try {
-            for (int i = 0; i < nBins; i++) {
-                binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins) + differenceInMeans;
-            }
-        } catch (MathException e) {
-            throw new RuntimeException("Failed to compute inverse cumulative probability!");
-        }
-
-        binRatesNeedsUpdate = false;
-    }
-
     @Override
     Double[] getRatesArray() {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         return ratesArray;
     }
 
     @Override
     public double getRateForBranch(Node node) {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         return ratesArray[node.getNr()];
     }

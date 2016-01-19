@@ -45,7 +45,9 @@ public class ContinuousRates extends SpeciesTreeRates {
         needsUpdate = true;
     }
 
-    private void update() {
+    private synchronized void update() {
+        if (!needsUpdate) return; // in case this method has been called and completed already by another likelihood thread
+
         final Double realMean = meanRateInput.get().getValue();
         final Double stdev = stdevInput.get().getValue();
         final Double logMean = Math.log(realMean) - (0.5 * stdev * stdev);
@@ -59,18 +61,14 @@ public class ContinuousRates extends SpeciesTreeRates {
 
     @Override
     Double[] getRatesArray() {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         return realRatesArray;
     }
 
     @Override
     public double getRateForBranch(Node node) {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         return realRatesArray[node.getNr()];
     }
