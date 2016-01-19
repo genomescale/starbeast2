@@ -12,7 +12,7 @@ import beast.core.parameter.RealParameter;
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulationSize extends PopulationSizeModel {
+public class ConstantPopulation extends PopulationSizeModel {
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     @Override

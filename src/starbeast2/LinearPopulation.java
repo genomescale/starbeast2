@@ -12,7 +12,7 @@ import beast.core.parameter.RealParameter;
 * @author Huw Ogilvie
  */
 
-public class LinearPopulationSize extends PopulationSizeModel {
+public class LinearPopulation extends PopulationSizeModel {
     public Input<RealParameter> topPopSizesInput =
             new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput =

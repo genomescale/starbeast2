@@ -10,7 +10,7 @@ import beast.core.parameter.RealParameter;
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulationSizeIO extends PopulationSizeModel {
+public class ConstantPopulationIO extends PopulationSizeModel {
     public Input<RealParameter> invgammaShapeInput =
             new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
     public Input<RealParameter> invgammaScaleInput =
