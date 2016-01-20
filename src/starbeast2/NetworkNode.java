@@ -117,6 +117,12 @@ public class NetworkNode extends BEASTObject {
         isDirty |= nDirty;
     }
 
+    protected void startEditing() {
+        if (network != null && network.getState() != null) {
+            network.startEditing(null);
+        }
+    }
+
     public int getParentCount() {
         return nParents;
     }
@@ -135,7 +141,7 @@ public class NetworkNode extends BEASTObject {
     }
 
     void setLeftParent(final NetworkNode newLeftParent) {
-        // startEditing();
+        startEditing();
         leftParent = newLeftParent;
         leftParent.leftChild = this;
         isDirty = Network.IS_FILTHY;
@@ -143,7 +149,7 @@ public class NetworkNode extends BEASTObject {
     }
 
     void setRightParent(final NetworkNode newRightParent) {
-        // startEditing();
+        startEditing();
         rightParent = newRightParent;
         rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
@@ -160,12 +166,14 @@ public class NetworkNode extends BEASTObject {
     }
 
     public void setLeftChild(final NetworkNode newLeftChild) {
+        startEditing();
         leftChild = newLeftChild;
         leftChild.leftParent = this;
         updateSizes();
     }
 
     public void setRightChild(final NetworkNode newRightChild) {
+        startEditing();
         rightChild = newRightChild;
         rightChild.rightParent = this;
         updateSizes();
@@ -212,22 +220,22 @@ public class NetworkNode extends BEASTObject {
     public boolean isVisited() {
         return visited;
     }
-    public void setVisited () {
+    public void setVisited() {
         visited = true;
     }
-    public void resetVisited () {
+    public void resetVisited() {
         visited = false;
     }
 
     /* reset all the visited indicators */
-    public void recursiveResetVisited () {
-        visited = false;
+    public void recursiveResetVisited() {
+        resetVisited ();
         if (leftChild != null) leftChild.recursiveResetVisited();
         if (rightChild != null) rightChild.recursiveResetVisited();
     }
 
     public int getNodeCount() {
-        recursiveResetVisited ();
+        recursiveResetVisited();
         return recurseNodeCount();
     }
     private int recurseNodeCount() {
@@ -242,7 +250,7 @@ public class NetworkNode extends BEASTObject {
     }
 
     public int getLeafNodeCount() {
-        recursiveResetVisited ();
+        recursiveResetVisited();
         return recurseLeafNodeCount();
     }
     private int recurseLeafNodeCount() {
@@ -261,7 +269,7 @@ public class NetworkNode extends BEASTObject {
     }
 
     public int getInternalNodeCount() {
-        recursiveResetVisited ();
+        recursiveResetVisited();
         return recurseInternalNodeCount();
     }
     private int recurseInternalNodeCount() {
@@ -290,18 +298,93 @@ public class NetworkNode extends BEASTObject {
     }
 
     private NetworkNode recursiveCopy() {
-        final String nodeLabel = getID();
         if (clone == null) {
             final NetworkNode clone = new NetworkNode();
             clone.height = height;
             clone.labelNr = labelNr;
             clone.metaDataString = metaDataString;
             clone.metaData = new TreeMap<>(metaData);
-            clone.setID(nodeLabel);
+            clone.setID(getID());
             if (leftChild != null) clone.setLeftChild(getLeftChild().recursiveCopy());
             if (rightChild != null) clone.setRightChild(getRightChild().recursiveCopy());
         }
         return clone;
+    }
+
+    /**
+     * assign values to a network in array representation
+     */
+    public void assignTo (final NetworkNode[] nodes) {
+        recursiveResetVisited();
+        recursiveAssignTo(nodes);
+    }
+    private void recursiveAssignTo(final NetworkNode[] nodes) {
+        if (!visited) {
+            final NetworkNode node = nodes[getNr()];
+            node.height = height;
+            node.labelNr = labelNr;
+            node.metaDataString = metaDataString;
+            node.metaData = new TreeMap<>(metaData);
+            node.setID(getID());
+            setVisited();
+            if (leftChild != null) {
+                node.setLeftChild(nodes[getLeftChild().getNr()]);
+                getLeftChild().recursiveAssignTo(nodes);
+            }
+            if (rightChild != null) {
+                node.setRightChild(nodes[getRightChild().getNr()]);
+                getRightChild().recursiveAssignTo(nodes);
+            }
+        }
+    }
+
+    /**
+     * assign values from a network in array representation
+     */
+    public void assignFrom (final NetworkNode[] nodes, final NetworkNode node) {
+        recursiveResetVisited();
+        recursiveAssignFrom(nodes, node);
+    }
+    private void recursiveAssignFrom(final NetworkNode[] nodes, final NetworkNode node) {
+        if (!visited) {
+            height = node.height;
+            labelNr = node.labelNr;
+            metaDataString = node.metaDataString;
+            metaData = new TreeMap<>(node.metaData);
+            setID(node.getID());
+            setVisited();
+            if (node.getLeftChild() != null) {
+                setLeftChild(nodes[node.getLeftChild().getNr()]);
+                getLeftChild().recursiveAssignFrom(nodes, node.getLeftChild());
+            }
+            if (node.getRightChild() != null) {
+                setRightChild(nodes[node.getRightChild().getNr()]);
+                getRightChild().recursiveAssignFrom(nodes, node.getRightChild());
+            }
+        }
+    }
+
+    /**
+     * scale height of this node and all its descendants
+     * @param scale scale factor
+     */
+    public void scale (final double scale) throws Exception {
+        recursiveResetVisited();
+        recursiveScale(scale);
+    }
+    private void recursiveScale(final double scale) {
+        startEditing();
+        isDirty |= Network.IS_DIRTY;
+        if (!isLeaf() && !visited) {
+            height *= scale;
+            setVisited();
+            if (getLeftChild() != null)
+                getLeftChild().recursiveScale(scale);
+            if (getRightChild() != null)
+                getRightChild().recursiveScale(scale);
+            if (height < getLeftChild().height || height < getRightChild().height)
+                throw new IllegalArgumentException("Scale gives negative branch length");
+        }
     }
 
     /**

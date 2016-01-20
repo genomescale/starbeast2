@@ -45,18 +45,23 @@ public class Network extends StateNode {  //implements TreeInterface
 
     @Override
     public void initAndValidate() throws Exception {
+        // needs implementation here???
         // bla bla
     }
 
-
+    /**
+     * constructors
+     */
     public Network() {
     }
 
+    // constructor overload
     public Network(final NetworkNode rootNode) {
         setRoot(rootNode);
-        // initArrays();
+        initArrays();
     }
 
+    // construct a network from newick string -- will not automatically adjust tips to zero
     public Network(final String sNewick) {
     }
 
@@ -68,14 +73,25 @@ public class Network extends StateNode {  //implements TreeInterface
         }
     }
 
+    protected void initArrays() {
+        // initialise network-as-array representation + its stored variant
+        networkNodes = new NetworkNode[nodeCount];
+        listNodes(root, networkNodes);
+        storedNetworkNodes = new NetworkNode[nodeCount];
+        final NetworkNode copy = root.copy();
+        listNodes(copy, storedNetworkNodes);
+    }
+
     public NetworkNode getRoot() {
         return root;
     }
 
     public void setRoot(final NetworkNode root) {
         this.root = root;
-        // ensure root is the last node in networkNodes
+        // ensure root is the last node in networkNodes???
+
     }
+
     /**
      * @return the number of nodes
      */
@@ -133,6 +149,13 @@ public class Network extends StateNode {  //implements TreeInterface
     }
 
     /**
+     * convert network to array representation
+     */
+    void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
+        //???
+    }
+
+    /**
      * @return the number of branches at the given time
      */
     public int getBranchCount(double time) {
@@ -155,12 +178,12 @@ public class Network extends StateNode {  //implements TreeInterface
     public void setEverythingDirty(final boolean isDirty) {
         setSomethingIsDirty(isDirty);
         if (!isDirty) {
-            for(NetworkNode n : networkNodes) {
-                n.isDirty = IS_CLEAN;
+            for(NetworkNode node : networkNodes) {
+                node.isDirty = IS_CLEAN;
             }
         } else {
-            for(NetworkNode n : networkNodes) {
-                n.isDirty = IS_FILTHY;
+            for(NetworkNode node : networkNodes) {
+                node.isDirty = IS_FILTHY;
             }
         }
     }
@@ -187,9 +210,9 @@ public class Network extends StateNode {  //implements TreeInterface
     public void assignTo(final StateNode other) {
         final Network network = (Network) other;
         final NetworkNode[] nodes = new NetworkNode[nodeCount];
-        // ??? listNodes(network.root, nodes);
+        listNodes(network.root, nodes);
         network.setID(getID());
-        //tree.index = index;
+        network.index = index;
         root.assignTo(nodes);
         network.root = nodes[root.getNr()];
         network.nodeCount = nodeCount;
@@ -208,10 +231,10 @@ public class Network extends StateNode {  //implements TreeInterface
             nodes[i] = newNode();
         }
         setID(network.getID());
-        //index = tree.index;
+        index = network.index;
         root = nodes[network.root.getNr()];
         root.assignFrom(nodes, network.root);
-        root.parents = null;
+        root.leftParent = root.rightParent = null;
         nodeCount = network.nodeCount;
         internalNodeCount = network.internalNodeCount;
         leafNodeCount = network.leafNodeCount;
@@ -233,7 +256,7 @@ public class Network extends StateNode {  //implements TreeInterface
         final int rootNr = root.getNr();
         assignFrom(0, rootNr, otherNodes);
         root.height = otherNodes[rootNr].height;
-        root.parents = null;
+        root.leftParent = root.rightParent = null;
         if (otherNodes[rootNr].getLeftChild() != null) {
             root.setLeftChild(networkNodes[otherNodes[rootNr].getLeftChild().getNr()]);
         } else {
@@ -246,7 +269,6 @@ public class Network extends StateNode {  //implements TreeInterface
         }
         assignFrom(rootNr + 1, nodeCount, otherNodes);
     }
-
     /**
      * helper to assignFromFragile *
      */
@@ -276,7 +298,8 @@ public class Network extends StateNode {  //implements TreeInterface
     @Override
     public int scale(final double scale) throws Exception {
         root.scale(scale);
-        return getInternalNodeCount(); // is this number correct??? should return nBifurcationNode+2*nReticulationNode?
+        return getInternalNodeCount();
+        // is this number correct??? should return nBifurcationNode+2*nReticulationNode
     }
 
     /**
@@ -284,7 +307,9 @@ public class Network extends StateNode {  //implements TreeInterface
      */
     @Override
     public void fromXML(final org.w3c.dom.Node node) {
-        // initArrays();
+        // parser???
+
+        initArrays();
     }
 
     @Override
@@ -305,7 +330,23 @@ public class Network extends StateNode {  //implements TreeInterface
             final NetworkNode sink = storedNetworkNodes[i];
             final NetworkNode src = networkNodes[i];
             sink.height = src.height;
-            // ???
+            // am i doing the correct thing ???
+            if (src.leftParent != null)
+                sink.leftParent = storedNetworkNodes[src.leftParent.getNr()];
+            else
+                sink.leftParent = null;
+            if (src.rightParent != null)
+                sink.rightParent = storedNetworkNodes[src.rightParent.getNr()];
+            else
+                sink.rightParent = null;
+            if (src.leftChild != null)
+                sink.leftChild = storedNetworkNodes[src.leftChild.getNr()];
+            else
+                sink.leftChild = null;
+            if (src.rightChild != null)
+                sink.rightChild = storedNetworkNodes[src.rightChild.getNr()];
+            else
+                sink.rightChild = null;
         }
     }
 
@@ -319,13 +360,11 @@ public class Network extends StateNode {  //implements TreeInterface
         root = networkNodes[storedRoot.getNr()];
 
         // leafNodeCount = root.getLeafNodeCount();
-
         hasStartedEditing = false;
 
         for(NetworkNode n : networkNodes) {
             n.isDirty = Network.IS_CLEAN;
         }
-
         // postCache = null;
     }
 
@@ -364,9 +403,9 @@ public class Network extends StateNode {  //implements TreeInterface
         Network network = (Network) getCurrent();
         out.print("network STATE_" + sample + " = ");
         // Don't sort, this can confuse CalculationNodes relying on the tree
-        final int[] dummy = new int[1];
-        final String newick = network.getRoot().toSortedNewick(dummy);
-        out.print(newick);
+        // final int[] dummy = new int[1];
+        //??? final String newick = network.getRoot().toSortedNewick(dummy);
+        // out.print(newick);
         out.print(";");
     }
 
