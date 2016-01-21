@@ -1,13 +1,8 @@
 package starbeast2;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import beast.core.Input;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 public class StarBeastClock extends BranchRateModel.Base {
     public Input<GeneTree> geneTreeInput = new Input<>("geneTree", "The gene tree this relaxed clock is associated with.", Input.Validate.REQUIRED);
@@ -52,17 +47,19 @@ public class StarBeastClock extends BranchRateModel.Base {
         final double[][] speciesOccupancy = geneTreeInput.get().getSpeciesOccupancy();
 
         final int speciesNodeCount = speciesTreeRates.length;
-        for (int i = 0; i < geneNodeCount; i++) {
-            double weightedRate = 0.0;
+        for (int i = 0; i < geneNodeCount - 1; i++) {
+            double weightedSum = 0.0;
             double branchLength = 0.0;
-
             for (int j = 0; j < speciesNodeCount; j++) {
-                weightedRate += speciesTreeRates[j] * speciesOccupancy[i][j];
+                // System.out.println(String.format("%d, %d: %f, %f", i, j, speciesTreeRates[j], speciesOccupancy[i][j]));
+                weightedSum += speciesTreeRates[j] * speciesOccupancy[i][j];
                 branchLength += speciesOccupancy[i][j];
             }
 
-            branchRates[i] = geneTreeRate * weightedRate / branchLength;
+            branchRates[i] = geneTreeRate * weightedSum / branchLength;
         }
+        // set the rate for the root branch of this gene to equal the input mean rate
+        branchRates[geneNodeCount - 1] = geneTreeRate;
         
         needsUpdate = false;
     }
@@ -74,30 +71,6 @@ public class StarBeastClock extends BranchRateModel.Base {
         }
 
         return branchRates[node.getNr()];
-    }
-
-    // for testing purposes
-    public double getRate(TreeInterface geneTree, String[] targetNames) {
-        final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
-
-        for (Node n: geneTree.getNodesAsArray()) {
-            final HashSet<String> comparison = new HashSet<>();
-            if (n.isLeaf()) {
-                final String leafName = n.getID();
-                comparison.add(leafName);
-            } else {
-                for (Node l: n.getAllLeafNodes()) {
-                    final String leafName = l.getID();
-                    comparison.add(leafName);
-                }
-            }
-
-            if (s.equals(comparison)) {
-                return getRateForBranch(n);
-            }
-        }
-
-        return Double.NEGATIVE_INFINITY;
     }
 }
 

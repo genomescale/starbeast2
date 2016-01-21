@@ -1,9 +1,5 @@
 package starbeast2;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.commons.math.MathException;
 
 import beast.core.Input;
@@ -124,6 +120,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
                 throw new RuntimeException("Failed to compute inverse cumulative probability!");
             }
         }
+
         Double estimatedMean;
         final RealParameter estimatedMeanParameter = meanRateInput.get();
         if (estimatedMeanParameter == null) {
@@ -134,7 +131,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
 
         final Integer[] branchRatePointers = branchRatesInput.get().getValues();
         for (int i = 0; i < nEstimatedRates; i++) {
-            int b = branchRatePointers[i];            
+            int b = branchRatePointers[i];
             ratesArray[i] = binRates[b] * estimatedMean;
         }
 
@@ -172,33 +169,5 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
 
         assert ratesArray[node.getNr()] > 0.0;
         return ratesArray[node.getNr()];
-    }
-
-    // for testing purposes
-    public boolean setRate(String[] targetNames, int newBin) {
-        final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
-        final IntegerParameter branchRates = branchRatesInput.get();
-        final Node[] nodeArray = treeInput.get().getNodesAsArray();
-
-        for (int i = 0; i < nodeArray.length; i++) {
-            Node n = nodeArray[i];
-            final HashSet<String> comparison = new HashSet<>();
-            if (n.isLeaf()) {
-                final String leafName = n.getID();
-                comparison.add(leafName);
-            } else {
-                for (Node l: n.getAllLeafNodes()) {
-                    final String leafName = l.getID();
-                    comparison.add(leafName);
-                }
-            }
-
-            if (s.equals(comparison)) {
-                branchRates.setValue(i, newBin);;
-                return true;
-            }
-        }
-        
-        return false;
     }
 }

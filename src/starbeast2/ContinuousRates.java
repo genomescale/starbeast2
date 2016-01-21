@@ -1,9 +1,5 @@
 package starbeast2;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
@@ -108,33 +104,5 @@ public class ContinuousRates extends BranchRateModel.Base implements SpeciesTree
         }
 
         return realRatesArray[node.getNr()];
-    }
-
-    // for testing purposes
-    public boolean setRate(String[] targetNames, double newRate) {
-        final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
-        final RealParameter branchRates = logRatesInput.get();
-        final Node[] nodeArray = treeInput.get().getNodesAsArray();
-
-        for (int i = 0; i < nodeArray.length; i++) {
-            Node n = nodeArray[i];
-            final HashSet<String> comparison = new HashSet<>();
-            if (n.isLeaf()) {
-                final String leafName = n.getID();
-                comparison.add(leafName);
-            } else {
-                for (Node l: n.getAllLeafNodes()) {
-                    final String leafName = l.getID();
-                    comparison.add(leafName);
-                }
-            }
-
-            if (s.equals(comparison)) {
-                branchRates.setValue(i, newRate);;
-                return true;
-            }
-        }
-
-        return false;
     }
 }
