@@ -79,7 +79,7 @@ abstract class ExchangeTestHelper {
         }
 
         CoordinatedExchange coex = new CoordinatedExchange();
-        coex.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers);
+        coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees);
         coex.manipulateSpeciesTree(brother);
         final double calculatedLogHR = coex.rearrangeGeneTrees();
 

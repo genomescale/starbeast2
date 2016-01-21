@@ -7,68 +7,105 @@ import java.util.Set;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
+import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
 @Description("Uses continuous rates stored in clock space, which should have a standard normal prior distribution." +
 "These are scaled to have a spread of 'stdev' and a mean in real space of 1.")
-public class ContinuousRates extends SpeciesTreeRates {
-    public Input<RealParameter> stdevInput = new Input<>("stdev", "The standard deviation to apply to rates.", Input.Validate.REQUIRED);
-    public Input<RealParameter> logRatesInput = new Input<>("logRates", "Per-branch rates.", Input.Validate.REQUIRED);
+public class ContinuousRates extends BranchRateModel.Base implements SpeciesTreeRates {
+    final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
+    final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", true);
+    final public Input<RealParameter> stdevInput = new Input<>("stdev", "The standard deviation to apply to rates.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> logRatesInput = new Input<>("logRates", "Per-branch rates. Must have a log standard normal prior distribution.", Input.Validate.REQUIRED);
 
-    private Double[] realRatesArray;
-    private int nRates;
+    private double[] realRatesArray;
+    private double[] storedRatesArray;
+    private int nEstimatedRates;
+    private int rootNodeNumber;
+    private boolean estimateRoot;
     private boolean needsUpdate;
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = logRatesInput.isDirty() || stdevInput.isDirty();
+        needsUpdate = meanRateInput.isDirty() || stdevInput.isDirty() || logRatesInput.isDirty();
         return needsUpdate;
     }
 
+    @Override
+    public void store() {
+        System.arraycopy(realRatesArray, 0, storedRatesArray, 0, realRatesArray.length);
+        super.store();
+    }
+
+    @Override
     public void restore() {
-        needsUpdate = true;
+        double[] tmpRatesArray = realRatesArray;
+        realRatesArray = storedRatesArray;
+        storedRatesArray = tmpRatesArray;
         super.restore();
     }
 
     @Override
     public void initAndValidate() throws Exception {
         final RealParameter branchRates = logRatesInput.get();
-        final TreeInterface speciesTree = speciesTreeInput.get();
+        final TreeInterface speciesTree = treeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();
+        estimateRoot = estimateRootInput.get().booleanValue();
+        rootNodeNumber = speciesTree.getRoot().getNr();
+        realRatesArray = new double[speciesNodes.length];
+        storedRatesArray = new double[speciesNodes.length];
 
-        nRates = speciesNodes.length;
+        if (estimateRoot) {
+            nEstimatedRates = speciesNodes.length;
+        } else {
+            nEstimatedRates = speciesNodes.length - 1;
+        }
 
-        branchRates.setDimension(nRates);
-        realRatesArray = new Double[nRates];
+        branchRates.setDimension(nEstimatedRates);
 
         needsUpdate = true;
     }
 
-    private synchronized void update() {
-        if (!needsUpdate) return; // in case this method has been called and completed already by another likelihood thread
-
-        final Double realMean = meanRateInput.get().getValue();
-        final Double stdev = stdevInput.get().getValue();
-        final Double logMean = Math.log(realMean) - (0.5 * stdev * stdev);
-        final Double[] logRatesArray = logRatesInput.get().getValues();
-        for (int i = 0; i < logRatesArray.length; i++) {
-            realRatesArray[i] = Math.exp((logRatesArray[i] * stdev) + logMean);
+    private void update() {
+        final RealParameter estimatedMeanParameter = meanRateInput.get();
+        Double estimatedMean;
+        if (estimatedMeanParameter == null) {
+            estimatedMean = 1.0;
+        } else {
+            estimatedMean = estimatedMeanParameter.getValue();
         }
 
-        needsUpdate = false;
+        final Double stdev = stdevInput.get().getValue();
+        final Double scaledLogMean = Math.log(estimatedMean) - (0.5 * stdev * stdev);
+        final Double[] logRatesArray = logRatesInput.get().getValues();
+        for (int i = 0; i < nEstimatedRates; i++) {
+            realRatesArray[i] = Math.exp((logRatesArray[i] * stdev) + scaledLogMean);
+        }
+
+        if (!estimateRoot) realRatesArray[rootNodeNumber] = estimatedMean;
     }
 
     @Override
-    Double[] getRatesArray() {
-        if (needsUpdate) update();
+    public double[] getRatesArray() {
+        if (needsUpdate) {
+            synchronized (this) {
+                update();
+                needsUpdate = false;
+            }
+        }
 
         return realRatesArray;
     }
 
     @Override
     public double getRateForBranch(Node node) {
-        if (needsUpdate) update();
+        if (needsUpdate) {
+            synchronized (this) {
+                update();
+                needsUpdate = false;
+            }
+        }
 
         return realRatesArray[node.getNr()];
     }
@@ -77,7 +114,7 @@ public class ContinuousRates extends SpeciesTreeRates {
     public boolean setRate(String[] targetNames, double newRate) {
         final Set<String> s = new HashSet<>(Arrays.asList(targetNames));
         final RealParameter branchRates = logRatesInput.get();
-        final Node[] nodeArray = speciesTreeInput.get().getNodesAsArray();
+        final Node[] nodeArray = treeInput.get().getNodesAsArray();
 
         for (int i = 0; i < nodeArray.length; i++) {
             Node n = nodeArray[i];
@@ -97,7 +134,7 @@ public class ContinuousRates extends SpeciesTreeRates {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

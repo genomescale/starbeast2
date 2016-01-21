@@ -40,6 +40,8 @@ public class ContinuousRatesTest {
     private final double geneRate = 1.5;
     private final double initialSpeciesRate = 1.0;
     private final double ploidy = 2.0;
+    private final double mean = 1.0;
+    private final double stdev = 1.0;
 
     final double allowedError = 10e-6;
 
@@ -47,6 +49,8 @@ public class ContinuousRatesTest {
     private RealParameter betaParameter;
     private RealParameter geneRateParameter;
     private RealParameter speciesRateParameter;
+    private RealParameter branchRateMeanParameter;
+    private RealParameter branchRateStdevParameter;
 
     private StarBeastClock clockModel;
     private ContinuousRates speciesRates;
@@ -69,11 +73,15 @@ public class ContinuousRatesTest {
         betaParameter = new RealParameter();
         geneRateParameter = new RealParameter();
         speciesRateParameter = new RealParameter();
+        branchRateMeanParameter = new RealParameter();
+        branchRateStdevParameter = new RealParameter();
 
         alphaParameter.initByName("value", String.valueOf(alpha));
         betaParameter.initByName("value", String.valueOf(beta));
         geneRateParameter.initByName("value", String.valueOf(geneRate));
         speciesRateParameter.initByName("value", String.valueOf(initialSpeciesRate));
+        branchRateMeanParameter.initByName("value", String.valueOf(mean));
+        branchRateStdevParameter.initByName("value", String.valueOf(stdev));
 
         // Create dummy state to allow statenode editing
         State state = new State();
@@ -81,6 +89,8 @@ public class ContinuousRatesTest {
         state.initByName("stateNode", betaParameter);
         state.initByName("stateNode", geneRateParameter);
         state.initByName("stateNode", speciesRateParameter);
+        state.initByName("stateNode", branchRateMeanParameter);
+        state.initByName("stateNode", branchRateStdevParameter);
         state.initialise();
 
         final int nBranches = (2 * nSpecies) - 1;
@@ -93,7 +103,7 @@ public class ContinuousRatesTest {
         msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
 
         speciesRates = new ContinuousRates();
-        speciesRates.initByName("tree", speciesTree, "rates", speciesRateParameter);
+        speciesRates.initByName("tree", speciesTree, "logRates", speciesRateParameter, "clock.rate", branchRateMeanParameter, "stdev", branchRateStdevParameter);
         initializeRates();
 
         clockModel = new StarBeastClock();
