@@ -16,7 +16,7 @@ import beast.math.distributions.LogNormalDistributionModel;
 
 public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
-    final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", true);
+    final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
     final public Input<IntegerParameter> branchRatesInput = new Input<>("rates", "Discrete per-branch rates.", Input.Validate.REQUIRED);
     final public Input<LogNormalDistributionModel> rateDistributionInput = new Input<>("distr", "The distribution governing the rates among branches. Must have mean of 1.", Input.Validate.REQUIRED);
 
@@ -26,6 +26,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     private double[] binRates;
     private double[] storedBinRates;
     private double[] ratesArray;
+    private double[] storedRatesArray;
 
     private int nEstimatedRates;
     private int rootNodeNumber;
@@ -50,14 +51,15 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
             binRatesNeedsUpdate = false;
         }
 
-        needsUpdate = true;
-        return true;
+        needsUpdate = binRatesNeedsUpdate || branchRatesInput.isDirty() || meanRateInput.isDirty();
+        return needsUpdate;
     }
 
     @Override
     public void store() {
         storedLogNormalStdev = currentLogNormalStdev;
         System.arraycopy(binRates, 0, storedBinRates, 0, binRates.length);
+        System.arraycopy(ratesArray, 0, storedRatesArray, 0, ratesArray.length);
         super.store();
     }
 
@@ -65,15 +67,16 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     public void restore() {
         double tmpLogNormalStdev = currentLogNormalStdev;
         double[] tmpBinRates = binRates;
+        double[] tmpRatesArray = ratesArray;
 
         currentLogNormalStdev = storedLogNormalStdev;
         binRates = storedBinRates;
+        ratesArray = storedRatesArray;
         
         storedLogNormalStdev = tmpLogNormalStdev;
         storedBinRates = tmpBinRates;
+        storedRatesArray = tmpRatesArray;
 
-        // binRatesNeedsUpdate = true;
-        needsUpdate = true;
         super.restore();
     }
 
@@ -85,6 +88,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
         estimateRoot = estimateRootInput.get().booleanValue();
         rootNodeNumber = speciesTree.getRoot().getNr();
         ratesArray = new double[speciesNodes.length];
+        storedRatesArray = new double[speciesNodes.length];
 
         if (estimateRoot) {
             nEstimatedRates = speciesNodes.length;

@@ -24,23 +24,63 @@ public class GeneTree extends TreeWrapper {
 
     private int geneTreeLeafNodeCount;
     private int geneTreeNodeCount;
-    private double[][] speciesOccupancy;
     private boolean needsUpdate;
 
-    final protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
-    final protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
+    protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
+    protected ListMultimap<Integer, Double> storedCoalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
+    protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
+    protected Multiset<Integer> storedCoalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
 
     protected int[] geneNodeSpeciesAssignment;
+    protected int[] storedGeneNodeSpeciesAssignment;
+    protected double[][] speciesOccupancy;
+    protected double[][] storedSpeciesOccupancy;
     protected boolean geneTreeCompatible;
+    protected boolean storedGeneTreeCompatible;
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = true;
-        return true;
+        needsUpdate = treeInput.isDirty() || speciesTreeInput.isDirty();
+        return needsUpdate;
     }
 
+    @Override
+    public void store() {
+        storedCoalescentTimes.clear();
+        storedCoalescentLineageCounts.clear();
+
+        storedCoalescentTimes.putAll(coalescentTimes);
+        storedCoalescentLineageCounts.addAll(coalescentLineageCounts);
+
+        storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
+        System.arraycopy(geneNodeSpeciesAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeSpeciesAssignment.length);
+        System.arraycopy(speciesOccupancy, 0, storedSpeciesOccupancy, 0, speciesOccupancy.length);
+
+        storedGeneTreeCompatible = geneTreeCompatible;
+
+        super.store();
+    }
+
+    @Override
     public void restore() {
-        needsUpdate = true;
+        ListMultimap<Integer, Double> tmpCoalescentTimes = coalescentTimes;
+        Multiset<Integer> tmpCoalescentLineageCounts = coalescentLineageCounts;
+        int[] tmpGeneNodeSpeciesAssignment = geneNodeSpeciesAssignment;
+        double[][] tmpSpeciesOccupancy = speciesOccupancy;
+        boolean tmpGeneTreeCompatible = geneTreeCompatible;
+
+        coalescentTimes = storedCoalescentTimes;
+        coalescentLineageCounts = storedCoalescentLineageCounts;
+        speciesOccupancy = storedSpeciesOccupancy;
+        geneNodeSpeciesAssignment = storedGeneNodeSpeciesAssignment;
+        geneTreeCompatible = storedGeneTreeCompatible;
+
+        storedCoalescentTimes = tmpCoalescentTimes;
+        storedCoalescentLineageCounts = tmpCoalescentLineageCounts;
+        storedSpeciesOccupancy = tmpSpeciesOccupancy;
+        storedGeneNodeSpeciesAssignment = tmpGeneNodeSpeciesAssignment;
+        storedGeneTreeCompatible = tmpGeneTreeCompatible;
+
         super.restore();
     }
 
@@ -58,6 +98,7 @@ public class GeneTree extends TreeWrapper {
 
         geneTreeNodeCount = treeInput.get().getNodeCount();
         geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
+        storedGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
 
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
 
@@ -72,6 +113,9 @@ public class GeneTree extends TreeWrapper {
 
             speciesNumberMap.put(speciesName, speciesNumber);
         }
+
+        geneTreeCompatible = false;
+        storedGeneTreeCompatible = false;
 
         needsUpdate = true;
     }
@@ -166,12 +210,20 @@ public class GeneTree extends TreeWrapper {
         }
     }
 
-    public double[] getOccupancy(Node node) {
+    public double[][] getSpeciesOccupancy() {
+        if (needsUpdate) {
+            update();
+        }
+
+        return speciesOccupancy;
+    }
+
+    /* public double[] getOccupancy(Node node) {
         if (needsUpdate) {
             update();
         }
 
         final int geneTreeNodeNumber = node.getNr();
         return speciesOccupancy[geneTreeNodeNumber];
-    }
+    } */
 }

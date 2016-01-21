@@ -15,7 +15,7 @@ import beast.evolution.tree.TreeInterface;
 "These are scaled to have a spread of 'stdev' and a mean in real space of 1.")
 public class ContinuousRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
-    final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", true);
+    final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
     final public Input<RealParameter> stdevInput = new Input<>("stdev", "The standard deviation to apply to rates.", Input.Validate.REQUIRED);
     final public Input<RealParameter> logRatesInput = new Input<>("logRates", "Per-branch rates. Must have a log standard normal prior distribution.", Input.Validate.REQUIRED);
 
