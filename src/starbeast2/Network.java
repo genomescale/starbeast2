@@ -8,6 +8,7 @@ import java.util.Collections;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.StateNode;
+import beast.evolution.alignment.TaxonSet;
 
 /**
  * Network class to replace Tree class
@@ -17,9 +18,11 @@ import beast.core.StateNode;
 @Description("Network representing reticulate evolution of species")
 public class Network extends StateNode {  //implements TreeInterface
     final public Input<Network> networkInput =
-            new Input<>("initial", "network to start with");
+            new Input<>("initial", "Network to start with.");
     final public Input<String> nodeTypeInput =
-            new Input<>("nodetype", "type of the node in the network", NetworkNode.class.getName());
+            new Input<>("nodetype", "Type of the node in the network.", NetworkNode.class.getName());
+    final public Input<TaxonSet> taxonSetInput =
+            new Input<>("taxonset", "Set of taxa at the leafs of the network.");
 
     /**
      * state of dirtiness of a node in the tree
@@ -43,10 +46,71 @@ public class Network extends StateNode {  //implements TreeInterface
     protected NetworkNode[] networkNodes = null;
     protected NetworkNode[] storedNetworkNodes = null;
 
+    /**
+     * array of taxa names for the nodes in the network
+     * such that taxaNames[node.getNr()] == node.getID()
+     */
+    String[] taxaNames = null;
+
     @Override
     public void initAndValidate() throws Exception {
-        // needs implementation here???
-        // bla bla
+        if (nodeCount < 0) {
+            if (taxonSetInput.get() != null) {
+                makeCaterpillar(0, 1, false);
+            } else {
+                // make dummy network with a single root node
+                root = newNode();
+                root.labelNr = 0;
+                root.height = 0;
+                root.network = this;
+                nodeCount = 1;
+                internalNodeCount = 0;
+                leafNodeCount = 1;
+            }
+        }
+        if (nodeCount >= 0) {
+            initArrays();
+        }
+
+        // ensure all nodes have their taxon names set up
+        String[] taxa = getTaxaNames();
+        for (int i = 0; i < getNodeCount() && i < taxa.length; i++) {
+            if (taxa[i] != null)
+                networkNodes[i].setID(taxa[i]);
+        }
+
+        // needs more things here???
+    }
+
+    public void makeCaterpillar(final double minInternalHeight, final double step, final boolean finalize) {
+        // make a caterpillar
+        final List<String> taxa = taxonSetInput.get().asStringList();
+        NetworkNode left = newNode();
+        left.labelNr = 0;
+        left.height = 0;
+        left.setID(taxa.get(0));
+        for (int i = 1; i < taxa.size(); i++) {
+            final NetworkNode right = newNode();
+            right.labelNr = i;
+            right.height = 0;
+            right.setID(taxa.get(i));
+            final NetworkNode parent = newNode();
+            parent.labelNr = taxa.size() + i - 1;
+            parent.height = minInternalHeight + i * step;
+            // left.parent = parent;
+            parent.setLeftChild(left);
+            // right.parent = parent;
+            parent.setRightChild(right);
+            left = parent;
+        }
+        root = left;
+        leafNodeCount = taxa.size();
+        nodeCount = leafNodeCount * 2 - 1;
+        internalNodeCount = leafNodeCount - 1;
+
+        if (finalize) {
+            initArrays();
+        }
     }
 
     /**
@@ -168,6 +232,41 @@ public class Network extends StateNode {  //implements TreeInterface
             }
         }
         return  nB;
+    }
+
+    /**
+     * @return an array of taxon names in order of their node numbers
+     */
+    public String[] getTaxaNames() {
+        if (taxaNames == null || taxaNames.length == 0) {
+            final TaxonSet taxonSet = taxonSetInput.get();
+            if (taxonSet != null) {
+                String[] array = new String[taxonSet.asStringList().size()];
+                taxaNames = taxonSet.asStringList().toArray(array);
+            } else {
+                taxaNames = new String[getNodeCount()];
+                collectTaxaNames(getRoot());
+            }
+        }
+
+        // sanity check
+        if (taxaNames.length == 1 && taxaNames[0] == null) {
+        }
+        return taxaNames;
+    }
+    private void collectTaxaNames(final NetworkNode node) {
+        if (node.getID() != null) {
+            taxaNames[node.getNr()] = node.getID();
+        }
+        if (node.isLeaf()) {
+            if (node.getID() == null) {
+                node.setID("node" + node.getNr());
+            }
+        } else {
+            for (NetworkNode child : node.getChildren()) {
+                collectTaxaNames(child);
+            }
+        }
     }
 
     public String toString() {

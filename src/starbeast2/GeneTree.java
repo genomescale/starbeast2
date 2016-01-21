@@ -162,7 +162,7 @@ public class GeneTree extends CalculationNode {
             }
         } else {
             // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
-            // otherwise, this gene tree IS NOT compatible with the species tree
+            // return false if this gene tree IS NOT compatible with the species tree
             return (existingSpeciesAssignment == speciesNetworkNodeNumber);
         }
     }
