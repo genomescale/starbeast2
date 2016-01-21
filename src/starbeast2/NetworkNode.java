@@ -22,6 +22,13 @@ public class NetworkNode extends BEASTObject {
      */
     protected int labelNr;
 
+    protected int reticulateNr;  // label nr of reticulation event of node
+
+    /**
+     * inheritance probability associated with the left parent branch
+     */
+    protected double inheritProb;
+
     /**
      * height of this node
      */
@@ -98,6 +105,14 @@ public class NetworkNode extends BEASTObject {
 
     public void setNr(final int nr) {
         labelNr = nr;
+    }
+
+    public int getReticulateNr() {
+        return reticulateNr;
+    }
+
+    public void setReticulateNr(final int nr) {
+        reticulateNr = nr;
     }
 
     public double getHeight() {

@@ -23,7 +23,7 @@ public class MultispeciesCoalescent extends Distribution {
             new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
     public Input<List<GeneTree>> geneTreeInput =
             new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
-    public Input<MultispeciesPopulationModel> populationModelInput =
+    public Input<PopulationSizeModel> populationModelInput =
             new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
 
     private int nGeneTrees;
@@ -47,7 +47,7 @@ public class MultispeciesCoalescent extends Distribution {
             perGenePloidy[i] = geneTreeI.ploidy;
         }
 
-        final MultispeciesPopulationModel populationModel = populationModelInput.get();
+        final PopulationSizeModel populationModel = populationModelInput.get();
         final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
         speciesNetworkNodeCount = speciesNetwork.getNodeCount();
         populationModel.initPopSizes(speciesNetworkNodeCount * 2);
@@ -56,7 +56,7 @@ public class MultispeciesCoalescent extends Distribution {
     @Override
     public double calculateLogP() throws Exception {
         final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
-        final MultispeciesPopulationModel populationModel = populationModelInput.get();
+        final PopulationSizeModel populationModel = populationModelInput.get();
         speciesNetworkNodeCount = speciesNetwork.getNodeCount();
         double[] speciesStartTimes = new double[2*speciesNetworkNodeCount]; // the earlier date (rootward end)
         double[] speciesEndTimes = new double[2*speciesNetworkNodeCount]; // the later date (tipward end)
