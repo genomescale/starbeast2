@@ -23,21 +23,29 @@ public class LinearPopulation extends PopulationSizeModel {
     }
 
     @Override
-    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+    public double branchLogP(int speciesNetworkPopNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
                              List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int nGenes = perGenePloidy.length;
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesNetworkPopNumber);
 
-        double branchTipPopSize;
+        final double branchTipPopSize;
         if (speciesNetworkNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesNetworkNodeNumber);
+            branchTipPopSize = tipPopSizes.getValue(speciesNetworkPopNumber);
+        } else if (speciesNetworkNode.isReticulation()) {
+            final int childNodeNumber;
+            if (speciesNetworkNode.getLeftChild() != null)
+                childNodeNumber = speciesNetworkNode.getLeftChild().getNr();
+            else
+                childNodeNumber = speciesNetworkNode.getRightChild().getNr();
+            branchTipPopSize = topPopSizes.getValue(childNodeNumber*2);
         } else {
             final int leftChildNodeNumber = speciesNetworkNode.getLeftChild().getNr();
             final int rightChildNodeNumber = speciesNetworkNode.getRightChild().getNr();
-            branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
+            branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber*2) +
+                               topPopSizes.getValue(rightChildNodeNumber*2+1);
         }
 
         // set the root branch heights for each gene tree (to equal the highest gene tree root node)
@@ -52,7 +60,7 @@ public class LinearPopulation extends PopulationSizeModel {
         }
 
         final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy,
-                                        branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+                                       branchCoalescentTimes, branchLineageCounts, branchEventCounts);
 
         // for debugging
         /*if (speciesTreeNode.isRoot()) {
@@ -68,13 +76,13 @@ public class LinearPopulation extends PopulationSizeModel {
     }
 
     @Override
-    public void initPopSizes(int nBranches) {
+    public void initPopSizes(int nPopulation) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
-        final int nSpecies = (nBranches + 1) / 2;
+        //final int nSpecies = (nSpecies + 1) / 2;
 
-        topPopSizes.setDimension(nBranches);
-        tipPopSizes.setDimension(nSpecies);
+        topPopSizes.setDimension(nPopulation);
+        tipPopSizes.setDimension(nPopulation);
     }
 
     @Override
@@ -82,10 +90,10 @@ public class LinearPopulation extends PopulationSizeModel {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
 
+        // TODO consider reticulation node ???
         for (int i = 0; i < topPopSizes.getDimension(); i++) {
             topPopSizes.setValue(i, popInitial / 2.0);
         }
-
         for (int i = 0; i < tipPopSizes.getDimension(); i++) {
             tipPopSizes.setValue(i, popInitial);
         }
@@ -97,6 +105,7 @@ public class LinearPopulation extends PopulationSizeModel {
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int speciesNetworkNodeNumber = speciesNetworkNode.getNr();
 
+        // TODO ???
         final double branchTopPopSize = topPopSizes.getValue(speciesNetworkNodeNumber);
 
         double branchTipPopSize;

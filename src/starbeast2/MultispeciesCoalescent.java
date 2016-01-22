@@ -74,9 +74,14 @@ public class MultispeciesCoalescent extends Distribution {
             if (speciesNode.isRoot()) {
                 speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = Double.POSITIVE_INFINITY;
             } else {
-                speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = leftParent.getHeight();
-                if (rightParent != null)
+                if (leftParent != null && rightParent == null)
+                    speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = leftParent.getHeight();
+                else if (rightParent != null && leftParent == null)
+                    speciesStartTimes[i*2+1] = speciesStartTimes[i*2] = rightParent.getHeight();
+                else { // reticulation node
+                    speciesStartTimes[i*2] = leftParent.getHeight();
                     speciesStartTimes[i*2+1] = rightParent.getHeight();
+                }
             }
         }
 
@@ -128,7 +133,6 @@ public class MultispeciesCoalescent extends Distribution {
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);
 
-            // linearPopulation uses i and speciesTreeNode, which needs double check later???
             final double branchLogP = populationModel.branchLogP(i, speciesNetworkNode, perGenePloidy,
                                                 branchCoalescentTimes, branchLineageCounts, branchEventCounts);
             logP += branchLogP;

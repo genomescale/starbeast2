@@ -14,23 +14,20 @@ import beast.core.Description;
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")
 public abstract class PopulationSizeModel extends CalculationNode {
-    public abstract double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+    abstract public double branchLogP(int speciesNetworkPopNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
                                       List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
     // Sets the appropriate dimension size of each population size state node
     // To successfully resume from a saved state, this must be called via an initAndValidate method
-    public void initPopSizes(final int nSpeciesBranches) {
-    }
+    abstract public void initPopSizes(final int nPopulation);
 
     // Sets model-compatible default population sizes
     // To successfully begin a run, this must be called from a StateNodeInitializer
-    public void initPopSizes(final double initialPopSizes) {
-    }
+    abstract public void initPopSizes(final double initialPopSizes);
 
     // Per-branch population size information which will be added to a Newick string.
     // If no information is available, do not override the superclass method
-    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
-    }
+    abstract public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df);
 
     protected static double constantLogP(double popSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes,
                                          int[] branchLineageCounts, int[] branchEventCounts) {
