@@ -298,6 +298,53 @@ public class NetworkNode extends BEASTObject {
         return nodeCount;
     }
 
+    public int getReticulationNodeCount() {
+        recursiveResetVisited();
+        return recurseReticulationNodeCount();
+    }
+    private int recurseReticulationNodeCount() {
+        if (visited || nParents <= 1) return 0;
+
+        int nodeCount = 1;
+        if (leftChild != null) nodeCount += leftChild.recurseInternalNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseInternalNodeCount();
+
+        setVisited();
+        return nodeCount;
+    }
+
+    /**
+     * get all child node under this node, if this node is leaf then list.size() = 0.
+     */
+    public List<NetworkNode> getAllChildNodes() {
+        final List<NetworkNode> childNodes = new ArrayList<>();
+        recursiveResetVisited();
+        if (!this.isLeaf()) getAllChildNodes(childNodes);
+        return childNodes;
+    }
+    // recursive
+    public void getAllChildNodes(final List<NetworkNode> childNodes) {
+        if (visited) return;
+
+        childNodes.add(this);
+        setVisited();
+        if (leftChild != null) leftChild.getAllChildNodes(childNodes);
+        if (rightChild != null) rightChild.getAllChildNodes(childNodes);
+    }
+
+    /**
+     * @return length of branch between this node and its parent
+     */
+    public final double getLeftLength() {
+        if (isRoot() || getLeftParent() == null) return 0;
+        else return getLeftParent().height - height;
+    }
+
+    public final double getRightLength() {
+        if (isRoot() || getRightParent() == null) return 0;
+        else return getRightParent().height - height;
+    }
+
     /**
      * @return (deep) copy of node
      */

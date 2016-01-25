@@ -36,6 +36,7 @@ public class Network extends StateNode {  //implements TreeInterface
     protected int nodeCount = -1;
     protected int internalNodeCount = -1;
     protected int leafNodeCount = -1;
+    protected int reticulationNodeCount = -1;
 
     protected NetworkNode root;
     protected NetworkNode storedRoot;
@@ -64,7 +65,7 @@ public class Network extends StateNode {  //implements TreeInterface
                 root.height = 0;
                 root.network = this;
                 nodeCount = 1;
-                internalNodeCount = 0;
+                internalNodeCount = reticulationNodeCount = 0;
                 leafNodeCount = 1;
             }
         }
@@ -179,6 +180,13 @@ public class Network extends StateNode {  //implements TreeInterface
         return leafNodeCount;
     }
 
+    public int getReticulationNodeCount() {
+        if (reticulationNodeCount < 0) {
+            reticulationNodeCount = root.getReticulationNodeCount();
+        }
+        return reticulationNodeCount;
+    }
+
     /**
      * @return a list of leaf nodes contained in this network
      */
@@ -232,6 +240,13 @@ public class Network extends StateNode {  //implements TreeInterface
             }
         }
         return  nB;
+    }
+
+    /**
+     * @return the number of branches in the network, including the root branch
+     */
+    public int getBranchCount() {
+        return getNodeCount() + getReticulationNodeCount();
     }
 
     /**
@@ -299,6 +314,7 @@ public class Network extends StateNode {  //implements TreeInterface
         network.nodeCount = nodeCount;
         network.internalNodeCount = internalNodeCount;
         network.leafNodeCount = leafNodeCount;
+        network.reticulationNodeCount = reticulationNodeCount;
         return network;
     }
 
@@ -317,6 +333,7 @@ public class Network extends StateNode {  //implements TreeInterface
         network.nodeCount = nodeCount;
         network.internalNodeCount = internalNodeCount;
         network.leafNodeCount = leafNodeCount;
+        network.reticulationNodeCount = reticulationNodeCount;
     }
 
     /**
@@ -337,6 +354,7 @@ public class Network extends StateNode {  //implements TreeInterface
         nodeCount = network.nodeCount;
         internalNodeCount = network.internalNodeCount;
         leafNodeCount = network.leafNodeCount;
+        reticulationNodeCount = network.reticulationNodeCount;
 
         initArrays();
     }
@@ -458,7 +476,6 @@ public class Network extends StateNode {  //implements TreeInterface
         networkNodes = tmp;
         root = networkNodes[storedRoot.getNr()];
 
-        // leafNodeCount = root.getLeafNodeCount();
         hasStartedEditing = false;
 
         for(NetworkNode n : networkNodes) {
