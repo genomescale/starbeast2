@@ -224,7 +224,12 @@ public class Network extends StateNode {  //implements TreeInterface
      * convert network to array representation
      */
     void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
-        //???
+        nodes[node.getNr()] = node;
+        node.network = this;  //(JH) I don't understand this code
+        // (JH) why not  node.children, we don't keep it around??
+        for (final NetworkNode child : node.getChildren()) {
+            listNodes(child, nodes);
+        }
     }
 
     /**

@@ -193,7 +193,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         return (mij*(2*nSpecies-1 - mij))/2 + (abs(s1-s2)-1);
     }
 
-
     private void fullInit() throws Exception {
         // Build gene trees from  alignments
 
@@ -354,19 +353,13 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    private void randomInitGeneTrees(double speciesTreeHeight) {
-      final List<Tree> geneTrees = geneTreesInput.get();
-        for (final Tree gtree : geneTrees) {
-            gtree.makeCaterpillar(speciesTreeHeight, speciesTreeHeight/gtree.getInternalNodeCount(), true);
-        }
-    }
-
     private void randomInit() throws Exception {
         double lam = 1;
         final RealParameter lambda = birthRateInput.get();
         if(lambda != null) {
             lam = lambda.getArrayValue();
         }
+
         final Network sNetwork = speciesNetworkInput.get();
         final TaxonSet species = sNetwork.taxonSetInput.get();
         final int nSpecies = species.asStringList().size();
@@ -376,11 +369,12 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
         final double rootHeight = (1/lam) * s;
         sNetwork.scale(rootHeight/sNetwork.getRoot().getHeight());
-        randomInitGeneTrees(rootHeight);
-//        final List<Tree> geneTrees = genes.get();
-//        for (final Tree gtree : geneTrees) {
-//            gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
-//        }
+
+        // randomInitGeneTrees(rootHeight);
+        final List<Tree> geneTrees = geneTreesInput.get();
+        for (final Tree gtree : geneTrees) {
+            gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
+        }
     }
 
     // private void initWithCalibrations() throws Exception {}
@@ -390,7 +384,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         // if( hasCalibrations ) { stateNodes.add((Tree) calibratedYule.get().treeInput.get()); } else {
         stateNodes.add(speciesNetworkInput.get());
 
-        for( final Tree gtree : geneTreesInput.get() ) {
+        for(final Tree gtree : geneTreesInput.get()) {
             stateNodes.add(gtree);
         }
 
