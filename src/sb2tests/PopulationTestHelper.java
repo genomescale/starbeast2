@@ -12,7 +12,6 @@ import beast.util.TreeParser;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.PopulationSizeModel;
-import starbeast2.SpeciesTree;
 
 abstract class PopulationTestHelper {
     String newickSpeciesTree;

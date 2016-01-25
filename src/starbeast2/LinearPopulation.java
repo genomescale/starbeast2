@@ -14,9 +14,9 @@ import beast.core.parameter.RealParameter;
 
 public class LinearPopulation extends PopulationSizeModel {
     public Input<RealParameter> topPopSizesInput =
-            new Input<RealParameter>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
+            new Input<>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput =
-            new Input<RealParameter>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
+            new Input<>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() throws Exception {
@@ -59,18 +59,53 @@ public class LinearPopulation extends PopulationSizeModel {
             }
         }
 
-        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy,
-                                       branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+        return linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy,
+                          branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+    }
 
-        // for debugging
-        /*if (speciesTreeNode.isRoot()) {
-            System.out.println(String.format("Tallest gene tree height = %f", tallestGeneTreeHeight));
-            System.out.println(String.format("Root node %d logP = %f", speciesTreeNodeNumber, logP));
-        } else if (speciesTreeNode.isLeaf()) {
-            System.out.println(String.format("Leaf node %d logP = %f", speciesTreeNodeNumber, logP));
-        } else { 
-            System.out.println(String.format("Internal node %d logP = %f", speciesTreeNodeNumber, logP));
-        }*/
+    // copied from *BEAST v2.3, with small modifications to work with starbeast2
+    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes,
+                                       int[] branchLineageCounts, int[] branchEventCounts) {
+        final int nGenes = perGenePloidy.length;
+
+        double logP = 0.0;
+        for (int j = 0; j < nGenes; j++) {
+            final double fPopSizeTop = topPopSize * perGenePloidy[j];
+            final double fPopSizeBottom = tipPopSize * perGenePloidy[j];
+            final Double[] fTimes = branchCoalescentTimes.get(j);
+            final int k = branchEventCounts[j];
+            final int nLineagesBottom = branchLineageCounts[j];
+
+            final double a = (fPopSizeTop - fPopSizeBottom) / (fTimes[k + 1] - fTimes[0]);
+            // final double b = fPopSizeBottom;
+
+            if (Math.abs(fPopSizeTop - fPopSizeBottom) < 1e-10) {
+                // use approximation for small values to bypass numerical instability
+                for (int i = 0; i <= k; i++) {
+                    final double fTimeip1 = fTimes[i + 1];
+                    final double fPopSize = a * (fTimeip1 - fTimes[0]) + fPopSizeBottom;
+                    if( i < k ) {
+                        logP += -Math.log(fPopSize);
+                    }
+
+                    // slope = 0, so population function is constant
+                    final int i1 = nLineagesBottom - i;
+                    logP -= (i1 * (i1 - 1.0) / 2.0) * (fTimeip1 - fTimes[i]) / fPopSize;
+                }
+            } else {
+                final double vv = fPopSizeBottom - a * fTimes[0];
+                for (int i = 0; i <= k; i++) {
+                    final double fPopSize = a * fTimes[i + 1] + vv;
+                    if( i < k ) {
+                        logP += -Math.log(fPopSize);
+                    }
+                    final double f = fPopSize / (a * fTimes[i] + vv);
+
+                    final int i1 = nLineagesBottom - i;
+                    logP += -(i1 * (i1 - 1.0) / 2.0) * Math.log(f) / a;
+                }
+            }
+        }
 
         return logP;
     }

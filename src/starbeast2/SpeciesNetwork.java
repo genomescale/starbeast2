@@ -68,4 +68,8 @@ public class SpeciesNetwork extends CalculationNode {
     protected Network getNetwork() {
         return networkInput.get();
     }
+
+    protected Network getCurrentNetwork() {
+        return (Network) networkInput.get().getCurrent();
+    }
 }

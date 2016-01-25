@@ -17,7 +17,6 @@ import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.PopulationSizeModel;
-import starbeast2.SpeciesTree;
 
 abstract class ExchangeTestHelper {
     String newickSpeciesTree;
@@ -79,7 +78,7 @@ abstract class ExchangeTestHelper {
         }
 
         CoordinatedExchange coex = new CoordinatedExchange();
-        coex.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers);
+        coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees);
         coex.manipulateSpeciesTree(brother);
         final double calculatedLogHR = coex.rearrangeGeneTrees();
 
