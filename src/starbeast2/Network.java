@@ -68,9 +68,8 @@ public class Network extends StateNode {  //implements TreeInterface
                 leafNodeCount = 1;
             }
         }
-        if (nodeCount >= 0) {
-            initArrays();
-        }
+
+        initArrays();
 
         // ensure all nodes have their taxon names set up
         String[] taxa = getTaxaNames();
@@ -499,7 +498,7 @@ public class Network extends StateNode {  //implements TreeInterface
 
     @Override
     public void log(int sample, PrintStream out) {
-        Network network = (Network) getCurrent();
+        // Network network = (Network) getCurrent();
         out.print("network STATE_" + sample + " = ");
         // Don't sort, this can confuse CalculationNodes relying on the tree
         // final int[] dummy = new int[1];
@@ -526,5 +525,30 @@ public class Network extends StateNode {  //implements TreeInterface
     @Override
     public double getArrayValue(int nr) {
         return networkNodes[nr].height;
+    }
+
+    public void addLeafNode(final NetworkNode newNode) {
+        addNode(newNode, true);
+    }
+
+    public void addInternalNode(final NetworkNode newNode) {
+        addNode(newNode, false);
+    }
+
+    public void addNode(final NetworkNode newNode, final boolean isLeaf) {
+        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
+        System.arraycopy(networkNodes, 0, tmp, 0, nodeCount);
+        if (root == null) {
+            tmp[nodeCount] = newNode;
+            newNode.setNr(nodeCount);
+        } else {
+            tmp[nodeCount] = root;
+            tmp[nodeCount - 1] = newNode;
+            root.setNr(nodeCount);
+            newNode.setNr(nodeCount - 1);
+        }
+        networkNodes = tmp;
+        nodeCount++;
+        if (isLeaf) leafNodeCount++;
     }
 }

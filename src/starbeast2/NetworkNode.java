@@ -58,7 +58,7 @@ public class NetworkNode extends BEASTObject {
      */
     int isDirty = Network.IS_CLEAN;
 
-    private void updateSizes() {
+    protected void updateSizes() {
         nParents = 0;
         nChildren = 0;
         if (leftParent  != null) nParents++;
@@ -402,8 +402,69 @@ public class NetworkNode extends BEASTObject {
         }
     }
 
+    // swap the orientation of parents (so the left parent becomes the right parent and vice versa)
+    public void reorientParents() {
+        // swap parents
+        NetworkNode tmpParent = leftParent;
+        leftParent = rightParent;
+        rightParent = tmpParent;
+        
+        // update parent nodes to reflect changes
+        // cascade changes to parent of half-siblings if they exist
+        if (leftParent != null) {
+            NetworkNode halfSibling = leftParent.leftChild;
+            leftParent.rightChild = null;
+            if (halfSibling != null) halfSibling.reorientParents();
+            leftParent.leftChild = this;
+        }
+
+        if (rightParent != null) {
+            NetworkNode halfSibling = rightParent.rightChild;
+            rightParent.leftChild = null;
+            if (halfSibling != null) halfSibling.reorientParents();
+            rightParent.rightChild = this;
+        }
+    }
+
     /**
      * many other methods below
      */
 
+    @Override
+    public String toString() {
+        resetVisited();
+        final StringBuffer sb = new StringBuffer();
+        buildNewick(sb);
+
+        return sb.toString(); 
+    }
+
+    public void buildNewick(StringBuffer representation) {
+        if (!isLeaf() && (!visited || !isReticulation())) {
+            NetworkNode lc = getRightChild();
+            NetworkNode rc = getLeftChild();
+            representation.append("(");
+            if (lc != null) {
+                lc.buildNewick(representation);
+                representation.append(":");
+                representation.append(getHeight() - lc.getHeight());
+            }
+            if (lc != null && rc != null) representation.append(",");
+            if (rc != null) {
+                rc.buildNewick(representation);
+                representation.append(":");
+                representation.append(getHeight() - rc.getHeight());
+            }
+            representation.append(")");
+        }
+
+        representation.append(getID());
+        if (isReticulation()) {
+            representation.append("#");
+            representation.append(labelNr);
+        }
+
+        visited = true;
+    }
 }
+
