@@ -15,6 +15,7 @@ import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
+import starbeast2.SpeciesTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.PopulationSizeModel;
 

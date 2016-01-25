@@ -86,7 +86,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
         PopulationSizeModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
-        network.getRoot().sort();
+        // ??? network.getRoot().sort();
         // out.print(toNewick(network.getRoot(), metadata, branchRateModel, populationModel));
         //out.print(tree.getRoot().toShortNewick(false));
         out.print(";");
@@ -108,6 +108,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
         }
     }
 
+    /* temp disabled for code to compile
     String toNewick(NetworkNode node, List<Function> metadataList, BranchRateModel branchRateModel, PopulationSizeModel populationModel) {
         StringBuffer buf = new StringBuffer();
         if (node.getLeftChild() != null) {
@@ -194,6 +195,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
 
         return speciesNetworkHeight;
     }
+    */
 
     @Override
     public void close(PrintStream out) {
