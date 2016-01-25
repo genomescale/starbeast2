@@ -153,8 +153,16 @@ public class Network extends StateNode {  //implements TreeInterface
 
     public void setRoot(final NetworkNode root) {
         this.root = root;
-        // ensure root is the last node in networkNodes???
-
+        nodeCount = this.root.getNodeCount();
+        // ensure root is the last node in networkNodes
+        if (networkNodes != null && root.labelNr != networkNodes.length - 1) {
+            final int rootPos = networkNodes.length - 1;
+            NetworkNode tmp = networkNodes[rootPos];
+            networkNodes[rootPos] = root;
+            networkNodes[root.labelNr] = tmp;
+            tmp.labelNr = root.labelNr;
+            networkNodes[rootPos].labelNr = rootPos;
+        }
     }
 
     /**
@@ -226,7 +234,6 @@ public class Network extends StateNode {  //implements TreeInterface
     void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
         nodes[node.getNr()] = node;
         node.network = this;  //(JH) I don't understand this code
-        // (JH) why not  node.children, we don't keep it around??
         for (final NetworkNode child : node.getChildren()) {
             listNodes(child, nodes);
         }
@@ -421,7 +428,6 @@ public class Network extends StateNode {  //implements TreeInterface
     public int scale(final double scale) throws Exception {
         root.scale(scale);
         return getInternalNodeCount();
-        // is this number correct??? should return nBifurcationNode+2*nReticulationNode
     }
 
     /**
@@ -452,7 +458,6 @@ public class Network extends StateNode {  //implements TreeInterface
             final NetworkNode sink = storedNetworkNodes[i];
             final NetworkNode src = networkNodes[i];
             sink.height = src.height;
-            // am i doing the correct thing ???
             if (src.leftParent != null)
                 sink.leftParent = storedNetworkNodes[src.leftParent.getNr()];
             else

@@ -20,7 +20,7 @@ import starbeast2.ConstantPopulationIO;
 import starbeast2.DiscreteRates;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationSizeModel;
 import starbeast2.SpeciesTree;
 import starbeast2.StarBeastClock;
 
@@ -87,7 +87,7 @@ public class DiscreteRatesTest {
         state.initialise();
 
         final int nBranches = (2 * nSpecies) - 1;
-        MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
+        PopulationSizeModel populationModel = new ConstantPopulationIO();
         populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);

@@ -11,7 +11,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import starbeast2.ConstantPopulation;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationSizeModel;
 
 public class IncompatibleTreeTest extends PopulationTestHelper {
     private final int individualsPerSpecies = 2;
@@ -53,7 +53,7 @@ public class IncompatibleTreeTest extends PopulationTestHelper {
     }
 
     @Override
-    public MultispeciesPopulationModel generatePopulationModel() throws Exception {
+    public PopulationSizeModel generatePopulationModel() throws Exception {
         popSizesParameter = new RealParameter();
         popSizesParameter.initByName("value", String.valueOf(popSize));
 
@@ -62,7 +62,7 @@ public class IncompatibleTreeTest extends PopulationTestHelper {
         state.initByName("stateNode", popSizesParameter);
         state.initialise();
 
-        MultispeciesPopulationModel populationModel = new ConstantPopulation();
+        PopulationSizeModel populationModel = new ConstantPopulation();
         populationModel.initByName("popSizes", popSizesParameter);
         
         return populationModel;

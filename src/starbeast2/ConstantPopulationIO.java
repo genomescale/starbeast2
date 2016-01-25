@@ -1,5 +1,6 @@
 package starbeast2;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.Input;
@@ -62,5 +63,20 @@ public class ConstantPopulationIO extends PopulationSizeModel {
         final double logP = branchLogR + (alpha * Math.log(beta)) - ((alpha + branchQ) * Math.log(beta + branchGamma)) + logGammaRatio;
 
         return logP;
+    }
+
+    @Override
+    public void initPopSizes(int nPopulation) {
+        // do nothing
+    }
+
+    @Override
+    public void initPopSizes(double popInitial) {
+        // do nothing
+    }
+
+    @Override
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
+        // do nothing
     }
 }

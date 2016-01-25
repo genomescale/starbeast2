@@ -11,7 +11,7 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationSizeModel;
 import starbeast2.SpeciesTree;
 
 abstract class PopulationTestHelper {
@@ -34,7 +34,7 @@ abstract class PopulationTestHelper {
     final double allowedError = 10e-6;
 
     abstract public TaxonSet generateSuperset() throws Exception;
-    abstract public MultispeciesPopulationModel generatePopulationModel() throws Exception;
+    abstract public PopulationSizeModel generatePopulationModel() throws Exception;
 
     @Test
     public void testLogP() throws Exception {
@@ -43,7 +43,7 @@ abstract class PopulationTestHelper {
         initializeGeneTrees();
 
         final int nBranches = (nSpecies * 2) - 1;
-        final MultispeciesPopulationModel populationModel = generatePopulationModel();
+        final PopulationSizeModel populationModel = generatePopulationModel();
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);
 
