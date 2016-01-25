@@ -21,8 +21,6 @@ import beast.util.Randomizer;
         + "species tree node by a uniform amount chosen from a range which preserves the topology of all trees."
         + "See http://dx.doi.org/10.1101/010199 for full details.")
 public class CoordinatedUniform extends CoordinatedOperator {
-    final static SanityChecks sc = new SanityChecks();
-
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
@@ -68,8 +66,6 @@ public class CoordinatedUniform extends CoordinatedOperator {
             geneTreeNode.setHeight(geneTreeNode.getHeight() + uniformShift);
         }
 
-        assert sc.computeCoalescentTimes(geneTreeInput.get()); // this move should always preserve gene-tree-within-species-tree compatibility
-
         return fLogHastingsRatio;
     }
     
@@ -85,7 +81,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
         final Set<String> rightChildDescendants = findDescendants(rightChildNode, rightChildNodeNumber);
 
         final SetMultimap<Integer, Node> allConnectingNodes = HashMultimap.create();
-        final List<GeneTree> geneTrees = geneTreeInput.get();
+        final List<TreeInterface> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final Set<Node> jConnectingNodes = new HashSet<Node>();

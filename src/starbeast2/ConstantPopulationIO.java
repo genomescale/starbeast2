@@ -1,5 +1,6 @@
 package starbeast2;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import beast.core.Input;
@@ -12,9 +13,9 @@ import beast.core.parameter.RealParameter;
 
 public class ConstantPopulationIO extends PopulationSizeModel {
     public Input<RealParameter> invgammaShapeInput =
-            new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+            new Input<>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
     public Input<RealParameter> invgammaScaleInput =
-            new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+            new Input<>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() throws Exception {
@@ -44,11 +45,13 @@ public class ConstantPopulationIO extends PopulationSizeModel {
 
             double partialGamma = 0.0;
             for (int i = 0; i < geneK; i++) {
-                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i]) * (geneN - i) * (geneN - (i + 1.0)) / 2.0;
+                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i])
+                                * (geneN - i) * (geneN - i - 1.0) / 2.0;
             }
             
             if (geneN - geneK > 1) {
-                partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK]) * (geneN - geneK) * (geneN - (geneK + 1.0)) / 2.0;
+                partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK])
+                                * (geneN - geneK) * (geneN - geneK - 1.0) / 2.0;
             }
 
             branchGamma += partialGamma / genePloidy;
@@ -59,8 +62,21 @@ public class ConstantPopulationIO extends PopulationSizeModel {
             logGammaRatio += Math.log(alpha + i);
         }
 
-        final double logP = branchLogR + (alpha * Math.log(beta)) - ((alpha + branchQ) * Math.log(beta + branchGamma)) + logGammaRatio;
+        return branchLogR + (alpha * Math.log(beta)) - ((alpha + branchQ) * Math.log(beta + branchGamma)) + logGammaRatio;
+    }
 
-        return logP;
+    @Override
+    public void initPopSizes(int nPopulation) {
+        // do nothing
+    }
+
+    @Override
+    public void initPopSizes(double popInitial) {
+        // do nothing
+    }
+
+    @Override
+    public void serialize(NetworkNode speciesNetworkNode, StringBuffer buf, DecimalFormat df) {
+        // do nothing
     }
 }

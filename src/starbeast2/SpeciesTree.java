@@ -26,15 +26,6 @@ public class SpeciesTree extends TreeWrapper {
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 
     public void initAndValidate() throws Exception {
-        if (treeInput.get() == null) {
-            final String thisID = getID();
-            if (thisID == null) {
-                throw new Exception(String.format("A species tree input named \"tree\" is required but was not supplied."));
-            } else {
-                throw new Exception(String.format("A species tree input named \"tree\" is required but was not supplied for \"%s\".", thisID));
-            }
-        }
-
         // generate map of species tree tip node names to node numbers
         final TreeInterface speciesTree = treeInput.get();
         final HashMap<String, Integer> speciesNumberMap = new HashMap<>();

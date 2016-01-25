@@ -10,6 +10,7 @@ import org.junit.runners.Suite.SuiteClasses;
     ConstantPopulationTest.class,
     ContinuousRatesTest.class,
     DiscreteRatesTest.class,
+    StarbeastClockTest.class,
     LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,

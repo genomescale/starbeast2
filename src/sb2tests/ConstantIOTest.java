@@ -10,7 +10,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import starbeast2.ConstantPopulationIO;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationSizeModel;
 
 public class ConstantIOTest extends PopulationTestHelper {
     private final double alpha = 1.5;
@@ -61,13 +61,13 @@ public class ConstantIOTest extends PopulationTestHelper {
     }
 
     @Override
-    public MultispeciesPopulationModel generatePopulationModel() throws Exception {
+    public PopulationSizeModel generatePopulationModel() throws Exception {
         State state = new State();
         state.initByName("stateNode", alphaParameter);
         state.initByName("stateNode", betaParameter);
         state.initialise();
 
-        MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
+        PopulationSizeModel populationModel = new ConstantPopulationIO();
         populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
         
         return populationModel;

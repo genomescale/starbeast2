@@ -15,9 +15,9 @@ import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
-import starbeast2.MultispeciesCoalescent;
-import starbeast2.MultispeciesPopulationModel;
 import starbeast2.SpeciesTree;
+import starbeast2.MultispeciesCoalescent;
+import starbeast2.PopulationSizeModel;
 
 abstract class ExchangeTestHelper {
     String newickSpeciesTree;
@@ -30,7 +30,7 @@ abstract class ExchangeTestHelper {
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
     RealParameter popSizesParameter;
-    MultispeciesPopulationModel populationModel;
+    PopulationSizeModel populationModel;
     MultispeciesCoalescent msc;
 
     double ploidy;
@@ -79,7 +79,7 @@ abstract class ExchangeTestHelper {
         }
 
         CoordinatedExchange coex = new CoordinatedExchange();
-        coex.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers);
+        coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees);
         coex.manipulateSpeciesTree(brother);
         final double calculatedLogHR = coex.rearrangeGeneTrees();
 

@@ -36,6 +36,7 @@ public class Network extends StateNode {  //implements TreeInterface
     protected int nodeCount = -1;
     protected int internalNodeCount = -1;
     protected int leafNodeCount = -1;
+    protected int reticulationNodeCount = -1;
 
     protected NetworkNode root;
     protected NetworkNode storedRoot;
@@ -64,7 +65,7 @@ public class Network extends StateNode {  //implements TreeInterface
                 root.height = 0;
                 root.network = this;
                 nodeCount = 1;
-                internalNodeCount = 0;
+                internalNodeCount = reticulationNodeCount = 0;
                 leafNodeCount = 1;
             }
         }
@@ -151,8 +152,16 @@ public class Network extends StateNode {  //implements TreeInterface
 
     public void setRoot(final NetworkNode root) {
         this.root = root;
-        // ensure root is the last node in networkNodes???
-
+        nodeCount = this.root.getNodeCount();
+        // ensure root is the last node in networkNodes
+        if (networkNodes != null && root.labelNr != networkNodes.length - 1) {
+            final int rootPos = networkNodes.length - 1;
+            NetworkNode tmp = networkNodes[rootPos];
+            networkNodes[rootPos] = root;
+            networkNodes[root.labelNr] = tmp;
+            tmp.labelNr = root.labelNr;
+            networkNodes[rootPos].labelNr = rootPos;
+        }
     }
 
     /**
@@ -176,6 +185,13 @@ public class Network extends StateNode {  //implements TreeInterface
             leafNodeCount = root.getLeafNodeCount();
         }
         return leafNodeCount;
+    }
+
+    public int getReticulationNodeCount() {
+        if (reticulationNodeCount < 0) {
+            reticulationNodeCount = root.getReticulationNodeCount();
+        }
+        return reticulationNodeCount;
     }
 
     /**
@@ -215,7 +231,11 @@ public class Network extends StateNode {  //implements TreeInterface
      * convert network to array representation
      */
     void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
-        //???
+        nodes[node.getNr()] = node;
+        node.network = this;  //(JH) I don't understand this code
+        for (final NetworkNode child : node.getChildren()) {
+            listNodes(child, nodes);
+        }
     }
 
     /**
@@ -231,6 +251,13 @@ public class Network extends StateNode {  //implements TreeInterface
             }
         }
         return  nB;
+    }
+
+    /**
+     * @return the number of branches in the network, including the root branch
+     */
+    public int getBranchCount() {
+        return getNodeCount() + getReticulationNodeCount();
     }
 
     /**
@@ -298,6 +325,7 @@ public class Network extends StateNode {  //implements TreeInterface
         network.nodeCount = nodeCount;
         network.internalNodeCount = internalNodeCount;
         network.leafNodeCount = leafNodeCount;
+        network.reticulationNodeCount = reticulationNodeCount;
         return network;
     }
 
@@ -316,6 +344,7 @@ public class Network extends StateNode {  //implements TreeInterface
         network.nodeCount = nodeCount;
         network.internalNodeCount = internalNodeCount;
         network.leafNodeCount = leafNodeCount;
+        network.reticulationNodeCount = reticulationNodeCount;
     }
 
     /**
@@ -336,6 +365,7 @@ public class Network extends StateNode {  //implements TreeInterface
         nodeCount = network.nodeCount;
         internalNodeCount = network.internalNodeCount;
         leafNodeCount = network.leafNodeCount;
+        reticulationNodeCount = network.reticulationNodeCount;
 
         initArrays();
     }
@@ -397,7 +427,6 @@ public class Network extends StateNode {  //implements TreeInterface
     public int scale(final double scale) throws Exception {
         root.scale(scale);
         return getInternalNodeCount();
-        // is this number correct??? should return nBifurcationNode+2*nReticulationNode
     }
 
     /**
@@ -428,7 +457,6 @@ public class Network extends StateNode {  //implements TreeInterface
             final NetworkNode sink = storedNetworkNodes[i];
             final NetworkNode src = networkNodes[i];
             sink.height = src.height;
-            // am i doing the correct thing ???
             if (src.leftParent != null)
                 sink.leftParent = storedNetworkNodes[src.leftParent.getNr()];
             else
@@ -457,7 +485,6 @@ public class Network extends StateNode {  //implements TreeInterface
         networkNodes = tmp;
         root = networkNodes[storedRoot.getNr()];
 
-        // leafNodeCount = root.getLeafNodeCount();
         hasStartedEditing = false;
 
         for(NetworkNode n : networkNodes) {

@@ -19,9 +19,10 @@ public class LinearWithConstantRoot extends LinearPopulation {
 
         final double branchTopPopSize = topPopSizes.getValue(speciesNetworkPopNumber);
 
-        double logP;
+        final double logP;
         if (speciesNetworkNode.isRoot()) {
-            logP = constantLogP(branchTopPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+            logP = ConstantPopulation.constantLogP(branchTopPopSize, perGenePloidy,
+                              branchCoalescentTimes, branchLineageCounts, branchEventCounts);
         } else {
             final double branchTipPopSize;
             if (speciesNetworkNode.isLeaf()) {

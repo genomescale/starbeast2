@@ -10,7 +10,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import starbeast2.LinearWithConstantRoot;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationSizeModel;
 
 public class LinearWithConstantRootTest extends PopulationTestHelper {
     private final int individualsPerSpecies = 2;
@@ -53,7 +53,7 @@ public class LinearWithConstantRootTest extends PopulationTestHelper {
     }
 
     @Override
-    public MultispeciesPopulationModel generatePopulationModel() throws Exception {
+    public PopulationSizeModel generatePopulationModel() throws Exception {
         topPopSizesParameter = new RealParameter();
         tipPopSizesParameter = new RealParameter();
         topPopSizesParameter.initByName("value", String.valueOf(popSize));
@@ -65,7 +65,7 @@ public class LinearWithConstantRootTest extends PopulationTestHelper {
         state.initByName("stateNode", tipPopSizesParameter);
         state.initialise();
 
-        MultispeciesPopulationModel populationModel = new LinearWithConstantRoot();
+        PopulationSizeModel populationModel = new LinearWithConstantRoot();
         populationModel.initByName("topPopSizes", topPopSizesParameter, "tipPopSizes", tipPopSizesParameter);
         
         return populationModel;

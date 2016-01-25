@@ -2,11 +2,12 @@ package starbeast2;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
+import beast.core.Input.Validate;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
 public abstract class TreeWrapper extends CalculationNode {
-    public Input<Tree> treeInput = new Input<>("tree", "Tree object for this wrapper.");
+    public Input<Tree> treeInput = new Input<>("tree", "Tree object for this wrapper.", Validate.REQUIRED);
 
     protected Node getRoot() {
         return treeInput.get().getRoot();
