@@ -361,7 +361,7 @@ public class NetworkNode extends BEASTObject {
 
     private NetworkNode recursiveCopy() {
         if (clone == null) {
-            final NetworkNode clone = new NetworkNode();
+            clone = new NetworkNode();
             clone.height = height;
             clone.labelNr = labelNr;
             clone.metaDataString = metaDataString;
