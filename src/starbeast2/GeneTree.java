@@ -50,12 +50,26 @@ public class GeneTree extends CalculationNode {
     /**
      * gene tree lineage inheritance direction
      * Tracing backward in time, true -> left parent and false -> right parent.
-     * The length of the boolean array (1st dimension) equals to the number of gene tips.
-     * The length of the list (2nd dimension) equals to the number of reticulation (hybridization) nodes.
+     * The length of the boolean array (2nd dimension) equals to the number of gene tips.
+     * The length of the list (1st dimension) equals to the number of reticulation (hybridization) nodes.
      * There have methods to insert/delete a list element (boolean array) when adding/deleting a reticulation event,
      * and change the booleans if the gene tree lineages change the ancestral population at a reticulation event.
      */
-    public List<boolean[]> lineageInheritance = new ArrayList<>();
+    // public List<boolean[]> lineageInheritance = new ArrayList<>();
+
+    /**
+     * This data structure is replaced by a list of ancestral species nodes for each gene tree node.
+     * The information probably can be stored in metaData in Node.java, but is left here at the moment.
+     * The 1st dimension is for the gene tree nodes/lineages.
+     * The 2nd dimension is for the network nodes that each gene tree lineage has traversed.
+     */
+    public List<List<NetworkNode>> traversedNetworkNodes = new ArrayList<>();
+
+    /**
+     * The 1st dimension is for the gene tree nodes/lineages. For each gene tree node/lineage,
+     * the 2nd dimension is for the directions at the network nodes that the lineage goes.
+     */
+    public List<List<Boolean>> traversedInheritances = new ArrayList<>();
 
     @Override
     public boolean requiresRecalculation() {
@@ -123,9 +137,15 @@ public class GeneTree extends CalculationNode {
             speciesNumberMap.put(speciesName, speciesNumber);
         }
 
+        traversedNetworkNodes.clear();
+        traversedInheritances.clear();
+        for (int i = 0; i < geneTreeNodeCount; i++) {
+            traversedNetworkNodes.add(new ArrayList<>());
+            traversedInheritances.add(new ArrayList<>());
+        }
+
         geneTreeCompatible = false;
         storedGeneTreeCompatible = false;
-
         needsUpdate = true;
     }
 
@@ -168,8 +188,8 @@ public class GeneTree extends CalculationNode {
             final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
             // final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
             final double lastHeight = 0.0;
-            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode,
-                                            speciesNetworkLeafNode, 2*speciesNetworkLeafNumber)) {
+            if (!recurseCoalescenceEvents(geneTreeLeafNode, lastHeight, firstCoalescenceNode,
+                                          speciesNetworkLeafNode, 2*speciesNetworkLeafNumber)) {
                 // this gene tree IS NOT compatible with the species tree
                 geneTreeCompatible = false;
                 needsUpdate = false;
@@ -181,44 +201,45 @@ public class GeneTree extends CalculationNode {
         needsUpdate = false;
     }
 
-    private boolean recurseCoalescenceEvents(final int lastGeneTreeNodeNumber, final double lastHeight, final Node geneTreeNode,
-                                             final NetworkNode speciesNetworkNode, final int speciesNetworkNodeNumber) {
+    private boolean recurseCoalescenceEvents(final Node lastGeneTreeNode, final double lastHeight, final Node geneTreeNode,
+                                             final NetworkNode speciesNetworkNode, final int speciesNetworkPopNumber) {
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final int geneTreeNodeNumber = geneTreeNode.getNr();
+        final int lastGeneTreeNodeNumber = lastGeneTreeNode.getNr();
 
         // check if the next coalescence event occurs in an ancestral branch
         if (!speciesNetworkNode.isRoot()) {
             final NetworkNode speciesNetworkParentNode = getNetworkParentNode(speciesNetworkNode, geneTreeNode);
             final double speciesNetworkParentHeight = speciesNetworkParentNode.getHeight();
             if (geneTreeNodeHeight >= speciesNetworkParentHeight) {
-                speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkNodeNumber] = speciesNetworkParentHeight - lastHeight;
+                speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = speciesNetworkParentHeight - lastHeight;
                 final int speciesNetworkParentNodeNumber = 2 * speciesNetworkParentNode.getNr()
-                                                             + getOffset(speciesNetworkParentNode, geneTreeNode);
+                                                             + getOffset(speciesNetworkParentNode, lastGeneTreeNode);
                 coalescentLineageCounts.add(speciesNetworkParentNodeNumber);
-                return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesNetworkParentHeight, geneTreeNode,
+                return recurseCoalescenceEvents(lastGeneTreeNode, speciesNetworkParentHeight, geneTreeNode,
                                                 speciesNetworkParentNode, speciesNetworkParentNodeNumber);
             }
         }
 
         // this code executes if the next coalescence event occurs within the current branch
-        speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkNodeNumber] = geneTreeNodeHeight - lastHeight;
+        speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = geneTreeNodeHeight - lastHeight;
         final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
         if (existingSpeciesAssignment == -1) {
-            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesNetworkNodeNumber;
-            coalescentTimes.put(speciesNetworkNodeNumber, geneTreeNodeHeight);
+            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesNetworkPopNumber;
+            coalescentTimes.put(speciesNetworkPopNumber, geneTreeNodeHeight);
             final Node nextGeneTreeNode = geneTreeNode.getParent();
             if (nextGeneTreeNode == null) {
                 // this is the root of the gene tree and no incompatibilities were detected
                 return true;
             } else {
                 // if this is not the root of the gene tree, check the subsequent (back in time) coalescence event
-                return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode,
-                                                speciesNetworkNode, speciesNetworkNodeNumber);
+                return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeHeight, nextGeneTreeNode,
+                                                speciesNetworkNode, speciesNetworkPopNumber);
             }
         } else {
             // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
             // return false if this gene tree IS NOT compatible with the species tree
-            return (existingSpeciesAssignment == speciesNetworkNodeNumber);
+            return existingSpeciesAssignment == speciesNetworkPopNumber;
         }
     }
 
@@ -264,10 +285,11 @@ public class GeneTree extends CalculationNode {
             else
                 return null; // networkNode is root
         } else {  // networkNode is a reticulation node
-            // find the tip node which is descendant of gTreeNode, then its number
-            final int gTreeTipNr = getGeneTreeTipDescendant(gTreeNode).getNr();
-            // find the boolean of inheritance (gTreeTipNr'th array element)
-            if (lineageInheritance.get(networkNode.getReticulateNr())[gTreeTipNr])
+            // find the networkNode that the lineage of gTreeNode has traversed, get its index
+            final int index = traversedNetworkNodes.get(gTreeNode.getNr()).indexOf(networkNode);
+            // need to check the index is not out of bounds ???
+            // find the boolean of inheritance: true -> left, false -> right
+            if (traversedInheritances.get(gTreeNode.getNr()).get(index))
                 return networkNode.getLeftParent();
             else
                 return networkNode.getRightParent();
@@ -283,10 +305,10 @@ public class GeneTree extends CalculationNode {
         if (!networkNode.isReticulation()) {
             return 0;
         } else {  // networkNode is a reticulation node
-            // find the tip node which is descendant of gTreeNode, then its number
-            final int gTreeTipNr = getGeneTreeTipDescendant(gTreeNode).getNr();
-            // find the boolean of inheritance (gTreeTipNr'th array element)
-            if (lineageInheritance.get(networkNode.getReticulateNr())[gTreeTipNr])
+            // find the networkNode that the lineage of gTreeNode has traversed, get its index
+            final int index = traversedNetworkNodes.get(gTreeNode.getNr()).indexOf(networkNode);
+            // find the boolean of inheritance: true -> left, false -> right
+            if (traversedInheritances.get(gTreeNode.getNr()).get(index))
                 return 0;
             else
                 return 1;
