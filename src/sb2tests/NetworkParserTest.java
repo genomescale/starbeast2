@@ -1,5 +1,7 @@
 package sb2tests;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
 import beast.util.TreeParser;
@@ -16,8 +18,7 @@ public class NetworkParserTest {
     // or even this one because of lacking internal node name
     final String testNetwork2 = "((A:0.2,(B:0.1)#H1:0.1):0.2,(#H1:0.2,C:0.3):0.1)";
     // this diamond network
-    final String testNetwork3 = "((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)b:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)a:0.1)#H4:0.1,#H3:0.3)c:0.1)";
-
+    final String testNetwork3 = "((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)b:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)a:0.1)#H4:0.1,#H3:0.3)c:0.1)r";
 
     public NetworkParserTest() {
         treeParser = new TreeParser();
@@ -34,6 +35,7 @@ public class NetworkParserTest {
 
     @Test
     public void testLogHR() throws Exception {
-        System.out.println(networkParser.toString());
+        //System.out.println(networkParser.toString());
+        assertEquals(testNetwork3, networkParser.toString());
     }
 }

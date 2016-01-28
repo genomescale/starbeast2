@@ -584,7 +584,6 @@ public class Network extends StateNode {  //implements TreeInterface
         nodeCount = networkNodes.length;
         speciationNodeCount++;
         resetNodeNumbers();
-        System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
     }
 
     public void addReticulationNode(final NetworkNode newNode) {

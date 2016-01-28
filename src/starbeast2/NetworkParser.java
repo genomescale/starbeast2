@@ -21,25 +21,23 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         leafNodeCount = reticulationNodeCount = 0;
         super.initAndValidate();
 
+        // System.out.println(String.format("Root labels = %s -> %s <- %s", treeRoot.getLeft().getID(), treeRoot.getID(), treeRoot.getRight().getID()));
+        // System.out.println(String.format("Root numbers = %d -> %d <- %d", treeRoot.getLeft().getNr(), treeRoot.getNr(), treeRoot.getRight().getNr()));
         rebuildNetwork(treeRoot.getLeft(), root, true);
         rebuildNetwork(treeRoot.getRight(), root, false);
         root.updateSizes();
     }
 
     private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) throws Exception {
+        // System.out.println(String.format("Current branch: %s - %s a.k.a. %d - %d", parentNode.getID(), treeNode.getID(), parentNode.getNr(), treeNode.getNr()));
         final Node leftChild = treeNode.getLeft();
         final Node rightChild = treeNode.getRight();
         final String nodeLabel = treeNode.getID();
-        boolean reticulation;
-        NetworkNode networkNode;
-        if (nodeLabel == null) {
-            networkNode = null;
-            reticulation = false;
-        } else {
-            networkNode = getNode(nodeLabel);
-            final int hStart = nodeLabel.indexOf('#') + 1;
-            reticulation = (hStart > 0) && (nodeLabel.length() > hStart) && (nodeLabel.charAt(hStart) == 'H');
-        }
+        final int hStart = nodeLabel.indexOf('#') + 1;
+        boolean reticulation = false;
+        NetworkNode networkNode = null;
+        reticulation = (hStart > 0) && (nodeLabel.length() > hStart) && (nodeLabel.charAt(hStart) == 'H');
+        if (reticulation) networkNode = getNode(nodeLabel);
 
         if (networkNode == null) {
             networkNode = new NetworkNode(treeNode);
@@ -48,13 +46,14 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
             else addSpeciationNode(networkNode);
         }
 
+        // partial reticulation nodes are always right-attached
+        if (reticulation && leftChild == null && rightChild == null) networkNode.setRightParent(parentNode);
         // complete reticulation nodes are always left-attached
-        if (reticulation && leftChild == null && rightChild == null) networkNode.setLeftParent(parentNode);
-        // incomplete (no children) reticulation nodes are always right-attached
-        else if (reticulation) networkNode.setRightParent(parentNode);
+        else if (reticulation) networkNode.setLeftParent(parentNode);
         else if (isLeft) networkNode.setLeftParent(parentNode);
         else networkNode.setRightParent(parentNode);
 
+        // System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
         if (leftChild != null) rebuildNetwork(leftChild, networkNode, true);
         if (rightChild != null) rebuildNetwork(rightChild, networkNode, false);
 
