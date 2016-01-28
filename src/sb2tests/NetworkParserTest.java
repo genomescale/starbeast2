@@ -16,7 +16,7 @@ public class NetworkParserTest {
     // or even this one because of lacking internal node name
     final String testNetwork2 = "((A:0.2,(B:0.1)#H1:0.1):0.2,(#H1:0.2,C:0.3):0.1)";
     // this diamond network: stackoverflow
-    final String testNetwork3 = "( (((A:0.1)#H1:0.1)#H2:0.3, ((#H2:0.1,#H3:0.1)a:0.1)#H4:0.1)b:0.1, (#H4:0.1, (#H1:0.1)#H3:0.3)c:0.1 )";
+    final String testNetwork3 = "( (((A:0.1)#H1:0.1)#H2:0.3, ((#H3:0.1,#H2:0.1)a:0.1)#H4:0.1)b:0.1, (#H4:0.1, (#H1:0.1)#H3:0.3)c:0.1 )";
 
     public NetworkParserTest() {
         treeParser = new TreeParser();

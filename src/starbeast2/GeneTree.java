@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -63,13 +62,13 @@ public class GeneTree extends CalculationNode {
      * The 1st dimension is for the gene tree nodes/lineages.
      * The 2nd dimension is for the network nodes that each gene tree lineage has traversed.
      */
-    public List<List<NetworkNode>> traversedNetworkNodes = new ArrayList<>();
+    public ListMultimap<Node, NetworkNode> traversedNetworkNodes = ArrayListMultimap.create();
 
     /**
      * The 1st dimension is for the gene tree nodes/lineages. For each gene tree node/lineage,
      * the 2nd dimension is for the directions at the network nodes that the lineage goes.
      */
-    public List<List<Boolean>> traversedInheritances = new ArrayList<>();
+    public ListMultimap<Node, Boolean> traversedInheritances = ArrayListMultimap.create();
 
     @Override
     public boolean requiresRecalculation() {
@@ -137,12 +136,12 @@ public class GeneTree extends CalculationNode {
             speciesNumberMap.put(speciesName, speciesNumber);
         }
 
-        traversedNetworkNodes.clear();
+        /* traversedNetworkNodes.clear();
         traversedInheritances.clear();
         for (int i = 0; i < geneTreeNodeCount; i++) {
             traversedNetworkNodes.add(new ArrayList<>());
             traversedInheritances.add(new ArrayList<>());
-        }
+        } */
 
         geneTreeCompatible = false;
         storedGeneTreeCompatible = false;
@@ -209,7 +208,7 @@ public class GeneTree extends CalculationNode {
 
         // check if the next coalescence event occurs in an ancestral branch
         if (!speciesNetworkNode.isRoot()) {
-            final NetworkNode speciesNetworkParentNode = getNetworkParentNode(speciesNetworkNode, geneTreeNode);
+            final NetworkNode speciesNetworkParentNode = speciesNetworkNode.getParent(lastGeneTreeNode);
             final double speciesNetworkParentHeight = speciesNetworkParentNode.getHeight();
             if (geneTreeNodeHeight >= speciesNetworkParentHeight) {
                 speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = speciesNetworkParentHeight - lastHeight;
@@ -286,10 +285,10 @@ public class GeneTree extends CalculationNode {
                 return null; // networkNode is root
         } else {  // networkNode is a reticulation node
             // find the networkNode that the lineage of gTreeNode has traversed, get its index
-            final int index = traversedNetworkNodes.get(gTreeNode.getNr()).indexOf(networkNode);
+            final int index = traversedNetworkNodes.get(gTreeNode).indexOf(networkNode);
             // need to check the index is not out of bounds ???
             // find the boolean of inheritance: true -> left, false -> right
-            if (traversedInheritances.get(gTreeNode.getNr()).get(index))
+            if (traversedInheritances.get(gTreeNode).get(index))
                 return networkNode.getLeftParent();
             else
                 return networkNode.getRightParent();
@@ -306,12 +305,9 @@ public class GeneTree extends CalculationNode {
             return 0;
         } else {  // networkNode is a reticulation node
             // find the networkNode that the lineage of gTreeNode has traversed, get its index
-            final int index = traversedNetworkNodes.get(gTreeNode.getNr()).indexOf(networkNode);
+            final int index = traversedNetworkNodes.get(gTreeNode).indexOf(networkNode);
             // find the boolean of inheritance: true -> left, false -> right
-            if (traversedInheritances.get(gTreeNode.getNr()).get(index))
-                return 0;
-            else
-                return 1;
+            return (traversedInheritances.get(gTreeNode).get(index)) ? 0 : 1;
         }
     }
 

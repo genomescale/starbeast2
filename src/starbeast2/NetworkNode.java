@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 import beast.core.BEASTObject;
 import beast.core.Description;
+import beast.evolution.tree.Node;
 
 /**
  * NetworkNode that is like Node but has 2 parents and 2 children.
@@ -48,6 +49,8 @@ public class NetworkNode extends BEASTObject {
 
     protected int nParents;
     protected int nChildren;
+    
+    private Map<Node, Boolean> embeddedLineagePaths;
 
     private NetworkNode clone;
 
@@ -57,6 +60,20 @@ public class NetworkNode extends BEASTObject {
      * status of this node after an operation is performed on the state
      */
     int isDirty = Network.IS_CLEAN;
+
+    protected NetworkNode getParent(Node embeddedLineage) {
+        if (nParents == 2) {
+            return (embeddedLineagePaths.get(embeddedLineage)) ? leftParent : rightParent;
+        } else if (leftParent != null) {
+            return leftParent;
+        } else {
+            return rightParent;
+        }
+    }
+
+    protected void setParent(Node embeddedLineage, Boolean travelsLeft) {
+        embeddedLineagePaths.put(embeddedLineage, travelsLeft);
+    }
 
     protected void updateSizes() {
         nParents = 0;
@@ -87,6 +104,20 @@ public class NetworkNode extends BEASTObject {
 
     public NetworkNode(final String id) throws Exception {
         setID(id);
+        initAndValidate();
+    }
+
+    // instantiate a new network node with the same height, labels and metadata as a tree node
+    // this does not copy the parents or children
+    public NetworkNode(Node treeNode) throws Exception {
+        setID(treeNode.getID());
+        height = treeNode.getHeight();
+        metaDataString = treeNode.metaDataString;
+        for (String metaDataKey: treeNode.getMetaDataNames()) {
+            Object metaDataValue = treeNode.getMetaData(metaDataKey);
+            metaData.put(metaDataKey, metaDataValue);
+        }
+
         initAndValidate();
     }
 
@@ -249,6 +280,7 @@ public class NetworkNode extends BEASTObject {
         if (rightChild != null) rightChild.recursiveResetVisited();
     }
 
+    // returns total node count (leaf, internal including root) of subtree defined by this node
     public int getNodeCount() {
         recursiveResetVisited();
         return recurseNodeCount();
@@ -480,38 +512,34 @@ public class NetworkNode extends BEASTObject {
     @Override
     public String toString() {
         resetVisited();
-        final StringBuffer sb = new StringBuffer();
-        buildNewick(sb);
-
-        return sb.toString(); 
+        return buildNewick(Double.POSITIVE_INFINITY, true);
     }
 
-    public void buildNewick(StringBuffer representation) {
-        if (!isLeaf() && (!visited || !isReticulation())) {
-            NetworkNode lc = getRightChild();
-            NetworkNode rc = getLeftChild();
-            representation.append("(");
-            if (lc != null) {
-                lc.buildNewick(representation);
-                representation.append(":");
-                representation.append(getHeight() - lc.getHeight());
+    public String buildNewick(Double parentHeight, boolean isLeft) {
+        StringBuffer subtreeString = new StringBuffer();
+        if (!visited) { // has already appeared in the tree
+            String leftSubtreeString = null;
+            String rightSubtreeString = null;
+            if (leftChild != null) leftSubtreeString = leftChild.buildNewick(height, true);
+            if (rightChild != null) rightSubtreeString = rightChild.buildNewick(height, false);
+    
+            // ensures correct orientation of descendant hybrid nodes
+            if (leftSubtreeString != null || (rightSubtreeString != null)) {
+                subtreeString.append("(");
+                if (leftSubtreeString != null) subtreeString.append(leftSubtreeString);
+                if (leftSubtreeString != null && rightSubtreeString != null) subtreeString.append(",");
+                if (rightSubtreeString != null) subtreeString.append(rightSubtreeString);
+                subtreeString.append(")");
             }
-            if (lc != null && rc != null) representation.append(",");
-            if (rc != null) {
-                rc.buildNewick(representation);
-                representation.append(":");
-                representation.append(getHeight() - rc.getHeight());
-            }
-            representation.append(")");
         }
-
-        representation.append(getID());
-        if (isReticulation()) {
-            representation.append("#");
-            representation.append(labelNr);
+        subtreeString.append(getID());
+        if (parentHeight < Double.POSITIVE_INFINITY) {
+            subtreeString.append(":");
+            subtreeString.append(parentHeight - height);
         }
 
         visited = true;
+        return subtreeString.toString();
     }
 }
 

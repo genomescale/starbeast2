@@ -1,8 +1,6 @@
 package starbeast2;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import beast.core.Input;
 import beast.core.StateNode;
@@ -16,50 +14,51 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
 
     @Override
     public void initAndValidate() throws Exception {
+        Node treeRoot = treeInput.get().getRoot();
+        NetworkNode newRoot = new NetworkNode(treeRoot);
+        setRoot(newRoot);
+        speciationNodeCount = 1;
+        leafNodeCount = reticulationNodeCount = 0;
         super.initAndValidate();
 
-        TreeInterface inputTree = treeInput.get(); 
-        for (Node treeLeaf: inputTree.getExternalNodes()) {
-            NetworkNode netLeaf = new NetworkNode();
-            netLeaf.setID(treeLeaf.getID());
-            netLeaf.height = treeLeaf.getHeight();
-            addLeafNode(netLeaf);
-        }
-
-        Map<String, NetworkNode> networkNodeNames = new HashMap<>();
-        Node treeRoot = inputTree.getRoot();
-        root.setID(treeRoot.getID());
-        root.height = treeRoot.getHeight();
-        recursiveCreateNetwork(treeRoot, root, networkNodeNames);
+        rebuildNetwork(treeRoot.getLeft(), root, true);
+        rebuildNetwork(treeRoot.getRight(), root, false);
         root.updateSizes();
     }
 
-    private void recursiveCreateNetwork(Node treeNode, NetworkNode netNode, Map<String, NetworkNode> networkNodeNames) {
-        for (Node treeChild: treeNode.getChildren()) {
-            String childName = treeChild.getID();
-            final int hStart = childName.indexOf('#');
-            if (hStart != -1) childName = childName.substring(0, hStart);
-            NetworkNode netChild = networkNodeNames.get(childName);
-
-            if (netChild == null) {
-                netChild = new NetworkNode();
-                networkNodeNames.put(childName, netChild);
-                netChild.setID(childName);
-                netChild.height = treeChild.getHeight();
-                addInternalNode(netChild);
-                recursiveCreateNetwork(treeChild, netChild, networkNodeNames);
-            }
-
-            if (netNode.leftChild == null) {
-                if (netChild.getLeftParent() != null) netChild.reorientParents();
-                netChild.setLeftParent(netNode);
-            } else {
-                if (netChild.getRightParent() != null) netChild.reorientParents();
-                netChild.setRightParent(netNode);
-            }
-
-            netChild.updateSizes();
+    private void rebuildNetwork(Node treeNode, NetworkNode parentNode, boolean isLeft) throws Exception {
+        final Node leftChild = treeNode.getLeft();
+        final Node rightChild = treeNode.getRight();
+        final String nodeLabel = treeNode.getID();
+        boolean reticulation;
+        NetworkNode networkNode;
+        if (nodeLabel == null) {
+            networkNode = null;
+            reticulation = false;
+        } else {
+            networkNode = getNode(nodeLabel);
+            final int hStart = nodeLabel.indexOf('#') + 1;
+            reticulation = (hStart > 0) && (nodeLabel.length() > hStart) && (nodeLabel.charAt(hStart) == 'H');
         }
+
+        if (networkNode == null) {
+            networkNode = new NetworkNode(treeNode);
+            if (reticulation) addReticulationNode(networkNode);
+            else if (treeNode.isLeaf()) addLeafNode(networkNode);
+            else addSpeciationNode(networkNode);
+        }
+
+        if (isLeft) networkNode.setLeftParent(parentNode);
+        else networkNode.setRightParent(parentNode);
+
+        if (rightChild != null) {
+            rebuildNetwork(leftChild, networkNode, true);
+            rebuildNetwork(rightChild, networkNode, false);
+        } else if (leftChild != null) {
+            rebuildNetwork(leftChild, networkNode, isLeft);
+        }
+
+        networkNode.updateSizes();
     }
 
     @Override
@@ -73,5 +72,4 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         // TODO Auto-generated method stub
 
     }
-
 }

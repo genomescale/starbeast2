@@ -34,7 +34,7 @@ public class Network extends StateNode {  //implements TreeInterface
 
     // number of nodes
     protected int nodeCount = -1;
-    protected int internalNodeCount = -1;
+    protected int speciationNodeCount = -1;
     protected int leafNodeCount = -1;
     protected int reticulationNodeCount = -1;
 
@@ -65,7 +65,7 @@ public class Network extends StateNode {  //implements TreeInterface
                 root.height = 0;
                 root.network = this;
                 nodeCount = 1;
-                internalNodeCount = reticulationNodeCount = 0;
+                speciationNodeCount = reticulationNodeCount = 0;
                 leafNodeCount = 1;
             }
         }
@@ -106,7 +106,7 @@ public class Network extends StateNode {  //implements TreeInterface
         root = left;
         leafNodeCount = taxa.size();
         nodeCount = leafNodeCount * 2 - 1;
-        internalNodeCount = leafNodeCount - 1;
+        speciationNodeCount = leafNodeCount - 1;
 
         if (finalize) {
             initArrays();
@@ -174,10 +174,10 @@ public class Network extends StateNode {  //implements TreeInterface
     }
 
     public int getInternalNodeCount() {
-        if (internalNodeCount < 0) {
-            internalNodeCount = root.getInternalNodeCount();
+        if (speciationNodeCount < 0) {
+            speciationNodeCount = root.getInternalNodeCount();
         }
-        return internalNodeCount;
+        return speciationNodeCount;
     }
 
     public int getLeafNodeCount() {
@@ -218,6 +218,13 @@ public class Network extends StateNode {  //implements TreeInterface
 
     public NetworkNode getNode(final int nr) {
         return networkNodes[nr];
+    }
+
+    public NetworkNode getNode(final String label) {
+        for (NetworkNode netNode: networkNodes) {
+            if (netNode.getID().equals(label)) return netNode;
+        }
+        return null;
     }
 
     /**
@@ -323,7 +330,7 @@ public class Network extends StateNode {  //implements TreeInterface
         network.index = index;
         network.root = root.copy();
         network.nodeCount = nodeCount;
-        network.internalNodeCount = internalNodeCount;
+        network.speciationNodeCount = speciationNodeCount;
         network.leafNodeCount = leafNodeCount;
         network.reticulationNodeCount = reticulationNodeCount;
         return network;
@@ -342,7 +349,7 @@ public class Network extends StateNode {  //implements TreeInterface
         root.assignTo(nodes);
         network.root = nodes[root.getNr()];
         network.nodeCount = nodeCount;
-        network.internalNodeCount = internalNodeCount;
+        network.speciationNodeCount = speciationNodeCount;
         network.leafNodeCount = leafNodeCount;
         network.reticulationNodeCount = reticulationNodeCount;
     }
@@ -363,7 +370,7 @@ public class Network extends StateNode {  //implements TreeInterface
         root.assignFrom(nodes, network.root);
         root.leftParent = root.rightParent = null;
         nodeCount = network.nodeCount;
-        internalNodeCount = network.internalNodeCount;
+        speciationNodeCount = network.speciationNodeCount;
         leafNodeCount = network.leafNodeCount;
         reticulationNodeCount = network.reticulationNodeCount;
 
@@ -555,27 +562,48 @@ public class Network extends StateNode {  //implements TreeInterface
     }
 
     public void addLeafNode(final NetworkNode newNode) {
-        addNode(newNode, true);
-    }
-
-    public void addInternalNode(final NetworkNode newNode) {
-        addNode(newNode, false);
-    }
-
-    public void addNode(final NetworkNode newNode, final boolean isLeaf) {
         final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        System.arraycopy(networkNodes, 0, tmp, 0, nodeCount);
-        if (root == null) {
-            tmp[nodeCount] = newNode;
-            newNode.setNr(nodeCount);
-        } else {
-            tmp[nodeCount] = root;
-            tmp[nodeCount - 1] = newNode;
-            root.setNr(nodeCount);
-            newNode.setNr(nodeCount - 1);
+        if (nodeCount > 0) {
+            System.arraycopy(networkNodes, 0, tmp, 1, nodeCount);
+            networkNodes = tmp;
         }
-        networkNodes = tmp;
-        nodeCount++;
-        if (isLeaf) leafNodeCount++;
+        networkNodes[0] = newNode;
+        nodeCount = networkNodes.length;
+        leafNodeCount++;
+        resetNodeNumbers();
+    }
+
+    public void addSpeciationNode(final NetworkNode newNode) {
+        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
+        if (nodeCount > 0) {
+            System.arraycopy(networkNodes, 0, tmp, 0, leafNodeCount);
+            System.arraycopy(networkNodes, leafNodeCount, tmp, leafNodeCount + 1, speciationNodeCount + reticulationNodeCount);
+            networkNodes = tmp;
+        }
+        networkNodes[leafNodeCount] = newNode;
+        nodeCount = networkNodes.length;
+        speciationNodeCount++;
+        resetNodeNumbers();
+        System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
+    }
+
+    public void addReticulationNode(final NetworkNode newNode) {
+        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
+        if (nodeCount > 0) {
+            System.arraycopy(networkNodes, 0, tmp, 0, nodeCount - 1);
+            tmp[nodeCount] = networkNodes[nodeCount - 1];
+            networkNodes = tmp;
+        }
+        networkNodes[nodeCount - 1] = newNode;
+        nodeCount = networkNodes.length;
+        reticulationNodeCount++;
+        resetNodeNumbers();
+    }
+
+    private void resetNodeNumbers() {
+        for (int i = 0; i < nodeCount; i++) {
+            networkNodes[i].setNr(i);
+        }
     }
 }
+
