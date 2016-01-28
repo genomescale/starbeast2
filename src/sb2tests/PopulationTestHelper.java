@@ -9,19 +9,20 @@ import org.junit.Test;
 
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
+import starbeast2.NetworkParser;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.PopulationSizeModel;
-import starbeast2.SpeciesTree;
+import starbeast2.SpeciesNetwork;
 
 abstract class PopulationTestHelper {
-    String newickSpeciesTree;
+    String newickSpeciesNetwork;
     List<String> newickGeneTrees = new ArrayList<>();
 
-    TreeParser speciesTree;
+    NetworkParser speciesNetwork;
     List<TreeParser> geneTrees = new ArrayList<>();
     
-    SpeciesTree speciesTreeWrapper;
+    SpeciesNetwork speciesNetworkWrapper;
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
     MultispeciesCoalescent msc;
@@ -39,7 +40,7 @@ abstract class PopulationTestHelper {
     @Test
     public void testLogP() throws Exception {
         TaxonSet speciesSuperset = generateSuperset();
-        initializeSpeciesTree(speciesSuperset);
+        initializeSpeciesNetwork(speciesSuperset);
         initializeGeneTrees();
 
         final int nBranches = (nSpecies * 2) - 1;
@@ -48,17 +49,17 @@ abstract class PopulationTestHelper {
         populationModel.initPopSizes(popSize);
 
         msc = new MultispeciesCoalescent();
-        msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
+        msc.initByName("speciesNetwork", speciesNetworkWrapper, "geneTrees", geneTreeWrappers, "populationModel", populationModel);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    public void initializeSpeciesTree(TaxonSet speciesSuperset) throws Exception {
-        speciesTree = new TreeParser();
-        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
-        speciesTreeWrapper = new SpeciesTree();
-        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperset);
+    public void initializeSpeciesNetwork(TaxonSet speciesSuperset) throws Exception {
+        speciesNetwork = new NetworkParser();
+        speciesNetwork.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true);
+        speciesNetworkWrapper = new SpeciesNetwork();
+        speciesNetworkWrapper.initByName("network", speciesNetwork, "taxonSuperSet", speciesSuperset);
     }
 
     public void initializeGeneTrees() throws Exception {
@@ -68,7 +69,7 @@ abstract class PopulationTestHelper {
             geneTrees.add(geneTree);
 
             GeneTree geneTreeWrapper = new GeneTree();
-            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesNetworkWrapper);
             geneTreeWrappers.add(geneTreeWrapper);
         }
     }
