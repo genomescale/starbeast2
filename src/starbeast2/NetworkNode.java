@@ -511,20 +511,18 @@ public class NetworkNode extends BEASTObject {
 
     @Override
     public String toString() {
-        resetVisited();
         return buildNewick(Double.POSITIVE_INFINITY, true);
     }
 
     public String buildNewick(Double parentHeight, boolean isLeft) {
         StringBuffer subtreeString = new StringBuffer();
-        if (!visited) { // has already appeared in the tree
+        if (leftParent == null || rightParent == null || isLeft) { //  only add children to left-attached reticulation nodes
             String leftSubtreeString = null;
             String rightSubtreeString = null;
             if (leftChild != null) leftSubtreeString = leftChild.buildNewick(height, true);
             if (rightChild != null) rightSubtreeString = rightChild.buildNewick(height, false);
-    
-            // ensures correct orientation of descendant hybrid nodes
-            if (leftSubtreeString != null || (rightSubtreeString != null)) {
+
+            if (leftSubtreeString != null || rightSubtreeString != null) {
                 subtreeString.append("(");
                 if (leftSubtreeString != null) subtreeString.append(leftSubtreeString);
                 if (leftSubtreeString != null && rightSubtreeString != null) subtreeString.append(",");
@@ -534,11 +532,10 @@ public class NetworkNode extends BEASTObject {
         }
         subtreeString.append(getID());
         if (parentHeight < Double.POSITIVE_INFINITY) {
-            subtreeString.append(":");
-            subtreeString.append(parentHeight - height);
+            String branchLengthSuffix = String.format(":%.8g", parentHeight - height);
+            while (branchLengthSuffix.charAt(branchLengthSuffix.length() - 1) == '0') branchLengthSuffix = branchLengthSuffix.substring(0, branchLengthSuffix.length() - 1);
+            subtreeString.append(branchLengthSuffix);
         }
-
-        visited = true;
         return subtreeString.toString();
     }
 }

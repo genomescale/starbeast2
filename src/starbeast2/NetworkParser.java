@@ -26,7 +26,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         root.updateSizes();
     }
 
-    private void rebuildNetwork(Node treeNode, NetworkNode parentNode, boolean isLeft) throws Exception {
+    private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) throws Exception {
         final Node leftChild = treeNode.getLeft();
         final Node rightChild = treeNode.getRight();
         final String nodeLabel = treeNode.getID();
@@ -48,15 +48,15 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
             else addSpeciationNode(networkNode);
         }
 
-        if (isLeft) networkNode.setLeftParent(parentNode);
+        // complete reticulation nodes are always left-attached
+        if (reticulation && leftChild == null && rightChild == null) networkNode.setLeftParent(parentNode);
+        // incomplete (no children) reticulation nodes are always right-attached
+        else if (reticulation) networkNode.setRightParent(parentNode);
+        else if (isLeft) networkNode.setLeftParent(parentNode);
         else networkNode.setRightParent(parentNode);
 
-        if (rightChild != null) {
-            rebuildNetwork(leftChild, networkNode, true);
-            rebuildNetwork(rightChild, networkNode, false);
-        } else if (leftChild != null) {
-            rebuildNetwork(leftChild, networkNode, isLeft);
-        }
+        if (leftChild != null) rebuildNetwork(leftChild, networkNode, true);
+        if (rightChild != null) rebuildNetwork(rightChild, networkNode, false);
 
         networkNode.updateSizes();
     }
