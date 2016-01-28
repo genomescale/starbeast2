@@ -61,20 +61,6 @@ public class NetworkNode extends BEASTObject {
      */
     int isDirty = Network.IS_CLEAN;
 
-    protected NetworkNode getParent(Node embeddedLineage) {
-        if (nParents == 2) {
-            return (embeddedLineagePaths.get(embeddedLineage)) ? leftParent : rightParent;
-        } else if (leftParent != null) {
-            return leftParent;
-        } else {
-            return rightParent;
-        }
-    }
-
-    protected void setParent(Node embeddedLineage, Boolean travelsLeft) {
-        embeddedLineagePaths.put(embeddedLineage, travelsLeft);
-    }
-
     protected void updateSizes() {
         nParents = 0;
         nChildren = 0;
@@ -200,6 +186,30 @@ public class NetworkNode extends BEASTObject {
         rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
+    }
+
+    protected NetworkNode getParent(Node embeddedLineage) {
+        if (nParents == 2) {
+            return (embeddedLineagePaths.get(embeddedLineage)) ? leftParent : rightParent;
+        } else if (leftParent != null) {
+            return leftParent;
+        } else {
+            return rightParent;
+        }
+    }
+
+    protected void setParent(Node embeddedLineage, Boolean travelsLeft) {
+        embeddedLineagePaths.put(embeddedLineage, travelsLeft);
+    }
+
+    protected int getOffset(Node embeddedLineage) {
+        if (nParents == 2) {
+            return (embeddedLineagePaths.get(embeddedLineage)) ? 0 : 1;
+        } else if (leftParent != null) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 
     /* children */

@@ -63,7 +63,6 @@ public class GeneTree extends CalculationNode {
      * The 2nd dimension is for the network nodes that each gene tree lineage has traversed.
      */
     public ListMultimap<Node, NetworkNode> traversedNetworkNodes = ArrayListMultimap.create();
-
     /**
      * The 1st dimension is for the gene tree nodes/lineages. For each gene tree node/lineage,
      * the 2nd dimension is for the directions at the network nodes that the lineage goes.
@@ -213,7 +212,7 @@ public class GeneTree extends CalculationNode {
             if (geneTreeNodeHeight >= speciesNetworkParentHeight) {
                 speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = speciesNetworkParentHeight - lastHeight;
                 final int speciesNetworkParentNodeNumber = 2 * speciesNetworkParentNode.getNr()
-                                                             + getOffset(speciesNetworkParentNode, lastGeneTreeNode);
+                                                             + speciesNetworkParentNode.getOffset(lastGeneTreeNode);
                 coalescentLineageCounts.add(speciesNetworkParentNodeNumber);
                 return recurseCoalescenceEvents(lastGeneTreeNode, speciesNetworkParentHeight, geneTreeNode,
                                                 speciesNetworkParentNode, speciesNetworkParentNodeNumber);
@@ -270,53 +269,11 @@ public class GeneTree extends CalculationNode {
     }
 
     /**
-     * @param networkNode the current network node
-     * @param gTreeNode the gene tree node (coalescent event)
-     * @return the parent network node toward which the gene tree node goes
-     * the method is here instead of in NetworkNode class because it needs information of the gene tree node
-     */
-    public NetworkNode getNetworkParentNode(NetworkNode networkNode, Node gTreeNode) {
-        if (!networkNode.isReticulation()) {
-            if (networkNode.getLeftParent() != null)
-                return networkNode.getLeftParent();
-            else if (networkNode.getRightParent() != null)
-                return networkNode.getRightParent();
-            else
-                return null; // networkNode is root
-        } else {  // networkNode is a reticulation node
-            // find the networkNode that the lineage of gTreeNode has traversed, get its index
-            final int index = traversedNetworkNodes.get(gTreeNode).indexOf(networkNode);
-            // need to check the index is not out of bounds ???
-            // find the boolean of inheritance: true -> left, false -> right
-            if (traversedInheritances.get(gTreeNode).get(index))
-                return networkNode.getLeftParent();
-            else
-                return networkNode.getRightParent();
-        }
-    }
-
-    /**
-     * @param networkNode the current network node
-     * @param gTreeNode the gene tree node (coalescent event)
-     * @return 1 if the gene tree node goes to right parent at reticulation node, 0 otherwise
-     */
-    protected int getOffset(NetworkNode networkNode, Node gTreeNode) {
-        if (!networkNode.isReticulation()) {
-            return 0;
-        } else {  // networkNode is a reticulation node
-            // find the networkNode that the lineage of gTreeNode has traversed, get its index
-            final int index = traversedNetworkNodes.get(gTreeNode).indexOf(networkNode);
-            // find the boolean of inheritance: true -> left, false -> right
-            return (traversedInheritances.get(gTreeNode).get(index)) ? 0 : 1;
-        }
-    }
-
-    /**
      * @return the first tip node which is descendant of
      * @param gTreeNode
      * this can be in Tree.java as gTreeNode.getGeneTreeTipDescendant()
      */
-    private Node getGeneTreeTipDescendant(Node gTreeNode) {
+    private Node getGeneNodeDescendantTip(Node gTreeNode) {
         final TreeInterface geneTree = geneTreeInput.get();
         final List<Node> gTreeTips = geneTree.getExternalNodes();  // tips
         for (Node tip : gTreeTips) {
