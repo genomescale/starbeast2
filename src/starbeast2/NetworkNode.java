@@ -48,7 +48,7 @@ public class NetworkNode extends BEASTObject {
     protected int nChildren;
 
     // a set of labels
-    Set<String> labels;
+    Set<String> labels = new TreeSet<>();
 
     /*
      * Map each gene tree node (the lineage) to a boolean (true -> left parent and false -> right parent)

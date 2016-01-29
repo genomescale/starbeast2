@@ -43,7 +43,7 @@ public class FindLoop {
 
         node.addLabel(label);
 
-        if (node.hasLabel(checkLabel)) {
+        if (checkLabel != null && node.hasLabel(checkLabel)) {
             if (returnNode[0] == null) {
                 returnNode[0] = node;
             } else {
@@ -67,7 +67,7 @@ public class FindLoop {
         treeParser.initByName("newick", testNetwork, "IsLabelledNewick", true, "adjustTipHeights", false);
         networkParser.initByName("tree", treeParser);
 
-        NetworkNode hybridNode = networkParser.getNode("#H3");
+        NetworkNode hybridNode = networkParser.getNode("#H4");
 
         NetworkNode topNode = findLoop(networkParser, hybridNode, true);
 
