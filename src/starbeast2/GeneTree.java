@@ -46,29 +46,6 @@ public class GeneTree extends CalculationNode {
     protected boolean geneTreeCompatible;
     protected boolean storedGeneTreeCompatible;
 
-    /**
-     * gene tree lineage inheritance direction
-     * Tracing backward in time, true -> left parent and false -> right parent.
-     * The length of the boolean array (2nd dimension) equals to the number of gene tips.
-     * The length of the list (1st dimension) equals to the number of reticulation (hybridization) nodes.
-     * There have methods to insert/delete a list element (boolean array) when adding/deleting a reticulation event,
-     * and change the booleans if the gene tree lineages change the ancestral population at a reticulation event.
-     */
-    // public List<boolean[]> lineageInheritance = new ArrayList<>();
-
-    /**
-     * This data structure is replaced by a list of ancestral species nodes for each gene tree node.
-     * The information probably can be stored in metaData in Node.java, but is left here at the moment.
-     * The 1st dimension is for the gene tree nodes/lineages.
-     * The 2nd dimension is for the network nodes that each gene tree lineage has traversed.
-     */
-    public ListMultimap<Node, NetworkNode> traversedNetworkNodes = ArrayListMultimap.create();
-    /**
-     * The 1st dimension is for the gene tree nodes/lineages. For each gene tree node/lineage,
-     * the 2nd dimension is for the directions at the network nodes that the lineage goes.
-     */
-    public ListMultimap<Node, Boolean> traversedInheritances = ArrayListMultimap.create();
-
     @Override
     public boolean requiresRecalculation() {
         needsUpdate = geneTreeInput.isDirty() || speciesNetworkInput.isDirty();

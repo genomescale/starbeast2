@@ -49,7 +49,10 @@ public class NetworkNode extends BEASTObject {
 
     protected int nParents;
     protected int nChildren;
-    
+
+    /*
+     * Map each gene tree node (the lineage) to a boolean (true -> left parent and false -> right parent)
+     */
     private Map<Node, Boolean> embeddedLineagePaths;
 
     private NetworkNode clone;
