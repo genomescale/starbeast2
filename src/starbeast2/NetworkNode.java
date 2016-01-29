@@ -1,9 +1,6 @@
 package starbeast2;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import beast.core.BEASTObject;
 import beast.core.Description;
@@ -49,6 +46,9 @@ public class NetworkNode extends BEASTObject {
 
     protected int nParents;
     protected int nChildren;
+
+    // a set of labels
+    Set<String> labels;
 
     /*
      * Map each gene tree node (the lineage) to a boolean (true -> left parent and false -> right parent)
@@ -517,6 +517,19 @@ public class NetworkNode extends BEASTObject {
             rightParent.rightChild = this;
         }
     }
+
+    public void addLabel(String label) {
+        labels.add(label);
+    }
+
+    public void removeLabel(String label) {
+        labels.remove(label);
+    }
+
+    public boolean hasLabel(String label) {
+        return labels.contains(label);
+    }
+
 
     /**
      * many other methods below
