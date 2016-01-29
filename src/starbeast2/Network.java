@@ -16,7 +16,7 @@ import beast.evolution.alignment.TaxonSet;
  */
 
 @Description("Network representing reticulate evolution of species")
-public class Network extends StateNode {  //implements TreeInterface
+public class Network extends StateNode {
     final public Input<Network> networkInput =
             new Input<>("initial", "Network to start with.");
     final public Input<String> nodeTypeInput =
@@ -249,9 +249,8 @@ public class Network extends StateNode {  //implements TreeInterface
      * @return the number of branches at the given time
      */
     public int getBranchCount(double time) {
-        final Network network = networkInput.get();
         int nB = 1;
-        for (NetworkNode node : network.getInternalNodes()) {
+        for (NetworkNode node : networkNodes) {
             if (node.getHeight() > time) {
                 if (node.isReticulation()) nB++;
                 else nB--;
