@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import beast.core.Description;
 import beast.core.Input;

@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import beast.core.Input;
 import beast.evolution.branchratemodel.BranchRateModel;

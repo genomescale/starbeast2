@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.max;

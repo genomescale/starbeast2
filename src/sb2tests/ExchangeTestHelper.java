@@ -12,12 +12,12 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
-import starbeast2.ConstantPopulation;
-import starbeast2.CoordinatedExchange;
-import starbeast2.GeneTree;
-import starbeast2.SpeciesTree;
-import starbeast2.MultispeciesCoalescent;
-import starbeast2.PopulationSizeModel;
+import network.ConstantPopulation;
+import network.CoordinatedExchange;
+import network.GeneTree;
+import network.SpeciesTree;
+import network.MultispeciesCoalescent;
+import network.PopulationSizeModel;
 
 abstract class ExchangeTestHelper {
     String newickSpeciesTree;

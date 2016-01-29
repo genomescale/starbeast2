@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import java.util.ArrayList;
 import java.util.HashSet;

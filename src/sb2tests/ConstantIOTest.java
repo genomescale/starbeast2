@@ -9,8 +9,8 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import starbeast2.ConstantPopulationIO;
-import starbeast2.PopulationSizeModel;
+import network.ConstantPopulationIO;
+import network.PopulationSizeModel;
 
 public class ConstantIOTest extends PopulationTestHelper {
     private final double alpha = 1.5;

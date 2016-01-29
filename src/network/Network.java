@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import java.io.PrintStream;
 import java.util.List;

@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import org.apache.commons.math.MathException;
 

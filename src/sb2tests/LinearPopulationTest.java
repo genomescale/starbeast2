@@ -9,8 +9,8 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import starbeast2.LinearPopulation;
-import starbeast2.PopulationSizeModel;
+import network.LinearPopulation;
+import network.PopulationSizeModel;
 
 public class LinearPopulationTest extends PopulationTestHelper {
     private final int individualsPerSpecies = 2;

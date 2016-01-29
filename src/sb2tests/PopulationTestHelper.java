@@ -9,11 +9,11 @@ import org.junit.Test;
 
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import starbeast2.NetworkParser;
-import starbeast2.GeneTree;
-import starbeast2.MultispeciesCoalescent;
-import starbeast2.PopulationSizeModel;
-import starbeast2.SpeciesNetwork;
+import network.NetworkParser;
+import network.GeneTree;
+import network.MultispeciesCoalescent;
+import network.PopulationSizeModel;
+import network.SpeciesNetwork;
 
 abstract class PopulationTestHelper {
     String newickSpeciesNetwork;

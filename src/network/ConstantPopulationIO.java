@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 import java.text.DecimalFormat;
 import java.util.List;

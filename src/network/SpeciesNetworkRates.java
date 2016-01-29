@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 public interface SpeciesNetworkRates {
     double[] getRatesArray();

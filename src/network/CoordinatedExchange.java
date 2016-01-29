@@ -1,6 +1,6 @@
 // Based on Exchange.java in BEAST2, which in turn was based on ExchangeOperator.java in BEAST.
 
-package starbeast2;
+package network;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -18,10 +18,10 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
-import starbeast2.DiscreteRates;
-import starbeast2.GeneTree;
-import starbeast2.SpeciesTree;
-import starbeast2.StarBeastClock;
+import network.DiscreteRates;
+import network.GeneTree;
+import network.SpeciesTree;
+import network.StarBeastClock;
 
 public class StarbeastClockTest {
     private String newickSpeciesTree;

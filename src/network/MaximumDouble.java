@@ -1,4 +1,4 @@
-package starbeast2;
+package network;
 
 // store and return a single double value
 // value if never set() is negative infinity
