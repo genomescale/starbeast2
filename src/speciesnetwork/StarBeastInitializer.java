@@ -381,7 +381,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             * 0 -> left parent/branch
             * 1 -> right parent/branch
             */
-            IntegerParameterList mapping = gtree.getTreeMappingToNetwork();
+            // IntegerParameterList mapping = gtree.getTreeMappingToNetwork();
 
         }
     }
