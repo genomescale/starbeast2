@@ -61,14 +61,16 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
     }
 
     @Override
-    public void initStateNodes() throws Exception {
-        // TODO Auto-generated method stub
-
+    public void initStateNodes() {
+        if (networkInput.get() != null) {
+            networkInput.get().assignFrom(this);
+        }
     }
 
     @Override
-    public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        // TODO Auto-generated method stub
-
+    public void getInitialisedStateNodes(final List<StateNode> stateNodes) {
+        if (networkInput.get() != null) {
+            stateNodes.add(networkInput.get());
+        }
     }
 }
