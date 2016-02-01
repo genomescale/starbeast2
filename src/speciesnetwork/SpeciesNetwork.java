@@ -27,6 +27,8 @@ public class SpeciesNetwork extends CalculationNode {
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 
+    protected enum traversal{NEITHER, LEFT, RIGHT, BOTH}
+
     public void initAndValidate() throws Exception {
         // generate map of species network tip node names to node numbers
         final Network speciesNetwork = networkInput.get();

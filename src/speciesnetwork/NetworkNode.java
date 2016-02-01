@@ -5,6 +5,7 @@ import java.util.*;
 import beast.core.BEASTObject;
 import beast.core.Description;
 import beast.evolution.tree.Node;
+import speciesnetwork.SpeciesNetwork.traversal;
 
 /**
  * NetworkNode that is like Node but has 2 parents and 2 children.
@@ -189,20 +190,6 @@ public class NetworkNode extends BEASTObject {
         rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
-    }
-
-    protected NetworkNode getParent(Node embeddedLineage) {
-        if (nParents == 2) {
-            return (embeddedLineagePaths.get(embeddedLineage)) ? leftParent : rightParent;
-        } else if (leftParent != null) {
-            return leftParent;
-        } else {
-            return rightParent;
-        }
-    }
-
-    protected void setParent(Node embeddedLineage, Boolean travelsLeft) {
-        embeddedLineagePaths.put(embeddedLineage, travelsLeft);
     }
 
     protected int getOffset(Node embeddedLineage) {
@@ -563,6 +550,18 @@ public class NetworkNode extends BEASTObject {
             subtreeString.append(branchLengthSuffix);
         }
         return subtreeString.toString();
+    }
+
+    public traversal getOrientation() {
+        if (leftParent != null && rightParent != null) {
+            return traversal.BOTH;
+        } else if (leftParent != null) {
+            return traversal.LEFT;
+        } else if (rightParent != null) {
+            return traversal.RIGHT;
+        } else {
+            return traversal.NEITHER;
+        }
     }
 }
 

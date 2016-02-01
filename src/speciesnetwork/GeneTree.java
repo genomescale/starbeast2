@@ -13,9 +13,11 @@ import com.google.common.collect.HashMultiset;
 import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.IntegerParameterList;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
+import speciesnetwork.SpeciesNetwork.traversal;
 
 /**
 * @author Huw Ogilvie
@@ -26,9 +28,13 @@ public class GeneTree extends CalculationNode {
             new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "Gene tree embedded in the Species network.", Validate.REQUIRED);
+    public Input<IntegerParameterList> embeddingInput =
+            new Input<>("embedding", "Map of gene tree traversal within the species network.", Validate.REQUIRED);
     public Input<Double> ploidyInput =
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     protected double ploidy;
+
+    private traversal[][] traversalMatrix;
 
     private int geneTreeLeafNodeCount;
     private int geneTreeNodeCount;
@@ -39,7 +45,7 @@ public class GeneTree extends CalculationNode {
     protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
     protected Multiset<Integer> storedCoalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
 
-    protected int[] geneNodeSpeciesAssignment;
+    protected int[] geneNodeBranchAssignment;
     protected int[] storedGeneNodeSpeciesAssignment;
     protected double[][] speciesOccupancy;
     protected double[][] storedSpeciesOccupancy;
@@ -48,7 +54,7 @@ public class GeneTree extends CalculationNode {
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = geneTreeInput.isDirty() || speciesNetworkInput.isDirty();
+        needsUpdate = embeddingInput.isDirty() || geneTreeInput.isDirty() || speciesNetworkInput.isDirty();
         return needsUpdate;
     }
 
@@ -61,7 +67,7 @@ public class GeneTree extends CalculationNode {
         storedCoalescentLineageCounts.addAll(coalescentLineageCounts);
 
         storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
-        System.arraycopy(geneNodeSpeciesAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeSpeciesAssignment.length);
+        System.arraycopy(geneNodeBranchAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeBranchAssignment.length);
         System.arraycopy(speciesOccupancy, 0, storedSpeciesOccupancy, 0, speciesOccupancy.length);
 
         storedGeneTreeCompatible = geneTreeCompatible;
@@ -73,14 +79,14 @@ public class GeneTree extends CalculationNode {
     public void restore() {
         ListMultimap<Integer, Double> tmpCoalescentTimes = coalescentTimes;
         Multiset<Integer> tmpCoalescentLineageCounts = coalescentLineageCounts;
-        int[] tmpGeneNodeSpeciesAssignment = geneNodeSpeciesAssignment;
+        int[] tmpGeneNodeSpeciesAssignment = geneNodeBranchAssignment;
         double[][] tmpSpeciesOccupancy = speciesOccupancy;
         boolean tmpGeneTreeCompatible = geneTreeCompatible;
 
         coalescentTimes = storedCoalescentTimes;
         coalescentLineageCounts = storedCoalescentLineageCounts;
         speciesOccupancy = storedSpeciesOccupancy;
-        geneNodeSpeciesAssignment = storedGeneNodeSpeciesAssignment;
+        geneNodeBranchAssignment = storedGeneNodeSpeciesAssignment;
         geneTreeCompatible = storedGeneTreeCompatible;
 
         storedCoalescentTimes = tmpCoalescentTimes;
@@ -96,7 +102,7 @@ public class GeneTree extends CalculationNode {
         ploidy = ploidyInput.get();
 
         geneTreeNodeCount = geneTreeInput.get().getNodeCount();
-        geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
+        geneNodeBranchAssignment = new int[geneTreeNodeCount];
         storedGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
 
         geneTreeLeafNodeCount = geneTreeInput.get().getLeafNodeCount();
@@ -111,13 +117,6 @@ public class GeneTree extends CalculationNode {
 
             speciesNumberMap.put(speciesName, speciesNumber);
         }
-
-        /* traversedNetworkNodes.clear();
-        traversedInheritances.clear();
-        for (int i = 0; i < geneTreeNodeCount; i++) {
-            traversedNetworkNodes.add(new ArrayList<>());
-            traversedInheritances.add(new ArrayList<>());
-        } */
 
         geneTreeCompatible = false;
         storedGeneTreeCompatible = false;
@@ -141,30 +140,51 @@ public class GeneTree extends CalculationNode {
 
     void update() {
         final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        final TreeInterface geneTree = geneTreeInput.get();
         final Map<String, Integer> tipNumberMap = speciesNetworkInput.get().getTipNumberMap();
 
         final int speciesNetworkNodeCount = speciesNetwork.getNodeCount();
+        final int geneTreeNodeCount = speciesNetwork.getNodeCount();
+
+        traversalMatrix = new traversal[geneTreeNodeCount - 1][speciesNetworkNodeCount];
         speciesOccupancy = new double[geneTreeNodeCount][2*speciesNetworkNodeCount];
+        
+        final IntegerParameterList embedding = embeddingInput.get();
+        for (int i = 0; i < speciesNetworkNodeCount; i++) {
+            for (int j = 0; j < geneTreeNodeCount - 1; j++) {
+                switch (embedding.get(i).getValue(j)) {
+                case -1:
+                    traversalMatrix[j][i] = traversal.NEITHER;
+                    break;
+                case 0:
+                    traversalMatrix[j][i] = traversal.LEFT;
+                    break;
+                case 1:
+                    traversalMatrix[j][i] = traversal.RIGHT;
+                    break;
+                }
+            }
+        }
 
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
-        Arrays.fill(geneNodeSpeciesAssignment, -1);
+        Arrays.fill(geneNodeBranchAssignment, -1);
         // -1 means no species assignment for that gene tree node has been made yet
 
         coalescentLineageCounts.clear();
         coalescentTimes.clear();
 
-        final TreeInterface geneTree = geneTreeInput.get();
         for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
             final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
-            final int speciesNetworkLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
-            final NetworkNode speciesNetworkLeafNode = speciesNetwork.getNode(speciesNetworkLeafNumber);
-            coalescentLineageCounts.add(2 * speciesNetworkLeafNumber);
+            final int speciesLeafNodeNumber = tipNumberMap.get(geneTreeLeafNode.getID());
+            final NetworkNode speciesLeafNode = speciesNetwork.getNode(speciesLeafNodeNumber);
+            final traversal speciesOrientation = speciesLeafNode.getOrientation();
+            final int speciesLeafBranchNumber = (speciesOrientation == traversal.LEFT) ? speciesLeafNodeNumber * 2 : (speciesLeafNodeNumber * 2) + 1;
+            coalescentLineageCounts.add(speciesLeafBranchNumber);
 
             final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
-            // final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
             final double lastHeight = 0.0;
-            if (!recurseCoalescenceEvents(geneTreeLeafNode, lastHeight, firstCoalescenceNode,
-                                          speciesNetworkLeafNode, 2*speciesNetworkLeafNumber)) {
+            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode,
+                                          speciesLeafNode, speciesLeafBranchNumber, speciesOrientation)) {
                 // this gene tree IS NOT compatible with the species tree
                 geneTreeCompatible = false;
                 needsUpdate = false;
@@ -176,45 +196,44 @@ public class GeneTree extends CalculationNode {
         needsUpdate = false;
     }
 
-    private boolean recurseCoalescenceEvents(final Node lastGeneTreeNode, final double lastHeight, final Node geneTreeNode,
-                                             final NetworkNode speciesNetworkNode, final int speciesNetworkPopNumber) {
-        final double geneTreeNodeHeight = geneTreeNode.getHeight();
+    private boolean recurseCoalescenceEvents(final int lastGeneTreeNodeNumber, final double lastHeight, final Node geneTreeNode,
+                                             final NetworkNode speciesNode, final int speciesBranchNumber, final traversal orientation) {
         final int geneTreeNodeNumber = geneTreeNode.getNr();
-        final int lastGeneTreeNodeNumber = lastGeneTreeNode.getNr();
-
         // check if the next coalescence event occurs in an ancestral branch
-        if (!speciesNetworkNode.isRoot()) {
-            final NetworkNode speciesNetworkParentNode = speciesNetworkNode.getParent(lastGeneTreeNode);
-            final double speciesNetworkParentHeight = speciesNetworkParentNode.getHeight();
-            if (geneTreeNodeHeight >= speciesNetworkParentHeight) {
-                speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = speciesNetworkParentHeight - lastHeight;
-                final int speciesNetworkParentNodeNumber = 2 * speciesNetworkParentNode.getNr()
-                                                             + speciesNetworkParentNode.getOffset(lastGeneTreeNode);
-                coalescentLineageCounts.add(speciesNetworkParentNodeNumber);
-                return recurseCoalescenceEvents(lastGeneTreeNode, speciesNetworkParentHeight, geneTreeNode,
-                                                speciesNetworkParentNode, speciesNetworkParentNodeNumber);
+        if (!speciesNode.isRoot()) {
+            final NetworkNode speciesParentNode = (orientation == traversal.LEFT) ? speciesNode.getLeftParent() : speciesNode.getRightParent();
+            final int speciesParentNodeNumber = speciesParentNode.getNr();
+            final traversal nextOrientation = traversalMatrix[geneTreeNodeNumber][speciesParentNodeNumber];
+            if (nextOrientation != traversal.NEITHER) { // this gene lineage traverses through the species parent node (left or right)
+                final double speciesParentNodeHeight = speciesParentNode.getHeight();
+                final int speciesParentBranchNumber = (nextOrientation == traversal.LEFT) ? speciesParentNodeNumber * 2 : (speciesParentNodeNumber * 2) + 1;
+                speciesOccupancy[lastGeneTreeNodeNumber][speciesBranchNumber] = speciesParentNodeHeight - lastHeight;
+                coalescentLineageCounts.add(speciesParentNodeNumber);
+                return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesParentNodeHeight, geneTreeNode,
+                        speciesParentNode, speciesParentBranchNumber, nextOrientation);
             }
         }
 
         // this code executes if the next coalescence event occurs within the current branch
-        speciesOccupancy[lastGeneTreeNodeNumber][speciesNetworkPopNumber] = geneTreeNodeHeight - lastHeight;
-        final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
-        if (existingSpeciesAssignment == -1) {
-            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesNetworkPopNumber;
-            coalescentTimes.put(speciesNetworkPopNumber, geneTreeNodeHeight);
+        final double geneTreeNodeHeight = geneTreeNode.getHeight();
+        final int existingBranchAssignment = geneNodeBranchAssignment[geneTreeNodeNumber];
+        speciesOccupancy[lastGeneTreeNodeNumber][speciesBranchNumber] = geneTreeNodeHeight - lastHeight;
+        if (existingBranchAssignment == -1) {
+            geneNodeBranchAssignment[geneTreeNodeNumber] = speciesBranchNumber;
+            coalescentTimes.put(speciesBranchNumber, geneTreeNodeHeight);
             final Node nextGeneTreeNode = geneTreeNode.getParent();
             if (nextGeneTreeNode == null) {
                 // this is the root of the gene tree and no incompatibilities were detected
                 return true;
             } else {
                 // if this is not the root of the gene tree, check the subsequent (back in time) coalescence event
-                return recurseCoalescenceEvents(geneTreeNode, geneTreeNodeHeight, nextGeneTreeNode,
-                                                speciesNetworkNode, speciesNetworkPopNumber);
+                return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode,
+                                                speciesNode, speciesBranchNumber, orientation);
             }
         } else {
             // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
-            // return false if this gene tree IS NOT compatible with the species tree
-            return existingSpeciesAssignment == speciesNetworkPopNumber;
+            // return false if this gene tree IS NOT compatible with the species network
+            return existingBranchAssignment == speciesBranchNumber;
         }
     }
 
