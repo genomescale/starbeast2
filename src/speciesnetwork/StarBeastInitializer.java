@@ -18,6 +18,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
+import beast.core.parameter.IntegerParameterList;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Taxon;
@@ -374,6 +375,14 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final List<Tree> geneTrees = geneTreesInput.get();
         for (final Tree gtree : geneTrees) {
             gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
+
+            /* figure out the mapping and write IntegerParameterList
+            * -1 -> not passing the species network node
+            * 0 -> left parent/branch
+            * 1 -> right parent/branch
+            */
+            // IntegerParameterList mapping = gtree.getTreeMappingToNetwork();
+
         }
     }
 
