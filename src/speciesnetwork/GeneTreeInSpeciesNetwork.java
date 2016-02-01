@@ -22,6 +22,7 @@ import speciesnetwork.SpeciesNetwork.traversal;
 
 /**
 * @author Huw Ogilvie
+* @author Chi Zhang
  */
 
 public class GeneTreeInSpeciesNetwork extends CalculationNode {
