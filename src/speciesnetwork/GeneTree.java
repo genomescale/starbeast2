@@ -49,7 +49,7 @@ public class GeneTree extends CalculationNode {
     protected Multiset<Integer> storedCoalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
 
     protected int[] geneNodeBranchAssignment;
-    protected int[] storedGeneNodeSpeciesAssignment;
+    protected int[] storedGeneNodeBranchAssignment;
     protected double[][] speciesOccupancy;
     protected double[][] storedSpeciesOccupancy;
     protected boolean geneTreeCompatible;
@@ -70,7 +70,7 @@ public class GeneTree extends CalculationNode {
         storedCoalescentLineageCounts.addAll(coalescentLineageCounts);
 
         storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
-        System.arraycopy(geneNodeBranchAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeBranchAssignment.length);
+        System.arraycopy(geneNodeBranchAssignment, 0, storedGeneNodeBranchAssignment, 0, geneNodeBranchAssignment.length);
         System.arraycopy(speciesOccupancy, 0, storedSpeciesOccupancy, 0, speciesOccupancy.length);
 
         storedGeneTreeCompatible = geneTreeCompatible;
@@ -89,13 +89,13 @@ public class GeneTree extends CalculationNode {
         coalescentTimes = storedCoalescentTimes;
         coalescentLineageCounts = storedCoalescentLineageCounts;
         speciesOccupancy = storedSpeciesOccupancy;
-        geneNodeBranchAssignment = storedGeneNodeSpeciesAssignment;
+        geneNodeBranchAssignment = storedGeneNodeBranchAssignment;
         geneTreeCompatible = storedGeneTreeCompatible;
 
         storedCoalescentTimes = tmpCoalescentTimes;
         storedCoalescentLineageCounts = tmpCoalescentLineageCounts;
         storedSpeciesOccupancy = tmpSpeciesOccupancy;
-        storedGeneNodeSpeciesAssignment = tmpGeneNodeSpeciesAssignment;
+        storedGeneNodeBranchAssignment = tmpGeneNodeSpeciesAssignment;
         storedGeneTreeCompatible = tmpGeneTreeCompatible;
 
         super.restore();
@@ -106,7 +106,7 @@ public class GeneTree extends CalculationNode {
 
         geneTreeNodeCount = geneTreeInput.get().getNodeCount();
         geneNodeBranchAssignment = new int[geneTreeNodeCount];
-        storedGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
+        storedGeneNodeBranchAssignment = new int[geneTreeNodeCount];
 
         geneTreeLeafNodeCount = geneTreeInput.get().getLeafNodeCount();
 
@@ -158,7 +158,7 @@ public class GeneTree extends CalculationNode {
         final int geneTreeNodeCount = speciesNetwork.getNodeCount();
 
         traversalMatrix = new traversal[geneTreeNodeCount - 1][traversalNodeCount];
-        speciesOccupancy = new double[geneTreeNodeCount][(2 * speciesNodeCount) - 1];
+        speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
 
         final IntegerParameterList embedding = embeddingInput.get();
         for (int i = 0; i < traversalNodeCount - 1; i++) {
@@ -222,11 +222,11 @@ public class GeneTree extends CalculationNode {
                     final int reticulationNumber = speciesParentNodeNumber - reticulationNodeOffset;
                     speciesParentBranchNumber = reticulationNodeOffset + (reticulationNumber * 2);
                     if (orientation == traversal.RIGHT) speciesParentBranchNumber++;
-                } else {
+                } else { // leaf or internal speciation node
                     speciesParentBranchNumber = speciesParentNodeNumber;
                 }
                 speciesOccupancy[lastGeneTreeNodeNumber][speciesBranchNumber] = speciesParentNodeHeight - lastHeight;
-                coalescentLineageCounts.add(speciesParentNodeNumber);
+                coalescentLineageCounts.add(speciesParentBranchNumber);
                 return recurseCoalescenceEvents(lastGeneTreeNodeNumber, speciesParentNodeHeight, geneTreeNode,
                         speciesParentNode, speciesParentBranchNumber, nextOrientation);
             }
