@@ -19,7 +19,7 @@ import beast.evolution.tree.Node;
 import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
 import speciesnetwork.DiscreteRates;
-import speciesnetwork.GeneTree;
+import speciesnetwork.GeneTreeInSpeciesNetwork;
 import speciesnetwork.SpeciesTree;
 import speciesnetwork.StarBeastClock;
 
@@ -31,7 +31,7 @@ public class StarbeastClockTest {
     private TreeParser geneTree = new TreeParser();
     
     private SpeciesTree speciesTreeWrapper = new SpeciesTree();
-    private GeneTree geneTreeWrapper = new GeneTree();
+    private GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
 
 
     private final int nSpecies = 3;
@@ -211,7 +211,7 @@ public class StarbeastClockTest {
         geneTree = new TreeParser();
         geneTree.initByName("newick", newickGeneTree, "IsLabelledNewick", true);
 
-        geneTreeWrapper = new GeneTree();
+        geneTreeWrapper = new GeneTreeInSpeciesNetwork();
         geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
     }
 }

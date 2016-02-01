@@ -21,7 +21,7 @@ import beast.core.State;
 public class MultispeciesCoalescent extends Distribution {
     public Input<SpeciesNetwork> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
-    public Input<List<GeneTree>> geneTreeInput =
+    public Input<List<GeneTreeInSpeciesNetwork>> geneTreeInput =
             new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
     public Input<PopulationSizeModel> populationModelInput =
             new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
@@ -38,12 +38,12 @@ public class MultispeciesCoalescent extends Distribution {
 
     @Override
     public void initAndValidate() throws Exception {
-        final List<GeneTree> geneTrees = geneTreeInput.get();
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeInput.get();
         nGeneTrees = geneTrees.size();
 
         perGenePloidy = new double[nGeneTrees];
         for (int i = 0; i < nGeneTrees; i++) {
-            final GeneTree geneTreeI = geneTrees.get(i);
+            final GeneTreeInSpeciesNetwork geneTreeI = geneTrees.get(i);
             perGenePloidy[i] = geneTreeI.ploidy;
         }
 
@@ -61,7 +61,7 @@ public class MultispeciesCoalescent extends Distribution {
         double[] speciesStartTimes = new double[2*speciesNetworkNodeCount]; // the earlier date (rootward end)
         double[] speciesEndTimes = new double[2*speciesNetworkNodeCount]; // the later date (tipward end)
 
-        final List<GeneTree> geneTrees = geneTreeInput.get();
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeInput.get();
         // assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
 
         // [2*i] for the left branch and [2i+1] for the right branch (if right branch exists)
@@ -96,7 +96,7 @@ public class MultispeciesCoalescent extends Distribution {
 
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
-            final GeneTree geneTree = geneTrees.get(j);
+            final GeneTreeInSpeciesNetwork geneTree = geneTrees.get(j);
             // assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
 
             if (geneTree.computeCoalescentTimes()) {

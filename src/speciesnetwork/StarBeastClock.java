@@ -5,7 +5,7 @@ import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 
 public class StarBeastClock extends BranchRateModel.Base {
-    public Input<GeneTree> geneTreeInput =
+    public Input<GeneTreeInSpeciesNetwork> geneTreeInput =
             new Input<>("geneTree", "The gene tree this relaxed clock is associated with.", Input.Validate.REQUIRED);
     public Input<SpeciesNetworkRates> speciesTreeRatesInput =
             new Input<>("speciesTreeRates", "The per-branch rates for the species tree", Input.Validate.REQUIRED);

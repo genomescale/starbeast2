@@ -12,12 +12,8 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
-import speciesnetwork.ConstantPopulation;
-import speciesnetwork.CoordinatedExchange;
-import speciesnetwork.GeneTree;
-import speciesnetwork.SpeciesTree;
-import speciesnetwork.MultispeciesCoalescent;
-import speciesnetwork.PopulationSizeModel;
+import speciesnetwork.*;
+import speciesnetwork.GeneTreeInSpeciesNetwork;
 
 abstract class ExchangeTestHelper {
     String newickSpeciesTree;
@@ -27,7 +23,7 @@ abstract class ExchangeTestHelper {
     List<TreeParser> geneTrees = new ArrayList<>();
     
     SpeciesTree speciesTreeWrapper;
-    List<GeneTree> geneTreeWrappers = new ArrayList<>();
+    List<GeneTreeInSpeciesNetwork> geneTreeWrappers = new ArrayList<>();
 
     RealParameter popSizesParameter;
     PopulationSizeModel populationModel;
@@ -99,7 +95,7 @@ abstract class ExchangeTestHelper {
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
             geneTrees.add(geneTree);
 
-            GeneTree geneTreeWrapper = new GeneTree();
+            GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
             geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
             geneTreeWrappers.add(geneTreeWrapper);
         }
