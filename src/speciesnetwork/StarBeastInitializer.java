@@ -55,9 +55,10 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<Method> initMethod = new Input<>("method", "Initialise either with a totally random state" +
             "or a point estimate based on alignments data (default point-estimate)", Method.POINT, Method.values());
 
-    final public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "Species network to initialize.");
+    final public Input<SpeciesNetwork> speciesNetworkInput = new Input<>("speciesNetwork", "Species network to initialize.");
 
-    final public Input<List<Tree>> geneTreesInput = new Input<>("geneTrees", "Gene trees to initialize.", new ArrayList<>());
+    final public Input<List<GeneTreeInSpeciesNetwork>> geneTreesInput =
+            new Input<>("geneTrees", "Gene trees to initialize.", new ArrayList<>());
 
     final public Input<YuleHybridModel> hybridYuleInput = new Input<>("hybridYule",
             "The species network (with hybridization) to initialize.", Validate.XOR, speciesNetworkInput);
@@ -83,7 +84,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     @Override
     public void initStateNodes() throws Exception {
         // initialize population sizes to equal average branch length (equivalent to 2Ne = E[1/lambda])
-        final NetworkNode speciesNetworkRoot = speciesNetworkInput.get().getRoot();
+        final NetworkNode speciesNetworkRoot = speciesNetworkInput.get().getNetwork().getRoot();
 
         double speciesNetworkLength = 0;
         for (final NetworkNode n : speciesNetworkRoot.getAllChildNodes()) {
@@ -91,7 +92,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             if(n.getRightParent() != null) speciesNetworkLength += n.getRightLength();
         }
 
-        final int nSpeciesBranches = speciesNetworkInput.get().getBranchCount();
+        final int nSpeciesBranches = speciesNetworkInput.get().getNetwork().getBranchCount();
         final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
 
         final PopulationSizeModel populationModel = populationFunctionInput.get();
@@ -200,24 +201,24 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final Function muInput = this.muInput.get();
         final double mu = (muInput != null) ? muInput.getArrayValue() : 1;
 
-        final Network sNetwork = speciesNetworkInput.get();
+        final Network sNetwork = speciesNetworkInput.get().getNetwork();
         final TaxonSet species = sNetwork.taxonSetInput.get();
         final List<String> speciesNames = species.asStringList();
         final int nSpecies = speciesNames.size();
 
-        final List<Tree> geneTrees = geneTreesInput.get();
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreesInput.get();
 
         //final List<Alignment> alignments = genes.get();
         //final List<Tree> geneTrees = new ArrayList<>(alignments.size());
         double maxNsites = 0;
         //for( final Alignment alignment : alignments)  {
-        for (final Tree gtree : geneTrees) {
+        for (final GeneTreeInSpeciesNetwork gtree : geneTrees) {
             //final Tree gtree = new Tree();
-            final Alignment alignment = gtree.m_taxonset.get().alignmentInput.get();
+            final Alignment alignment = gtree.getTree().m_taxonset.get().alignmentInput.get();
 
             final ClusterTree ctree = new ClusterTree();
             ctree.initByName("initial", gtree, "clusterType", "upgma", "taxa", alignment);
-            gtree.scale(1 / mu);
+            gtree.getTree().scale(1 / mu);
 
             maxNsites = max(maxNsites, alignment.getSiteCount());
         }
@@ -236,8 +237,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final double[][] genesDmins = new double[geneTrees.size()][];
 
         for(int ng = 0; ng < geneTrees.size(); ++ng) {
-            final Tree gtree = geneTrees.get(ng);
-            final double[] dmin = firstMeetings(gtree, geneTips2Species, nSpecies);
+            final GeneTreeInSpeciesNetwork gtree = geneTrees.get(ng);
+            final double[] dmin = firstMeetings(gtree.getTree(), geneTips2Species, nSpecies);
             genesDmins[ng] = dmin;
 
             for(int i = 0; i < dmin.length; ++i) {
@@ -303,8 +304,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 }
             }
             if(!compatible) {
-                final Tree gtree = geneTrees.get(ng);
-                final TaxonSet gtreeTaxa = gtree.m_taxonset.get();
+                final GeneTreeInSpeciesNetwork gtree = geneTrees.get(ng);
+                final TaxonSet gtreeTaxa = gtree.getTree().m_taxonset.get();
                 final Alignment alignment = gtreeTaxa.alignmentInput.get();
                 final List<String> taxaNames = alignment.getTaxaNames();
                 final int nTaxa =  taxaNames.size();
@@ -355,34 +356,28 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     private void randomInit() throws Exception {
-        double lam = 1;
-        final RealParameter lambda = birthRateInput.get();
-        if(lambda != null) {
-            lam = lambda.getArrayValue();
-        }
+        double lambda = 1;
+        if(birthRateInput.get() != null) lambda = birthRateInput.get().getArrayValue();
 
-        final Network sNetwork = speciesNetworkInput.get();
-        final TaxonSet species = sNetwork.taxonSetInput.get();
+        final SpeciesNetwork sNetwork = speciesNetworkInput.get();
+        final TaxonSet species = sNetwork.getNetwork().taxonSetInput.get();
         final int nSpecies = species.asStringList().size();
         double s = 0;
-        for(int k = 2; k <= nSpecies; ++k) {
-            s += 1.0/k;
-        }
-        final double rootHeight = (1/lam) * s;
-        sNetwork.scale(rootHeight/sNetwork.getRoot().getHeight());
+        for(int k = 2; k <= nSpecies; ++k) s += 1.0/k;
+        final double rootHeight = (1/lambda) * s;
+        sNetwork.getNetwork().scale(rootHeight/sNetwork.getNetwork().getRoot().getHeight());
 
-        // randomInitGeneTrees(rootHeight);
-        final List<Tree> geneTrees = geneTreesInput.get();
-        for (final Tree gtree : geneTrees) {
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreesInput.get();
+        for (final GeneTreeInSpeciesNetwork gtisn : geneTrees) {
+            Tree gtree = gtisn.getTree();
             gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
 
-            /* figure out the mapping and write IntegerParameterList
-            * -1 -> not passing the species network node
-            * 0 -> left parent/branch
-            * 1 -> right parent/branch
-            */
-            // IntegerParameterList mapping = gtree.getTreeMappingToNetwork();
+            IntegerParameterList mapping = gtisn.getTreeMappingToNetwork();
+            // fill mapping in all with -1 ???
+            mapping.initByName("dimension", gtree.getNodeCount() -1);
 
+            // assign gene tree mapping
+            initGeneTreeMapping(gtree.getRoot(), sNetwork, mapping);
         }
     }
 
@@ -391,15 +386,74 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         // if( hasCalibrations ) { stateNodes.add((Tree) calibratedYule.get().treeInput.get()); } else {
-        stateNodes.add(speciesNetworkInput.get());
+        stateNodes.add(speciesNetworkInput.get().getNetwork());
 
-        for(final Tree gtree : geneTreesInput.get()) {
-            stateNodes.add(gtree);
+        for(final GeneTreeInSpeciesNetwork gtree : geneTreesInput.get()) {
+            stateNodes.add(gtree.getTree());
         }
 
         final RealParameter brate = birthRateInput.get();
         if(brate != null) {
             stateNodes.add(brate) ;
+        }
+
+        final RealParameter hrate = hybridRateInput.get();
+        if(hrate != null) {
+            stateNodes.add(hrate) ;
+        }
+    }
+
+    /**
+     * recursively assign mapping indicators
+     * -1 -> not passing the species node
+     * 0 -> left parent/branch
+     * 1 -> right parent/branch
+     * @return species node/branch containing the current gene tree node
+     */
+    private NetworkNode initGeneTreeMapping(Node gtNode, SpeciesNetwork sNetwork, IntegerParameterList mapping) {
+        // the gene tips are mapped to species tip nodes
+        if (gtNode.isLeaf()) {
+            final int geneLeafNumber = gtNode.getNr();
+            final int speciesLeafNumber = sNetwork.getTipNumberMap().get(gtNode.getID());
+            final NetworkNode speciesNode = sNetwork.getNetwork().getNode(speciesLeafNumber);
+
+            if (speciesNode.getLeftParent() != null)
+                mapping.get(speciesLeafNumber).setValue(geneLeafNumber, 0);
+            else
+                mapping.get(speciesLeafNumber).setValue(geneLeafNumber, 1);
+
+            return speciesNode;
+        } else {
+            NetworkNode leftSpeciesNode = initGeneTreeMapping(gtNode.getLeft(), sNetwork, mapping);
+            NetworkNode rightSpeciesNode = initGeneTreeMapping(gtNode.getRight(), sNetwork, mapping);
+            final double height = gtNode.getHeight();
+            final Node leftGeneNode = gtNode.getLeft();
+            final Node rightGeneNode = gtNode.getRight();
+
+            // this should work for species tree, but not good for species network
+            while ((leftSpeciesNode.getLeftParent() != null && height > leftSpeciesNode.getLeftParent().getHeight()) ||
+                   (leftSpeciesNode.getRightParent()!= null && height > leftSpeciesNode.getRightParent().getHeight())) {
+                if (leftSpeciesNode.getLeftParent() != null && height > leftSpeciesNode.getLeftParent().getHeight()) {
+                    leftSpeciesNode = leftSpeciesNode.getLeftParent();
+                    mapping.get(leftSpeciesNode.getNr()).setValue(leftGeneNode.getNr(), 0);
+                } else {
+                    leftSpeciesNode = leftSpeciesNode.getRightParent();
+                    mapping.get(leftSpeciesNode.getNr()).setValue(leftGeneNode.getNr(), 1);
+                }
+            }
+            while ((rightSpeciesNode.getLeftParent() != null && height > rightSpeciesNode.getLeftParent().getHeight()) ||
+                   (rightSpeciesNode.getRightParent()!= null && height > rightSpeciesNode.getRightParent().getHeight())) {
+                if (rightSpeciesNode.getLeftParent() != null && height > rightSpeciesNode.getLeftParent().getHeight()) {
+                    rightSpeciesNode = rightSpeciesNode.getLeftParent();
+                    mapping.get(rightSpeciesNode.getNr()).setValue(rightGeneNode.getNr(), 0);
+                } else {
+                    rightSpeciesNode = rightSpeciesNode.getRightParent();
+                    mapping.get(rightSpeciesNode.getNr()).setValue(rightGeneNode.getNr(), 1);
+                }
+            }
+
+            assert(leftSpeciesNode == rightSpeciesNode);
+            return rightSpeciesNode;
         }
     }
 }

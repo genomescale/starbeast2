@@ -22,7 +22,7 @@ import beast.evolution.tree.Tree;
 public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
     final public Input<SpeciesNetwork> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network to be logged.", Validate.REQUIRED);
-    final public Input<List<GeneTree>> geneTreesInput =
+    final public Input<List<GeneTreeInSpeciesNetwork>> geneTreesInput =
             new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
     final public Input<PopulationSizeModel> populationModelInput =
             new Input<>("populationmodel", "population sizes to be logged with branches of the tree");

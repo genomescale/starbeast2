@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
+import beast.core.parameter.IntegerParameterList;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multiset;
@@ -23,7 +24,7 @@ import speciesnetwork.SpeciesNetwork.traversal;
 * @author Huw Ogilvie
  */
 
-public class GeneTree extends CalculationNode {
+public class GeneTreeInSpeciesNetwork extends CalculationNode {
     public Input<SpeciesNetwork> speciesNetworkInput =
             new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
     public Input<Tree> geneTreeInput =
@@ -54,6 +55,11 @@ public class GeneTree extends CalculationNode {
     protected double[][] storedSpeciesOccupancy;
     protected boolean geneTreeCompatible;
     protected boolean storedGeneTreeCompatible;
+
+    /**
+     * 2d array list of mapping gene tree into the species network
+     */
+    protected IntegerParameterList treeMappingToNetworkList;
 
     @Override
     public boolean requiresRecalculation() {
@@ -262,14 +268,9 @@ public class GeneTree extends CalculationNode {
         return speciesOccupancy;
     }
 
-    /* public double[] getOccupancy(Node node) {
-        if (needsUpdate) {
-            update();
-        }
-
-        final int geneTreeNodeNumber = node.getNr();
-        return speciesOccupancy[geneTreeNodeNumber];
-    } */
+    protected IntegerParameterList getTreeMappingToNetwork() {
+        return treeMappingToNetworkList;
+    }
 
     protected Tree getTree() {
         return geneTreeInput.get();

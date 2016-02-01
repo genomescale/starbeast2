@@ -10,7 +10,7 @@ import org.junit.Test;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import speciesnetwork.NetworkParser;
-import speciesnetwork.GeneTree;
+import speciesnetwork.GeneTreeInSpeciesNetwork;
 import speciesnetwork.MultispeciesCoalescent;
 import speciesnetwork.PopulationSizeModel;
 import speciesnetwork.SpeciesNetwork;
@@ -23,7 +23,7 @@ abstract class PopulationTestHelper {
     List<TreeParser> geneTrees = new ArrayList<>();
     
     SpeciesNetwork speciesNetworkWrapper;
-    List<GeneTree> geneTreeWrappers = new ArrayList<>();
+    List<GeneTreeInSpeciesNetwork> geneTreeWrappers = new ArrayList<>();
 
     MultispeciesCoalescent msc;
 
@@ -68,7 +68,7 @@ abstract class PopulationTestHelper {
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
             geneTrees.add(geneTree);
 
-            GeneTree geneTreeWrapper = new GeneTree();
+            GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
             geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesNetworkWrapper);
             geneTreeWrappers.add(geneTreeWrapper);
         }
