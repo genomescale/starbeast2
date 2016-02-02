@@ -18,7 +18,6 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
-import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Taxon;
@@ -72,6 +71,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<PopulationSizeModel> populationFunctionInput = new Input<>("populationModel",
             "The species network population size model.", Validate.REQUIRED);
 
+    final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding", "Operator which rebuilds embedding of gene trees within species tree.");
     // private boolean hasCalibrations;  // don't deal with calibrations at the moment
 
     @Override
@@ -107,6 +107,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             case ALL_RANDOM:
                 randomInit();
                 break;
+        }
+        
+        // initialize embedding for all gene trees
+        for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
+            operator.proposal();
         }
     }
 
@@ -371,23 +376,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         for (final GeneTreeInSpeciesNetwork gtisn : geneTrees) {
             Tree gtree = gtisn.getTree();
             gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
-
-            final IntegerParameter embedding = gtisn.embeddingInput.get();
-            final int traversalNodeCount = sNetwork.getNodeCount() - (sNetwork.getLeafNodeCount() + 1);
-            final int geneBranchCount = gtisn.geneTreeInput.get().getNodeCount() - 1; // no branch attached to the root node
-
-            embedding.setDimension(traversalNodeCount * geneBranchCount);
-            embedding.setMinorDimension(geneBranchCount);
-            
-            // initialize embedding matrix to -1 (no traversal)
-            for (int i = 0; i < traversalNodeCount; i++) {
-                for (int j = 0; j < geneBranchCount; j++) {
-                    embedding.setMatrixValue(i, j, -1);
-                }
-            }
-
-            // assign gene tree mapping
-            // initGeneTreeMapping(gtree.getRoot(), sNetwork, embedding);
         }
     }
 
