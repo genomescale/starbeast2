@@ -5,7 +5,7 @@ import java.util.List;
 import beast.evolution.tree.Node;
 
 final class SanityChecks {
-    protected boolean computeCoalescentTimes(List<GeneTreeInSpeciesNetwork> geneTrees) {
+    protected boolean computeCoalescentTimes(List<GeneTreeInSpeciesNetwork> geneTrees) throws Exception {
         for (GeneTreeInSpeciesNetwork geneTree: geneTrees) {
             if (!geneTree.computeCoalescentTimes()) {
                 // this gene tree IS NOT compatible with the species tree

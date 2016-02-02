@@ -43,7 +43,7 @@ public class StarBeastClock extends BranchRateModel.Base {
         super.restore();
     }
 
-    private void update() {
+    private void update() throws Exception {
         final double geneTreeRate = meanRateInput.get().getValue();
         final double[] speciesTreeRates = speciesTreeRatesInput.get().getRatesArray();
         final double[][] speciesOccupancy = geneTreeInput.get().getSpeciesOccupancy();
@@ -69,7 +69,12 @@ public class StarBeastClock extends BranchRateModel.Base {
     @Override
     public double getRateForBranch(Node node) {
         if (needsUpdate) {
-            update();
+            try {
+                update();
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
 
         return branchRates[node.getNr()];

@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
-import beast.core.parameter.IntegerParameterList;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multiset;
@@ -14,7 +13,7 @@ import com.google.common.collect.HashMultiset;
 import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.parameter.IntegerParameterList;
+import beast.core.parameter.IntegerParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
@@ -30,7 +29,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "Gene tree embedded in the species network.", Validate.REQUIRED);
-    public Input<IntegerParameterList> embeddingInput =
+    public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "Map of gene tree traversal within the species network.", Validate.REQUIRED);
     public Input<Double> ploidyInput =
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
@@ -56,11 +55,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     protected double[][] storedSpeciesOccupancy;
     protected boolean geneTreeCompatible;
     protected boolean storedGeneTreeCompatible;
-
-    /**
-     * 2d array list of mapping gene tree into the species network
-     */
-    protected IntegerParameterList treeMappingToNetworkList;
 
     @Override
     public boolean requiresRecalculation() {
@@ -133,7 +127,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         needsUpdate = true;
     }
 
-    protected boolean computeCoalescentTimes() {
+    protected boolean computeCoalescentTimes() throws Exception {
         if (needsUpdate) {
             update();
         }
@@ -148,7 +142,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         }
     }
 
-    void update() {
+    void update() throws Exception {
         final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
         final TreeInterface geneTree = geneTreeInput.get();
         final Map<String, Integer> tipNumberMap = speciesNetworkInput.get().getTipNumberMap();
@@ -162,24 +156,26 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         speciesBranchCount = speciesNodeCount + reticulationNodeCount;
         // traversalNodeCount excludes the leaves and the root
         final int traversalNodeCount = speciesNodeCount - (speciesLeafNodeCount + 1);
-        final int geneTreeNodeCount = speciesNetwork.getNodeCount();
 
+        // transpose and convert integer matrix to enumerated traversal matrix
         traversalMatrix = new traversal[geneTreeNodeCount - 1][traversalNodeCount];
-        speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
+        speciesOccupancy = new double[geneTreeNodeCount - 1][speciesBranchCount];
 
-        final IntegerParameterList embedding = embeddingInput.get();
-        for (int i = 0; i < traversalNodeCount - 1; i++) {
-            for (int j = 0; j < geneTreeNodeCount - 1; j++) {
-                switch (embedding.get(i).getValue(j)) {
+        final IntegerParameter embedding = embeddingInput.get();
+        for (int i = 0; i < geneTreeNodeCount - 1; i++) {
+            for (int j = 0; j < traversalNodeCount - 1; j++) {
+                switch (embedding.getMatrixValue(j, i)) { // embedding is stored species traversal nodes x gene node branches
                 case -1:
-                    traversalMatrix[j][i] = traversal.NEITHER;
+                    traversalMatrix[i][j] = traversal.NEITHER;
                     break;
                 case 0:
-                    traversalMatrix[j][i] = traversal.LEFT;
+                    traversalMatrix[i][j] = traversal.LEFT;
                     break;
                 case 1:
-                    traversalMatrix[j][i] = traversal.RIGHT;
+                    traversalMatrix[i][j] = traversal.RIGHT;
                     break;
+                default:
+                    throw new Exception("Invalid traversal matrix value (should be -1, 0 or +1).");
                 }
             }
         }
@@ -263,14 +259,10 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         }
     }
 
-    public double[][] getSpeciesOccupancy() {
+    public double[][] getSpeciesOccupancy() throws Exception {
         if (needsUpdate) update();
 
         return speciesOccupancy;
-    }
-
-    protected IntegerParameterList getTreeMappingToNetwork() {
-        return treeMappingToNetworkList;
     }
 
     protected Tree getTree() {

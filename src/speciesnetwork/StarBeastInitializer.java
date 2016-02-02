@@ -18,6 +18,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.IntegerParameterList;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
@@ -28,6 +29,7 @@ import beast.evolution.alignment.distance.JukesCantorDistance;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.ClusterTree;
+import speciesnetwork.SpeciesNetwork.traversal;
 
 /**
 * @author Joseph Heled
@@ -372,12 +374,22 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             Tree gtree = gtisn.getTree();
             gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
 
-            IntegerParameterList mapping = gtisn.getTreeMappingToNetwork();
-            // fill mapping in all with -1 ???
-            mapping.initByName("dimension", gtree.getNodeCount() -1);
+            final IntegerParameter embedding = gtisn.embeddingInput.get();
+            final int traversalNodeCount = sNetwork.getNetwork().getNodeCount() - (sNetwork.getNetwork().getLeafNodeCount() + 1);
+            final int geneBranchCount = gtisn.geneTreeInput.get().getNodeCount() - 1; // no branch attached to the root node
+
+            embedding.setDimension(traversalNodeCount * geneBranchCount);
+            embedding.setMinorDimension(geneBranchCount);
+            
+            // initialize embedding matrix to -1 (no traversal)
+            for (int i = 0; i < traversalNodeCount; i++) {
+                for (int j = 0; j < geneBranchCount; j++) {
+                    embedding.setMatrixValue(i, j, -1);
+                }
+            }
 
             // assign gene tree mapping
-            initGeneTreeMapping(gtree.getRoot(), sNetwork, mapping);
+            initGeneTreeMapping(gtree.getRoot(), sNetwork, embedding);
         }
     }
 
@@ -410,22 +422,22 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
      * 1 -> right parent/branch
      * @return species node/branch containing the current gene tree node
      */
-    private NetworkNode initGeneTreeMapping(Node gtNode, SpeciesNetwork sNetwork, IntegerParameterList mapping) {
+    private NetworkNode initGeneTreeMapping(Node gtNode, SpeciesNetwork sNetwork, IntegerParameter embedding) {
         // the gene tips are mapped to species tip nodes
         if (gtNode.isLeaf()) {
             final int geneLeafNumber = gtNode.getNr();
             final int speciesLeafNumber = sNetwork.getTipNumberMap().get(gtNode.getID());
             final NetworkNode speciesNode = sNetwork.getNetwork().getNode(speciesLeafNumber);
 
-            if (speciesNode.getLeftParent() != null)
-                mapping.get(speciesLeafNumber).setValue(geneLeafNumber, 0);
+            if (speciesNode.getOrientation() == traversal.LEFT)
+                embedding.setMatrixValue(speciesLeafNumber, geneLeafNumber, 0);
             else
-                mapping.get(speciesLeafNumber).setValue(geneLeafNumber, 1);
+                embedding.setMatrixValue(speciesLeafNumber, geneLeafNumber, 1);
 
             return speciesNode;
         } else {
-            NetworkNode leftSpeciesNode = initGeneTreeMapping(gtNode.getLeft(), sNetwork, mapping);
-            NetworkNode rightSpeciesNode = initGeneTreeMapping(gtNode.getRight(), sNetwork, mapping);
+            NetworkNode leftSpeciesNode = initGeneTreeMapping(gtNode.getLeft(), sNetwork, embedding);
+            NetworkNode rightSpeciesNode = initGeneTreeMapping(gtNode.getRight(), sNetwork, embedding);
             final double height = gtNode.getHeight();
             final Node leftGeneNode = gtNode.getLeft();
             final Node rightGeneNode = gtNode.getRight();
@@ -435,20 +447,20 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                    (leftSpeciesNode.getRightParent()!= null && height > leftSpeciesNode.getRightParent().getHeight())) {
                 if (leftSpeciesNode.getLeftParent() != null && height > leftSpeciesNode.getLeftParent().getHeight()) {
                     leftSpeciesNode = leftSpeciesNode.getLeftParent();
-                    mapping.get(leftSpeciesNode.getNr()).setValue(leftGeneNode.getNr(), 0);
+                    embedding.setMatrixValue(leftSpeciesNode.getNr(), leftGeneNode.getNr(), 0);
                 } else {
                     leftSpeciesNode = leftSpeciesNode.getRightParent();
-                    mapping.get(leftSpeciesNode.getNr()).setValue(leftGeneNode.getNr(), 1);
+                    embedding.setMatrixValue(leftSpeciesNode.getNr(), leftGeneNode.getNr(), 1);
                 }
             }
             while ((rightSpeciesNode.getLeftParent() != null && height > rightSpeciesNode.getLeftParent().getHeight()) ||
                    (rightSpeciesNode.getRightParent()!= null && height > rightSpeciesNode.getRightParent().getHeight())) {
                 if (rightSpeciesNode.getLeftParent() != null && height > rightSpeciesNode.getLeftParent().getHeight()) {
                     rightSpeciesNode = rightSpeciesNode.getLeftParent();
-                    mapping.get(rightSpeciesNode.getNr()).setValue(rightGeneNode.getNr(), 0);
+                    embedding.setMatrixValue(rightSpeciesNode.getNr(), rightGeneNode.getNr(), 0);
                 } else {
                     rightSpeciesNode = rightSpeciesNode.getRightParent();
-                    mapping.get(rightSpeciesNode.getNr()).setValue(rightGeneNode.getNr(), 1);
+                    embedding.setMatrixValue(rightSpeciesNode.getNr(), rightGeneNode.getNr(), 1);
                 }
             }
 
