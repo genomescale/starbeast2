@@ -567,6 +567,7 @@ public class Network extends StateNode {
             networkNodes = tmp;
         }
         networkNodes[0] = newNode;
+        newNode.network = this;
         nodeCount = networkNodes.length;
         leafNodeCount++;
         resetNodeNumbers();
@@ -580,6 +581,7 @@ public class Network extends StateNode {
             networkNodes = tmp;
         }
         networkNodes[leafNodeCount] = newNode;
+        newNode.network = this;
         nodeCount = networkNodes.length;
         speciationNodeCount++;
         resetNodeNumbers();
@@ -593,6 +595,7 @@ public class Network extends StateNode {
             networkNodes = tmp;
         }
         networkNodes[nodeCount - 1] = newNode;
+        newNode.network = this;
         nodeCount = networkNodes.length;
         reticulationNodeCount++;
         resetNodeNumbers();

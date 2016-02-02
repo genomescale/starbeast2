@@ -7,23 +7,27 @@ import java.util.List;
 
 import org.junit.Test;
 
+import beast.core.State;
+import beast.core.parameter.IntegerParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import speciesnetwork.NetworkParser;
 import speciesnetwork.GeneTreeInSpeciesNetwork;
 import speciesnetwork.MultispeciesCoalescent;
 import speciesnetwork.PopulationSizeModel;
-import speciesnetwork.SpeciesNetwork;
+import speciesnetwork.RebuildEmbedding;
 
 abstract class PopulationTestHelper {
+    State state = null;
     String newickSpeciesNetwork;
     List<String> newickGeneTrees = new ArrayList<>();
 
+    TaxonSet speciesSuperset;
+    TreeParser speciesTree;
     NetworkParser speciesNetwork;
     List<TreeParser> geneTrees = new ArrayList<>();
-    
-    SpeciesNetwork speciesNetworkWrapper;
     List<GeneTreeInSpeciesNetwork> geneTreeWrappers = new ArrayList<>();
+    List<IntegerParameter> geneTreeEmbedding = new ArrayList<>();
 
     MultispeciesCoalescent msc;
 
@@ -39,8 +43,9 @@ abstract class PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
-        TaxonSet speciesSuperset = generateSuperset();
-        initializeSpeciesNetwork(speciesSuperset);
+        speciesSuperset = generateSuperset();
+        initializeSpeciesNetwork();
+        initializeStateNodes();
         initializeGeneTrees();
 
         final int nBranches = (nSpecies * 2) - 1;
@@ -49,27 +54,42 @@ abstract class PopulationTestHelper {
         populationModel.initPopSizes(popSize);
 
         msc = new MultispeciesCoalescent();
-        msc.initByName("speciesNetwork", speciesNetworkWrapper, "geneTrees", geneTreeWrappers, "populationModel", populationModel);
+        msc.initByName("speciesNetwork", speciesNetwork, "geneTrees", geneTreeWrappers, "populationModel", populationModel);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    public void initializeSpeciesNetwork(TaxonSet speciesSuperset) throws Exception {
+    public void initializeSpeciesNetwork() throws Exception {
+        speciesTree = new TreeParser();
+        speciesTree.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true);
         speciesNetwork = new NetworkParser();
-        speciesNetwork.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true);
-        speciesNetworkWrapper = new SpeciesNetwork();
-        speciesNetworkWrapper.initByName("network", speciesNetwork, "taxonSuperSet", speciesSuperset);
+        speciesNetwork.initByName("tree", speciesTree);
+    }
+
+    public void initializeStateNodes() throws Exception {
+        if (state == null) state = new State();
+        for (int i = 0; i < newickGeneTrees.size(); i++) {
+            IntegerParameter embedding = new IntegerParameter();
+            geneTreeEmbedding.add(embedding);
+            embedding.initByName("value", "1");
+            state.initByName("stateNode", embedding);
+        }
+        state.initialise();
     }
 
     public void initializeGeneTrees() throws Exception {
-        for (String geneTreeNewick: newickGeneTrees) {
+        for (int i = 0; i < newickGeneTrees.size(); i++) {
+            final String geneTreeNewick = newickGeneTrees.get(i);
             TreeParser geneTree = new TreeParser();
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
             geneTrees.add(geneTree);
-
+            IntegerParameter embedding = geneTreeEmbedding.get(i);
+            RebuildEmbedding rebuildOperator = new RebuildEmbedding();
+            rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork, "taxonSuperset", speciesSuperset, "embedding", embedding);
+            assertEquals(rebuildOperator.proposal(), 0.0, allowedError);
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
-            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesNetworkWrapper);
+            geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork, "embedding", embedding);
             geneTreeWrappers.add(geneTreeWrapper);
         }
     }

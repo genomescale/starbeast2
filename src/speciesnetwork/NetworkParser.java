@@ -33,7 +33,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         final Node leftChild = treeNode.getLeft();
         final Node rightChild = treeNode.getRight();
         final String nodeLabel = treeNode.getID();
-        final int hStart = nodeLabel.indexOf('#') + 1;
+        final int hStart = (nodeLabel == null) ? 0 : nodeLabel.indexOf('#') + 1;
         boolean reticulation = false;
         NetworkNode networkNode = null;
         reticulation = (hStart > 0) && (nodeLabel.length() > hStart) && (nodeLabel.charAt(hStart) == 'H');

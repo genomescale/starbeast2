@@ -1,6 +1,5 @@
 package speciesnetwork;
 
-import java.util.HashMap;
 import java.util.List;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -22,7 +21,7 @@ import beast.evolution.tree.TreeInterface;
  */
 
 public class GeneTreeInSpeciesNetwork extends CalculationNode {
-    public Input<SpeciesNetwork> speciesNetworkInput =
+    public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "Gene tree embedded in the species network.", Validate.REQUIRED);
@@ -86,18 +85,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     public void initAndValidate() throws Exception {
         ploidy = ploidyInput.get();
         geneTreeNodeCount = geneTreeInput.get().getNodeCount();
-
-        // generate map of species tree tip node names to node numbers
-        final SpeciesNetwork speciesNetwork = speciesNetworkInput.get();
-        final HashMap<String, Integer> speciesNumberMap = new HashMap<>();
-
-        for (NetworkNode leafNode: speciesNetwork.getNetwork().getLeafNodes()) {
-            final String speciesName = leafNode.getID();
-            final int speciesNumber = leafNode.getNr();
-
-            speciesNumberMap.put(speciesName, speciesNumber);
-        }
-
         needsUpdate = true;
     }
 
@@ -108,17 +95,14 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     }
 
     void update() {
-        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        final Network speciesNetwork = speciesNetworkInput.get();
         final TreeInterface geneTree = geneTreeInput.get();
         embedding = embeddingInput.get();
 
-        final int speciesNodeCount = speciesNetwork.getNodeCount();
-        final int reticulationNodeCount = speciesNetwork.getReticulationNodeCount();
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
         // each reticulation node has two branches
-        speciesBranchCount = speciesNodeCount + reticulationNodeCount;
+        speciesBranchCount = speciesNetwork.getBranchCount();
         speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
-        // traversalNodeCount excludes the leaves and the root
 
         // reset coalescent arrays as these values need to be recomputed after any changes to the species or gene tree
         coalescentLineageCounts.clear();
@@ -126,7 +110,8 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
         final Node geneTreeRoot = geneTree.getRoot();
         final NetworkNode speciesNetworkRoot = speciesNetwork.getRoot();
-        recurseCoalescenceEvents(geneTreeRoot, geneTreeRoot.getNr(), speciesNetworkRoot, speciesNetworkRoot.getFirstBranchNumber(), Double.POSITIVE_INFINITY);
+        final int speciesRootBranchNumber = speciesBranchCount - 1;
+        recurseCoalescenceEvents(geneTreeRoot, geneTreeRoot.getNr(), speciesNetworkRoot, speciesRootBranchNumber, Double.POSITIVE_INFINITY);
         needsUpdate = false;
     }
 
@@ -134,7 +119,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     private void recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final NetworkNode speciesNetworkNode, final int speciesBranchNumber, final double lastHeight) {
         final double geneNodeHeight = geneTreeNode.getHeight();
         final double speciesNodeHeight = speciesNetworkNode.getHeight();
-        
+
         // check if coalescence node occurs in a descendant species network branch
         if (geneNodeHeight < speciesNodeHeight) {
             speciesOccupancy[geneTreeNodeNumber][speciesBranchNumber] += lastHeight - speciesNodeHeight;
@@ -142,7 +127,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafNodeCount;
             final int traversalDirection = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             final NetworkNode nextSpeciesNode = (traversalDirection == 0) ? speciesNetworkNode.getLeftChild() : speciesNetworkNode.getRightChild();
-            final int nextSpeciesBranchNumber = nextSpeciesNode.getFirstBranchNumber() + traversalDirection;
+            final int nextSpeciesBranchNumber = (traversalDirection == 0) ? nextSpeciesNode.getLeftBranchNumber() : nextSpeciesNode.getRightBranchNumber();
             recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, nextSpeciesNode, nextSpeciesBranchNumber, speciesNodeHeight);
         } else if (geneTreeNode.isLeaf()) { // assumes tip node heights are always zero
             speciesOccupancy[geneTreeNodeNumber][speciesBranchNumber] += lastHeight;

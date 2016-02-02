@@ -5,7 +5,6 @@ import java.util.*;
 import beast.core.BEASTObject;
 import beast.core.Description;
 import beast.evolution.tree.Node;
-import speciesnetwork.SpeciesNetwork.traversal;
 
 /**
  * NetworkNode that is like Node but has 2 parents and 2 children.
@@ -285,6 +284,7 @@ public class NetworkNode extends BEASTObject {
         recursiveResetVisited();
         return recurseNodeCount();
     }
+
     private int recurseNodeCount() {
         if (visited) return 0;
 
@@ -554,33 +554,29 @@ public class NetworkNode extends BEASTObject {
         return subtreeString.toString();
     }
 
-    public traversal getOrientation() {
-        if (leftParent != null && rightParent != null) {
-            return traversal.BOTH;
-        } else if (leftParent != null) {
-            return traversal.LEFT;
-        } else if (rightParent != null) {
-            return traversal.RIGHT;
-        } else {
-            return traversal.NEITHER;
-        }
-    }
-
-    public int getFirstBranchNumber() {
+    public int getBranchNumber(final int traversalDirection) {
         // if this is a reticulation node
         if (leftParent != null && rightParent != null) {
             // this is the index of the first reticulation node
             final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
             final int reticulationNumber = labelNr - reticulationNodeOffset;
-            final int speciesBranchNumber = reticulationNodeOffset + (reticulationNumber * 2);
+            final int speciesBranchNumber = reticulationNodeOffset + (reticulationNumber * 2) + traversalDirection;
             return speciesBranchNumber;
         } else if (leftParent == null && rightParent == null) {
-            // this is the root node
-            return network.getNodeCount() - 1;
+            // this is a root node
+            return network.getBranchCount() - 1;
         } else {
             // leaf and non-root speciation nodes have equivalent branch and node numbers
             return labelNr;
         }
+    }
+
+    public int getRightBranchNumber() {
+        return getBranchNumber(0);
+    }
+
+    public int getLeftBranchNumber() {
+        return getBranchNumber(1);
     }
 }
 

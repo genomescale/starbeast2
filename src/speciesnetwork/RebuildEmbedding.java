@@ -30,7 +30,7 @@ import beast.core.Input.Validate;
 public class RebuildEmbedding extends Operator {
     public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
-    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput = new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
 
     final private Map<String, NetworkNode> tipMap = new HashMap<>();
@@ -106,14 +106,25 @@ public class RebuildEmbedding extends Operator {
             return Double.NEGATIVE_INFINITY;
         }
 
+        // print matrix for debugging
+        /* StringBuffer sb = new StringBuffer();
+        for (int i = -1; i < embedding.getMinorDimension2(); i++) {
+            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                if (i == -1) sb.append(j);
+                else sb.append(embedding.getMatrixValue(i, j));
+                sb.append(" ");
+            }
+            sb.append("\n");
+        }
+        System.out.println(sb); */
+
         return 0.0;
     }
 
     private void reinitializeEmbedding() throws Exception {
         final IntegerParameter embedding = embeddingInput.get();
-        // nothing traverses through species leaf node, and species root node has only one branch
-        // so traversal nodes only include non-root internal nodes
-        final int traversalNodeCount = speciesNetwork.getNodeCount() - (speciesNetwork.getLeafNodeCount() + 1);
+        // nothing traverses through species leaf nodes
+        final int traversalNodeCount = speciesNetwork.getNodeCount() - speciesNetwork.getLeafNodeCount();
         final int geneNodeCount = geneTree.getNodeCount();
 
         embedding.setDimension(traversalNodeCount * geneNodeCount);

@@ -19,7 +19,7 @@ import beast.core.State;
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends Distribution {
-    public Input<SpeciesNetwork> speciesNetworkInput =
+    public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
     public Input<List<GeneTreeInSpeciesNetwork>> geneTreeInput =
             new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
@@ -48,11 +48,8 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         final PopulationSizeModel populationModel = populationModelInput.get();
-        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
-        final int speciesNodeCount = speciesNetwork.getNodeCount();
-        final int reticulationNodeCount = speciesNetwork.getReticulationNodeCount();
-        // each reticulation node has two branches
-        final int speciesBranchCount = speciesNodeCount + reticulationNodeCount;
+        final Network speciesNetwork = speciesNetworkInput.get();
+        final int speciesBranchCount = speciesNetwork.getBranchCount();
 
         speciesNetworkNodeCount = speciesNetwork.getNodeCount();
         populationModel.initPopSizes(speciesBranchCount);
@@ -60,7 +57,7 @@ public class MultispeciesCoalescent extends Distribution {
 
     @Override
     public double calculateLogP() throws Exception {
-        final Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        final Network speciesNetwork = speciesNetworkInput.get();
         final int speciesNodeCount = speciesNetwork.getNodeCount();
         final int reticulationNodeCount = speciesNetwork.getReticulationNodeCount();
         // each reticulation node has two branches
@@ -77,9 +74,9 @@ public class MultispeciesCoalescent extends Distribution {
         for (int i = 0; i < speciesNetworkNodeCount; i++) {
             final NetworkNode speciesNetworkNode = speciesNetwork.getNode(i);
             final NetworkNode leftParent = speciesNetworkNode.getLeftParent();
-            final NetworkNode rightParent = speciesNetworkNode.getLeftParent();
+            final NetworkNode rightParent = speciesNetworkNode.getRightParent();
 
-            final int speciesBranchNumber = speciesNetworkNode.getFirstBranchNumber();
+            final int speciesBranchNumber = speciesNetworkNode.getLeftBranchNumber();
             speciesEndTimes[speciesBranchNumber] = speciesNetworkNode.getHeight();
 
             if (leftParent != null && rightParent != null) { // this is a reticulation node
@@ -107,8 +104,6 @@ public class MultispeciesCoalescent extends Distribution {
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTreeInSpeciesNetwork geneTree = geneTrees.get(j);
-            // assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-
             geneTree.computeCoalescentTimes();
             for (int i = 0; i < speciesBranchCount; i++) { // for each species network branch "i"
                 final List<Double> timesView = geneTree.coalescentTimes.get(i);

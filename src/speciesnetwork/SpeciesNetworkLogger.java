@@ -20,7 +20,7 @@ import beast.evolution.tree.Tree;
 
 @Description("Based on the TreeWithMetaDataLogger class, but with support for population sizes")
 public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
-    final public Input<SpeciesNetwork> speciesNetworkInput =
+    final public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network to be logged.", Validate.REQUIRED);
     final public Input<List<GeneTreeInSpeciesNetwork>> geneTreesInput =
             new Input<>("geneTrees", "Gene trees within the species network.", new ArrayList<>());
@@ -67,15 +67,14 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(PrintStream out) throws Exception {
-        Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        Network speciesNetwork = speciesNetworkInput.get();
         speciesNetwork.init(out);
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
         // make sure we get the current version of the inputs
-        SpeciesNetwork speciesNetwork = speciesNetworkInput.get();
-        Network network = speciesNetwork.getCurrentNetwork();
+        Network network = (Network) speciesNetworkInput.get().getCurrent();
         List<Function> metadata = parameterInput.get();
         for (int i = 0; i < metadata.size(); i++) {
             if (metadata.get(i) instanceof StateNode) {
@@ -199,7 +198,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
 
     @Override
     public void close(PrintStream out) {
-        Network speciesNetwork = speciesNetworkInput.get().getNetwork();
+        Network speciesNetwork = speciesNetworkInput.get();
         speciesNetwork.close(out);
     }
 }
