@@ -315,16 +315,17 @@ public class NetworkNode extends BEASTObject {
         return nodeCount;
     }
 
-    public int getInternalNodeCount() {
+    public int getSpeciationNodeCount() {
         recursiveResetVisited();
-        return recurseInternalNodeCount();
+        return recurseSpeciationNodeCount();
     }
-    private int recurseInternalNodeCount() {
-        if (visited || nChildren == 0) return 0;
+    private int recurseSpeciationNodeCount() {
+        if (visited) return 0;
 
-        int nodeCount = 1;
-        if (leftChild != null) nodeCount += leftChild.recurseInternalNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseInternalNodeCount();
+        // don't count reticulation nodes
+        int nodeCount = (leftChild != null && rightChild != null) ? 1 : 0;
+        if (leftChild != null) nodeCount += leftChild.recurseSpeciationNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseSpeciationNodeCount();
 
         setVisited();
         return nodeCount;
@@ -335,11 +336,12 @@ public class NetworkNode extends BEASTObject {
         return recurseReticulationNodeCount();
     }
     private int recurseReticulationNodeCount() {
-        if (visited || nParents <= 1) return 0;
+        if (visited) return 0;
 
-        int nodeCount = 1;
-        if (leftChild != null) nodeCount += leftChild.recurseInternalNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseInternalNodeCount();
+        // only count reticulation nodes
+        int nodeCount = (leftParent != null && rightParent != null) ? 1 : 0;
+        if (leftChild != null) nodeCount += leftChild.recurseReticulationNodeCount();
+        if (rightChild != null) nodeCount += rightChild.recurseReticulationNodeCount();
 
         setVisited();
         return nodeCount;
@@ -561,6 +563,23 @@ public class NetworkNode extends BEASTObject {
             return traversal.RIGHT;
         } else {
             return traversal.NEITHER;
+        }
+    }
+
+    public int getFirstBranchNumber() {
+        // if this is a reticulation node
+        if (leftParent != null && rightParent != null) {
+            // this is the index of the first reticulation node
+            final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
+            final int reticulationNumber = labelNr - reticulationNodeOffset;
+            final int speciesBranchNumber = reticulationNodeOffset + (reticulationNumber * 2);
+            return speciesBranchNumber;
+        } else if (leftParent == null && rightParent == null) {
+            // this is the root node
+            return network.getNodeCount() - 1;
+        } else {
+            // leaf and non-root speciation nodes have equivalent branch and node numbers
+            return labelNr;
         }
     }
 }

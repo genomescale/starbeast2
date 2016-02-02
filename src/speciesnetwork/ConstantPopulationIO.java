@@ -22,7 +22,7 @@ public class ConstantPopulationIO extends PopulationSizeModel {
     }
 
     @Override
-    public double branchLogP(int speciesNetworkNodeNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+    public double branchLogP(int speciesBranchNumber, double[] perGenePloidy,
                              List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter invgammaShape = invgammaShapeInput.get();
         final RealParameter invgammaScale = invgammaScaleInput.get();

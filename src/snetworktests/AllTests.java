@@ -11,8 +11,6 @@ import org.junit.runners.Suite.SuiteClasses;
     ContinuousRatesTest.class,
     DiscreteRatesTest.class,
     StarbeastClockTest.class,
-    LinearPopulationTest.class,
-    LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,
     SmallCoordinatedExchangeTest.class,
     BigCoordinatedExchangeTest.class,

@@ -173,9 +173,9 @@ public class Network extends StateNode {
         return nodeCount;
     }
 
-    public int getInternalNodeCount() {
+    public int getSpeciationNodeCount() {
         if (speciationNodeCount < 0) {
-            speciationNodeCount = root.getInternalNodeCount();
+            speciationNodeCount = root.getSpeciationNodeCount();
         }
         return speciationNodeCount;
     }
@@ -432,7 +432,7 @@ public class Network extends StateNode {
     @Override
     public int scale(final double scale) throws Exception {
         root.scale(scale);
-        return getInternalNodeCount();
+        return getSpeciationNodeCount() + getReticulationNodeCount();
     }
 
     /**

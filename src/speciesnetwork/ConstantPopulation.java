@@ -19,10 +19,10 @@ public class ConstantPopulation extends PopulationSizeModel {
     }
 
     @Override
-    public double branchLogP(int speciesNetworkPopNumber, NetworkNode speciesNetworkNode, double[] perGenePloidy,
+    public double branchLogP(int speciesBranchNumber, double[] perGenePloidy,
                              List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter popSizes = popSizesInput.get();
-        final double popSize = popSizes.getValue(speciesNetworkPopNumber);
+        final double popSize = popSizes.getValue(speciesBranchNumber);
 
         return constantLogP(popSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
     }
@@ -80,8 +80,6 @@ public class ConstantPopulation extends PopulationSizeModel {
         final RealParameter popSizes = popSizesInput.get();
         final int speciesNetworkNodeNumber = speciesNetworkNode.getNr();
         final double branchPopSize = popSizes.getValue(speciesNetworkNodeNumber);
-        final double branchPopSizeL = popSizes.getValue(2*speciesNetworkNodeNumber);
-        final double branchPopSizeR = popSizes.getValue(2*speciesNetworkNodeNumber+1);
 
         // TODO ???
         buf.append("dmv={");
