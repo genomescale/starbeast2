@@ -111,14 +111,15 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         final Node geneTreeRoot = geneTree.getRoot();
         final NetworkNode speciesNetworkRoot = speciesNetwork.getRoot();
         final int speciesRootBranchNumber = speciesBranchCount - 1;
-        recurseCoalescenceEvents(geneTreeRoot, geneTreeRoot.getNr(), speciesNetworkRoot, speciesRootBranchNumber, Double.POSITIVE_INFINITY);
+        recurseCoalescentEvents(geneTreeRoot, speciesNetworkRoot, speciesRootBranchNumber, Double.POSITIVE_INFINITY);
         needsUpdate = false;
     }
 
     // forward in time recursion, unlike StarBEAST 2
-    private void recurseCoalescenceEvents(final Node geneTreeNode, final int geneTreeNodeNumber, final NetworkNode speciesNetworkNode, final int speciesBranchNumber, final double lastHeight) {
+    private void recurseCoalescentEvents(final Node geneTreeNode, final NetworkNode speciesNetworkNode, final int speciesBranchNumber, final double lastHeight) {
         final double geneNodeHeight = geneTreeNode.getHeight();
         final double speciesNodeHeight = speciesNetworkNode.getHeight();
+        final int geneTreeNodeNumber = geneTreeNode.getNr();
 
         // check if coalescence node occurs in a descendant species network branch
         if (geneNodeHeight < speciesNodeHeight) {
@@ -128,7 +129,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             final int traversalDirection = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             final NetworkNode nextSpeciesNode = (traversalDirection == 0) ? speciesNetworkNode.getLeftChild() : speciesNetworkNode.getRightChild();
             final int nextSpeciesBranchNumber = (traversalDirection == 0) ? nextSpeciesNode.getLeftBranchNumber() : nextSpeciesNode.getRightBranchNumber();
-            recurseCoalescenceEvents(geneTreeNode, geneTreeNodeNumber, nextSpeciesNode, nextSpeciesBranchNumber, speciesNodeHeight);
+            recurseCoalescentEvents(geneTreeNode, nextSpeciesNode, nextSpeciesBranchNumber, speciesNodeHeight);
         } else if (geneTreeNode.isLeaf()) { // assumes tip node heights are always zero
             speciesOccupancy[geneTreeNodeNumber][speciesBranchNumber] += lastHeight;
             coalescentLineageCounts.add(speciesBranchNumber);
@@ -137,8 +138,8 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             coalescentTimes.put(speciesBranchNumber, geneNodeHeight);
             final Node leftChild = geneTreeNode.getLeft();
             final Node rightChild = geneTreeNode.getRight();
-            recurseCoalescenceEvents(leftChild, leftChild.getNr(), speciesNetworkNode, speciesBranchNumber, geneNodeHeight);
-            recurseCoalescenceEvents(rightChild, rightChild.getNr(), speciesNetworkNode, speciesBranchNumber, geneNodeHeight);
+            recurseCoalescentEvents(leftChild, speciesNetworkNode, speciesBranchNumber, geneNodeHeight);
+            recurseCoalescentEvents(rightChild, speciesNetworkNode, speciesBranchNumber, geneNodeHeight);
         }
     }
 
