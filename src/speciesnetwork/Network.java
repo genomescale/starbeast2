@@ -75,8 +75,7 @@ public class Network extends StateNode {
         // ensure all nodes have their taxon names set up
         String[] taxa = getTaxaNames();
         for (int i = 0; i < getNodeCount() && i < taxa.length; i++) {
-            if (taxa[i] != null)
-                networkNodes[i].setID(taxa[i]);
+            if (taxa[i] != null) networkNodes[i].setID(taxa[i]);
         }
 
         // needs more things here???
@@ -568,7 +567,6 @@ public class Network extends StateNode {
         }
         networkNodes[0] = newNode;
         newNode.network = this;
-        nodeCount = networkNodes.length;
         leafNodeCount++;
         resetNodeNumbers();
     }
@@ -582,7 +580,6 @@ public class Network extends StateNode {
         }
         networkNodes[leafNodeCount] = newNode;
         newNode.network = this;
-        nodeCount = networkNodes.length;
         speciationNodeCount++;
         resetNodeNumbers();
     }
@@ -596,12 +593,12 @@ public class Network extends StateNode {
         }
         networkNodes[nodeCount - 1] = newNode;
         newNode.network = this;
-        nodeCount = networkNodes.length;
         reticulationNodeCount++;
         resetNodeNumbers();
     }
 
     private void resetNodeNumbers() {
+        nodeCount = networkNodes.length;
         for (int i = 0; i < nodeCount; i++) {
             networkNodes[i].setNr(i);
         }

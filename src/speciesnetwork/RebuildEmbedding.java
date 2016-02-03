@@ -143,6 +143,7 @@ public class RebuildEmbedding extends Operator {
     private void setLeafNodeHeirs(final Node geneTreeNode) {
         final String tipName = geneTreeNode.getID();
         final NetworkNode speciesNetworkNode = tipMap.get(tipName);
+        // System.out.println(String.format("%s - %d", speciesNetworkNode.getID(), geneTreeNode.getNr()));
         geneNodeHeirs.put(geneTreeNode, geneTreeNode.getNr());
         speciesNodeHeirs.put(speciesNetworkNode, geneTreeNode.getNr());
     }
@@ -175,6 +176,7 @@ public class RebuildEmbedding extends Operator {
     }
 
     private boolean recurseRebuild(final Node geneTreeNode, final NetworkNode speciesNetworkNode) {
+        // System.out.println(String.format("%s/%d:%d", speciesNetworkNode.getID(), speciesNetworkNode.getNr(), geneTreeNode.getNr()));
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final double speciesNetworkNodeHeight = speciesNetworkNode.getHeight();
         // this coalescence node must be embedded in a descendant species network branch
@@ -186,7 +188,24 @@ public class RebuildEmbedding extends Operator {
 
             final NetworkNode leftSpecies = speciesNetworkNode.getLeftChild();
             final NetworkNode rightSpecies = speciesNetworkNode.getRightChild();
-            
+
+            /* StringBuffer sb = new StringBuffer();
+            for (Integer i: requiredHeirs) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            sb.append("- ");
+            for (Integer i: speciesNodeHeirs.get(leftSpecies)) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            sb.append("- ");
+            for (Integer i: speciesNodeHeirs.get(rightSpecies)) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            System.out.println(sb.toString()); */
+
             if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
                 if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
                     // both species children are compatible with the gene tree, in which case the embedding becomes stochastic

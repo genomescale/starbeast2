@@ -87,7 +87,8 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
         out.print("tree STATE_" + nSample + " = ");
         // ??? network.getRoot().sort();
         // out.print(toNewick(network.getRoot(), metadata, branchRateModel, populationModel));
-        //out.print(tree.getRoot().toShortNewick(false));
+        // out.print(tree.getRoot().toShortNewick(false));
+        out.print(network.toString());
         out.print(";");
     }
 

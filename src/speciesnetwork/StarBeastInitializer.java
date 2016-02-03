@@ -56,8 +56,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     final public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "Species network to initialize.");
 
-    final public Input<List<GeneTreeInSpeciesNetwork>> geneTreesInput =
-            new Input<>("geneTrees", "Gene trees to initialize.", new ArrayList<>());
+    final public Input<List<Tree>> geneTreesInput =
+            new Input<>("geneTree", "Gene tree to initialize.", new ArrayList<>());
 
     final public Input<YuleHybridModel> hybridYuleInput = new Input<>("hybridYule",
             "The species network (with hybridization) to initialize.", Validate.XOR, speciesNetworkInput);
@@ -71,7 +71,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<PopulationSizeModel> populationFunctionInput = new Input<>("populationModel",
             "The species network population size model.", Validate.REQUIRED);
 
-    final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding", "Operator which rebuilds embedding of gene trees within species tree.");
+    final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding", "Operator which rebuilds embedding of gene trees within species tree.", new ArrayList<>());
     // private boolean hasCalibrations;  // don't deal with calibrations at the moment
 
     @Override
@@ -111,7 +111,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         
         // initialize embedding for all gene trees
         for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
-            operator.proposal();
+            if (operator.proposal() != 0.0) {
+                throw new Exception("Fuck.");
+            }
         }
     }
 
@@ -211,19 +213,19 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final List<String> speciesNames = species.asStringList();
         final int nSpecies = speciesNames.size();
 
-        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreesInput.get();
+        final List<Tree> geneTrees = geneTreesInput.get();
 
         //final List<Alignment> alignments = genes.get();
         //final List<Tree> geneTrees = new ArrayList<>(alignments.size());
         double maxNsites = 0;
         //for( final Alignment alignment : alignments)  {
-        for (final GeneTreeInSpeciesNetwork gtree : geneTrees) {
+        for (final Tree gtree : geneTrees) {
             //final Tree gtree = new Tree();
-            final Alignment alignment = gtree.getTree().m_taxonset.get().alignmentInput.get();
+            final Alignment alignment = gtree.m_taxonset.get().alignmentInput.get();
 
             final ClusterTree ctree = new ClusterTree();
             ctree.initByName("initial", gtree, "clusterType", "upgma", "taxa", alignment);
-            gtree.getTree().scale(1 / mu);
+            gtree.scale(1 / mu);
 
             maxNsites = max(maxNsites, alignment.getSiteCount());
         }
@@ -242,8 +244,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final double[][] genesDmins = new double[geneTrees.size()][];
 
         for(int ng = 0; ng < geneTrees.size(); ++ng) {
-            final GeneTreeInSpeciesNetwork gtree = geneTrees.get(ng);
-            final double[] dmin = firstMeetings(gtree.getTree(), geneTips2Species, nSpecies);
+            final Tree gtree = geneTrees.get(ng);
+            final double[] dmin = firstMeetings(gtree, geneTips2Species, nSpecies);
             genesDmins[ng] = dmin;
 
             for(int i = 0; i < dmin.length; ++i) {
@@ -309,8 +311,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 }
             }
             if(!compatible) {
-                final GeneTreeInSpeciesNetwork gtree = geneTrees.get(ng);
-                final TaxonSet gtreeTaxa = gtree.getTree().m_taxonset.get();
+                final Tree gtree = geneTrees.get(ng);
+                final TaxonSet gtreeTaxa = gtree.m_taxonset.get();
                 final Alignment alignment = gtreeTaxa.alignmentInput.get();
                 final List<String> taxaNames = alignment.getTaxaNames();
                 final int nTaxa =  taxaNames.size();
@@ -372,10 +374,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final double rootHeight = (1/lambda) * s;
         sNetwork.scale(rootHeight/sNetwork.getRoot().getHeight());
 
-        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreesInput.get();
-        for (final GeneTreeInSpeciesNetwork gtisn : geneTrees) {
-            Tree gtree = gtisn.getTree();
-            gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
+        final List<Tree> geneTrees = geneTreesInput.get();
+        for (final Tree gtree : geneTrees) {
+            gtree.makeCaterpillar(10 * rootHeight, 10 * rootHeight/gtree.getInternalNodeCount(), true);
         }
     }
 
@@ -386,8 +387,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         // if( hasCalibrations ) { stateNodes.add((Tree) calibratedYule.get().treeInput.get()); } else {
         stateNodes.add(speciesNetworkInput.get());
 
-        for(final GeneTreeInSpeciesNetwork gtree : geneTreesInput.get()) {
-            stateNodes.add(gtree.getTree());
+        for(final Tree gtree : geneTreesInput.get()) {
+            stateNodes.add(gtree);
         }
 
         final RealParameter brate = birthRateInput.get();

@@ -475,8 +475,8 @@ public class NetworkNode extends BEASTObject {
                 getLeftChild().recursiveScale(scale);
             if (getRightChild() != null)
                 getRightChild().recursiveScale(scale);
-            if (height < getLeftChild().height || height < getRightChild().height)
-                throw new IllegalArgumentException("Scale gives negative branch length");
+            //if (height < getLeftChild().height || height < getRightChild().height)
+            //    throw new IllegalArgumentException("Scale gives negative branch length");
         }
     }
 
@@ -523,6 +523,7 @@ public class NetworkNode extends BEASTObject {
 
     @Override
     public String toString() {
+        // System.out.println(getID());
         return buildNewick(Double.POSITIVE_INFINITY, true);
     }
 
