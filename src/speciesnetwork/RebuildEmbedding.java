@@ -1,5 +1,7 @@
 package speciesnetwork;
 
+import beast.core.Input;
+import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
 import beast.evolution.alignment.Taxon;
@@ -18,9 +20,6 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import beast.core.Input;
-import beast.core.Input.Validate;
-
 /**
  * 
  * @author Huw Ogilvie
@@ -30,8 +29,10 @@ import beast.core.Input.Validate;
 public class RebuildEmbedding extends Operator {
     public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
-    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
-    public Input<IntegerParameter> embeddingInput = new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput =
+            new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<IntegerParameter> embeddingInput =
+            new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
 
     final private Map<String, NetworkNode> tipMap = new HashMap<>();
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
@@ -45,9 +46,9 @@ public class RebuildEmbedding extends Operator {
 
     @Override
     public void initAndValidate() throws Exception {
-        // generate map of species network tip node names to node numbers
+        // generate map of species network tip names to species network tip nodes
         final Network speciesNetwork = speciesNetworkInput.get();
-        final HashMap<String, NetworkNode> speciesNodeMap = new HashMap<>();
+        final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
 
         final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
         speciesLeafCount = speciesLeafNodes.size();
@@ -56,7 +57,7 @@ public class RebuildEmbedding extends Operator {
             speciesNodeMap.put(speciesName, leafNode);
         }
 
-        // generate map of gene tree tip node names to species tree tip node numbers
+        // generate map of gene tree tip names to species network tip nodes
         final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
         final Set<Taxon> speciesSet = new HashSet<>(taxonSuperSet.taxonsetInput.get());
 
@@ -215,7 +216,7 @@ public class RebuildEmbedding extends Operator {
         } else {
             // embed both gene tree children
             return recurseRebuild(geneTreeNode.getLeft(), speciesNetworkNode) &&
-                    recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
+                   recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
         }
     }
 }

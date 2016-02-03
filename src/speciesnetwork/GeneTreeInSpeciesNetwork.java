@@ -134,7 +134,8 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     }
 
     // forward in time recursion, unlike StarBEAST 2
-    private void recurseCoalescentEvents(final Node geneTreeNode, final NetworkNode speciesNetworkNode, final int speciesBranchNumber, final double lastHeight) throws Exception {
+    private void recurseCoalescentEvents(final Node geneTreeNode, final NetworkNode speciesNetworkNode,
+                                         final int speciesBranchNumber, final double lastHeight) throws Exception {
         final double geneNodeHeight = geneTreeNode.getHeight();
         final double speciesNodeHeight = speciesNetworkNode.getHeight();
         final int geneTreeNodeNumber = geneTreeNode.getNr();
