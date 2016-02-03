@@ -102,9 +102,11 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         // transpose gene-branch list of lists to branch-gene list of lists
+        logP = 0.0;
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTreeInSpeciesNetwork geneTree = geneTrees.get(j);
             geneTree.computeCoalescentTimes();
+            logP += geneTree.logGammaSum;
             for (int i = 0; i < speciesBranchCount; i++) { // for each species network branch "i"
                 final List<Double> timesView = geneTree.coalescentTimes.get(i);
                 final int geneBranchEventCount = timesView.size();
@@ -127,7 +129,6 @@ public class MultispeciesCoalescent extends Distribution {
             }
         }
 
-        logP = 0.0;
         for (int i = 0; i < speciesBranchCount; i++) {
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
