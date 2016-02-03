@@ -48,11 +48,6 @@ public class NetworkNode extends BEASTObject {
     // a set of labels
     Set<String> labels = new TreeSet<>();
 
-    /*
-     * Map each gene tree node (the lineage) to a boolean (true -> left parent and false -> right parent)
-     */
-    private Map<Node, Boolean> embeddedLineagePaths;
-
     private NetworkNode clone;
 
     // whether the node has been visited, say by a recursive method
@@ -124,7 +119,7 @@ public class NetworkNode extends BEASTObject {
     public void setNr(final int nr) {
         labelNr = nr;
     }
-
+    
     public int getReticulationNumber() throws Exception {
         if (leftParent == null || rightParent == null) throw new Exception("Not a reticulation node.");
         final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
@@ -186,16 +181,6 @@ public class NetworkNode extends BEASTObject {
         rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
-    }
-
-    protected int getOffset(Node embeddedLineage) {
-        if (nParents == 2) {
-            return (embeddedLineagePaths.get(embeddedLineage)) ? 0 : 1;
-        } else if (leftParent != null) {
-            return 0;
-        } else {
-            return 1;
-        }
     }
 
     /* children */
@@ -281,7 +266,6 @@ public class NetworkNode extends BEASTObject {
         recursiveResetVisited();
         return recurseNodeCount();
     }
-
     private int recurseNodeCount() {
         if (visited) return 0;
 
@@ -546,20 +530,28 @@ public class NetworkNode extends BEASTObject {
         subtreeString.append(getID());
         if (parentHeight < Double.POSITIVE_INFINITY) {
             String branchLengthSuffix = String.format(":%.8g", parentHeight - height);
-            while (branchLengthSuffix.charAt(branchLengthSuffix.length() - 1) == '0') branchLengthSuffix = branchLengthSuffix.substring(0, branchLengthSuffix.length() - 1);
+            while (branchLengthSuffix.charAt(branchLengthSuffix.length() - 1) == '0')
+                branchLengthSuffix = branchLengthSuffix.substring(0, branchLengthSuffix.length() - 1);
             subtreeString.append(branchLengthSuffix);
         }
         return subtreeString.toString();
     }
 
+    /**
+     * number the network leafs as 0, 1, ..., leafNodeCount-1
+     * number the speciation nodes (except root) as leafNodeCount, ..., leafNodeCount+speciationNodeCount-1
+     * number the reticulation nodes as leafNodeCount+speciationNodeCount, ..., nodeCount-2
+     * number the root as nodeCount-1
+     * @param traversalDirection 0 -> left, 1 -> right
+     * @return branch number
+     */
     public int getBranchNumber(final int traversalDirection) {
         // if this is a reticulation node
         if (leftParent != null && rightParent != null) {
             // this is the index of the first reticulation node
             final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
-            final int reticulationNumber = labelNr - reticulationNodeOffset;
-            final int speciesBranchNumber = reticulationNodeOffset + (reticulationNumber * 2) + traversalDirection;
-            return speciesBranchNumber;
+            final int reticulationNumber = labelNr - reticulationNodeOffset;  // 0, 1, 2, ...
+            return reticulationNodeOffset + (reticulationNumber * 2) + traversalDirection;
         } else if (leftParent == null && rightParent == null) {
             // this is a root node
             return network.getBranchCount() - 1;
@@ -569,11 +561,11 @@ public class NetworkNode extends BEASTObject {
         }
     }
 
-    public int getRightBranchNumber() {
+    public int getLeftBranchNumber() {
         return getBranchNumber(0);
     }
 
-    public int getLeftBranchNumber() {
+    public int getRightBranchNumber() {
         return getBranchNumber(1);
     }
 }
