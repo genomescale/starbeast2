@@ -29,7 +29,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "Map of gene tree traversal within the species network.", Validate.REQUIRED);
     public Input<RealParameter> gammaInput =
-            new Input<>("gamma", "Vector of probabilities of traversing left (forward in time) through reticulation nodes.", Validate.REQUIRED);
+            new Input<>("gamma", "Vector of probabilities of traversing left (backward in time) through reticulation nodes.", Validate.REQUIRED);
     public Input<Double> ploidyInput =
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     protected double ploidy;
