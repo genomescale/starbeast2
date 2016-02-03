@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import speciesnetwork.NetworkParser;
@@ -28,6 +29,7 @@ abstract class PopulationTestHelper {
     List<TreeParser> geneTrees = new ArrayList<>();
     List<GeneTreeInSpeciesNetwork> geneTreeWrappers = new ArrayList<>();
     List<IntegerParameter> geneTreeEmbedding = new ArrayList<>();
+    RealParameter gammaParameter;
 
     MultispeciesCoalescent msc;
 
@@ -89,7 +91,7 @@ abstract class PopulationTestHelper {
             rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork, "taxonSuperset", speciesSuperset, "embedding", embedding);
             assertEquals(rebuildOperator.proposal(), 0.0, allowedError);
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
-            geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork, "embedding", embedding);
+            geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork, "embedding", embedding, "gamma", gammaParameter);
             geneTreeWrappers.add(geneTreeWrapper);
         }
     }

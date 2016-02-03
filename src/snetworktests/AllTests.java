@@ -10,7 +10,6 @@ import org.junit.runners.Suite.SuiteClasses;
     ConstantPopulationTest.class,
     ContinuousRatesTest.class,
     DiscreteRatesTest.class,
-    IncompatibleTreeTest.class,
     SmallCoordinatedExchangeTest.class,
     BigCoordinatedExchangeTest.class,
     MissingDataCoordinatedExchange.class,

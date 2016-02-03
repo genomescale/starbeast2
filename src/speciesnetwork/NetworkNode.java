@@ -119,6 +119,13 @@ public class NetworkNode extends BEASTObject {
     public void setNr(final int nr) {
         labelNr = nr;
     }
+    
+    public int getReticulationNumber() throws Exception {
+        if (leftParent == null || rightParent == null) throw new Exception("Not a reticulation node.");
+        final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
+        final int reticulationNumber = labelNr - reticulationNodeOffset;
+        return reticulationNumber;
+    }
 
     public double getHeight() {
         return height;

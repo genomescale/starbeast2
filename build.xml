@@ -1,15 +1,15 @@
-<!-- Build starbeast2. It is also used by Hudson starbeast2 project. JUnit test is available for this build. -->
-<project basedir="." default="build_jar_all_starbeast2" name="BUILD_starbeast2">
+<!-- Build speciesnetwork. It is also used by Hudson speciesnetwork project. JUnit test is available for this build. -->
+<project basedir="." default="build_jar_all_speciesnetwork" name="BUILD_speciesnetwork">
 	<description>
-	    Build starbeast2.
+	    Build speciesnetwork.
 	</description>
 
 	<!-- set global properties for this build -->
-	<property name="srcstarbeast2" location="src" />
-	<property name="buildstarbeast2" location="build" />
-	<property name="libstarbeast2" location="lib" />
+	<property name="srcspeciesnetwork" location="src" />
+	<property name="buildspeciesnetwork" location="build" />
+	<property name="libspeciesnetwork" location="lib" />
 	<property name="release_dir" value="release" />
-	<property name="diststarbeast2" location="${buildstarbeast2}/dist" />
+	<property name="distspeciesnetwork" location="${buildspeciesnetwork}/dist" />
 	<property name="beast2path" location="../beast2" />
 	<property name="libBeast2" location="${beast2path}/lib" />
 	<property name="srcBeast2" location="${beast2path}/src" />
@@ -19,50 +19,50 @@
     <import file="${beast2path}/build.xml" />
 
 	<property name="main_class_BEAST" value="beast.app.BeastMCMC" />
-	<property name="report" value="${buildstarbeast2}/junitreport"/>
+	<property name="report" value="${buildspeciesnetwork}/junitreport"/>
 
 	<path id="classpath">
-        <pathelement path="${buildstarbeast2}"/>
+        <pathelement path="${buildspeciesnetwork}"/>
 		<fileset dir="${libBeast2}" includes="*.jar"/>
-		<fileset dir="${libstarbeast2}" includes="*.jar"/>
+		<fileset dir="${libspeciesnetwork}" includes="*.jar"/>
         <pathelement path="${beast2classpath}"/>
 	</path>
 
 	<!-- start -->
-	<target name="initstarbeast2">
+	<target name="initspeciesnetwork">
 		<echo message="${ant.project.name}: ${ant.file}" />
 	</target>
 
-	<target name="cleanstarbeast2">
-    	<delete dir="${buildstarbeast2}" />
+	<target name="cleanspeciesnetwork">
+    	<delete dir="${buildspeciesnetwork}" />
 	</target>
 
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
-	<target name="build_all_starbeast2" depends="cleanstarbeast2,compile-allstarbeast2,junitstarbeast2"
+	<target name="build_all_speciesnetwork" depends="cleanspeciesnetwork,compile-allspeciesnetwork,junitspeciesnetwork"
         description="Clean and Build all run-time stuff">
 	</target>
 
 	<!-- clean previous build, compile Java source code, and Junit test, and make the beast.jar and beauti.jar -->
-	<target name="build_jar_all_starbeast2" depends="cleanstarbeast2,compile-allstarbeast2,junitstarbeast2,dist_all_starbeast2"
+	<target name="build_jar_all_speciesnetwork" depends="cleanspeciesnetwork,compile-allspeciesnetwork,junitspeciesnetwork,dist_all_speciesnetwork"
         description="Clean and Build all run-time stuff">
 	</target>
 
-	<!-- No JUnit Test, clean previous build, compile Java source code, and make the starbeast2.jar and beauti.jar -->
-	<target name="build_jar_all_starbeast2_NoJUnitTest" depends="cleanstarbeast2,compile-allstarbeast2,dist_all_starbeast2"
+	<!-- No JUnit Test, clean previous build, compile Java source code, and make the speciesnetwork.jar and beauti.jar -->
+	<target name="build_jar_all_speciesnetwork_NoJUnitTest" depends="cleanspeciesnetwork,compile-allspeciesnetwork,dist_all_speciesnetwork"
         description="Clean and Build all run-time stuff">
 	</target>
 
 	<!-- compile Java source code -->
-	<target name="compile-allstarbeast2" depends="initstarbeast2">
+	<target name="compile-allspeciesnetwork" depends="initspeciesnetwork">
 	    <!-- Capture the path as a delimited property using the refid attribute -->
 	    <property name="myclasspath" refid="classpath"/>
 	    <!-- Emit the property to the ant console -->
 	    <echo message="Classpath = ${myclasspath}"/>
 
-		<mkdir dir="${buildstarbeast2}" />
+		<mkdir dir="${buildspeciesnetwork}" />
 
-		<!-- Compile the java code from ${srcstarbeast2} into ${buildstarbeast2} /bin -->
-		<javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath"
+		<!-- Compile the java code from ${srcspeciesnetwork} into ${buildspeciesnetwork} /bin -->
+		<javac srcdir="${srcspeciesnetwork}" destdir="${buildspeciesnetwork}" classpathref="classpath"
                        debug="true"
 		       fork="true"
 		       memoryinitialsize="256m"
@@ -73,49 +73,49 @@
 		<echo message="Successfully compiled." />
 	</target>
 
-	<!-- make starbeast2.jar and starbeast2.src.jar -->
-	<target name="dist_all_starbeast2" depends="compile-allstarbeast2" description="create starbeast2 jar">
+	<!-- make speciesnetwork.jar and speciesnetwork.src.jar -->
+	<target name="dist_all_speciesnetwork" depends="compile-allspeciesnetwork" description="create speciesnetwork jar">
 		<!-- Create the distribution directory -->
-		<mkdir dir="${diststarbeast2}" />
+		<mkdir dir="${distspeciesnetwork}" />
 
-		<!-- Put everything in ${buildstarbeast2} into the beast.jar file -->
-		<jar jarfile="${diststarbeast2}/starbeast2.jar">
+		<!-- Put everything in ${buildspeciesnetwork} into the beast.jar file -->
+		<jar jarfile="${distspeciesnetwork}/speciesnetwork.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 				<attribute name="Main-Class" value="${main_class_BEAST}" />
 			</manifest>
-			<fileset dir="${buildstarbeast2}">
+			<fileset dir="${buildspeciesnetwork}">
 				<include name="**/*.class" />
 				<include name="**/*.java" />
 			</fileset>
 		</jar>
-		<jar jarfile="${diststarbeast2}/starbeast2.src.jar">
-			<fileset dir="${srcstarbeast2}">
+		<jar jarfile="${distspeciesnetwork}/speciesnetwork.src.jar">
+			<fileset dir="${srcspeciesnetwork}">
 				<include name="**/*.java" />
 			</fileset>
         </jar>
-		<jar jarfile="${diststarbeast2}/starbeast2.addon.jar">
+		<jar jarfile="${distspeciesnetwork}/speciesnetwork.addon.jar">
 			<manifest>
 				<attribute name="Built-By" value="${user.name}" />
 			</manifest>
-			<fileset dir="${buildstarbeast2}">
+			<fileset dir="${buildspeciesnetwork}">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
 	</target>
 
 	<!-- JUnit test -->
-	<target name="junitstarbeast2">
+	<target name="junitspeciesnetwork">
 		<mkdir dir="${report}" />
 		<junit printsummary="yes"> <!--showoutput='yes'-->
 			<classpath>
 				<path refid="classpath" />
-				<path location="${buildstarbeast2}" />
+				<path location="${buildspeciesnetwork}" />
 			</classpath>
 
 			<formatter type="xml" />
 
-			<test fork="yes" todir="${report}" name="sb2tests.AllTests" />
+			<test fork="yes" todir="${report}" name="snetworktests.AllTests" />
 		</junit>
 		<echo message="JUnit test finished." />
 	</target>
@@ -130,8 +130,8 @@
 
 
 	<target name="addon"
-	        depends="build_jar_all_starbeast2_NoJUnitTest"
-	        description="release starbeast2 add-on">
+	        depends="build_jar_all_speciesnetwork_NoJUnitTest"
+	        description="release speciesnetwork add-on">
 
 		<delete dir="${Add_on_dir}" />
 		<!-- Create the release directory -->
@@ -147,17 +147,17 @@
 			<fileset dir="examples" />
 		</copy>
 		<copy todir="${Add_on_dir}/lib">
-			<fileset dir="${diststarbeast2}" includes="starbeast2.addon.jar" />
-			<fileset dir="${libstarbeast2}" includes="guava-19.0.jar" />
+			<fileset dir="${distspeciesnetwork}" includes="speciesnetwork.addon.jar" />
+			<fileset dir="${libspeciesnetwork}" includes="guava-19.0.jar" />
 		</copy>
 		<copy todir="${Add_on_dir}">
-			<fileset dir="${diststarbeast2}" includes="starbeast2.src.jar" />
+			<fileset dir="${distspeciesnetwork}" includes="speciesnetwork.src.jar" />
 		</copy>
 		<!--<copy todir="${Add_on_dir}/templates">
 			<fileset file="templates/FBD.xml" />
 		</copy>-->
 
-		<jar jarfile="${diststarbeast2}/starbeast2.addon.zip">
+		<jar jarfile="${distspeciesnetwork}/speciesnetwork.addon.zip">
 			<fileset dir="${Add_on_dir}">
 				<include name="**/*" />
 			</fileset>
