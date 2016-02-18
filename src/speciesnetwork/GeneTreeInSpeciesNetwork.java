@@ -140,18 +140,20 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         final double speciesNodeHeight = speciesNetworkNode.getHeight();
         final int geneTreeNodeNumber = geneTreeNode.getNr();
 
-        // check if coalescence node occurs in a descendant species network branch
+        // check if coalescent node occurs in a descendant species network branch
         if (geneNodeHeight < speciesNodeHeight) {
             speciesOccupancy[geneTreeNodeNumber][speciesBranchNumber] += lastHeight - speciesNodeHeight;
             coalescentLineageCounts.add(speciesBranchNumber);
             final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafNodeCount;
-            final int traversalDirection = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             if (speciesNetworkNode.isReticulation()) {
                 final int reticulationNumber = speciesNetworkNode.getReticulationNumber();
                 final double leftP = gamma.getValue(reticulationNumber);
-                final double traversalP = (traversalDirection == 0) ? leftP : 1 - leftP;
+                // determine traversal direction backward in time
+                final double traversalP = speciesNetworkNode.getLeftBranchNumber() == speciesBranchNumber ? leftP : 1 - leftP;
                 logGammaSum += Math.log(traversalP);
             }
+            // traversal direction forward in time
+            final int traversalDirection = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             final NetworkNode nextSpeciesNode = (traversalDirection == 0) ? speciesNetworkNode.getLeftChild() : speciesNetworkNode.getRightChild();
             final int nextSpeciesBranchNumber = (traversalDirection == 0) ? nextSpeciesNode.getLeftBranchNumber() : nextSpeciesNode.getRightBranchNumber();
             recurseCoalescentEvents(geneTreeNode, nextSpeciesNode, nextSpeciesBranchNumber, speciesNodeHeight);

@@ -47,10 +47,10 @@
       <stateNode id="embedding:gene1" spec="parameter.IntegerParameter">-1</stateNode>
     </state>
 
-  <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species" rebuildEmbedding="@rebuildEmbedding">
-    <geneTree idref="tree:gene1" />
-    <populationModel alpha="2.0" beta="1.0" id="popModel" spec="speciesnetwork.ConstantPopulationIO" />
-  </init>
+    <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species" rebuildEmbedding="@rebuildEmbedding">
+      <geneTree idref="tree:gene1" />
+      <populationModel alpha="2.0" beta="1.0" id="popModel" spec="speciesnetwork.ConstantPopulationIO" />
+    </init>
 
     <distribution id="posterior" spec="util.CompoundDistribution">
       <distribution id="speciescoalescent" populationModel="@popModel" spec="speciesnetwork.MultispeciesCoalescent" speciesNetwork="@network:species">
