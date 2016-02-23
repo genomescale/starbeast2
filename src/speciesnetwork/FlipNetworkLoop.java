@@ -1,11 +1,26 @@
 package speciesnetwork;
 
+import beast.core.Operator;
 import beast.util.TreeParser;
 
 /**
  * @author Alexei Drummond
+ * @author Chi Zhang
  */
-public class FindLoop {
+public class FlipNetworkLoop extends Operator {
+
+    @Override
+    public void initAndValidate() {
+    }
+
+    /**
+     *
+     */
+    @Override
+    public double proposal() {
+
+        return 0.0;
+    }
 
     /**
      * @param network
@@ -58,6 +73,7 @@ public class FindLoop {
         if (node.getRightParent() != null) label(node.getRightParent(), label, checkLabel, returnNode);
     }
 
+    /*
     public static void main(String[] args) throws Exception {
 
         final String testNetwork = "((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)#S2:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)#S1:0.1)#H4:0.1,#H3:0.3)#S3:0.1)#R";
@@ -76,6 +92,5 @@ public class FindLoop {
         System.out.println("Hybrid Node =" + hybridNode.getID());
         System.out.println("Top Node =" + topNode.getID());
 
-    }
-
+    } */
 }
