@@ -25,7 +25,7 @@ public class SpeciesTree extends TreeWrapper {
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         // generate map of species tree tip node names to node numbers
         final TreeInterface speciesTree = treeInput.get();
         final HashMap<String, Integer> speciesNumberMap = new HashMap<>();

@@ -18,7 +18,7 @@ public class ConstantPopulationIO extends PopulationSizeModel {
             new Input<>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
     }
 
     /* private void debug(int speciesBranchNumber, double[] perGenePloidy,

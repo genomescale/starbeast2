@@ -13,7 +13,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
     public final Input<TreeInterface> treeInput = new Input<>("tree", "Tree initialized from extended newick string", Validate.REQUIRED);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         Node treeRoot = treeInput.get().getRoot();
         NetworkNode newRoot = new NetworkNode(treeRoot);
         setRoot(newRoot);
@@ -28,7 +28,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         root.updateSizes();
     }
 
-    private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) throws Exception {
+    private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) {
         // System.out.println(String.format("Current branch: %s - %s a.k.a. %d - %d", parentNode.getID(), treeNode.getID(), parentNode.getNr(), treeNode.getNr()));
         final Node leftChild = treeNode.getLeft();
         final Node rightChild = treeNode.getRight();

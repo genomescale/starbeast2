@@ -93,7 +93,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         super.restore();
     }
 
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         ploidy = ploidyInput.get();
         geneTreeNodeCount = geneTreeInput.get().getNodeCount();
         needsUpdate = true;

@@ -45,7 +45,7 @@ public class RebuildEmbedding extends Operator {
     private IntegerParameter embedding;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         // generate map of species network tip names to species network tip nodes
         final Network speciesNetwork = speciesNetworkInput.get();
         final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();

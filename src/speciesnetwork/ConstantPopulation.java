@@ -15,7 +15,7 @@ public class ConstantPopulation extends PopulationSizeModel {
     public Input<RealParameter> popSizesInput = new Input<>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
     }
 
     @Override
@@ -45,8 +45,8 @@ public class ConstantPopulation extends PopulationSizeModel {
 
             double partialGamma = 0.0;
             for (int i = 0; i < geneK; i++) {
-                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i]) * (geneN - i)
-                                * (geneN - i - 1.0) / 2.0;
+                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i])
+                                * (geneN - i) * (geneN - i - 1.0) / 2.0;
             }
 
             if (geneN - geneK > 1) {

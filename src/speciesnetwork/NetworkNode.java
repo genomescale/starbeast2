@@ -84,14 +84,14 @@ public class NetworkNode extends BEASTObject {
     public NetworkNode() {
     }
 
-    public NetworkNode(final String id) throws Exception {
+    public NetworkNode(final String id) {
         setID(id);
         initAndValidate();
     }
 
     // instantiate a new network node with the same height, labels and metadata as a tree node
     // this does not copy the parents or children
-    public NetworkNode(Node treeNode) throws Exception {
+    public NetworkNode(Node treeNode) {
         setID(treeNode.getID());
         height = treeNode.getHeight();
         metaDataString = treeNode.metaDataString;
@@ -104,7 +104,7 @@ public class NetworkNode extends BEASTObject {
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         // do nothing
     }
 
@@ -445,7 +445,7 @@ public class NetworkNode extends BEASTObject {
      * scale height of this node and all its descendants
      * @param scale scale factor
      */
-    public void scale (final double scale) throws Exception {
+    public void scale (final double scale) {
         recursiveResetVisited();
         recursiveScale(scale);
     }

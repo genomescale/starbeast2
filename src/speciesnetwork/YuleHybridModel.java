@@ -31,7 +31,7 @@ public class YuleHybridModel extends Distribution {
     //      new Input<>("conditionalOnRoot", "condition on the root (otherwise: on the time of origin)", true);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         super.initAndValidate();
 
         // make sure that all tips are at the same height,
@@ -48,7 +48,7 @@ public class YuleHybridModel extends Distribution {
     }
 
     @Override
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         final Network network = networkInput.get();
         final double lambda = diversificationInput.get().getValue();
         final double nu = hybridizationInput.get().getValue();

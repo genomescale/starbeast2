@@ -54,7 +54,7 @@ public class Network extends StateNode {
     String[] taxaNames = null;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         if (nodeCount < 0) {
             if (taxonSetInput.get() != null) {
                 makeCaterpillar(0, 1, false);
@@ -429,7 +429,7 @@ public class Network extends StateNode {
     }
 
     @Override
-    public int scale(final double scale) throws Exception {
+    public int scale(final double scale) {
         root.scale(scale);
         return getSpeciationNodeCount() + getReticulationNodeCount();
     }

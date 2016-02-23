@@ -31,7 +31,6 @@ public class ConstantPopulationTest extends PopulationTestHelper {
     public void testLogP() throws Exception {
         super.testLogP();
     }
-    
 
     @Override
     public TaxonSet generateSuperset() throws Exception {

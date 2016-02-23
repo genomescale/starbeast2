@@ -37,7 +37,7 @@ public class MultispeciesCoalescent extends Distribution {
     final static SanityChecks sc = new SanityChecks();
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeInput.get();
         nGeneTrees = geneTrees.size();
 
@@ -56,7 +56,7 @@ public class MultispeciesCoalescent extends Distribution {
     }
 
     @Override
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         final Network speciesNetwork = speciesNetworkInput.get();
         final int speciesNodeCount = speciesNetwork.getNodeCount();
         final int reticulationNodeCount = speciesNetwork.getReticulationNodeCount();

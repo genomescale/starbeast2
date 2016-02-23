@@ -71,18 +71,19 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<PopulationSizeModel> populationFunctionInput = new Input<>("populationModel",
             "The species network population size model.", Validate.REQUIRED);
 
-    final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding", "Operator which rebuilds embedding of gene trees within species tree.", new ArrayList<>());
+    final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding",
+            "Operator which rebuilds embedding of gene trees within species tree.", new ArrayList<>());
     // private boolean hasCalibrations;  // don't deal with calibrations at the moment
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         // what does this do and is it dangerous to call it or not to call it at the start or at the end??????
         super.initAndValidate();
         // do we need to initialize both species network and gene trees in this method???
     }
 
     @Override
-    public void initStateNodes() throws Exception {
+    public void initStateNodes() {
         // initialize population sizes to equal average branch length (equivalent to 2Ne = E[1/lambda])
         final NetworkNode speciesNetworkRoot = speciesNetworkInput.get().getRoot();
 
@@ -111,9 +112,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         
         // initialize embedding for all gene trees
         for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
-            if (operator.proposal() != 0.0) {
-                throw new Exception("Fuck.");
-            }
+            if (operator.proposal() != 0.0) {}
         }
     }
 
@@ -202,7 +201,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         return (mij*(2*nSpecies-1 - mij))/2 + (abs(s1-s2)-1);
     }
 
-    private void fullInit() throws Exception {
+    private void fullInit() {
         // Build gene trees from  alignments
 
         final Function muInput = this.muInput.get();
@@ -362,7 +361,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    private void randomInit() throws Exception {
+    private void randomInit() {
         double lambda = 1;
         if(birthRateInput.get() != null) lambda = birthRateInput.get().getArrayValue();
 

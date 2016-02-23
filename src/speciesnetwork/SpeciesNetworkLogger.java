@@ -42,7 +42,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
     private DecimalFormat df;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         if (parameterInput.get().size() == 0 && clockModelInput.get() == null && populationModelInput.get() == null) {
             someMetaDataNeedsLogging = false;
             return;

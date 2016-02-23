@@ -16,7 +16,7 @@ public class StarBeastClock extends BranchRateModel.Base {
     private boolean needsUpdate;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         geneNodeCount = geneTreeInput.get().getTree().getNodeCount();
         branchRates = new double[geneNodeCount];
         storedBranchRates = new double[geneNodeCount];
