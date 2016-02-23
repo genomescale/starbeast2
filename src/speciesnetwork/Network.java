@@ -512,7 +512,7 @@ public class Network extends StateNode {
     }
 
     @Override
-    public void init(PrintStream out) throws Exception {
+    public void init(PrintStream out) {
         NetworkNode node = getRoot();
         out.println("#NEXUS\n");
         out.println("Begin taxa;");

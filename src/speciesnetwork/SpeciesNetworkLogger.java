@@ -66,7 +66,7 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
     }
 
     @Override
-    public void init(PrintStream out) throws Exception {
+    public void init(PrintStream out) {
         Network speciesNetwork = speciesNetworkInput.get();
         speciesNetwork.init(out);
     }
