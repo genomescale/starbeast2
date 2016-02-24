@@ -5,10 +5,11 @@ import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import beast.util.TreeParser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Flip a random gene tree lineage with all its descendants in one side of the loop to the other side in the network.
@@ -24,10 +25,6 @@ public class FlipNetworkLoop extends Operator {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Input.Validate.REQUIRED);
 
-    private Tree geneTree;
-    private Network speciesNetwork;
-    private IntegerParameter embedding;
-
     @Override
     public void initAndValidate() {
     }
@@ -37,9 +34,9 @@ public class FlipNetworkLoop extends Operator {
      */
     @Override
     public double proposal() {
-        geneTree = geneTreeInput.get();
-        speciesNetwork = speciesNetworkInput.get();
-        embedding = embeddingInput.get();
+        Tree geneTree = geneTreeInput.get();
+        Network speciesNetwork = speciesNetworkInput.get();
+        IntegerParameter embedding = embeddingInput.get();
 
         List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
         // if there is no reticulation node, this operator doesn't apply
@@ -50,26 +47,26 @@ public class FlipNetworkLoop extends Operator {
         NetworkNode hybridNode = hybridNodes.get(rnd);
         // find the top node of the loop with the hybrid node
         NetworkNode topNode = findLoop(hybridNode, true);
-        final int topNodeNum = topNode.getNr();
+        final int topNodeNr = topNode.getNr();
+        final int bottomNodeNr = hybridNode.getNr();
 
-        // find the gene lineages traversing the top network node
+        // find the gene lineages traversing the top and bottom network nodes
         final int geneNodeCount = geneTree.getNodeCount();
         List<Integer> geneNodeNums = new ArrayList<>();
         for (int j = 0; j < geneNodeCount; j++) {
-            if (embedding.getMatrixValue(topNodeNum, j) > -1)
+            if (embedding.getMatrixValue(topNodeNr, j) > -1 && embedding.getMatrixValue(bottomNodeNr, j) > -1)
                 geneNodeNums.add(j);
         }
         // if there is no lineage traversing, this operator doesn't apply
         if (geneNodeNums.isEmpty()) return Double.NEGATIVE_INFINITY;
 
-        /* pick a lineage randomly from all the lineages traversing the top node
-         * if this lineage (and all its descendant lineages) traverses the hybrid node,
-         * flip it (them) to the other side of the loop; otherwise, abort
-         */
+        // pick a lineage randomly, flip it to the other side of the loop
         rnd = Randomizer.nextInt(geneNodeNums.size());
         int geneNodeNr = geneNodeNums.get(rnd);
-
-
+        if (embedding.getMatrixValue(topNodeNr, geneNodeNr) == 0)
+            embedding.setMatrixValue(topNodeNr, geneNodeNr, 1);
+        else
+            embedding.setMatrixValue(topNodeNr, geneNodeNr, 0);
 
         return 0.0;
     }
@@ -87,6 +84,9 @@ public class FlipNetworkLoop extends Operator {
         // traverse left, label A; traverse right, label B
         label(hybridNode.getLeftParent(), "A", null, null);
         label(hybridNode.getRightParent(), "B", "A", returnNode);
+
+        // list all the paths connecting returnNode[0] and the hybrid node
+        // Set<List<NetworkNode>> pathSet = getAllPathes(returnNode[0], hybridNode);
 
         if (cleanup) {
             unlabel(hybridNode.getLeftParent(), "A");
