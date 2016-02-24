@@ -63,10 +63,6 @@ public class FlipNetworkLoop extends Operator {
         // pick a lineage randomly, flip it to the other side of the loop
         rnd = Randomizer.nextInt(geneNodeNums.size());
         int geneNodeNr = geneNodeNums.get(rnd);
-        if (embedding.getMatrixValue(topNodeNr, geneNodeNr) == 0)
-            embedding.setMatrixValue(topNodeNr, geneNodeNr, 1);
-        else
-            embedding.setMatrixValue(topNodeNr, geneNodeNr, 0);
 
         return 0.0;
     }
