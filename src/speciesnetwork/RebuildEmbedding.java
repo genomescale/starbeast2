@@ -21,9 +21,8 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 /**
- * 
+ * Rebuild the embedding of a gene tree in the species network.
  * @author Huw Ogilvie
- *
  */
 
 public class RebuildEmbedding extends Operator {

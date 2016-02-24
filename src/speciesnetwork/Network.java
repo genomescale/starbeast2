@@ -197,7 +197,7 @@ public class Network extends StateNode {
      * @return a list of leaf nodes contained in this network
      */
     public List<NetworkNode> getLeafNodes() {
-        final ArrayList<NetworkNode> lNodes = new ArrayList<>();
+        final List<NetworkNode> lNodes = new ArrayList<>();
         for (final NetworkNode node : networkNodes) {
             if (node.isLeaf()) lNodes.add(node);
         }
@@ -208,9 +208,20 @@ public class Network extends StateNode {
      * @return a list of internal nodes contained in this network
      */
     public List<NetworkNode> getInternalNodes() {
-        final ArrayList<NetworkNode> iNodes = new ArrayList<>();
+        final List<NetworkNode> iNodes = new ArrayList<>();
         for (final NetworkNode node : networkNodes) {
             if (!node.isLeaf()) iNodes.add(node);
+        }
+        return iNodes;
+    }
+
+    /**
+     * @return a list of reticulation nodes contained in this network
+     */
+    public List<NetworkNode> getReticulationNodes() {
+        final List<NetworkNode> iNodes = new ArrayList<>();
+        for (final NetworkNode node : networkNodes) {
+            if (node.isReticulation()) iNodes.add(node);
         }
         return iNodes;
     }
@@ -251,8 +262,8 @@ public class Network extends StateNode {
         int nB = 1;
         for (NetworkNode node : networkNodes) {
             if (node.getHeight() > time) {
-                if (node.isReticulation()) nB++;
-                else nB--;
+                if (node.isReticulation()) nB--;
+                else nB++;
             }
         }
         return  nB;
