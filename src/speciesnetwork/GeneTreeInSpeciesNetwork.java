@@ -42,10 +42,12 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
     private IntegerParameter embedding;
     private RealParameter gamma;
 
-    protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
-    protected ListMultimap<Integer, Double> storedCoalescentTimes = ArrayListMultimap.create(); // the coalescent event times for this gene tree for all species tree branches
-    protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
-    protected Multiset<Integer> storedCoalescentLineageCounts = HashMultiset.create(); // the number of lineages at the tipward end of each branch
+    // the coalescent times of this gene tree for all species branches
+    protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create();
+    protected ListMultimap<Integer, Double> storedCoalescentTimes = ArrayListMultimap.create();
+    // the number of lineages at the tipward end of each species branch
+    protected Multiset<Integer> coalescentLineageCounts = HashMultiset.create();
+    protected Multiset<Integer> storedCoalescentLineageCounts = HashMultiset.create();
 
     protected double[][] speciesOccupancy;
     protected double[][] storedSpeciesOccupancy;
@@ -96,7 +98,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
     public void initAndValidate() {
         ploidy = ploidyInput.get();
-        geneTreeNodeCount = geneTreeInput.get().getNodeCount();
         needsUpdate = true;
     }
 
@@ -113,9 +114,9 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         gamma = gammaInput.get();
         logGammaSum = 0.0;
 
+        geneTreeNodeCount = geneTreeInput.get().getNodeCount();
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
-        // each reticulation node has two branches
-        speciesBranchCount = speciesNetwork.getBranchCount();
+        speciesBranchCount = speciesNetwork.getBranchCount();  // each reticulation node has two branches
         speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
 
         // reset coalescent arrays as these values need to be recomputed after any changes to the species or gene tree
@@ -128,7 +129,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         try {
             recurseCoalescentEvents(geneTreeRoot, speciesNetworkRoot, speciesRootBranchNumber, Double.POSITIVE_INFINITY);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         needsUpdate = false;
@@ -155,8 +155,10 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             }
             // traversal direction forward in time
             final int traversalDirection = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
-            final NetworkNode nextSpeciesNode = (traversalDirection == 0) ? speciesNetworkNode.getLeftChild() : speciesNetworkNode.getRightChild();
-            final int nextSpeciesBranchNumber = (traversalDirection == 0) ? nextSpeciesNode.getLeftBranchNumber() : nextSpeciesNode.getRightBranchNumber();
+            final NetworkNode nextSpeciesNode =
+                    traversalDirection == 0 ? speciesNetworkNode.getLeftChild() : speciesNetworkNode.getRightChild();
+            final int nextSpeciesBranchNumber =
+                    traversalDirection == 0 ? nextSpeciesNode.getLeftBranchNumber() : nextSpeciesNode.getRightBranchNumber();
             recurseCoalescentEvents(geneTreeNode, nextSpeciesNode, nextSpeciesBranchNumber, speciesNodeHeight);
         } else if (geneTreeNode.isLeaf()) { // assumes tip node heights are always zero
             speciesOccupancy[geneTreeNodeNumber][speciesBranchNumber] += lastHeight;
@@ -179,14 +181,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
     protected Tree getTree() {
         return geneTreeInput.get();
-    }
-
-    protected Node getRoot() {
-        return geneTreeInput.get().getRoot();
-    }
-
-    protected double getTreeHeight() {
-        return geneTreeInput.get().getRoot().getHeight();
     }
 
     /**

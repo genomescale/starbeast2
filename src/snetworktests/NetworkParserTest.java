@@ -15,9 +15,9 @@ public class NetworkParserTest {
 
     // cannot parse this one because of the :: inheritProb
     final String testNetwork1 = "((A:0.2,(B:0.1)#H1:0.1::0.6):0.2,(#H1:0.2::0.4,C:0.3):0.1)";
-    // or even this one because of lacking internal node name
-    final String testNetwork2 = "((A:0.2,(B:0.1)#H1:0.1):0.2,(#H1:0.2,C:0.3):0.1)";
-    // this diamond network
+
+    final String testNetwork2 = "((A:0.2,#H1:0.1)#S1:0.3,((B:0.1)#H1:0.2,C:0.3)#S2:0.2)R";
+
     final String testNetwork3 = "((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)#S2:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)#S1:0.1)#H4:0.1,#H3:0.3)#S3:0.1)R";
 
     public NetworkParserTest() {
@@ -25,17 +25,16 @@ public class NetworkParserTest {
         networkParser = new NetworkParser();
 
         try {
-            treeParser.initByName("newick", testNetwork3, "IsLabelledNewick", true, "adjustTipHeights", false);
+            treeParser.initByName("newick", testNetwork2, "IsLabelledNewick", true, "adjustTipHeights", false);
             networkParser.initByName("tree", treeParser);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     @Test
     public void testLogHR() throws Exception {
-        //System.out.println(networkParser.toString());
-        assertEquals(testNetwork3, networkParser.toString());
+        // System.out.println(networkParser.toString());
+        assertEquals(testNetwork2, networkParser.toString());
     }
 }

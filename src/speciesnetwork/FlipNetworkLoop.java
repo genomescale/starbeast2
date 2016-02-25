@@ -17,7 +17,6 @@ import java.util.Set;
  * @author Chi Zhang
  */
 public class FlipNetworkLoop extends Operator {
-
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "The gene tree.", Input.Validate.REQUIRED);
     public Input<Network> speciesNetworkInput =
@@ -29,9 +28,6 @@ public class FlipNetworkLoop extends Operator {
     public void initAndValidate() {
     }
 
-    /**
-     *
-     */
     @Override
     public double proposal() {
         Tree geneTree = geneTreeInput.get();
@@ -64,6 +60,8 @@ public class FlipNetworkLoop extends Operator {
         rnd = Randomizer.nextInt(geneNodeNums.size());
         int geneNodeNr = geneNodeNums.get(rnd);
 
+
+
         return 0.0;
     }
 
@@ -82,7 +80,7 @@ public class FlipNetworkLoop extends Operator {
         label(hybridNode.getRightParent(), "B", "A", returnNode);
 
         // list all the paths connecting returnNode[0] and the hybrid node
-        // Set<List<NetworkNode>> pathSet = getAllPathes(returnNode[0], hybridNode);
+        // Set<List<NetworkNode>> pathSet = getAllPaths(returnNode[0], hybridNode);
 
         if (cleanup) {
             unlabel(hybridNode.getLeftParent(), "A");

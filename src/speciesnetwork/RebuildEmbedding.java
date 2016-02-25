@@ -122,7 +122,6 @@ public class RebuildEmbedding extends Operator {
     }
 
     private void reinitializeEmbedding() throws Exception {
-        final IntegerParameter embedding = embeddingInput.get();
         // nothing traverses through species leaf nodes
         final int traversalNodeCount = speciesNetwork.getNodeCount() - speciesNetwork.getLeafNodeCount();
         final int geneNodeCount = geneTree.getNodeCount();
