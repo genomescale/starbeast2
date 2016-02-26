@@ -16,13 +16,13 @@ import speciesnetwork.PopulationSizeModel;
 public class ConstantPopulationTest extends PopulationTestHelper {
 
     public ConstantPopulationTest() throws Exception {
-        expectedLogP = 0; // this should be the right answer (calculated by hand)
+        expectedLogP = -2.52067921; // -0.046217525 -2.474461685
 
         nSpecies = 3;
         nBranches = 8;
         popSize = 0.1;
         ploidy = 2.0;
-        gamma = 0.6;
+        gamma = 0.6; // for branch #H1(5)-#S2(3)
 
         newickSpeciesNetwork = "((A:0.2,#H1:0.1)#S1:0.3,((B:0.1)#H1:0.2,C:0.3)#S2:0.2)R";
         newickGeneTrees.add("(((a1:0.07,a2:0.07):0.48,(b1:0.25,b2:0.25):0.30):0.08,(b3:0.35,c1:0.35):0.28)");
@@ -30,8 +30,14 @@ public class ConstantPopulationTest extends PopulationTestHelper {
 
         IntegerParameter embedding1 = new IntegerParameter();
         IntegerParameter embedding2 = new IntegerParameter();
-        embedding1.initByName("value", "-1", "dimension", "44", "minordimension", "11");
-        embedding2.initByName("value", "-1", "dimension", "44", "minordimension", "11");
+        embedding1.initByName("value", "-1 -1 -1 -1  0  1 -1 -1 -1 -1 -1 " +
+                                       "-1 -1  1  1 -1 -1  0 -1 -1 -1 -1 " +
+                                       "-1 -1  0  0  0 -1 -1 -1 -1 -1 -1 " +
+                                       "-1 -1 -1 -1 -1 -1  0  0 -1  1 -1", "dimension", "44", "minordimension", "11");
+        embedding2.initByName("value", "-1 -1 -1 -1  0  1 -1  0 -1 -1 -1 " +
+                                       "-1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1 " +
+                                       "-1 -1 -1 -1  0 -1 -1  0 -1 -1 -1 " +
+                                       "-1 -1 -1 -1  1  1  0  1 -1 -1 -1", "dimension", "44", "minordimension", "11");
         geneTreeEmbeddings.add(embedding1);
         geneTreeEmbeddings.add(embedding2);
     }

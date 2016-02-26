@@ -48,7 +48,7 @@ abstract class PopulationTestHelper {
         speciesSuperset = generateSuperset();
         initializeSpeciesNetwork();
         initializeStateNodes();
-        initializeGeneTrees();
+        initializeGeneTrees(false);
 
         final PopulationSizeModel populationModel = generatePopulationModel();
         populationModel.initPopSizes(nBranches);
@@ -81,16 +81,19 @@ abstract class PopulationTestHelper {
         state.initialise();
     }
 
-    public void initializeGeneTrees() throws Exception {
+    public void initializeGeneTrees(boolean reembed) throws Exception {
         for (int i = 0; i < newickGeneTrees.size(); i++) {
             final String geneTreeNewick = newickGeneTrees.get(i);
             TreeParser geneTree = new TreeParser();
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
             geneTrees.add(geneTree);
             IntegerParameter embedding = geneTreeEmbeddings.get(i);
-            // RebuildEmbedding rebuildOperator = new RebuildEmbedding();
-            // rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork, "taxonSuperset", speciesSuperset, "embedding", embedding);
-            // assertEquals(rebuildOperator.proposal(), 0.0, allowedError);
+            if (reembed) { // rebuild the embedding
+                RebuildEmbedding rebuildOperator = new RebuildEmbedding();
+                rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork,
+                                           "taxonSuperset", speciesSuperset, "embedding", embedding);
+                assertEquals(rebuildOperator.proposal(), 0.0, allowedError);
+            }
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
             geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork,
                                        "embedding", embedding, "gamma", gammaParameter);

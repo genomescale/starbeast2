@@ -48,12 +48,10 @@ public class ConstantPopulation extends PopulationSizeModel {
                 partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i])
                                 * (geneN - i) * (geneN - i - 1.0) / 2.0;
             }
-
             if (geneN - geneK > 1) {
                 partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK])
                                 * (geneN - geneK) * (geneN - geneK - 1.0) / 2.0;
             }
-
             branchGamma += partialGamma / genePloidy;
         }
 
