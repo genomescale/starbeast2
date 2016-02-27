@@ -84,16 +84,7 @@ public class GeneTree extends TreeWrapper {
         super.restore();
     }
 
-    public void initAndValidate() throws Exception {
-        if (treeInput.get() == null) {
-            final String thisID = getID();
-            if (thisID == null) {
-                throw new Exception(String.format("A gene tree input named \"tree\" is required but was not supplied."));
-            } else {
-                throw new Exception(String.format("A gene tree input named \"tree\" is required but was not supplied for \"%s\".", thisID));
-            }
-        }
-
+    public void initAndValidate() {
         ploidy = ploidyInput.get();
 
         geneTreeNodeCount = treeInput.get().getNodeCount();

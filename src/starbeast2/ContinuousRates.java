@@ -43,7 +43,7 @@ public class ContinuousRates extends BranchRateModel.Base implements SpeciesTree
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         final RealParameter branchRates = logRatesInput.get();
         final TreeInterface speciesTree = treeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();

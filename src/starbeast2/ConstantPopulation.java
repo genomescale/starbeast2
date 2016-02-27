@@ -17,7 +17,7 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
     }
 
     @Override

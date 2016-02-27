@@ -36,7 +36,7 @@ public class MultispeciesCoalescent extends Distribution {
     final static SanityChecks sc = new SanityChecks();
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         final List<GeneTree> geneTrees = geneTreeInput.get();
         nGeneTrees = geneTrees.size();
 
@@ -53,7 +53,7 @@ public class MultispeciesCoalescent extends Distribution {
         populationModel.initPopSizes(speciesTreeNodeCount);
     }
 
-    public double calculateLogP() throws Exception {
+    public double calculateLogP() {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 

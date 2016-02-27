@@ -77,7 +77,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     }
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         final IntegerParameter branchRates = branchRatesInput.get();
         final TreeInterface speciesTree = treeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();

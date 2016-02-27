@@ -77,14 +77,14 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     private boolean hasCalibrations;
 
     @Override
-    public void initAndValidate() throws Exception {
+    public void initAndValidate() {
         // what does this do and is it dangerous to call it or not to call it at the start or at the end??????
         super.initAndValidate();
         hasCalibrations = calibratedYule.get() != null;
     }
 
     @Override
-    public void initStateNodes() throws Exception {
+    public void initStateNodes() {
         // initialize population sizes to equal average branch length
         // this is equivalent to 2Ne = E[1/lambda]
         final Node speciesTreeRoot = speciesTreeInput.get().getRoot();
@@ -104,19 +104,23 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         populationModel.initPopSizes(averageBranchLength);
 
         // Do other stuff...
-        if( hasCalibrations ) {
-            initWithCalibrations();
-        } else {
-            final Method method = initMethod.get();
-
-            switch( method ) {
-                case POINT:
-                    fullInit();
-                    break;
-                case ALL_RANDOM:
-                    randomInit();
-                    break;
+        try {
+            if( hasCalibrations ) {
+                    initWithCalibrations();
+            } else {
+                final Method method = initMethod.get();
+    
+                switch( method ) {
+                    case POINT:
+                        fullInit();
+                        break;
+                    case ALL_RANDOM:
+                        randomInit();
+                        break;
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
