@@ -88,7 +88,6 @@ public class RebuildEmbedding extends Operator {
         try {
             reinitializeEmbedding();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
