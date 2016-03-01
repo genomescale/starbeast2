@@ -86,20 +86,17 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     public void initStateNodes() {
         // initialize population sizes to equal average branch length (equivalent to 2Ne = E[1/lambda])
         final NetworkNode speciesNetworkRoot = speciesNetworkInput.get().getRoot();
-
         double speciesNetworkLength = 0;
         for (final NetworkNode n : speciesNetworkRoot.getAllChildNodes()) {
             if(n.getLeftParent() != null)  speciesNetworkLength += n.getLeftLength();
             if(n.getRightParent() != null) speciesNetworkLength += n.getRightLength();
         }
-
         final int nSpeciesBranches = speciesNetworkInput.get().getBranchCount();
         final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
 
         final PopulationSizeModel populationModel = populationFunctionInput.get();
         populationModel.initPopSizes(averageBranchLength);
 
-        // if( hasCalibrations ) { initWithCalibrations(); } else {
         final Method method = initMethod.get();
         switch( method ) {
             case POINT:

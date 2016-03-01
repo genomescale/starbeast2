@@ -73,11 +73,6 @@ public class Network extends StateNode {
         initArrays();
 
         // ensure all nodes have their taxon names set up
-        String[] taxa = getTaxaNames();
-        for (int i = 0; i < getNodeCount() && i < taxa.length; i++) {
-            if (taxa[i] != null) networkNodes[i].setID(taxa[i]);
-        }
-
         // needs more things here???
     }
 
