@@ -38,7 +38,7 @@ public class RebuildEmbedding extends Operator {
     final private Multimap<Node, Integer> geneNodeHeirs = HashMultimap.create();
     final private Multimap<NetworkNode, Integer> speciesNodeHeirs = HashMultimap.create();
     
-    private int speciesLeafCount;
+    private int speciesLeafCount, nChoices;
     private Tree geneTree;
     private Network speciesNetwork;
     private IntegerParameter embedding;
@@ -74,16 +74,17 @@ public class RebuildEmbedding extends Operator {
     }
 
     /**
-     * The proposal distribution depends only on the topology and times of the gene
-     * tree and on the topology and times of the species network. Because this move
-     * does not change topologies or times, the forward and reverse proposal
-     * distributions are identical and the move is symmetric.
      */
     @Override
     public double proposal() {
         geneTree = geneTreeInput.get();
         speciesNetwork = speciesNetworkInput.get();
         embedding = embeddingInput.get();
+
+        // count the number of alternative traversing choices for the current state (n0)
+        nChoices = 0;
+        countNumberOfChoices(geneTree.getRoot(), speciesNetwork.getRoot());
+        final int oldChoices = nChoices;
 
         try {
             reinitializeEmbedding();
@@ -95,13 +96,15 @@ public class RebuildEmbedding extends Operator {
             setLeafNodeHeirs(geneLeaf);
             recurseGeneHeirs(geneLeaf);
         }
-
         for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
             recurseSpeciesHeirs(speciesLeaf);
         }
 
-        // if no embedding of the gene trees is compatible with the species network
+        // rebuild the embedding, and
+        // count the number of alternative traversing choices for the proposed state (n1)
+        nChoices = 0;
         if (!recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot())) {
+            // if no embedding of the gene trees is compatible with the species network
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -117,7 +120,8 @@ public class RebuildEmbedding extends Operator {
         }
         System.out.println(sb); */
 
-        return 0.0;
+        // the proposal ratio is (2^n1)/(2^n0)
+        return (nChoices - oldChoices) * Math.log(2);
     }
 
     private void reinitializeEmbedding() throws Exception {
@@ -207,6 +211,7 @@ public class RebuildEmbedding extends Operator {
             if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
                 if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
                     // both species children are compatible with the gene tree, in which case the embedding becomes stochastic
+                    nChoices++;
                     if (Randomizer.nextBoolean()) {
                         embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, 0);
                         return recurseRebuild(geneTreeNode, leftSpecies);
@@ -233,6 +238,44 @@ public class RebuildEmbedding extends Operator {
             // embed both gene tree children
             return recurseRebuild(geneTreeNode.getLeft(), speciesNetworkNode) &&
                    recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
+        }
+    }
+
+    private boolean countNumberOfChoices(final Node geneTreeNode, final NetworkNode speciesNetworkNode) {
+        final double geneTreeNodeHeight = geneTreeNode.getHeight();
+        final double speciesNetworkNodeHeight = speciesNetworkNode.getHeight();
+        // this coalescence node must be embedded in a descendant species network branch
+        if (geneTreeNodeHeight < speciesNetworkNodeHeight) {
+            final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafCount;
+            final int geneTreeNodeNumber = geneTreeNode.getNr();
+            final Collection<Integer> requiredHeirs = geneNodeHeirs.get(geneTreeNode);
+            final NetworkNode leftSpecies = speciesNetworkNode.getLeftChild();
+            final NetworkNode rightSpecies = speciesNetworkNode.getRightChild();
+
+            if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
+                if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
+                    // both species children are compatible with the gene tree
+                    nChoices++;
+                    if (embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 0)
+                        return countNumberOfChoices(geneTreeNode, leftSpecies);
+                    else // embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 1
+                        return countNumberOfChoices(geneTreeNode, rightSpecies);
+                } else {
+                    // only the left branch is compatible with the gene tree
+                    return countNumberOfChoices(geneTreeNode, leftSpecies);
+                }
+            } else if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
+                // only the right branch is compatible with the gene tree
+                return countNumberOfChoices(geneTreeNode, rightSpecies);
+            } else {
+                // neither child branch is compatible with the gene tree
+                return false;  // for a valid embedding, should never go here
+            }
+        } else if (geneTreeNode.isLeaf()) {
+            return true;
+        } else {
+            return countNumberOfChoices(geneTreeNode.getLeft(), speciesNetworkNode) &&
+                   countNumberOfChoices(geneTreeNode.getRight(), speciesNetworkNode);
         }
     }
 }
