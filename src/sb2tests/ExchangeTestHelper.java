@@ -13,7 +13,7 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
-import starbeast2.CoordinatedExchange;
+import starbeast2.NarrowExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
@@ -78,7 +78,7 @@ abstract class ExchangeTestHelper {
             }
         }
 
-        CoordinatedExchange coex = new CoordinatedExchange();
+        NarrowExchange coex = new NarrowExchange();
         coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees);
         coex.manipulateSpeciesTree(brother);
         final double calculatedLogHR = coex.rearrangeGeneTrees();

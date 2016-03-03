@@ -29,11 +29,11 @@ import beast.util.Randomizer;
 * @author Andrew Rambaut
  */
 
-@Description("Implements the co-ordinated species and gene tree operator described in Yang & Rannala 2015. "
-        + "This performs a narrow exchange operation, then prunes-and-regrafts gene tree nodes made invalid "
+@Description("Implements the co-ordinated species and gene tree operator described in Rannala & Yang 2015. "
+        + "This performs a wide exchange operation, then prunes-and-regrafts gene tree nodes made invalid "
         + "by the operation onto a valid contemporary branch (without changing node heights). "
-        + "See http://doi.org/10.1093/molbev/msu279 for full details.")
-public class CoordinatedExchange extends CoordinatedOperator {
+        + "See http://arxiv.org/abs/1512.03843 for full details.")
+public class WideExchange extends CoordinatedOperator {
     private Node brother;
     private Node parent;
     private Node uncle;
