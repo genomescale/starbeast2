@@ -3,13 +3,16 @@ package speciesnetwork;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Flip a random gene tree lineage with all its descendants in one side of the loop to the other side in the network.
@@ -23,6 +26,7 @@ public class FlipNetworkLoop extends Operator {
             new Input<>("speciesNetwork", "The species network.", Input.Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Input.Validate.REQUIRED);
+    final private Multimap<NetworkNode, String> pathDirections = HashMultimap.create();
 
     @Override
     public void initAndValidate() {
@@ -41,24 +45,31 @@ public class FlipNetworkLoop extends Operator {
         // pick a hybrid node randomly from the network
         int rnd = Randomizer.nextInt(hybridNodes.size());
         NetworkNode hybridNode = hybridNodes.get(rnd);
-        // find the top node of the loop with the hybrid node
+        // find the top node of the minimal loop with the hybrid node at the bottom
         NetworkNode topNode = findLoop(hybridNode, true);
         final int topNodeNr = topNode.getNr();
         final int bottomNodeNr = hybridNode.getNr();
 
-        // find the gene lineages traversing the top and bottom network nodes
+        // find the gene lineages traversing the loop-top network node
+        List<Node> topGeneNodes = new ArrayList<>();
         final int geneNodeCount = geneTree.getNodeCount();
-        List<Integer> geneNodeNums = new ArrayList<>();
         for (int j = 0; j < geneNodeCount; j++) {
-            if (embedding.getMatrixValue(topNodeNr, j) > -1 && embedding.getMatrixValue(bottomNodeNr, j) > -1)
-                geneNodeNums.add(j);
-        }
-        // if there is no lineage traversing, this operator doesn't apply
-        if (geneNodeNums.isEmpty()) return Double.NEGATIVE_INFINITY;
+            if (embedding.getMatrixValue(topNodeNr, j) > -1) {
+                final Node geneNodeTop = geneTree.getNode(j);
 
-        // pick a lineage randomly, flip it to the other side of the loop
-        rnd = Randomizer.nextInt(geneNodeNums.size());
-        int geneNodeNr = geneNodeNums.get(rnd);
+                // check if all the descendants of geneNodeTop traverse one side of the loop
+
+
+                topGeneNodes.add(geneNodeTop);
+            }
+        }
+
+        // if there is no lineage traversing, this operator doesn't apply
+        if (topGeneNodes.isEmpty()) return Double.NEGATIVE_INFINITY;
+
+        // pick a lineage randomly, flip it (and all its descendant lineages) to the other side of the loop
+        rnd = Randomizer.nextInt(topGeneNodes.size());
+        final Node geneNodeTop = topGeneNodes.get(rnd);
 
 
 
@@ -67,27 +78,28 @@ public class FlipNetworkLoop extends Operator {
 
     /**
      * @param hybridNode the hybrid node forming the bottom of the loop
-     * @return the top network node on the minimal loop from the given hybrization node
+     * @return the top network node on the minimal loop from the given hybridization node
      */
     private NetworkNode findLoop(NetworkNode hybridNode, boolean cleanup) {
         // check if hybridNode is actually hybrid
         if (!hybridNode.isReticulation()) throw new RuntimeException();
 
-        NetworkNode[] returnNode = new NetworkNode[1];
+        NetworkNode topNode = new NetworkNode();
 
         // traverse left, label A; traverse right, label B
         label(hybridNode.getLeftParent(), "A", null, null);
-        label(hybridNode.getRightParent(), "B", "A", returnNode);
+        label(hybridNode.getRightParent(), "B", "A", topNode);
 
-        // list all the paths connecting returnNode[0] and the hybrid node
-        // Set<List<NetworkNode>> pathSet = getAllPaths(returnNode[0], hybridNode);
+        // find all the paths connecting top node and hybrid node
+        getPathDirections(topNode, topNode, hybridNode, "A");
+        getPathDirections(topNode, topNode, hybridNode, "B");
 
         if (cleanup) {
             unlabel(hybridNode.getLeftParent(), "A");
             unlabel(hybridNode.getRightParent(), "B");
         }
 
-        return returnNode[0];
+        return topNode;
     }
 
     private void unlabel(NetworkNode node, String label) {
@@ -97,33 +109,53 @@ public class FlipNetworkLoop extends Operator {
         if (node.getRightParent() != null) unlabel(node.getRightParent(), label);
     }
 
-    private void label(NetworkNode node, String label, String checkLabel, NetworkNode[] returnNode) {
+    private void label(NetworkNode node, String label, String checkLabel, NetworkNode returnNode) {
         node.addLabel(label);
 
         if (checkLabel != null && node.hasLabel(checkLabel)) {
-            if (returnNode[0] == null || node.getHeight() < returnNode[0].getHeight())
-                returnNode[0] = node;
+            if (returnNode == null || node.getHeight() < returnNode.getHeight())
+                returnNode = node;
         }
 
         if (node.getLeftParent() != null) label(node.getLeftParent(), label, checkLabel, returnNode);
         if (node.getRightParent() != null) label(node.getRightParent(), label, checkLabel, returnNode);
     }
 
+    /**
+     * get (forward in time) directions of the loop
+     * @param topNode    top node of the loop (speciation node)
+     * @param bottomNode bottom node of the loop (hybrid node)
+     * @param checkLabel label
+     */
+    private void getPathDirections(NetworkNode node, NetworkNode topNode, NetworkNode bottomNode, String checkLabel) {
+        if (node == topNode) {
+            pathDirections.put(node, "");  // initialize as empty string
+        }
+        if (node == bottomNode)
+            return;
 
-    /* public static void main(String[] args) throws Exception {
-        final String testNetwork =
-            "((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)#S2:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)#S1:0.1)#H4:0.1,#H3:0.3)#S3:0.1)#R";
+        NetworkNode leftNode = node.getLeftChild();
+        if (leftNode != null && (leftNode.hasLabel(checkLabel) || leftNode == bottomNode)) {
+            for (final String s : pathDirections.get(node)) {
+                pathDirections.put(leftNode, s + "0");  // traversing left
+            }
+            getPathDirections(leftNode, topNode, bottomNode, checkLabel);
+        }
 
-        TreeParser treeParser = new TreeParser();
-        NetworkParser networkParser = new NetworkParser();
-        treeParser.initByName("newick", testNetwork, "IsLabelledNewick", true, "adjustTipHeights", false);
-        networkParser.initByName("tree", treeParser);
+        NetworkNode rightNode = node.getRightChild();
+        if (rightNode != null && (rightNode.hasLabel(checkLabel) || rightNode == bottomNode)) {
+            for (final String s : pathDirections.get(node)) {
+                pathDirections.put(rightNode, s + "1"); // traversing right
+            }
+            getPathDirections(rightNode, topNode, bottomNode, checkLabel);
+        }
+    }
 
-        NetworkNode hybridNode = networkParser.getNode("#H3");
-        NetworkNode topNode = findLoop(hybridNode, true);
-
-        System.out.println(testNetwork);
-        System.out.println("Hybrid Node =" + hybridNode.getID());
-        System.out.println("Top Node =" + topNode.getID());
-    } */
+    // is tree node ancNode the ancestor of childNode?
+    boolean isAncestor(Node ancNode, Node childNode) {
+        Node nextNode = childNode;
+        while (nextNode != ancNode && nextNode != null)
+            nextNode = nextNode.getParent();
+        return nextNode != null;
+    }
 }
