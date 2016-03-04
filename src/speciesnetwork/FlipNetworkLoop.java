@@ -9,6 +9,7 @@ import beast.util.Randomizer;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
@@ -26,17 +27,22 @@ public class FlipNetworkLoop extends Operator {
             new Input<>("speciesNetwork", "The species network.", Input.Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Input.Validate.REQUIRED);
-    final private Multimap<NetworkNode, String> pathDirections = HashMultimap.create();
+
+    private IntegerParameter embedding = embeddingInput.get();
+    private Multimap<NetworkNode, String> pathDirections = HashMultimap.create();
+    private Multimap<Node, NetworkNode> lineagePath = HashMultimap.create();
+    private int speciesLeafCount;
 
     @Override
     public void initAndValidate() {
+        Network speciesNetwork = speciesNetworkInput.get();
+        speciesLeafCount = speciesNetwork.getLeafNodes().size();
     }
 
     @Override
     public double proposal() {
         Tree geneTree = geneTreeInput.get();
         Network speciesNetwork = speciesNetworkInput.get();
-        IntegerParameter embedding = embeddingInput.get();
 
         List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
         // if there is no reticulation node, this operator doesn't apply
@@ -46,31 +52,42 @@ public class FlipNetworkLoop extends Operator {
         int rnd = Randomizer.nextInt(hybridNodes.size());
         NetworkNode hybridNode = hybridNodes.get(rnd);
         // find the top node of the minimal loop with the hybrid node at the bottom
-        NetworkNode topNode = findLoop(hybridNode, true);
+        NetworkNode topNode = findLoop(hybridNode, true);  // pathDirections is also set
         final int topNodeNr = topNode.getNr();
         final int bottomNodeNr = hybridNode.getNr();
 
-        // find the gene lineages traversing the loop-top network node
-        List<Node> topGeneNodes = new ArrayList<>();
         final int geneNodeCount = geneTree.getNodeCount();
         for (int j = 0; j < geneNodeCount; j++) {
-            if (embedding.getMatrixValue(topNodeNr, j) > -1) {
+            // find the gene lineages traversing the loop-top network node
+            if (embedding.getMatrixValue(topNodeNr-speciesLeafCount, j) > -1) {
                 final Node geneNodeTop = geneTree.getNode(j);
-
+                Set<NetworkNode> traversedNodes = new HashSet<>();
                 // check if all the descendants of geneNodeTop traverse one side of the loop
-
-
-                topGeneNodes.add(geneNodeTop);
+                if (allLineagesInLoop(geneNodeTop, topNode, hybridNode, traversedNodes))
+                    lineagePath.putAll(geneNodeTop, traversedNodes);
             }
         }
-
         // if there is no lineage traversing, this operator doesn't apply
-        if (topGeneNodes.isEmpty()) return Double.NEGATIVE_INFINITY;
+        if (lineagePath.isEmpty()) return Double.NEGATIVE_INFINITY;
 
         // pick a lineage randomly, flip it (and all its descendant lineages) to the other side of the loop
-        rnd = Randomizer.nextInt(topGeneNodes.size());
-        final Node geneNodeTop = topGeneNodes.get(rnd);
+        List<Node> keys = new ArrayList<>(lineagePath.keySet());
+        rnd = Randomizer.nextInt(keys.size());
+        final Node geneNodeTop = keys.get(rnd);
 
+        // convert the path to direction
+        final Collection<NetworkNode> geneNodeTopPath = lineagePath.get(geneNodeTop);
+
+
+        // delete the current direction from the collection
+        final Collection<String> loopPathDirections = pathDirections.get(hybridNode);
+
+
+        // pick a new direction
+        rnd = Randomizer.nextInt(loopPathDirections.size());
+
+
+        // make the flip
 
 
         return 0.0;
@@ -148,6 +165,34 @@ public class FlipNetworkLoop extends Operator {
                 pathDirections.put(rightNode, s + "1"); // traversing right
             }
             getPathDirections(rightNode, topNode, bottomNode, checkLabel);
+        }
+    }
+
+    /**
+     * Are geneNode and its descendants traversing one side of the loop
+     */
+    boolean allLineagesInLoop (Node geneNode, NetworkNode netNode, NetworkNode bottomNode, Set<NetworkNode> traversedNodes) {
+        if (netNode.isLeaf()) return false;
+        traversedNodes.add(netNode); // add the node to the path set
+        if (netNode == bottomNode) return true;
+
+        if (geneNode.getHeight() < netNode.getHeight()) {
+            final int traversalNodeNr = netNode.getNr()-speciesLeafCount;
+            final int geneNodeNr = geneNode.getNr();
+            final NetworkNode leftNode = netNode.getLeftChild();
+            final NetworkNode rightNode = netNode.getRightChild();
+
+            if (embedding.getMatrixValue(traversalNodeNr, geneNodeNr) == 0 && leftNode != null) {
+                return allLineagesInLoop(geneNode, leftNode, bottomNode, traversedNodes);
+            }
+            else if (embedding.getMatrixValue(traversalNodeNr, geneNodeNr) == 1 && rightNode != null) {
+                return allLineagesInLoop(geneNode, rightNode, bottomNode, traversedNodes);
+            } else {
+                return false; // something is wrong
+            }
+        } else {
+            return !geneNode.isLeaf() && allLineagesInLoop(geneNode.getLeft(), netNode, bottomNode, traversedNodes) &&
+                    allLineagesInLoop(geneNode.getRight(), netNode, bottomNode, traversedNodes);
         }
     }
 
