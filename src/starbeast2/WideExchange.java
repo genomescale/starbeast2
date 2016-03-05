@@ -1,5 +1,3 @@
-// Based on Exchange.java in BEAST2, which in turn was based on ExchangeOperator.java in BEAST.
-
 package starbeast2;
 
 import java.util.ArrayList;
@@ -23,10 +21,7 @@ import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
 /**
-* @author Remco Bouckaert
-* @author Alexei Drummond
 * @author Huw Ogilvie
-* @author Andrew Rambaut
  */
 
 @Description("Implements the co-ordinated species and gene tree operator described in Rannala & Yang 2015. "
@@ -77,7 +72,7 @@ public class WideExchange extends CoordinatedOperator {
 
         // for all internal nodes (excluding the root)
         final double[] mrcaHeights = new double[nNodesExceptRoot];
-        fillMrcaHeights(parentNode, rootNode, parentNodeHeight, mrcaHeights);
+        fillMrcaHeights(parentNode, rootNode, parentNodeHeight, Double.NEGATIVE_INFINITY, mrcaHeights);
 
         // pick a cousin from the available candidates
         int cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
@@ -85,27 +80,27 @@ public class WideExchange extends CoordinatedOperator {
             cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
         }
         cousinNode = speciesTreeNodes[cousinNodeNumber];
-        final double cousinMrcaHeight = mrcaHeights[cousinNodeNumber];
-        
-        exchangeNodes(parentNode, brotherNode, cousinNode, cousinMrcaHeight);
+        final double mrcaHeight = mrcaHeights[cousinNodeNumber];
+
+        exchangeNodes(parentNode, brotherNode, cousinNode, mrcaHeight);
 
         return 0.0;
     }
 
-    private List<Integer> fillMrcaHeights(final Node parentNode, final Node currentNode, final double parentNodeHeight, final double[] mrcaHeights) {
-        // possible cousins (nodes defining branches which include the height of the parent node)
+    private List<Integer> fillMrcaHeights(final Node parentNode, final Node currentNode, final double parentNodeHeight, final double branchTopHeight, final double[] mrcaHeights) {
+        // valid graft nodes (nodes defining branches which include the height of the parent node)
         final List<Integer> candidateList = new ArrayList<>();
         final double currentNodeHeight = currentNode.getHeight();
 
         if (parentNode == currentNode) {
             return null;
-        } else if (currentNodeHeight < parentNodeHeight) {
-            // this is a candidate node (could be a cousin)
+        } else if (parentNodeHeight < branchTopHeight) {
+            // this is a candidate node (would be a valid choice to graft parentNode to)
             candidateList.add(currentNode.getNr());
             return candidateList;
         } else {
-            final List<Integer> leftCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getLeft(), parentNodeHeight, mrcaHeights);
-            final List<Integer> rightCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getRight(), parentNodeHeight, mrcaHeights);
+            final List<Integer> leftCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getLeft(), parentNodeHeight, currentNodeHeight, mrcaHeights);
+            final List<Integer> rightCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getRight(), parentNodeHeight, currentNodeHeight, mrcaHeights);
 
             if (leftCandidateNodeNumbers == null) { // parent is the left child or descendant of the left child
                 // therefore the current node is the most recent common ancestor connecting the parent and right candidates
