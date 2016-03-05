@@ -34,9 +34,9 @@ import beast.util.Randomizer;
         + "by the operation onto a valid contemporary branch (without changing node heights). "
         + "See http://arxiv.org/abs/1512.03843 for full details.")
 public class WideExchange extends CoordinatedOperator {
-    private Node brother;
-    private Node parent;
-    private Node uncle;
+    private Node brotherNode;
+    private Node parentNode;
+    private Node cousinNode;
 
     private List<SortedMap<Node, Node>> forwardMovedNodes;
     private SetMultimap<Integer, Node> forwardGraftNodes;
@@ -50,7 +50,7 @@ public class WideExchange extends CoordinatedOperator {
      */
     @Override
     public double proposal() {
-        double fLogHastingsRatio = narrow();
+        double fLogHastingsRatio = wide();
 
         // only rearrange gene trees if the species tree has changed
         if (fLogHastingsRatio != Double.NEGATIVE_INFINITY) {
@@ -60,76 +60,90 @@ public class WideExchange extends CoordinatedOperator {
         return fLogHastingsRatio;
     }
 
-    private int isg(final Node n) {
-      return (n.getLeft().isLeaf() && n.getRight().isLeaf()) ? 0 : 1;
-    }
-
-    private int sisg(final Node n) {
-        return n.isLeaf() ? 0 : isg(n);
-    }
-
-    public double narrow() {
+    public double wide() {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
-        final int nInternalNodes = speciesTree.getInternalNodeCount();
-        if (nInternalNodes <= 1) {
-            return Double.NEGATIVE_INFINITY;
+        final Node[] speciesTreeNodes = speciesTree.getNodesAsArray();
+
+        final int nLeafNodes = speciesTree.getLeafNodeCount();
+        final int nInternalNodes = speciesTree.getInternalNodeCount() - 1; // excludes the root
+        final int nNodesExceptRoot = nLeafNodes + nInternalNodes;
+        final Node rootNode = speciesTreeNodes[nNodesExceptRoot];
+
+        // pick an internal node at random (excluding the root)
+        final int parentNodeNumber = nLeafNodes + Randomizer.nextInt(nInternalNodes);
+        parentNode = speciesTreeNodes[parentNodeNumber];
+        final double parentNodeHeight = parentNode.getHeight();
+        brotherNode = Randomizer.nextBoolean() ? parentNode.getLeft() : parentNode.getRight();
+
+        // for all internal nodes (excluding the root)
+        final double[] mrcaHeights = new double[nNodesExceptRoot];
+        fillMrcaHeights(parentNode, rootNode, parentNodeHeight, mrcaHeights);
+
+        // pick a cousin from the available candidates
+        int cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
+        while (mrcaHeights[cousinNodeNumber] == 0.0) {
+            cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
         }
+        cousinNode = speciesTreeNodes[cousinNodeNumber];
+        final double cousinMrcaHeight = mrcaHeights[cousinNodeNumber];
+        
+        exchangeNodes(parentNode, brotherNode, cousinNode, cousinMrcaHeight);
 
-        Node grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-        while (grandparent.getLeft().isLeaf() && grandparent.getRight().isLeaf()) {
-            grandparent = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-        }
+        return 0.0;
+    }
 
-        parent = grandparent.getLeft();
-        uncle = grandparent.getRight();
-        if (parent.getHeight() < uncle.getHeight()) {
-            parent = grandparent.getRight();
-            uncle = grandparent.getLeft();
-        }
+    private List<Integer> fillMrcaHeights(final Node parentNode, final Node currentNode, final double parentNodeHeight, final double[] mrcaHeights) {
+        // possible cousins (nodes defining branches which include the height of the parent node)
+        final List<Integer> candidateList = new ArrayList<>();
+        final double currentNodeHeight = currentNode.getHeight();
 
-        if (parent.isLeaf()) {
-            return Double.NEGATIVE_INFINITY;
-        }
+        if (parentNode == currentNode) {
+            return null;
+        } else if (currentNodeHeight < parentNodeHeight) {
+            // this is a candidate node (could be a cousin)
+            candidateList.add(currentNode.getNr());
+            return candidateList;
+        } else {
+            final List<Integer> leftCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getLeft(), parentNodeHeight, mrcaHeights);
+            final List<Integer> rightCandidateNodeNumbers = fillMrcaHeights(parentNode, currentNode.getRight(), parentNodeHeight, mrcaHeights);
 
-        brother = Randomizer.nextBoolean() ? parent.getLeft() : parent.getRight();
-
-        // must be done before any changes are made to the gene or species trees
-        forwardMovedNodes = getMovedPairs(brother);
-        forwardGraftNodes = getGraftBranches(uncle);
-
-        int validGP = 0;
-        {
-            for(int i = nInternalNodes + 1; i < 1 + 2*nInternalNodes; ++i) {
-                validGP += isg(speciesTree.getNode(i));
+            if (leftCandidateNodeNumbers == null) { // parent is the left child or descendant of the left child
+                // therefore the current node is the most recent common ancestor connecting the parent and right candidates
+                for (final Integer candidateNodeNumber: rightCandidateNodeNumbers) {
+                    mrcaHeights[candidateNodeNumber] = currentNodeHeight;
+                }
+                return null;
+            } else if (rightCandidateNodeNumbers == null) { // parent is the right child or descendant of the right child
+                // therefore the current node is the most recent common ancestor connecting the parent and left candidates
+                for (final Integer candidateNodeNumber: leftCandidateNodeNumbers) {
+                    mrcaHeights[candidateNodeNumber] = currentNodeHeight;
+                }
+                return null;
+            } else {
+                candidateList.addAll(leftCandidateNodeNumbers);
+                candidateList.addAll(rightCandidateNodeNumbers);
+                return candidateList;
             }
         }
-
-        final int c2 = sisg(parent) + sisg(uncle);
-
-        exchangeNodes(parent, grandparent, brother, uncle);
-
-        final int validGPafter = validGP - c2 + sisg(parent) + sisg(uncle);
-
-        return Math.log((float)validGP/validGPafter);
     }
 
     // for testing purposes
-    public void manipulateSpeciesTree(Node argBrother) {
+    /* public void manipulateSpeciesTree(Node argBrother) {
         brother = argBrother;
         parent = brother.getParent();
 
         final Node grandparent = parent.getParent();
         if (grandparent.getLeft().getNr() == parent.getNr()) {
-            uncle = grandparent.getRight();
+            cousin = grandparent.getRight();
         } else {
-            uncle = grandparent.getLeft();
+            cousin = grandparent.getLeft();
         }
 
         forwardMovedNodes = getMovedPairs(brother);
-        forwardGraftNodes = getGraftBranches(uncle);
+        forwardGraftNodes = getGraftBranches(cousin);
 
-        exchangeNodes(parent, grandparent, brother, uncle);
-    }
+        exchangeNodes(parent, grandparent, brother, cousin);
+    } */
 
     public double rearrangeGeneTrees() {
         final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
@@ -177,7 +191,7 @@ public class WideExchange extends CoordinatedOperator {
             forwardGraftCounts.add(jForwardGraftCounts);
         }
 
-        SetMultimap<Integer, Node> reverseGraftNodes = getGraftBranches(brother);
+        SetMultimap<Integer, Node> reverseGraftNodes = getGraftBranches(brotherNode);
 
         double logHastingsRatio = 0.0;
         for (int j = 0; j < nGeneTrees; j++) {
@@ -210,51 +224,51 @@ public class WideExchange extends CoordinatedOperator {
     }
 
     protected static void pruneAndRegraft(final Node nodeToMove, final Node newChild, final Node disownedChild) {
-        final Node sourceParent = nodeToMove.getParent();
+        final Node parent = nodeToMove.getParent();
         final Node destinationParent = newChild.getParent();
 
         // debug string
-        // System.out.println(String.format("%d-%d-%d > %d-%d", sourceParent.getNr(), nodeToMove.getNr(), disownedChild.getNr(), destinationParent.getNr(), newChild.getNr()));
+        // System.out.println(String.format("%d-%d-%d > %d-%d", parent.getNr(), nodeToMove.getNr(), disownedChild.getNr(), destinationParent.getNr(), newChild.getNr()));
 
         nodeToMove.removeChild(disownedChild);
-        sourceParent.removeChild(nodeToMove);
+        parent.removeChild(nodeToMove);
         destinationParent.removeChild(newChild);
 
         nodeToMove.addChild(newChild);
-        sourceParent.addChild(disownedChild);
+        parent.addChild(disownedChild);
         destinationParent.addChild(nodeToMove);
 
         nodeToMove.makeDirty(Tree.IS_FILTHY);
         newChild.makeDirty(Tree.IS_FILTHY);
         disownedChild.makeDirty(Tree.IS_FILTHY);
-        sourceParent.makeDirty(Tree.IS_FILTHY);
+        parent.makeDirty(Tree.IS_FILTHY);
         destinationParent.makeDirty(Tree.IS_FILTHY);
     }
 
-    protected static void exchangeNodes(final Node parent, final Node grandparent, final Node brother, final Node uncle) {
-        grandparent.removeChild(uncle);
-        parent.addChild(uncle);
+    protected static void exchangeNodes(final Node parent, final Node brother, final Node cousin, final double mrcaHeight) {
+        final Node parentParent = parent.getParent();
+        final Node cousinParent = cousin.getParent();
 
         parent.removeChild(brother);
-        grandparent.addChild(brother);
+        parentParent.removeChild(parent);
+        cousinParent.removeChild(cousin);
 
-        parent.makeDirty(Tree.IS_FILTHY);
-        grandparent.makeDirty(Tree.IS_FILTHY);        
-        brother.makeDirty(Tree.IS_FILTHY);
-        uncle.makeDirty(Tree.IS_FILTHY);
+        parent.addChild(cousin);
+        parentParent.addChild(brother);
+        cousinParent.addChild(parent);
     }
 
     // identify nodes that can serve as graft branches as part of a coordinated exchange move
-    protected SetMultimap<Integer, Node> getGraftBranches(Node uncleNode) {
-        final int uncleNodeNumber = uncleNode.getNr();
-        final Set<String> uncleDescendants = findDescendants(uncleNode, uncleNodeNumber);
+    protected SetMultimap<Integer, Node> getGraftBranches(Node cousinNode) {
+        final int cousinNodeNumber = cousinNode.getNr();
+        final Set<String> cousinDescendants = findDescendants(cousinNode, cousinNodeNumber);
 
         final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
         final List<TreeInterface> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final Set<Node> jGraftBranches = new HashSet<Node>();
-            findGraftBranches(geneTreeRootNode, jGraftBranches, uncleDescendants);
+            findGraftBranches(geneTreeRootNode, jGraftBranches, cousinDescendants);
             allGraftBranches.putAll(j, jGraftBranches);
         }
 
