@@ -9,11 +9,7 @@ import beast.util.Randomizer;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Flip a random gene tree lineage with all its descendants in one side of the loop to the other side in the network.
@@ -77,15 +73,19 @@ public class FlipNetworkLoop extends Operator {
 
         // convert the path to direction
         final Collection<NetworkNode> geneNodeTopPath = lineagePath.get(geneNodeTop);
-
-
+        String pathDir = "";  // empty path string
+        convertToDirection(geneNodeTopPath, topNode, hybridNode, pathDir);
         // delete the current direction from the collection
         final Collection<String> loopPathDirections = pathDirections.get(hybridNode);
-
-
-        // pick a new direction
+        loopPathDirections.remove(pathDir);
+        // pick a new direction, store it to pathDir
+        assert (loopPathDirections.size() > 0);
         rnd = Randomizer.nextInt(loopPathDirections.size());
-
+        int idx = 0;
+        for (String s :loopPathDirections) {
+            if (idx == rnd) pathDir = s;
+            idx++;
+        }
 
         // make the flip
 
@@ -171,7 +171,7 @@ public class FlipNetworkLoop extends Operator {
     /**
      * Are geneNode and its descendants traversing one side of the loop
      */
-    boolean allLineagesInLoop (Node geneNode, NetworkNode netNode, NetworkNode bottomNode, Set<NetworkNode> traversedNodes) {
+    private boolean allLineagesInLoop (Node geneNode, NetworkNode netNode, NetworkNode bottomNode, Set<NetworkNode> traversedNodes) {
         if (netNode.isLeaf()) return false;
         traversedNodes.add(netNode); // add the node to the path set
         if (netNode == bottomNode) return true;
@@ -196,11 +196,18 @@ public class FlipNetworkLoop extends Operator {
         }
     }
 
-    // is tree node ancNode the ancestor of childNode?
-    boolean isAncestor(Node ancNode, Node childNode) {
-        Node nextNode = childNode;
-        while (nextNode != ancNode && nextNode != null)
-            nextNode = nextNode.getParent();
-        return nextNode != null;
+    private void convertToDirection(Collection<NetworkNode> pathNodes, NetworkNode start, NetworkNode end, String direction) {
+        // pathNodes should contain network nodes forming a path connecting start and end
+        while (start != end) {
+            NetworkNode left = start.getLeftChild();
+            NetworkNode right = start.getRightChild();
+            if (left != null && pathNodes.contains(left)) {
+                direction += "0";
+                start = left;
+            } else if (right != null && pathNodes.contains(right)) {
+                direction += "1";
+                start = right;
+            } else return;
+        }
     }
 }
