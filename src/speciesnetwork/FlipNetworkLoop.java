@@ -66,31 +66,42 @@ public class FlipNetworkLoop extends Operator {
         // if there is no lineage traversing, this operator doesn't apply
         if (lineagePath.isEmpty()) return Double.NEGATIVE_INFINITY;
 
-        // pick a lineage randomly, flip it (and all its descendant lineages) to the other side of the loop
+        // pick a lineage randomly, with its traversing path
         List<Node> keys = new ArrayList<>(lineagePath.keySet());
         rnd = Randomizer.nextInt(keys.size());
         final Node geneNodeTop = keys.get(rnd);
 
         // convert the path to direction
         final Collection<NetworkNode> geneNodeTopPath = lineagePath.get(geneNodeTop);
-        String pathDir = "";  // empty path string
-        convertToDirection(geneNodeTopPath, topNode, hybridNode, pathDir);
+        final String currentPathDir = convertToDirection(geneNodeTopPath, topNode, hybridNode);
         // delete the current direction from the collection
         final Collection<String> loopPathDirections = pathDirections.get(hybridNode);
-        loopPathDirections.remove(pathDir);
-        // pick a new direction, store it to pathDir
+        loopPathDirections.remove(currentPathDir);
+
+        // pick a new direction randomly
         assert (loopPathDirections.size() > 0);
         rnd = Randomizer.nextInt(loopPathDirections.size());
-        int idx = 0;
-        for (String s :loopPathDirections) {
-            if (idx == rnd) pathDir = s;
-            idx++;
-        }
+        final String proposedPathDir = pickFromCollection(rnd, loopPathDirections);
+
+        // convert the picked direction to path
+        final Collection<NetworkNode> proposedPath = convertToPath(proposedPathDir, topNode, hybridNode);
 
         // make the flip
-
+        // first reset the embedding of the current path
+        setEmbedding(geneNodeTop, topNode, hybridNode, geneNodeTopPath, true);
+        // then build the new embedding of the proposed path
+        setEmbedding(geneNodeTop, topNode, hybridNode, proposedPath, false);
 
         return 0.0;
+    }
+
+    private String pickFromCollection(int index, Collection<String> strings) {
+        int i = 0;
+        for (String s : strings) {
+            if (i == index) return s;
+            i++;
+        }
+        return null;
     }
 
     /**
@@ -196,8 +207,9 @@ public class FlipNetworkLoop extends Operator {
         }
     }
 
-    private void convertToDirection(Collection<NetworkNode> pathNodes, NetworkNode start, NetworkNode end, String direction) {
+    private String convertToDirection(Collection<NetworkNode> pathNodes, NetworkNode start, NetworkNode end) {
         // pathNodes should contain network nodes forming a path connecting start and end
+        String direction = "";
         while (start != end) {
             NetworkNode left = start.getLeftChild();
             NetworkNode right = start.getRightChild();
@@ -207,7 +219,63 @@ public class FlipNetworkLoop extends Operator {
             } else if (right != null && pathNodes.contains(right)) {
                 direction += "1";
                 start = right;
-            } else return;
+            } else
+                return null;  // something is wrong
+        }
+        return direction;
+    }
+
+    private Collection<NetworkNode> convertToPath(String direction, NetworkNode start, NetworkNode end) {
+        // direction should form a path connecting start and end
+        Collection<NetworkNode> pathSet = new HashSet<>();
+        pathSet.add(start);
+        int i = 0;
+        while (start != end) {
+            NetworkNode left = start.getLeftChild();
+            NetworkNode right = start.getRightChild();
+            if (left != null && direction.charAt(i) == '0') {
+                pathSet.add(left);
+                start = left;
+            } else if (right != null && direction.charAt(i) == '1') {
+                pathSet.add(right);
+                start = right;
+            } else
+                return null;  // something is wrong
+            i++;
+        }
+        return pathSet;
+    }
+
+    private boolean setEmbedding (Node geneNode, NetworkNode netNode, NetworkNode bottomNode,
+                                  Collection<NetworkNode> traversedNodes, boolean reset) {
+        if (netNode.isLeaf()) return false;
+        if (netNode == bottomNode) return true;
+
+        if (geneNode.getHeight() < netNode.getHeight()) {
+            final int traversalNodeNr = netNode.getNr()-speciesLeafCount;
+            final int geneNodeNr = geneNode.getNr();
+            final NetworkNode leftNode = netNode.getLeftChild();
+            final NetworkNode rightNode = netNode.getRightChild();
+
+            if (leftNode != null && traversedNodes.contains(leftNode)) {
+                if (reset)
+                    embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
+                else
+                    embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 0);
+                return setEmbedding(geneNode, leftNode, bottomNode, traversedNodes, reset);
+            }
+            else if (rightNode != null && traversedNodes.contains(rightNode)) {
+                if (reset)
+                    embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
+                else
+                    embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 1);
+                return setEmbedding(geneNode, rightNode, bottomNode, traversedNodes, reset);
+            } else {
+                return false; // something is wrong
+            }
+        } else {
+            return !geneNode.isLeaf() && setEmbedding(geneNode.getLeft(), netNode, bottomNode, traversedNodes, reset)
+                    && setEmbedding(geneNode.getRight(), netNode, bottomNode, traversedNodes, reset);
         }
     }
 }
