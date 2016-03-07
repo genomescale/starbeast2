@@ -46,7 +46,9 @@ public class RebuildEmbedding extends Operator {
     @Override
     public void initAndValidate() {
         // generate map of species network tip names to species network tip nodes
-        final Network speciesNetwork = speciesNetworkInput.get();
+        geneTree = geneTreeInput.get();
+        speciesNetwork = speciesNetworkInput.get();
+        embedding = embeddingInput.get();
         final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
 
         final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
@@ -77,10 +79,6 @@ public class RebuildEmbedding extends Operator {
      */
     @Override
     public double proposal() {
-        geneTree = geneTreeInput.get();
-        speciesNetwork = speciesNetworkInput.get();
-        embedding = embeddingInput.get();
-
         // count the number of alternative traversing choices for the current state (n0)
         nChoices = 0;
         countNumberOfChoices(geneTree.getRoot(), speciesNetwork.getRoot());
@@ -92,11 +90,11 @@ public class RebuildEmbedding extends Operator {
             e.printStackTrace();
         }
 
-        for (final Node geneLeaf: geneTree.getExternalNodes()) {
+        for (final Node geneLeaf : geneTree.getExternalNodes()) {
             setLeafNodeHeirs(geneLeaf);
             recurseGeneHeirs(geneLeaf);
         }
-        for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
+        for (final NetworkNode speciesLeaf : speciesNetwork.getLeafNodes()) {
             recurseSpeciesHeirs(speciesLeaf);
         }
 
@@ -124,7 +122,21 @@ public class RebuildEmbedding extends Operator {
         return (nChoices - oldChoices) * Math.log(2);
     }
 
-    private void reinitializeEmbedding() throws Exception {
+    public boolean initializeEmbedding() {
+        reinitializeEmbedding();
+
+        for (final Node geneLeaf: geneTree.getExternalNodes()) {
+            setLeafNodeHeirs(geneLeaf);
+            recurseGeneHeirs(geneLeaf);
+        }
+        for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
+            recurseSpeciesHeirs(speciesLeaf);
+        }
+        // rebuild the embedding
+        return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot());
+    }
+
+    private void reinitializeEmbedding() {
         // nothing traverses through species leaf nodes
         final int traversalNodeCount = speciesNetwork.getNodeCount() - speciesNetwork.getLeafNodeCount();
         final int geneNodeCount = geneTree.getNodeCount();

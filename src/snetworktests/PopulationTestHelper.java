@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
@@ -92,6 +93,7 @@ abstract class PopulationTestHelper {
                 RebuildEmbedding rebuildOperator = new RebuildEmbedding();
                 rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork,
                                            "taxonSuperset", speciesSuperset, "embedding", embedding);
+                assertTrue(rebuildOperator.initializeEmbedding());
             }
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
             geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork,

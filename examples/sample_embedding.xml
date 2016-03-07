@@ -47,8 +47,7 @@
       <stateNode id="embedding:gene1" spec="parameter.IntegerParameter">-1</stateNode>
     </state>
 
-    <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species" rebuildEmbedding="@rebuildEmbedding">
-      <geneTree idref="tree:gene1" />
+    <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species" geneTree="@tree:gene1" rebuildEmbedding="@rebuildEmbedding">
       <populationModel alpha="2.0" beta="1.0" id="popModel" spec="speciesnetwork.ConstantPopulationIO" />
     </init>
 
@@ -67,7 +66,9 @@
         </distribution>
       </distribution>
     </distribution>
+
     <operator id="rebuildEmbedding" spec="speciesnetwork.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
+
     <logger fileName="embedding.log" id="tracelog" logEvery="100" model="@posterior" sort="smart">
       <log idref="posterior" />
       <log idref="speciescoalescent" />

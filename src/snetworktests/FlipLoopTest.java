@@ -6,6 +6,7 @@ import java.util.List;
 import beast.evolution.alignment.Taxon;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
@@ -109,6 +110,7 @@ public class FlipLoopTest {
                 RebuildEmbedding rebuildOperator = new RebuildEmbedding();
                 rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork,
                                            "taxonSuperset", speciesSuperset, "embedding", embedding);
+                assertTrue(rebuildOperator.initializeEmbedding());
             }
             /*
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();

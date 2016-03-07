@@ -109,7 +109,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         
         // initialize embedding for all gene trees
         for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
-            if (operator.proposal() != 0.0) {}
+            if (!operator.initializeEmbedding()) {
+                // TODO: in trouble
+            }
         }
     }
 

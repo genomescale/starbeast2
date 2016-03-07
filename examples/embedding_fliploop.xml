@@ -35,7 +35,7 @@
         <taxonset alignment="@gene1" id="TaxonSet:gene1" spec="TaxonSet" />
       </tree>
       <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" dimension="4" name="stateNode">0.5</parameter>
-      <stateNode id="embedding:gene1" spec="parameter.IntegerParameter" dimension="24">-1</stateNode>
+      <stateNode id="embedding:gene1" spec="parameter.IntegerParameter" dimension="24" minordimension="3">-1 -1 -1 -1 1 -1 0 -1 -1 0 -1 -1 0 0 -1 -1 -1 -1 -1 1 -1 0 1 -1</stateNode>
     </state>
 
     <!--
