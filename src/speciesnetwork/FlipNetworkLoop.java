@@ -24,10 +24,10 @@ public class FlipNetworkLoop extends Operator {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Input.Validate.REQUIRED);
 
-    private IntegerParameter embedding = embeddingInput.get();
     private Multimap<NetworkNode, String> pathDirections = HashMultimap.create();
     private Multimap<Node, NetworkNode> lineagePath = HashMultimap.create();
     private int speciesLeafCount;
+    private IntegerParameter embedding;
 
     @Override
     public void initAndValidate() {
@@ -39,6 +39,7 @@ public class FlipNetworkLoop extends Operator {
     public double proposal() {
         Tree geneTree = geneTreeInput.get();
         Network speciesNetwork = speciesNetworkInput.get();
+        embedding = embeddingInput.get();
 
         List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
         // if there is no reticulation node, this operator doesn't apply
@@ -112,12 +113,12 @@ public class FlipNetworkLoop extends Operator {
         // check if hybridNode is actually hybrid
         if (!hybridNode.isReticulation()) throw new RuntimeException();
 
-        NetworkNode topNode = new NetworkNode();
-
+        NetworkNode[] returnNode = new NetworkNode[1];
         // traverse left, label A; traverse right, label B
         label(hybridNode.getLeftParent(), "A", null, null);
-        label(hybridNode.getRightParent(), "B", "A", topNode);
+        label(hybridNode.getRightParent(), "B", "A", returnNode);
 
+        NetworkNode topNode = returnNode[0];
         // find all the paths connecting top node and hybrid node
         getPathDirections(topNode, topNode, hybridNode, "A");
         getPathDirections(topNode, topNode, hybridNode, "B");
@@ -127,7 +128,7 @@ public class FlipNetworkLoop extends Operator {
             unlabel(hybridNode.getRightParent(), "B");
         }
 
-        return topNode;
+        return returnNode[0];
     }
 
     private void unlabel(NetworkNode node, String label) {
@@ -137,12 +138,12 @@ public class FlipNetworkLoop extends Operator {
         if (node.getRightParent() != null) unlabel(node.getRightParent(), label);
     }
 
-    private void label(NetworkNode node, String label, String checkLabel, NetworkNode returnNode) {
+    private void label(NetworkNode node, String label, String checkLabel, NetworkNode[] returnNode) {
         node.addLabel(label);
 
         if (checkLabel != null && node.hasLabel(checkLabel)) {
-            if (returnNode == null || node.getHeight() < returnNode.getHeight())
-                returnNode = node;
+            if (returnNode[0] == null || node.getHeight() < returnNode[0].getHeight())
+                returnNode[0] = node;
         }
 
         if (node.getLeftParent() != null) label(node.getLeftParent(), label, checkLabel, returnNode);
