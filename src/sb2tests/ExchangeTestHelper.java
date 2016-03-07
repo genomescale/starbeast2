@@ -13,7 +13,7 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
-import starbeast2.NarrowExchange;
+import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
@@ -67,21 +67,30 @@ abstract class ExchangeTestHelper {
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);
 
-        Node brother = null;
+        Node bNode = null;
         for (Node n: speciesTree.getRoot().getAllLeafNodes()) {
             if (n.getID().equals(targetNodeLabel)) {
                 if (targetParent) {
-                    brother = n.getParent();
+                    bNode = n.getParent();
                 } else {
-                    brother = n;
+                    bNode = n;
                 }
             }
         }
 
-        NarrowExchange coex = new NarrowExchange();
-        coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees);
-        coex.manipulateSpeciesTree(brother);
-        final double calculatedLogHR = coex.rearrangeGeneTrees();
+        Node yNode = bNode.getParent();
+        Node zNode = yNode.getParent();
+        Node aNode = (bNode == yNode.getRight()) ? yNode.getLeft() : yNode.getRight();
+        Node cNode = (yNode == zNode.getRight()) ? zNode.getLeft() : zNode.getRight();
+
+        CoordinatedExchange coex = new CoordinatedExchange();
+        coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees, "testing", true);
+        coex.aNode = aNode;
+        coex.bNode = bNode;
+        coex.cNode = cNode;
+        coex.yNode = yNode;
+        coex.zNode = zNode;
+        final double calculatedLogHR = coex.proposal();
 
         assertEquals(expectedLogHR, calculatedLogHR, allowedError);
     }
