@@ -16,6 +16,7 @@ import org.junit.runners.Suite.SuiteClasses;
     IncompatibleTreeTest.class,
     SmallCoordinatedExchangeTest.class,
     BigCoordinatedExchangeTest.class,
+    WideExchangeTest.class,
     MissingDataCoordinatedExchange.class,
     MissingDataConstantIO.class,
 })

@@ -74,11 +74,11 @@ public class CoordinatedExchange extends CoordinatedOperator {
         nSpeciesNodes = speciesTree.getNodeCount();
 
         boolean isNarrow = isNarrowInput.get();
-        double logHastingsRatio;
+        double logHastingsRatio = 0.0;
         if (isNarrow) {
             // only proceed to rearrange gene trees if the species tree can be changed
             // doesn't execute if testing
-            if (!testing && !narrow()) return Double.NEGATIVE_INFINITY;
+            if (!testing && !pickNarrow()) return Double.NEGATIVE_INFINITY;
 
             int validGP = 0;
             for(int i = nLeafNodes; i < nSpeciesNodes; ++i) {
@@ -92,16 +92,14 @@ public class CoordinatedExchange extends CoordinatedOperator {
 
             final int validGPafter = validGP - c2 + sisg(yNode) + sisg(cNode);
 
-            logHastingsRatio = Math.log(validGP) - Math.log(validGPafter);
+            logHastingsRatio += Math.log(validGP) - Math.log(validGPafter);
         } else {
             // only proceed to rearrange gene trees if the species tree can be changed
             // doesn't execute if testing
-            if (!testing && !wide()) return Double.NEGATIVE_INFINITY;
+            if (!testing && !pickWide()) return Double.NEGATIVE_INFINITY;
 
             fillForwardNodes(); // fills in forwardMovedNodes and forwardGraftNodes
             pruneAndRegraft(yNode, cNode, bNode);
-
-            logHastingsRatio = 0.0;
         }
 
         for (int i = 0; i < czBranchCount; i++) {
@@ -113,7 +111,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         return logHastingsRatio;
     }
 
-    private boolean narrow() {
+    private boolean pickNarrow() {
         zNode = speciesTreeNodes[nLeafNodes + Randomizer.nextInt(nInternalNodes)];
         while (zNode.getLeft().isLeaf() && zNode.getRight().isLeaf()) {
             zNode = speciesTreeNodes[nLeafNodes + Randomizer.nextInt(nInternalNodes)];
@@ -139,7 +137,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         return true;
     }
 
-    private boolean wide() {
+    private boolean pickWide() {
         final int nNodesExceptRoot = nSpeciesNodes - 1;
         final Node rootNode = speciesTreeNodes[nNodesExceptRoot];
 
