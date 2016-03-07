@@ -14,8 +14,11 @@ public class SmallCoordinatedExchangeTest extends ExchangeTestHelper {
     final int nBranches = (nSpecies * 2) - 1;
 
     public SmallCoordinatedExchangeTest() {
-        targetNodeLabel = "B";
-        targetParent = false;
+        bTipLabel = "B";
+        bIsParent = false;
+
+        cTipLabel = null;
+        cIsParent = false;
 
         newickSpeciesTree = "((A:1.0,B:1.0):2.0,C:3.0)";
         newickGeneTrees.add("(((A1:1.5,B1:1.5):1.0,(A2:2.0,B2:2.0):0.5):1.5,C1:4.0)");

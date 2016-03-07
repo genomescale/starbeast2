@@ -10,8 +10,8 @@ import beast.evolution.alignment.TaxonSet;
 
 public class MissingDataCoordinatedExchange extends ExchangeTestHelper {
     public MissingDataCoordinatedExchange() {
-        targetNodeLabel = "B";
-        targetParent = false;
+        bTipLabel = "B";
+        bIsParent = false;
 
         newickSpeciesTree = "((A:1.0,B:1.0):2.0,C:3.0)";
         newickGeneTrees.add("((A1:1.5,B1:1.5):1.0,(A2:2.0,B2:2.0):0.5)");

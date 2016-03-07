@@ -36,8 +36,10 @@ abstract class ExchangeTestHelper {
     double ploidy;
     double popSize;
     double expectedLogHR;
-    String targetNodeLabel;
-    boolean targetParent;
+    String bTipLabel;
+    String cTipLabel;
+    boolean bIsParent;
+    boolean cIsParent;
 
     final double allowedError = 10e-6;
 
@@ -67,21 +69,25 @@ abstract class ExchangeTestHelper {
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);
 
+        Node cNode = null;
         Node bNode = null;
         for (Node n: speciesTree.getRoot().getAllLeafNodes()) {
-            if (n.getID().equals(targetNodeLabel)) {
-                if (targetParent) {
-                    bNode = n.getParent();
-                } else {
-                    bNode = n;
-                }
+            if (n.getID().equals(bTipLabel)) {
+                if (bIsParent) bNode = n.getParent();
+                else bNode = n;
+            } else if (n.getID().equals(cTipLabel)) {
+                if (cIsParent) cNode = n.getParent();
+                else cNode = n;
             }
         }
 
         Node yNode = bNode.getParent();
         Node zNode = yNode.getParent();
         Node aNode = (bNode == yNode.getRight()) ? yNode.getLeft() : yNode.getRight();
-        Node cNode = (yNode == zNode.getRight()) ? zNode.getLeft() : zNode.getRight();
+
+        if (cNode == null) {
+            cNode = (yNode == zNode.getRight()) ? zNode.getLeft() : zNode.getRight();
+        }
 
         CoordinatedExchange coex = new CoordinatedExchange();
         coex.initByName("tree", speciesTree, "speciesTree", speciesTreeWrapper, "geneTree", geneTrees, "testing", true);
