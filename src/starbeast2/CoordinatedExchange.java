@@ -35,7 +35,7 @@ import beast.util.Randomizer;
         + "See http://doi.org/10.1093/molbev/msu279 and http://arxiv.org/abs/1512.03843 for full details.")
 public class CoordinatedExchange extends CoordinatedOperator {
     final public Input<Boolean> isNarrowInput = new Input<>("isNarrow", "if true (default) a narrow exchange is performed, otherwise a wide exchange", true);
-    final public Input<Boolean> isTestInput = new Input<>("testing", "if true (default) a narrow exchange is performed, otherwise a wide exchange", true);
+    final public Input<Boolean> isTestInput = new Input<>("testing", "for performing unit tests, do not pick species tree nodes", false);
 
     private Node[] speciesTreeNodes;
 
@@ -156,13 +156,14 @@ public class CoordinatedExchange extends CoordinatedOperator {
         // for all internal nodes (excluding the root)
         final Node[] zNodes = new Node[nNodesExceptRoot];
 
-        czNodeFinder(yNode, rootNode, yNodeHeight, Double.NEGATIVE_INFINITY, zNodes);
+        czNodeFinder(yNode, rootNode, yNodeHeight, zNodes);
 
         // pick a cousin from the available candidates
         int cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
         zNode = zNodes[cousinNodeNumber];
         while (zNode == null) {
             cousinNodeNumber = Randomizer.nextInt(nNodesExceptRoot);
+            //System.out.println(String.format("%d/%d", cousinNodeNumber, nNodesExceptRoot));
             zNode = zNodes[cousinNodeNumber];
         }
 
@@ -171,20 +172,20 @@ public class CoordinatedExchange extends CoordinatedOperator {
         return true;
     }
 
-    private List<Integer> czNodeFinder(final Node parentNode, final Node currentNode, final double parentNodeHeight, final double branchTopHeight, final Node[] zNodes) {
+    private List<Integer> czNodeFinder(final Node parentNode, final Node currentNode, final double parentNodeHeight, final Node[] zNodes) {
         // valid graft nodes (nodes defining branches which include the height of the parent node)
         final List<Integer> candidateList = new ArrayList<>();
         final double currentNodeHeight = currentNode.getHeight();
 
         if (parentNode == currentNode) {
             return null;
-        } else if (parentNodeHeight < branchTopHeight) {
+        } else if (parentNodeHeight >= currentNodeHeight) {
             // this is a candidate node (would be a valid choice to graft parentNode to)
             candidateList.add(currentNode.getNr());
             return candidateList;
         } else {
-            final List<Integer> leftCandidateNodeNumbers = czNodeFinder(parentNode, currentNode.getLeft(), parentNodeHeight, currentNodeHeight, zNodes);
-            final List<Integer> rightCandidateNodeNumbers = czNodeFinder(parentNode, currentNode.getRight(), parentNodeHeight, currentNodeHeight, zNodes);
+            final List<Integer> leftCandidateNodeNumbers = czNodeFinder(parentNode, currentNode.getLeft(), parentNodeHeight, zNodes);
+            final List<Integer> rightCandidateNodeNumbers = czNodeFinder(parentNode, currentNode.getRight(), parentNodeHeight, zNodes);
 
             if (leftCandidateNodeNumbers == null) { // parent is the left child or descendant of the left child
                 // therefore the current node is the most recent common ancestor connecting the parent and right candidates
