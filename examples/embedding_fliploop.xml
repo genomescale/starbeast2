@@ -61,6 +61,7 @@
     </distribution>
 
     <operator id="rebuildEmbedding" spec="speciesnetwork.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
+    <operator id="flipNetworkLoop" spec="speciesnetwork.FlipNetworkLoop" geneTree="@tree:gene1" speciesNetwork="@network:species" embedding="@embedding:gene1" weight="1.0"/>
 
     <logger fileName="embedding.log" id="tracelog" logEvery="100" model="@posterior" sort="smart">
       <log idref="posterior" />

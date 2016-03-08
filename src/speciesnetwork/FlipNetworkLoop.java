@@ -6,10 +6,11 @@ import beast.core.parameter.IntegerParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import java.util.*;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 
 /**
  * Flip a random gene tree lineage with all its descendants in one side of the loop to the other side in the network.
@@ -24,34 +25,36 @@ public class FlipNetworkLoop extends Operator {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Input.Validate.REQUIRED);
 
-    private Multimap<NetworkNode, String> pathDirections = HashMultimap.create();
-    private Multimap<Node, NetworkNode> lineagePath = HashMultimap.create();
+    private Multimap<NetworkNode, String> pathDirections = HashMultimap.create(); // all directions in the loop
+    private Map<Node, String> lineagePathDir = new HashMap<>();  // lineage traversing direction
     private int speciesLeafCount;
     private IntegerParameter embedding;
+    private String traverseDirection;
 
     @Override
     public void initAndValidate() {
         Network speciesNetwork = speciesNetworkInput.get();
         speciesLeafCount = speciesNetwork.getLeafNodes().size();
+        embedding = embeddingInput.get();
     }
 
     @Override
     public double proposal() {
         Tree geneTree = geneTreeInput.get();
         Network speciesNetwork = speciesNetworkInput.get();
-        embedding = embeddingInput.get();
 
         List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
         // if there is no reticulation node, this operator doesn't apply
         if (hybridNodes.isEmpty()) return Double.NEGATIVE_INFINITY;
 
+        pathDirections.clear(); // clear before filling in
+        lineagePathDir.clear();
         // pick a hybrid node randomly from the network
         int rnd = Randomizer.nextInt(hybridNodes.size());
         NetworkNode hybridNode = hybridNodes.get(rnd);
         // find the top node of the minimal loop with the hybrid node at the bottom
         NetworkNode topNode = findLoop(hybridNode, true);  // pathDirections is also set
         final int topNodeNr = topNode.getNr();
-        final int bottomNodeNr = hybridNode.getNr();
 
         final int geneNodeCount = geneTree.getNodeCount();
         for (int j = 0; j < geneNodeCount; j++) {
@@ -59,50 +62,36 @@ public class FlipNetworkLoop extends Operator {
             if (embedding.getMatrixValue(topNodeNr-speciesLeafCount, j) > -1) {
                 final Node geneNodeTop = geneTree.getNode(j);
                 Set<NetworkNode> traversedNodes = new HashSet<>();
+                traverseDirection = "";
                 // check if all the descendants of geneNodeTop traverse one side of the loop
                 if (allLineagesInLoop(geneNodeTop, topNode, hybridNode, traversedNodes))
-                    lineagePath.putAll(geneNodeTop, traversedNodes);
+                    lineagePathDir.put(geneNodeTop, traverseDirection);
             }
         }
         // if there is no lineage traversing, this operator doesn't apply
-        if (lineagePath.isEmpty()) return Double.NEGATIVE_INFINITY;
+        if (lineagePathDir.isEmpty()) return Double.NEGATIVE_INFINITY;
 
-        // pick a lineage randomly, with its traversing path
-        List<Node> keys = new ArrayList<>(lineagePath.keySet());
+        // pick a lineage randomly, with its traversing direction
+        List<Node> keys = new ArrayList<>(lineagePathDir.keySet());
         rnd = Randomizer.nextInt(keys.size());
         final Node geneNodeTop = keys.get(rnd);
-
-        // convert the path to direction
-        final Collection<NetworkNode> geneNodeTopPath = lineagePath.get(geneNodeTop);
-        final String currentPathDir = convertToDirection(geneNodeTopPath, topNode, hybridNode);
-        // delete the current direction from the collection
-        final Collection<String> loopPathDirections = pathDirections.get(hybridNode);
+        final String currentPathDir = lineagePathDir.get(geneNodeTop);
+        // delete the current direction from the list
+        List<String> loopPathDirections = new ArrayList<>(pathDirections.get(hybridNode));
         loopPathDirections.remove(currentPathDir);
 
         // pick a new direction randomly
         assert (loopPathDirections.size() > 0);
         rnd = Randomizer.nextInt(loopPathDirections.size());
-        final String proposedPathDir = pickFromCollection(rnd, loopPathDirections);
-
-        // convert the picked direction to path
-        final Collection<NetworkNode> proposedPath = convertToPath(proposedPathDir, topNode, hybridNode);
+        final String proposedPathDir = loopPathDirections.get(rnd);
 
         // make the flip
         // first reset the embedding of the current path
-        setEmbedding(geneNodeTop, topNode, hybridNode, geneNodeTopPath, true);
+        setEmbedding(geneNodeTop, topNode, topNode, hybridNode, currentPathDir, true);
         // then build the new embedding of the proposed path
-        setEmbedding(geneNodeTop, topNode, hybridNode, proposedPath, false);
+        setEmbedding(geneNodeTop, topNode, topNode, hybridNode, proposedPathDir, false);
 
         return 0.0;
-    }
-
-    private String pickFromCollection(int index, Collection<String> strings) {
-        int i = 0;
-        for (String s : strings) {
-            if (i == index) return s;
-            i++;
-        }
-        return null;
     }
 
     /**
@@ -119,9 +108,10 @@ public class FlipNetworkLoop extends Operator {
         label(hybridNode.getRightParent(), "B", "A", returnNode);
 
         NetworkNode topNode = returnNode[0];
-        // find all the paths connecting top node and hybrid node
-        getPathDirections(topNode, topNode, hybridNode, "A");
-        getPathDirections(topNode, topNode, hybridNode, "B");
+        pathDirections.put(topNode, "");  // initialize as empty string
+        // find all the path directions from top node to hybrid node
+        getPathDirections(topNode, hybridNode, "A");
+        getPathDirections(topNode, hybridNode, "B");
 
         if (cleanup) {
             unlabel(hybridNode.getLeftParent(), "A");
@@ -151,15 +141,11 @@ public class FlipNetworkLoop extends Operator {
     }
 
     /**
-     * get (forward in time) directions of the loop
-     * @param topNode    top node of the loop (speciation node)
+     * get (forward in time) directions of the loop, from top node of the loop to
      * @param bottomNode bottom node of the loop (hybrid node)
      * @param checkLabel label
      */
-    private void getPathDirections(NetworkNode node, NetworkNode topNode, NetworkNode bottomNode, String checkLabel) {
-        if (node == topNode) {
-            pathDirections.put(node, "");  // initialize as empty string
-        }
+    private void getPathDirections(NetworkNode node, NetworkNode bottomNode, String checkLabel) {
         if (node == bottomNode)
             return;
 
@@ -168,7 +154,7 @@ public class FlipNetworkLoop extends Operator {
             for (final String s : pathDirections.get(node)) {
                 pathDirections.put(leftNode, s + "0");  // traversing left
             }
-            getPathDirections(leftNode, topNode, bottomNode, checkLabel);
+            getPathDirections(leftNode, bottomNode, checkLabel);
         }
 
         NetworkNode rightNode = node.getRightChild();
@@ -176,7 +162,7 @@ public class FlipNetworkLoop extends Operator {
             for (final String s : pathDirections.get(node)) {
                 pathDirections.put(rightNode, s + "1"); // traversing right
             }
-            getPathDirections(rightNode, topNode, bottomNode, checkLabel);
+            getPathDirections(rightNode, bottomNode, checkLabel);
         }
     }
 
@@ -195,60 +181,29 @@ public class FlipNetworkLoop extends Operator {
             final NetworkNode rightNode = netNode.getRightChild();
 
             if (embedding.getMatrixValue(traversalNodeNr, geneNodeNr) == 0 && leftNode != null) {
+                if (!traversedNodes.contains(leftNode))
+                    traverseDirection += "0";
                 return allLineagesInLoop(geneNode, leftNode, bottomNode, traversedNodes);
             }
             else if (embedding.getMatrixValue(traversalNodeNr, geneNodeNr) == 1 && rightNode != null) {
+                if (!traversedNodes.contains(rightNode))
+                    traverseDirection += "1";
                 return allLineagesInLoop(geneNode, rightNode, bottomNode, traversedNodes);
             } else {
                 return false; // something is wrong
             }
         } else {
-            return !geneNode.isLeaf() && allLineagesInLoop(geneNode.getLeft(), netNode, bottomNode, traversedNodes) &&
+            return !geneNode.isLeaf() &&
+                    allLineagesInLoop(geneNode.getLeft(), netNode, bottomNode, traversedNodes) &&
                     allLineagesInLoop(geneNode.getRight(), netNode, bottomNode, traversedNodes);
         }
     }
 
-    private String convertToDirection(Collection<NetworkNode> pathNodes, NetworkNode start, NetworkNode end) {
-        // pathNodes should contain network nodes forming a path connecting start and end
-        String direction = "";
-        while (start != end) {
-            NetworkNode left = start.getLeftChild();
-            NetworkNode right = start.getRightChild();
-            if (left != null && pathNodes.contains(left)) {
-                direction += "0";
-                start = left;
-            } else if (right != null && pathNodes.contains(right)) {
-                direction += "1";
-                start = right;
-            } else
-                return null;  // something is wrong
-        }
-        return direction;
-    }
-
-    private Collection<NetworkNode> convertToPath(String direction, NetworkNode start, NetworkNode end) {
-        // direction should form a path connecting start and end
-        Collection<NetworkNode> pathSet = new HashSet<>();
-        pathSet.add(start);
-        int i = 0;
-        while (start != end) {
-            NetworkNode left = start.getLeftChild();
-            NetworkNode right = start.getRightChild();
-            if (left != null && direction.charAt(i) == '0') {
-                pathSet.add(left);
-                start = left;
-            } else if (right != null && direction.charAt(i) == '1') {
-                pathSet.add(right);
-                start = right;
-            } else
-                return null;  // something is wrong
-            i++;
-        }
-        return pathSet;
-    }
-
-    private boolean setEmbedding (Node geneNode, NetworkNode netNode, NetworkNode bottomNode,
-                                  Collection<NetworkNode> traversedNodes, boolean reset) {
+    /**
+     * set or reset the embedding according to the traversal direction of one side of the loop
+     */
+    private boolean setEmbedding (Node geneNode, NetworkNode netNode, NetworkNode topNode, NetworkNode bottomNode,
+                                  String traverseDirection, boolean reset) {
         if (netNode.isLeaf()) return false;
         if (netNode == bottomNode) return true;
 
@@ -258,25 +213,47 @@ public class FlipNetworkLoop extends Operator {
             final NetworkNode leftNode = netNode.getLeftChild();
             final NetworkNode rightNode = netNode.getRightChild();
 
-            if (leftNode != null && traversedNodes.contains(leftNode)) {
+            if (leftNode != null && getDirection(leftNode, topNode, traverseDirection) == 0) {
                 if (reset)
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
                 else
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 0);
-                return setEmbedding(geneNode, leftNode, bottomNode, traversedNodes, reset);
+                return setEmbedding(geneNode, leftNode, topNode, bottomNode, traverseDirection, reset);
             }
-            else if (rightNode != null && traversedNodes.contains(rightNode)) {
+            else if (rightNode != null && getDirection(rightNode, topNode, traverseDirection) == 1) {
                 if (reset)
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
                 else
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 1);
-                return setEmbedding(geneNode, rightNode, bottomNode, traversedNodes, reset);
+                return setEmbedding(geneNode, rightNode, topNode, bottomNode, traverseDirection, reset);
             } else {
                 return false; // something is wrong
             }
         } else {
-            return !geneNode.isLeaf() && setEmbedding(geneNode.getLeft(), netNode, bottomNode, traversedNodes, reset)
-                    && setEmbedding(geneNode.getRight(), netNode, bottomNode, traversedNodes, reset);
+            return !geneNode.isLeaf() &&
+                    setEmbedding(geneNode.getLeft(), netNode, topNode, bottomNode, traverseDirection, reset) &&
+                    setEmbedding(geneNode.getRight(), netNode, topNode, bottomNode, traverseDirection, reset);
         }
+    }
+
+    /** get traversal direction to node given the starting node and the traversal direction
+     * @return 0 -> left, 1 -> right, -1 wrong
+     */
+    private int getDirection(NetworkNode node, NetworkNode start, String direction) {
+        int dir = -1, i = 0;
+        while (start != node && i < direction.length()) {
+            NetworkNode left = start.getLeftChild();
+            NetworkNode right = start.getRightChild();
+            if (left != null && direction.charAt(i) == '0') {
+                start = left;
+                dir = 0;
+            } else if (right != null && direction.charAt(i) == '1') {
+                start = right;
+                dir = 1;
+            } else
+                return -1;  // something is wrong
+            i++;
+        }
+        return start == node ? dir : -1;
     }
 }
