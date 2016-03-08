@@ -7,15 +7,15 @@ import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
-@Description("Uses continuous rates stored in clock space, which should have a standard normal prior distribution." +
-"These are scaled to have a spread of 'stdev' and a mean in real space of 1.")
-public class RealRates extends BranchRateModel.Base implements SpeciesTreeRates {
+@Description("Nothing yet!")
+public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
     final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
     final public Input<RealParameter> treeRatesInput = new Input<>("treeRates", "Per-branch rates. Must have a log standard normal prior distribution.", Input.Validate.REQUIRED);
 
     private double[] realRatesArray;
     private double[] storedRatesArray;
+    private double sumToOneScaleFactor;
     private int nEstimatedRates;
     private int rootNodeNumber;
     private boolean estimateRoot;
@@ -57,7 +57,9 @@ public class RealRates extends BranchRateModel.Base implements SpeciesTreeRates 
             nEstimatedRates = speciesNodes.length - 1;
         }
 
+        // set branch rates so that their sum equals one
         branchRates.setDimension(nEstimatedRates);
+        sumToOneScaleFactor = 1.0 / nEstimatedRates;
 
         needsUpdate = true;
     }
@@ -73,7 +75,7 @@ public class RealRates extends BranchRateModel.Base implements SpeciesTreeRates 
 
         final Double[] treeRatesArray = treeRatesInput.get().getValues();
         for (int i = 0; i < nEstimatedRates; i++) {
-            realRatesArray[i] = treeRatesArray[i] * estimatedMean;
+            realRatesArray[i] = treeRatesArray[i] * estimatedMean / sumToOneScaleFactor;
         }
 
         if (!estimateRoot) realRatesArray[rootNodeNumber] = estimatedMean;

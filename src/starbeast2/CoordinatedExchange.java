@@ -2,7 +2,6 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +50,8 @@ public class CoordinatedExchange extends CoordinatedOperator {
     private int nSpeciesNodes;
     private int czBranchCount;
 
-    private List<List<SortedMap<Node, Node>>> forwardMovedNodes;
-    private List<SetMultimap<Integer, Node>> forwardGraftNodes;
+    private List<List<SortedMap<Node, Node>>> movedNodes;
+    private List<SetMultimap<Integer, Node>> graftNodes;
     
     private boolean testing = false;
 
@@ -87,7 +86,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
 
             final int c2 = sisg(yNode) + sisg(cNode);
 
-            fillForwardNodes(); // fills in forwardMovedNodes and forwardGraftNodes
+            fillNodes(); // fills in movedNodes and graftNodes
             pruneAndRegraft(yNode, cNode, bNode);
 
             final int validGPafter = validGP - c2 + sisg(yNode) + sisg(cNode);
@@ -98,14 +97,35 @@ public class CoordinatedExchange extends CoordinatedOperator {
             // doesn't execute if testing
             if (!testing && !pickWide()) return Double.NEGATIVE_INFINITY;
 
-            fillForwardNodes(); // fills in forwardMovedNodes and forwardGraftNodes
+            fillNodes(); // fills in movedNodes and graftNodes
             pruneAndRegraft(yNode, cNode, bNode);
         }
 
         for (int i = 0; i < czBranchCount; i++) {
-            final List<SortedMap<Node, Node>> perBranchMovedNodes = forwardMovedNodes.get(i);
-            final SetMultimap<Integer, Node> perBranchGraftNodes = forwardGraftNodes.get(i);
-            logHastingsRatio += rearrangeGeneTrees(perBranchMovedNodes, perBranchGraftNodes);
+            final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);
+            final SetMultimap<Integer, Node> perBranchGraftNodes = graftNodes.get(i);
+            final double logForward = rearrangeGeneTrees(perBranchMovedNodes, perBranchGraftNodes, true);
+            assert logForward != Double.NEGATIVE_INFINITY;
+            if (logForward == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+            else logHastingsRatio += logForward;
+        }
+
+        // compute reverse move (Hastings ratio denominator)
+        final Node bNodeTmp = bNode;
+        final Node cNodeTmp = cNode;
+
+        bNode = cNodeTmp;
+        cNode = bNodeTmp;
+
+        fillNodes(); // fills in movedNodes and graftNodes for reverse move
+
+        for (int i = 0; i < czBranchCount; i++) {
+            final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);
+            final SetMultimap<Integer, Node> perBranchGraftNodes = graftNodes.get(i);
+            final double logReverse = rearrangeGeneTrees(perBranchMovedNodes, perBranchGraftNodes, false);
+            assert logReverse != Double.NEGATIVE_INFINITY;
+            if (logReverse == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
+            else logHastingsRatio -= logReverse;
         }
 
         return logHastingsRatio;
@@ -208,11 +228,11 @@ public class CoordinatedExchange extends CoordinatedOperator {
     }
 
     // fills forward nodes by destination branch (c through z) 
-    private void fillForwardNodes() {
+    private void fillNodes() {
         // must be done before any changes are made to the gene or species trees
         Node childNode = cNode;
-        forwardMovedNodes = new ArrayList<>();
-        forwardGraftNodes = new ArrayList<>();
+        movedNodes = new ArrayList<>();
+        graftNodes = new ArrayList<>();
         czBranchCount = 0;
         while (childNode != zNode) {
             czBranchCount++;
@@ -221,8 +241,8 @@ public class CoordinatedExchange extends CoordinatedOperator {
             final double parentNodeHeight = parentNode.getHeight();
             final List<SortedMap<Node, Node>> perBranchMovedNodes = getMovedPairs(childNodeHeight, parentNodeHeight);
             final SetMultimap<Integer, Node> perBranchGraftNodes = getGraftBranches(childNode);
-            forwardMovedNodes.add(0, perBranchMovedNodes); // needs to be added in reverse order
-            forwardGraftNodes.add(0, perBranchGraftNodes); // because nodes must be grafted oldest to youngest
+            movedNodes.add(0, perBranchMovedNodes); // needs to be added in reverse order
+            graftNodes.add(0, perBranchGraftNodes); // because nodes must be grafted oldest to youngest
             childNode = parentNode;
         }
     }
@@ -249,30 +269,10 @@ public class CoordinatedExchange extends CoordinatedOperator {
         disownedChild.makeDirty(Tree.IS_FILTHY);
     }
 
-    // for testing purposes
-    /* public void manipulateSpeciesTree(Node argBrother) {
-        brother = argBrother;
-        parent = brother.getParent();
-
-        final Node grandparent = parent.getParent();
-        if (grandparent.getLeft().getNr() == parent.getNr()) {
-            cousin = grandparent.getRight();
-        } else {
-            cousin = grandparent.getLeft();
-        }
-
-        forwardMovedNodes = getMovedPairs(brother);
-        forwardGraftNodes = getGraftBranches(cousin);
-
-        exchangeNodes(parent, grandparent, brother, cousin);
-    } */
-
-    private double rearrangeGeneTrees(List<SortedMap<Node, Node>> branchMovedNodes, SetMultimap<Integer, Node> branchGraftNodes) {
+    private double rearrangeGeneTrees(List<SortedMap<Node, Node>> branchMovedNodes, SetMultimap<Integer, Node> branchGraftNodes, boolean forwardMove) {
         double logHastingsRatio = 0.0;
 
-        final List<Map<Node, Integer>> forwardGraftCounts = new ArrayList<>();
         for (int j = 0; j < nGeneTrees; j++) {
-            final Map<Node, Integer> jForwardGraftCounts = new HashMap<>();
             final Set<Node> jForwardGraftNodes = branchGraftNodes.get(j);
             final SortedMap<Node, Node> jForwardMovedNodes = branchMovedNodes.get(j);
             for (final Entry<Node, Node> nodePair: jForwardMovedNodes.entrySet()) {
@@ -304,41 +304,12 @@ public class CoordinatedExchange extends CoordinatedOperator {
                 if (forwardGraftCount == 0) {
                     return Double.NEGATIVE_INFINITY;
                 } else {
-                    final Node chosenGraft = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
-                    pruneAndRegraft(movedNode, chosenGraft, disownedChild);
-                    movedNode.makeDirty(Tree.IS_FILTHY);
-                    jForwardGraftCounts.put(movedNode, forwardGraftCount);
-                }
-            }
-
-            forwardGraftCounts.add(jForwardGraftCounts);
-        }
-
-        SetMultimap<Integer, Node> reverseGraftNodes = getGraftBranches(bNode);
-
-        for (int j = 0; j < nGeneTrees; j++) {
-            final Map<Node, Integer> jForwardGraftCounts = forwardGraftCounts.get(j);
-            final Set<Node> jReverseGraftNodes = reverseGraftNodes.get(j);
-            for (Node movedNode: jForwardGraftCounts.keySet()) {
-                final double movedNodeHeight = movedNode.getHeight();
-                final int forwardGraftCount = jForwardGraftCounts.get(movedNode);
-                int reverseGraftCount = 0;
-
-                for (Node potentialGraft: jReverseGraftNodes) {
-                    final double potentialGraftBottom = potentialGraft.getHeight();
-                    double potentialGraftTop;
-                    if (potentialGraft.isRoot()) {
-                        potentialGraftTop = Double.POSITIVE_INFINITY;
-                    } else {
-                        potentialGraftTop = potentialGraft.getParent().getHeight();
-                    }
-
-                    if (movedNodeHeight > potentialGraftBottom && movedNodeHeight < potentialGraftTop) {
-                        reverseGraftCount++;
+                    logHastingsRatio += Math.log(forwardGraftCount);
+                    if (forwardMove) { // only actually change gene trees if this is the forward move
+                        final Node chosenGraft = validGraftBranches.get(Randomizer.nextInt(forwardGraftCount));
+                        pruneAndRegraft(movedNode, chosenGraft, disownedChild);
                     }
                 }
-
-                logHastingsRatio += Math.log(forwardGraftCount) - Math.log(reverseGraftCount);
             }
         }
 
