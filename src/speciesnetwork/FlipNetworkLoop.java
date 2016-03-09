@@ -17,6 +17,7 @@ import com.google.common.collect.Multimap;
  * @author Alexei Drummond
  * @author Chi Zhang
  */
+
 public class FlipNetworkLoop extends Operator {
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "The gene tree.", Input.Validate.REQUIRED);
@@ -86,10 +87,10 @@ public class FlipNetworkLoop extends Operator {
         final String proposedPathDir = loopPathDirections.get(rnd);
 
         // make the flip
-        // first reset the embedding of the current path
-        setEmbedding(geneNodeTop, topNode, topNode, hybridNode, currentPathDir, true);
-        // then build the new embedding of the proposed path
-        setEmbedding(geneNodeTop, topNode, topNode, hybridNode, proposedPathDir, false);
+        // first reset the embedding of the current path, then build the new embedding of the proposed path
+        if (!setEmbedding(geneNodeTop, topNode, hybridNode, currentPathDir, true) ||
+            !setEmbedding(geneNodeTop, topNode, hybridNode, proposedPathDir, false))
+            return Double.NEGATIVE_INFINITY;
 
         return 0.0;
     }
@@ -202,7 +203,7 @@ public class FlipNetworkLoop extends Operator {
     /**
      * set or reset the embedding according to the traversal direction of one side of the loop
      */
-    private boolean setEmbedding (Node geneNode, NetworkNode netNode, NetworkNode topNode, NetworkNode bottomNode,
+    private boolean setEmbedding (Node geneNode, NetworkNode netNode, NetworkNode bottomNode,
                                   String traverseDirection, boolean reset) {
         if (netNode.isLeaf()) return false;
         if (netNode == bottomNode) return true;
@@ -213,47 +214,43 @@ public class FlipNetworkLoop extends Operator {
             final NetworkNode leftNode = netNode.getLeftChild();
             final NetworkNode rightNode = netNode.getRightChild();
 
-            if (leftNode != null && getDirection(leftNode, topNode, traverseDirection) == 0) {
+            if (leftNode != null && getDirection(leftNode, bottomNode, traverseDirection) == '0') {
                 if (reset)
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
                 else
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 0);
-                return setEmbedding(geneNode, leftNode, topNode, bottomNode, traverseDirection, reset);
+                return setEmbedding(geneNode, leftNode, bottomNode, traverseDirection, reset);
             }
-            else if (rightNode != null && getDirection(rightNode, topNode, traverseDirection) == 1) {
+            else if (rightNode != null && getDirection(rightNode, bottomNode, traverseDirection) == '1') {
                 if (reset)
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, -1);
                 else
                     embedding.setMatrixValue(traversalNodeNr, geneNodeNr, 1);
-                return setEmbedding(geneNode, rightNode, topNode, bottomNode, traverseDirection, reset);
+                return setEmbedding(geneNode, rightNode, bottomNode, traverseDirection, reset);
             } else {
                 return false; // something is wrong
             }
         } else {
             return !geneNode.isLeaf() &&
-                    setEmbedding(geneNode.getLeft(), netNode, topNode, bottomNode, traverseDirection, reset) &&
-                    setEmbedding(geneNode.getRight(), netNode, topNode, bottomNode, traverseDirection, reset);
+                    setEmbedding(geneNode.getLeft(), netNode, bottomNode, traverseDirection, reset) &&
+                    setEmbedding(geneNode.getRight(), netNode, bottomNode, traverseDirection, reset);
         }
     }
 
-    /** get traversal direction to node given the starting node and the traversal direction
+    /** get traversal direction to node given the end node and the traversal direction
      * @return 0 -> left, 1 -> right, -1 wrong
      */
-    private int getDirection(NetworkNode node, NetworkNode start, String direction) {
-        int dir = -1, i = 0;
-        while (start != node && i < direction.length()) {
-            NetworkNode left = start.getLeftChild();
-            NetworkNode right = start.getRightChild();
-            if (left != null && direction.charAt(i) == '0') {
-                start = left;
-                dir = 0;
-            } else if (right != null && direction.charAt(i) == '1') {
-                start = right;
-                dir = 1;
-            } else
-                return -1;  // something is wrong
-            i++;
+    private int getDirection(NetworkNode node, NetworkNode end, String direction) {
+        // can go backward as child and parent directions are corresponded the same
+        int i = direction.length() - 1;
+        while (end != node && i >= 0) {
+            NetworkNode left = end.getLeftParent();
+            NetworkNode right = end.getRightParent();
+            if (left != null && direction.charAt(i) == '0') end = left;
+            else if (right != null && direction.charAt(i) == '1') end = right;
+            else return -1;  // something is wrong
+            i--;
         }
-        return start == node ? dir : -1;
+        return end == node ? direction.charAt(i) : -1;
     }
 }

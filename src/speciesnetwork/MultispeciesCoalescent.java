@@ -12,9 +12,9 @@ import beast.core.Input.Validate;
 import beast.core.State;
 
 /**
-* @author Remco Bouckaert
-* @author Joseph Heled
-* @author Huw Ogilvie
+ * @author Remco Bouckaert
+ * @author Joseph Heled
+ * @author Huw Ogilvie
  */
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")

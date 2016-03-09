@@ -18,8 +18,8 @@ import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
 
 /**
-* @author Huw Ogilvie
-* @author Chi Zhang
+ * @author Huw Ogilvie
+ * @author Chi Zhang
  */
 
 public class GeneTreeInSpeciesNetwork extends CalculationNode {

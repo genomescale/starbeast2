@@ -9,6 +9,11 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 import beast.core.Input.Validate;
 
+/**
+ * parse the network of extended newick format
+ * @author Huw Ogilvie
+ */
+
 public class NetworkParser extends Network implements StateNodeInitialiser {
     public final Input<TreeInterface> treeInput = new Input<>("tree", "Tree initialized from extended newick string", Validate.REQUIRED);
 
