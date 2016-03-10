@@ -21,7 +21,7 @@
 
   <populationModel alpha="2.0" beta="1.0" id="popModel" spec="speciesnetwork.ConstantPopulationIO" />
 
-  <run chainLength="1000000" id="mcmc" spec="MCMC" storeEvery="100">
+  <run chainLength="100000" id="mcmc" spec="MCMC" storeEvery="100">
     <state id="state" storeEvery="100">
       <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
         <taxonset id="taxonSuperset" spec="TaxonSet">
@@ -60,10 +60,18 @@
       </distribution>
     </distribution>
 
+    <!--
     <operator id="rebuildEmbedding" spec="speciesnetwork.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
+    -->
+
     <operator id="flipNetworkLoop" spec="speciesnetwork.FlipNetworkLoop" geneTree="@tree:gene1" speciesNetwork="@network:species" embedding="@embedding:gene1" weight="1.0"/>
 
-    <logger fileName="embedding.log" id="tracelog" logEvery="100" model="@posterior" sort="smart">
+    <operator id="scaleAndRebuild:gene1" spec="JointOperator" weight="5.0">
+      <operator id="scale:gene1" scaleFactor="0.5" spec="ScaleOperator" tree="@tree:gene1" weight="5.0"/>
+      <operator id="rebuild:gene1" spec="speciesnetwork.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="5.0"/>
+    </operator>
+
+    <logger fileName="embedding.species.log" id="tracelog" logEvery="100" model="@posterior" sort="smart">
       <log idref="posterior" />
       <log idref="speciescoalescent" />
       <log idref="prior" />
