@@ -8,7 +8,7 @@ import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 
 /**
-* @author Huw Ogilvie
+ * @author Huw Ogilvie
  */
 
 public class ConstantPopulation extends PopulationSizeModel {

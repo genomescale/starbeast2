@@ -7,8 +7,8 @@ import beast.core.CalculationNode;
 import beast.core.Description;
 
 /**
-* @author Huw Ogilvie
-* @author Joseph Heled
+ * @author Huw Ogilvie
+ * @author Joseph Heled
  */
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")

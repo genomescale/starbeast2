@@ -13,6 +13,8 @@ import beast.evolution.alignment.TaxonSet;
 /**
  * Network class to replace Tree class
  * It includes both bifurcation node (in-degree 1, out-degree 2 or 0(tip)) and reticulation node (in degree 2, out-degree 1).
+ * @author Chi Zhang
+ * @author Huw Ogilvie
  */
 
 @Description("Network representing reticulate evolution of species")

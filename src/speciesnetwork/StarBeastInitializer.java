@@ -29,8 +29,8 @@ import beast.evolution.tree.Tree;
 import beast.util.ClusterTree;
 
 /**
-* @author Joseph Heled
-* @author Huw Ogilvie
+ * @author Joseph Heled
+ * @author Huw Ogilvie
  */
 
 @Description("Set a starting point for a *BEAST analysis from gene alignment data.")

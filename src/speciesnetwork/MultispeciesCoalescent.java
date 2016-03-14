@@ -118,9 +118,7 @@ public class MultispeciesCoalescent extends Distribution {
 
                 final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
                 coalescentTimesIJ[0] = speciesEndTimes[i];
-                for (int k = 0; k < geneBranchEventCount; k++) {
-                    coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
-                }
+                System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
                 coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
 
                 allLineageCounts.get(i)[j] = geneBranchLineageCount;

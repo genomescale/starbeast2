@@ -1,5 +1,6 @@
 package speciesnetwork;
 
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
@@ -13,11 +14,11 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 /**
- * Flip a random gene tree lineage with all its descendants in one side of the loop to the other side in the network.
  * @author Alexei Drummond
  * @author Chi Zhang
  */
 
+@Description("Flip a random gene tree lineage with all its descendants in one side of the loop to another side in the network.")
 public class FlipNetworkLoop extends Operator {
     public Input<Tree> geneTreeInput =
             new Input<>("geneTree", "The gene tree.", Input.Validate.REQUIRED);

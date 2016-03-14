@@ -13,8 +13,10 @@ import beast.core.parameter.RealParameter;
 import beast.core.Distribution;
 
 /**
- * pure birth model for the species network
+ * Pure birth model for the species network.
+ * @author Chi Zhang
  */
+
 @Description("Pure birth model (i.e. no deaths) with hybridization")  // speciation times
 public class YuleHybridModel extends Distribution {
     public Input<Network> networkInput =

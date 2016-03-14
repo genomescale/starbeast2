@@ -1,5 +1,6 @@
 package speciesnetwork;
 
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
@@ -21,11 +22,11 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 /**
- * Rebuild the embedding of a gene tree in the species network.
  * @author Huw Ogilvie
  * @author Chi Zhang
  */
 
+@Description("Rebuild the embedding of a gene tree in the species network.")
 public class RebuildEmbedding extends Operator {
     public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);

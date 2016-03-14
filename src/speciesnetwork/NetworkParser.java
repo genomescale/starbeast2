@@ -2,6 +2,7 @@ package speciesnetwork;
 
 import java.util.List;
 
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
@@ -10,10 +11,11 @@ import beast.evolution.tree.TreeInterface;
 import beast.core.Input.Validate;
 
 /**
- * parse the network of extended newick format
+ * Parse the network of extended Newick format.
  * @author Huw Ogilvie
  */
 
+@Description("Parse the network of extended Newick format.")
 public class NetworkParser extends Network implements StateNodeInitialiser {
     public final Input<TreeInterface> treeInput = new Input<>("tree", "Tree initialized from extended newick string", Validate.REQUIRED);
 

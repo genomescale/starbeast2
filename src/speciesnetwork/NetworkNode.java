@@ -10,6 +10,8 @@ import beast.evolution.tree.Node;
  * NetworkNode that is like Node but has 2 parents and 2 children.
  * The right parent is null if it is a tree node.
  * The right child is null if it is a reticulation node.
+ * @author Chi Zhang
+ * @author Huw Ogilvie
  */
 
 @Description("Network node for binary rooted network")
@@ -120,15 +122,24 @@ public class NetworkNode extends BEASTObject {
         labelNr = nr;
     }
     
-    public int getReticulationNumber() throws Exception {
-        if (leftParent == null || rightParent == null) throw new Exception("Not a reticulation node.");
+    public int getReticulationNumber() {
+        if (leftParent == null || rightParent == null) throw new RuntimeException();
         final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
-        final int reticulationNumber = labelNr - reticulationNodeOffset;
-        return reticulationNumber;
+        return labelNr - reticulationNodeOffset;
     }
 
     public double getHeight() {
         return height;
+    }
+
+    public void setHeight(final double height) {
+        startEditing();
+        this.height = height;
+        isDirty |= Network.IS_DIRTY;
+        if (getLeftChild() != null)
+            getLeftChild().isDirty |= Network.IS_DIRTY;
+        if (getRightChild() != null)
+            getRightChild().isDirty |= Network.IS_DIRTY;
     }
 
     /**
@@ -196,6 +207,7 @@ public class NetworkNode extends BEASTObject {
         startEditing();
         leftChild = newLeftChild;
         leftChild.leftParent = this;
+        isDirty = Network.IS_FILTHY;
         updateSizes();
     }
 
@@ -203,6 +215,7 @@ public class NetworkNode extends BEASTObject {
         startEditing();
         rightChild = newRightChild;
         rightChild.rightParent = this;
+        isDirty = Network.IS_FILTHY;
         updateSizes();
     }
 
@@ -512,8 +525,8 @@ public class NetworkNode extends BEASTObject {
     }
 
     public String buildNewick(Double parentHeight, boolean isLeft) {
-        StringBuffer subtreeString = new StringBuffer();
-        if (leftParent == null || rightParent == null || isLeft) { //  only add children to left-attached reticulation nodes
+        StringBuilder subtreeString = new StringBuilder();
+        if (leftParent == null || rightParent == null || isLeft) { // only add children to left-attached reticulation nodes
             String leftSubtreeString = null;
             String rightSubtreeString = null;
             if (leftChild != null) leftSubtreeString = leftChild.buildNewick(height, true);
