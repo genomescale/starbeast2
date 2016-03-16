@@ -37,7 +37,7 @@ public class JointReembedding extends Operator {
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
     private Multimap<Node, Integer> geneNodeHeirs = HashMultimap.create();
     private Multimap<NetworkNode, Integer> speciesNodeHeirs = HashMultimap.create();
-
+    
     private int speciesLeafCount;
     private Tree geneTree;
     private Network speciesNetwork;
@@ -86,7 +86,7 @@ public class JointReembedding extends Operator {
         Operator op = operatorInput.get();
         double logHR = op.proposal();
         // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
-        if (!op.listStateNodes().isEmpty())
+        if (!op.listStateNodes().isEmpty())  // copied from JointOperator
             op.listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
 
         // then rebuild the embedding
@@ -202,7 +202,7 @@ public class JointReembedding extends Operator {
         } else {
             // embed both gene tree children
             return recurseRebuild(geneTreeNode.getLeft(), speciesNetworkNode) &&
-                    recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
+                   recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
         }
     }
 
@@ -241,7 +241,7 @@ public class JointReembedding extends Operator {
             return true;
         } else {
             return recurseNumberOfChoices(geneTreeNode.getLeft(), speciesNetworkNode, nChoices) &&
-                    recurseNumberOfChoices(geneTreeNode.getRight(), speciesNetworkNode, nChoices);
+                   recurseNumberOfChoices(geneTreeNode.getRight(), speciesNetworkNode, nChoices);
         }
     }
     

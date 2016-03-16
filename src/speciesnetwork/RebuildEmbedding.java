@@ -11,12 +11,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -77,8 +72,6 @@ public class RebuildEmbedding extends Operator {
         }
     }
 
-    /**
-     */
     @Override
     public double proposal() {
         // count the number of alternative traversing choices for the current state (n0)
@@ -86,8 +79,8 @@ public class RebuildEmbedding extends Operator {
         if (oldChoices < 0)
             return Double.NEGATIVE_INFINITY;  // not a valid embedding
 
+        // rebuild the embedding
         resetEmbedding();
-
         for (final Node geneLeaf : geneTree.getExternalNodes()) {
             setLeafNodeHeirs(geneLeaf);
             recurseGeneHeirs(geneLeaf);
@@ -95,7 +88,6 @@ public class RebuildEmbedding extends Operator {
         for (final NetworkNode speciesLeaf : speciesNetwork.getLeafNodes()) {
             recurseSpeciesHeirs(speciesLeaf);
         }
-        // rebuild the embedding
         if (!recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot()))
             return Double.NEGATIVE_INFINITY;
 
