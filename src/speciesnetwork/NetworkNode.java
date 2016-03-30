@@ -252,7 +252,7 @@ public class NetworkNode extends BEASTObject {
     /**
      * @return true if current node is reticulation node
      */
-    boolean isReticulation() {
+    public boolean isReticulation() {
         return nParents == 2;
     }
 

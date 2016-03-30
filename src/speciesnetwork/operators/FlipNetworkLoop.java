@@ -1,4 +1,6 @@
-package speciesnetwork;
+package speciesnetwork.operators;
+
+import java.util.*;
 
 import beast.core.Description;
 import beast.core.Input;
@@ -8,7 +10,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.*;
+import speciesnetwork.Network;
+import speciesnetwork.NetworkNode;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

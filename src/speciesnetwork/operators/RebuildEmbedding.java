@@ -1,10 +1,11 @@
-package speciesnetwork;
+package speciesnetwork.operators;
+
+import java.util.*;
 
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
-import beast.core.StateNode;
 import beast.core.parameter.IntegerParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -12,7 +13,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.*;
+import speciesnetwork.Network;
+import speciesnetwork.NetworkNode;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -22,16 +24,14 @@ import com.google.common.collect.Multimap;
  * @author Chi Zhang
  */
 
-@Description("Combine a gene tree operator with RebuildEmbedding.")
-public class JointReembedding extends Operator {
+@Description("Rebuild the embedding of a gene tree in the species network.")
+public class RebuildEmbedding extends Operator {
     public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
     public Input<TaxonSet> taxonSuperSetInput =
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
-    public Input<Operator> operatorInput
-            = new Input<>("operator", "Tree operator to combine into RebuildEmbedding.");
 
     private Map<String, NetworkNode> tipMap = new HashMap<>();
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
@@ -82,14 +82,7 @@ public class JointReembedding extends Operator {
         if (oldChoices < 0)
             return Double.NEGATIVE_INFINITY;  // not a valid embedding
 
-        // first make the operation
-        Operator op = operatorInput.get();
-        double logHR = op.proposal();
-        // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
-        if (!op.listStateNodes().isEmpty())  // copied from JointOperator
-            op.listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
-
-        // then rebuild the embedding
+        // rebuild the embedding
         resetEmbedding();
         for (final Node geneLeaf : geneTree.getExternalNodes()) {
             setLeafNodeHeirs(geneLeaf);
@@ -105,7 +98,34 @@ public class JointReembedding extends Operator {
         if (newChoices < 0)
             return Double.NEGATIVE_INFINITY;  // not a valid embedding
 
-        return logHR + (newChoices - oldChoices) * Math.log(2);
+        // print matrix for debugging
+        /* StringBuffer sb = new StringBuffer();
+        for (int i = -1; i < embedding.getMinorDimension2(); i++) {
+            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                if (i == -1) sb.append(j);
+                else sb.append(embedding.getMatrixValue(i, j));
+                sb.append(" ");
+            }
+            sb.append("\n");
+        }
+        System.out.println(sb); */
+
+        // the proposal ratio is (2^n1)/(2^n0)
+        return (newChoices - oldChoices) * Math.log(2);
+    }
+
+    public boolean initializeEmbedding() {
+        resetEmbedding();
+
+        for (final Node geneLeaf: geneTree.getExternalNodes()) {
+            setLeafNodeHeirs(geneLeaf);
+            recurseGeneHeirs(geneLeaf);
+        }
+        for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
+            recurseSpeciesHeirs(speciesLeaf);
+        }
+        // rebuild the embedding
+        return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot());
     }
 
     private void resetEmbedding() {
@@ -173,6 +193,23 @@ public class JointReembedding extends Operator {
 
             final NetworkNode leftSpecies = speciesNetworkNode.getLeftChild();
             final NetworkNode rightSpecies = speciesNetworkNode.getRightChild();
+
+            /* StringBuffer sb = new StringBuffer();
+            for (Integer i: requiredHeirs) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            sb.append("- ");
+            for (Integer i: speciesNodeHeirs.get(leftSpecies)) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            sb.append("- ");
+            for (Integer i: speciesNodeHeirs.get(rightSpecies)) {
+                sb.append(i);
+                sb.append(" ");
+            }
+            System.out.println(sb.toString()); */
 
             if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
                 if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
@@ -243,15 +280,5 @@ public class JointReembedding extends Operator {
             return recurseNumberOfChoices(geneTreeNode.getLeft(), speciesNetworkNode, nChoices) &&
                    recurseNumberOfChoices(geneTreeNode.getRight(), speciesNetworkNode, nChoices);
         }
-    }
-    
-    @Override
-    public List<StateNode> listStateNodes() {
-        List<StateNode> stateNodeList = new ArrayList<>();
-
-        stateNodeList.addAll(operatorInput.get().listStateNodes());
-        stateNodeList.addAll(super.listStateNodes());
-
-        return stateNodeList;
     }
 }

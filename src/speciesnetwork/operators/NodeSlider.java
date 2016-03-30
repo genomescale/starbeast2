@@ -1,4 +1,7 @@
-package speciesnetwork;
+package speciesnetwork.operators;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import beast.core.Description;
 import beast.core.Input;
@@ -8,8 +11,8 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.ArrayList;
-import java.util.List;
+import speciesnetwork.Network;
+import speciesnetwork.NetworkNode;
 
 /**
  * @author Chi Zhang

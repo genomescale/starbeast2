@@ -1,11 +1,14 @@
-package speciesnetwork;
+package speciesnetwork.operators;
+
+import java.util.List;
 
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.util.Randomizer;
 
-import java.util.List;
+import speciesnetwork.Network;
+import speciesnetwork.NetworkNode;
 
 /**
  * @author Chi Zhang

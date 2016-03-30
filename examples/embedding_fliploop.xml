@@ -61,11 +61,11 @@
     </distribution>
 
     <!--
-    <operator id="rebuildEmbedding" spec="speciesnetwork.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
+    <operator id="rebuildEmbedding" spec="speciesnetwork.operators.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
     -->
-    <operator id="flipNetworkLoop" spec="speciesnetwork.FlipNetworkLoop" geneTree="@tree:gene1" speciesNetwork="@network:species" embedding="@embedding:gene1" weight="1.0"/>
+    <operator id="flipNetworkLoop" spec="speciesnetwork.operators.FlipNetworkLoop" geneTree="@tree:gene1" speciesNetwork="@network:species" embedding="@embedding:gene1" weight="1.0"/>
 
-    <operator id="scaleAndRebuild:gene1" spec="speciesnetwork.JointReembedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="5.0">
+    <operator id="scaleAndRebuild:gene1" spec="speciesnetwork.operators.JointReembedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="5.0">
       <operator id="scale:gene1" scaleFactor="0.5" spec="ScaleOperator" tree="@tree:gene1" weight="5.0"/>
     </operator>
 

@@ -1,8 +1,6 @@
 package speciesnetwork;
 
-import static java.lang.Math.abs;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +25,8 @@ import beast.evolution.alignment.distance.JukesCantorDistance;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.ClusterTree;
+
+import speciesnetwork.operators.RebuildEmbedding;
 
 /**
  * @author Joseph Heled
