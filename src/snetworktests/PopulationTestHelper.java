@@ -2,7 +2,6 @@ package snetworktests;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -16,7 +15,7 @@ import speciesnetwork.NetworkParser;
 import speciesnetwork.GeneTreeInSpeciesNetwork;
 import speciesnetwork.MultispeciesCoalescent;
 import speciesnetwork.PopulationSizeModel;
-import speciesnetwork.RebuildEmbedding;
+import speciesnetwork.operators.RebuildEmbedding;
 
 abstract class PopulationTestHelper {
     String newickSpeciesNetwork;

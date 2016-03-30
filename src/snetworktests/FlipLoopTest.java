@@ -2,8 +2,6 @@ package snetworktests;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import beast.evolution.alignment.Taxon;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -11,9 +9,11 @@ import static org.junit.Assert.assertTrue;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import speciesnetwork.*;
+import speciesnetwork.NetworkParser;
+import speciesnetwork.operators.*;
 
 public class FlipLoopTest {
     String newickSpeciesNetwork;

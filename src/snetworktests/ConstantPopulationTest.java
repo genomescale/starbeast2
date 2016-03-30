@@ -2,10 +2,8 @@ package snetworktests;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.Test;
 
-import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
