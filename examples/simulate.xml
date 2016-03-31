@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" version="2.0">
+  <data id="gene1" name="alignment">
+    <sequence id="gene1_a1" taxon="a1" totalcount="4" value="-" />
+    <sequence id="gene1_a2" taxon="a2" totalcount="4" value="-" />
+    <sequence id="gene1_b1" taxon="b1" totalcount="4" value="-" />
+    <sequence id="gene1_b2" taxon="b2" totalcount="4" value="-" />
+    <sequence id="gene1_c1" taxon="c1" totalcount="4" value="-" />
+    <sequence id="gene1_c2" taxon="c2" totalcount="4" value="-" />
+  </data>
+  <!-- data id="gene2" name="alignment">
+    <sequence id="gene2_a1" taxon="a1" totalcount="4" value="-" />
+    <sequence id="gene2_a2" taxon="a2" totalcount="4" value="-" />
+    <sequence id="gene2_b1" taxon="b1" totalcount="4" value="-" />
+    <sequence id="gene2_b2" taxon="b2" totalcount="4" value="-" />
+    <sequence id="gene2_c1" taxon="c1" totalcount="4" value="-" />
+    <sequence id="gene2_c2" taxon="c2" totalcount="4" value="-" />
+  </data -->
+
+  <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((A:0.2,#H1:0.1)d:0.3,((B:0.1)#H1:0.2,C:0.3)e:0.2)f"/>
+
+  <run chainLength="100" id="mcmc" spec="MCMC" storeEvery="100">
+    <state id="state" storeEvery="100">
+      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.5</parameter>
+      <parameter id="popSizes" estimate="false" name="stateNode">0.1</parameter>
+      <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
+        <taxonset id="taxonSuperset" spec="TaxonSet">
+          <taxon id="A" spec="TaxonSet">
+            <taxon id="a1" spec="Taxon" />
+            <taxon id="a2" spec="Taxon" />
+          </taxon>
+          <taxon id="B" spec="TaxonSet">
+            <taxon id="b1" spec="Taxon" />
+            <taxon id="b2" spec="Taxon" />
+          </taxon>
+          <taxon id="C" spec="TaxonSet">
+            <taxon id="c1" spec="Taxon" />
+            <taxon id="c2" spec="Taxon" />
+          </taxon>
+        </taxonset>
+      </stateNode>
+      <tree id="tree:gene1" name="stateNode">
+        <taxonset alignment="@gene1" id="TaxonSet:gene1" spec="TaxonSet" />
+      </tree>
+      <stateNode id="embedding:gene1" spec="parameter.IntegerParameter">-1</stateNode>
+      <!-- tree id="tree:gene2" name="stateNode">
+        <taxonset alignment="@gene2" id="TaxonSet:gene2" spec="TaxonSet" />
+      </tree>
+      <stateNode id="embedding:gene2" spec="parameter.IntegerParameter">-1</stateNode -->
+    </state>
+
+    <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species">
+      <geneTree idref="tree:gene1"/>
+      <rebuildEmbedding id="reEmbedding1" spec="speciesnetwork.operators.RebuildEmbedding" geneTree="@tree:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="0.0"/>
+      <!-- geneTree idref="tree:gene2"/>
+      <rebuildEmbedding id="reEmbedding2" spec="speciesnetwork.operators.RebuildEmbedding" geneTree="@tree:gene2" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" embedding="@embedding:gene2" weight="0.0"/ -->
+      <populationModel popSizes="@popSizes" id="popModel" spec="speciesnetwork.ConstantPopulation" />
+    </init>
+
+    <distribution id="posterior" spec="util.CompoundDistribution">
+      <distribution id="Coalescent" spec="speciesnetwork.MultispeciesCoalescent" populationModel="@popModel" speciesNetwork="@network:species">
+        <geneTree id="geneTree:gene1" spec="speciesnetwork.GeneTreeInSpeciesNetwork" ploidy="2.0" geneTree="@tree:gene1" speciesNetwork="@network:species" embedding="@embedding:gene1" gamma="@gammaP"/>
+        <!-- geneTree id="geneTree:gene2" spec="speciesnetwork.GeneTreeInSpeciesNetwork" ploidy="2.0" geneTree="@tree:gene2" speciesNetwork="@network:species" embedding="@embedding:gene2" gamma="@gammaP"/ -->
+      </distribution>
+      <distribution id="prior" spec="util.CompoundDistribution">
+      </distribution>
+      <distribution id="likelihood" spec="util.CompoundDistribution">
+      </distribution>
+    </distribution>
+
+    <operator id="coalSimulator1" spec="speciesnetwork.simulator.CoalescentSimulator" geneTree="@tree:gene1" speciesNetwork="@network:species" populationModel="@popModel" taxonSuperset="@taxonSuperset" embedding="@embedding:gene1" weight="1.0"/>
+    <!-- operator id="coalSimulator2" spec="speciesnetwork.simulator.CoalescentSimulator" geneTree="@tree:gene2" speciesNetwork="@network:species" populationModel="@popModel" taxonSuperset="@taxonSuperset" embedding="@embedding:gene2" weight="1.0"/ -->
+
+    <logger id="screenlog" logEvery="10" model="@posterior">
+      <log idref="posterior" />
+      <log idref="Coalescent" />
+      <log idref="prior" />
+      <log idref="likelihood" />
+    </logger>
+    <logger fileName="simulate.species.trees" id="treelog:species" logEvery="1" mode="tree">
+      <log id="networkLogger:species" spec="speciesnetwork.SpeciesNetworkLogger" speciesNetwork="@network:species" />
+    </logger>
+    <logger fileName="simulate.gene1.log" id="tracelog:gene1" logEvery="1" model="@posterior">
+      <log idref="embedding:gene1" />
+    </logger>
+    <logger fileName="simulate.gene1.trees" id="treelog:gene1" logEvery="1" mode="tree">
+      <log id="treeLogger:gene1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@tree:gene1" />
+    </logger>
+    <!-- logger fileName="simulate.gene2.log" id="tracelog:gene2" logEvery="1" model="@posterior">
+      <log idref="embedding:gene2" />
+    </logger>
+    <logger fileName="simulate.gene2.trees" id="treelog:gene2" logEvery="1" mode="tree">
+      <log id="treeLogger:gene2" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@tree:gene2" />
+    </logger -->
+  </run>
+</beast>
