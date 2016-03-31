@@ -31,6 +31,7 @@ import speciesnetwork.operators.RebuildEmbedding;
 /**
  * @author Joseph Heled
  * @author Huw Ogilvie
+ * @author Chi Zhang
  */
 
 @Description("Set a starting point for a *BEAST analysis from gene alignment data.")
@@ -53,50 +54,31 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
     final public Input<Method> initMethod = new Input<>("method", "Initialise either with a totally random state" +
             "or a point estimate based on alignments data (default point-estimate)", Method.POINT, Method.values());
-
-    final public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "Species network to initialize.");
-
+    final public Input<Network> speciesNetworkInput
+            = new Input<>("speciesNetwork", "Species network to initialize.");
     final public Input<List<Tree>> geneTreesInput =
             new Input<>("geneTree", "Gene tree to initialize.", new ArrayList<>());
-
-    final public Input<YuleHybridModel> hybridYuleInput = new Input<>("hybridYule",
-            "The species network (with hybridization) to initialize.", Validate.XOR, speciesNetworkInput);
-
-    final public Input<RealParameter> birthRateInput = new Input<>("birthRate", "Network prior birth rate to initialize.");
-
-    final public Input<RealParameter> hybridRateInput = new Input<>("hybridRate", "Network hybridization rate to initialize.");
-
-    final public Input<Function> muInput = new Input<>("baseRate", "Main clock rate used to scale trees (default 1).");
-
-    final public Input<PopulationSizeModel> populationFunctionInput = new Input<>("populationModel",
-            "The species network population size model.", Validate.REQUIRED);
-
     final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding",
             "Operator which rebuilds embedding of gene trees within species tree.", new ArrayList<>());
-    // private boolean hasCalibrations;  // don't deal with calibrations at the moment
+    final public Input<YuleHybridModel> hybridYuleInput = new Input<>("hybridYule",
+            "The species network (with hybridization) to initialize.", Validate.XOR, speciesNetworkInput);
+    final public Input<RealParameter> birthRateInput =
+            new Input<>("birthRate", "Network prior birth rate to initialize.");
+    final public Input<RealParameter> hybridRateInput =
+            new Input<>("hybridRate", "Network hybridization rate to initialize.");
+    final public Input<Function> clockRateInput =
+            new Input<>("baseRate", "Main clock rate used to scale trees (default 1).");
+    final public Input<PopulationSizeModel> populationModelInput = new Input<>("populationModel",
+            "The species network population size model.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() {
         // what does this do and is it dangerous to call it or not to call it at the start or at the end??????
         super.initAndValidate();
-        // do we need to initialize both species network and gene trees in this method???
     }
 
     @Override
     public void initStateNodes() {
-        // initialize population sizes to equal average branch length (equivalent to 2Ne = E[1/lambda])
-        final NetworkNode speciesNetworkRoot = speciesNetworkInput.get().getRoot();
-        double speciesNetworkLength = 0;
-        for (final NetworkNode n : speciesNetworkRoot.getAllChildNodes()) {
-            if(n.getLeftParent() != null)  speciesNetworkLength += n.getLeftLength();
-            if(n.getRightParent() != null) speciesNetworkLength += n.getRightLength();
-        }
-        final int nSpeciesBranches = speciesNetworkInput.get().getBranchCount();
-        final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
-
-        final PopulationSizeModel populationModel = populationFunctionInput.get();
-        populationModel.initPopSizes(averageBranchLength);
-
         final Method method = initMethod.get();
         switch( method ) {
             case POINT:
@@ -109,9 +91,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         
         // initialize embedding for all gene trees
         for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
-            if (!operator.initializeEmbedding()) {
-                // TODO: in trouble
-            }
+            if (!operator.initializeEmbedding())
+                throw new RuntimeException("Failed to build gene tree embedding!");
         }
     }
 
@@ -202,8 +183,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     private void fullInit() {
         // Build gene trees from  alignments
-
-        final Function muInput = this.muInput.get();
+        final Function muInput = clockRateInput.get();
         final double mu = (muInput != null) ? muInput.getArrayValue() : 1;
 
         final Network sNetwork = speciesNetworkInput.get();
@@ -361,42 +341,39 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     private void randomInit() {
-        double lambda = 1;
-        if(birthRateInput.get() != null) lambda = birthRateInput.get().getArrayValue();
-
         final Network sNetwork = speciesNetworkInput.get();
-        final TaxonSet species = sNetwork.taxonSetInput.get();
-        final int nSpecies = species.asStringList().size();
-        double s = 0;
-        for(int k = 2; k <= nSpecies; ++k) s += 1.0/k;
-        final double rootHeight = (1/lambda) * s;
-        sNetwork.scale(rootHeight/sNetwork.getRoot().getHeight());
 
+        // initialize population sizes to equal average branch length
+        // final double speciesNetworkLength = sNetwork.getNetworkLength();
+        // final int nSpeciesBranches = sNetwork.getBranchCount();
+        // final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
+        // final PopulationSizeModel populationModel = populationModelInput.get();
+        // populationModel.initPopSizes(averageBranchLength);
+
+        // do not scale the species network at the moment!
+        // final TaxonSet species = sNetwork.taxonSetInput.get();
+        // final int nSpecies = species.asStringList().size();
+        // double s = 0;  for(int k = 2; k <= nSpecies; ++k) s += 1.0/k;
+        // final double rootHeight = (1/lambda) * s;
+        // sNetwork.scale(rootHeight/sNetwork.getRoot().getHeight());
+
+        final double rootHeight = sNetwork.getRoot().getHeight();
         final List<Tree> geneTrees = geneTreesInput.get();
         for (final Tree gtree : geneTrees) {
-            gtree.makeCaterpillar(10 * rootHeight, 10 * rootHeight/gtree.getInternalNodeCount(), true);
+            gtree.makeCaterpillar(10*rootHeight, 10*rootHeight/gtree.getInternalNodeCount(), true);
         }
     }
 
-    // private void initWithCalibrations() throws Exception {}
-
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        // if( hasCalibrations ) { stateNodes.add((Tree) calibratedYule.get().treeInput.get()); } else {
         stateNodes.add(speciesNetworkInput.get());
-
         for(final Tree gtree : geneTreesInput.get()) {
             stateNodes.add(gtree);
         }
 
         final RealParameter brate = birthRateInput.get();
-        if(brate != null) {
-            stateNodes.add(brate) ;
-        }
-
+        if(brate != null) stateNodes.add(brate);
         final RealParameter hrate = hybridRateInput.get();
-        if(hrate != null) {
-            stateNodes.add(hrate) ;
-        }
+        if(hrate != null) stateNodes.add(hrate);
     }
 }

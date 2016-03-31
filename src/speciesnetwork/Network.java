@@ -273,6 +273,15 @@ public class Network extends StateNode {
         return getNodeCount() + getReticulationNodeCount();
     }
 
+    public double getNetworkLength () {
+        double length = 0;
+        for (final NetworkNode node : root.getAllChildNodes()) {
+            if(node.getLeftParent() != null) length += node.getLeftLength();
+            if(node.getRightParent()!= null) length += node.getRightLength();
+        }
+        return length;
+    }
+
     /**
      * @return an array of taxon names in order of their node numbers
      */

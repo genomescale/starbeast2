@@ -380,13 +380,11 @@ public class NetworkNode extends BEASTObject {
         recursiveResetClones();
         return recursiveCopy();
     }
-
     private void recursiveResetClones() {
         clone = null;
         if (leftChild != null) leftChild.recursiveResetClones();
         if (rightChild != null) rightChild.recursiveResetClones();
     }
-
     private NetworkNode recursiveCopy() {
         if (clone == null) {
             clone = new NetworkNode();
@@ -513,11 +511,6 @@ public class NetworkNode extends BEASTObject {
         return labels.contains(label);
     }
 
-
-    /**
-     * many other methods below
-     */
-
     @Override
     public String toString() {
         // System.out.println(getID());
@@ -582,4 +575,3 @@ public class NetworkNode extends BEASTObject {
         return getBranchNumber(1);
     }
 }
-

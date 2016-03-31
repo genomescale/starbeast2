@@ -25,32 +25,40 @@ import speciesnetwork.*;
 public class CoalescentSimulator extends Operator {
     public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "Species network for simulating the gene tree.", Validate.REQUIRED);
-    public Input<List<Tree>> geneTreesInput =
-            new Input<>("geneTree", "Gene trees to initialize/simulate.", new ArrayList<>());
     public Input<PopulationSizeModel> populationInput =
             new Input<>("populationModel", "The species network population size model.", Validate.REQUIRED);
+    public Input<Tree> geneTreeInput =
+            new Input<>("geneTree", "The gene tree to be simulated.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput =
+            new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<IntegerParameter> embeddingInput =
+            new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
 
     private Network speciesNetwork;
 
-    public void initStateNodes() {
+    @Override
+    public void initAndValidate() {
         speciesNetwork = speciesNetworkInput.get();
-
-        // population sizes
         final int nSpeciesBranches = speciesNetwork.getBranchCount();
-        PopulationSizeModel populationModel = populationInput.get();
-        populationModel.initPopSizes(nSpeciesBranches);
+
+        // PopulationSizeModel populationModel = populationInput.get();
+        // populationModel.initPopSizes(nSpeciesBranches);
 
     }
 
-    public void simulate() {
+    @Override
+    public double proposal() {
         NetworkNode networkRoot = speciesNetwork.getRoot();
 
-        final List<Tree> geneTrees = geneTreesInput.get();
-        for (Tree gtree : geneTrees) {
-            // reset visited indicator
-            networkRoot.recursiveResetVisited();
-            simulate(networkRoot);
-        }
+        final Tree geneTree = geneTreeInput.get();
+
+        // reset visited indicator
+        networkRoot.recursiveResetVisited();
+        simulate(networkRoot);
+
+
+
+        return 0.0;
     }
 
     // recursively simulate lineages coalescent in each population
