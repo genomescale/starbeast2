@@ -26,12 +26,12 @@ public class PairRateExchange extends Operator {
 
     @Override
     public void initAndValidate() {
-        deltaScaleFactor = deltaInput.get();
-
         final RealParameter treeRates = treeRatesInput.get();
         nNodes = treeRates.getDimension();
         lowerBound = treeRates.getLower();
         upperBound = treeRates.getUpper();
+
+        deltaScaleFactor = deltaInput.get() / nNodes;
     }
 
     @Override

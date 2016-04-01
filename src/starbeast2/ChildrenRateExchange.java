@@ -24,6 +24,7 @@ public class ChildrenRateExchange extends Operator {
 
     private TreeInterface tree;
 
+    private int nNodes;
     private int nLeafNodes;
     private int nInternalNodes;
     private double deltaScaleFactor;
@@ -37,9 +38,12 @@ public class ChildrenRateExchange extends Operator {
         deltaScaleFactor = deltaInput.get();
 
         final RealParameter treeRates = treeRatesInput.get();
-        nInternalNodes = treeRates.getDimension() - nLeafNodes;
+        nNodes = treeRates.getDimension();
+        nInternalNodes = nNodes - nLeafNodes;
         lowerBound = treeRates.getLower();
         upperBound = treeRates.getUpper();
+
+        deltaScaleFactor = deltaInput.get() / nNodes;
     }
 
     @Override
