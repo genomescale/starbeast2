@@ -1,14 +1,7 @@
 package speciesnetwork;
 
 import static java.lang.Math.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import beast.core.Description;
 import beast.core.Function;
@@ -25,7 +18,6 @@ import beast.evolution.alignment.distance.JukesCantorDistance;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.ClusterTree;
-
 import speciesnetwork.operators.RebuildEmbedding;
 
 /**

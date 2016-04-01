@@ -351,7 +351,7 @@ public class NetworkNode extends BEASTObject {
         return childNodes;
     }
     // recursive
-    public void getAllChildNodes(final List<NetworkNode> childNodes) {
+    private void getAllChildNodes(final List<NetworkNode> childNodes) {
         if (visited) return;
 
         childNodes.add(this);

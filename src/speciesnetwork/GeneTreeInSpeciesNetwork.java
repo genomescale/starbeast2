@@ -150,7 +150,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
                 final int reticulationNumber = speciesNetworkNode.getReticulationNumber();
                 final double leftP = gamma.getValue(reticulationNumber);
                 // determine traversal direction backward in time
-                final double traversalP = speciesNetworkNode.getLeftBranchNumber() == speciesBranchNumber ? leftP : 1 - leftP;
+                final double traversalP = (speciesNetworkNode.getLeftBranchNumber() == speciesBranchNumber) ? leftP : 1 - leftP;
                 logGammaSum += Math.log(traversalP);
             }
             // traversal direction forward in time
