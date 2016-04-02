@@ -21,13 +21,12 @@ import beast.core.State;
 public class MultispeciesCoalescent extends Distribution {
     public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
-    public Input<List<GeneTreeInSpeciesNetwork>> geneTreeInput =
+    public Input<List<GeneTreeInSpeciesNetwork>> geneTreeWrapperInput =
             new Input<>("geneTreeWithin", "Gene trees within the species network.", new ArrayList<>());
     public Input<PopulationSizeModel> populationModelInput =
             new Input<>("populationModel", "The species network population model.", Validate.REQUIRED);
 
     private int nGeneTrees;
-    private int speciesNetworkNodeCount;
     private double[] perGenePloidy;
 
     final private List<int[]> allLineageCounts = new ArrayList<>();
@@ -38,7 +37,7 @@ public class MultispeciesCoalescent extends Distribution {
 
     @Override
     public void initAndValidate() {
-        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeInput.get();
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeWrapperInput.get();
         nGeneTrees = geneTrees.size();
 
         perGenePloidy = new double[nGeneTrees];
@@ -47,31 +46,23 @@ public class MultispeciesCoalescent extends Distribution {
             perGenePloidy[i] = geneTreeI.ploidy;
         }
 
-        final PopulationSizeModel populationModel = populationModelInput.get();
         final Network speciesNetwork = speciesNetworkInput.get();
         final int speciesBranchCount = speciesNetwork.getBranchCount();
-
-        speciesNetworkNodeCount = speciesNetwork.getNodeCount();
+        final PopulationSizeModel populationModel = populationModelInput.get();
         populationModel.initPopSizes(speciesBranchCount);
     }
 
     @Override
     public double calculateLogP() {
         final Network speciesNetwork = speciesNetworkInput.get();
+        // assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
+        final int speciesBranchCount = speciesNetwork.getBranchCount();
         final int speciesNodeCount = speciesNetwork.getNodeCount();
-        final int reticulationNodeCount = speciesNetwork.getReticulationNodeCount();
-        // each reticulation node has two branches
-        final int speciesBranchCount = speciesNodeCount + reticulationNodeCount;
 
-        final PopulationSizeModel populationModel = populationModelInput.get();
-        speciesNetworkNodeCount = speciesNetwork.getNodeCount();
         double[] speciesStartTimes = new double[speciesBranchCount]; // the earlier date (rootward end)
         double[] speciesEndTimes = new double[speciesBranchCount]; // the later date (tipward end)
 
-        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeInput.get();
-        // assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
-
-        for (int i = 0; i < speciesNetworkNodeCount; i++) {
+        for (int i = 0; i < speciesNodeCount; i++) {
             final NetworkNode speciesNetworkNode = speciesNetwork.getNode(i);
             final NetworkNode leftParent = speciesNetworkNode.getLeftParent();
             final NetworkNode rightParent = speciesNetworkNode.getRightParent();
@@ -101,6 +92,7 @@ public class MultispeciesCoalescent extends Distribution {
             allCoalescentTimes.add(new ArrayList<>());
         }
 
+        final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeWrapperInput.get();
         // transpose gene-branch list of lists to branch-gene list of lists
         logP = 0.0;
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
@@ -127,14 +119,13 @@ public class MultispeciesCoalescent extends Distribution {
             }
         }
 
+        final PopulationSizeModel populationModel = populationModelInput.get();
         for (int i = 0; i < speciesBranchCount; i++) {
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);
 
-            final double branchLogP = populationModel.branchLogP(i, perGenePloidy,
-                                                branchCoalescentTimes, branchLineageCounts, branchEventCounts);
-            logP += branchLogP;
+            logP += populationModel.branchLogP(i, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
         }
 
         return logP;

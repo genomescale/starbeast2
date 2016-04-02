@@ -123,7 +123,8 @@ public class NetworkNode extends BEASTObject {
     }
     
     public int getReticulationNumber() {
-        if (leftParent == null || rightParent == null) throw new RuntimeException();
+        if (leftParent == null || rightParent == null) // not a reticulation node
+            throw new RuntimeException();
         final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
         return labelNr - reticulationNodeOffset;
     }

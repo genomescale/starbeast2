@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" version="2.0">
   <data id="gene1" name="alignment">
-    <sequence id="gene1_speciesA_tip1" taxon="A_tip1" totalcount="4" value="-" />
-    <sequence id="gene1_speciesA_tip2" taxon="A_tip2" totalcount="4" value="-" />
+    <sequence id="gene1_a1" taxon="a1" totalcount="4" value="-" />
+    <sequence id="gene1_a2" taxon="a2" totalcount="4" value="-" />
   </data>
 
   <map name="Uniform">beast.math.distributions.Uniform</map>
@@ -17,7 +17,7 @@
   <map name="OneOnX">beast.math.distributions.OneOnX</map>
 
   <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((((A:0.1)#H1:0.1)#H2:0.3,#H4:0.1)#S2:0.1,((((#H1:0.1)#H3:0.1,#H2:0.1)#S1:0.1)#H4:0.1,#H3:0.3)#S3:0.1)#R"/>
-  <init spec='beast.util.TreeParser' id='tree:gene1' IsLabelledNewick="true" adjustTipHeights="false" newick="(A_tip1:1.0,A_tip2:1.0)"/>
+  <init spec='beast.util.TreeParser' id='tree:gene1' IsLabelledNewick="true" adjustTipHeights="false" newick="(a1:1.0,a2:1.0)"/>
 
   <populationModel alpha="2.0" beta="1.0" id="popModel" spec="speciesnetwork.ConstantPopulationIO" />
 
@@ -26,8 +26,8 @@
       <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
         <taxonset id="taxonSuperset" spec="TaxonSet">
           <taxon id="A" spec="TaxonSet">
-            <taxon id="A_tip1" spec="Taxon" />
-            <taxon id="A_tip2" spec="Taxon" />
+            <taxon id="a1" spec="Taxon" />
+            <taxon id="a2" spec="Taxon" />
           </taxon>
         </taxonset>
       </stateNode>

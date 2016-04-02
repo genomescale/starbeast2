@@ -26,16 +26,25 @@ import com.google.common.collect.Multimap;
 
 @Description("Simulate gene trees given a species network (multispecies coalescent).")
 public class CoalescentSimulator extends Operator {
-    public Input<GeneTreeInSpeciesNetwork> geneTreeWrapperInput =
-            new Input<>("geneTreeWithin", "Gene trees within the species network.", Validate.REQUIRED);
-    public Input<TaxonSet> taxonSuperSetInput =
-            new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<Network> speciesNetworkInput =
+            new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
+    public Input<Tree> geneTreeInput =
+            new Input<>("geneTree", "Gene tree embedded in the species network.", Validate.REQUIRED);
+    public Input<IntegerParameter> embeddingInput =
+            new Input<>("embedding", "Map of gene tree traversal within the species network.", Validate.REQUIRED);
+    public Input<RealParameter> gammaInput =
+            new Input<>("gamma", "Inheritance probabilities (traversing left backward in time).", Validate.REQUIRED);
     public Input<RealParameter> popSizesInput =
             new Input<>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
+    public Input<Double> ploidyInput =
+            new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
+    public Input<TaxonSet> taxonSuperSetInput =
+            new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
 
     private Network speciesNetwork;
     private Tree geneTree;
     private IntegerParameter embedding;
+    private RealParameter gammaP;
     private RealParameter popSizes;
     private double ploidy;
 
@@ -43,10 +52,11 @@ public class CoalescentSimulator extends Operator {
 
     @Override
     public void initAndValidate() {
-        speciesNetwork = geneTreeWrapperInput.get().speciesNetworkInput.get();
-        geneTree = geneTreeWrapperInput.get().geneTreeInput.get();
-        embedding = geneTreeWrapperInput.get().embeddingInput.get();
-        ploidy = geneTreeWrapperInput.get().ploidyInput.get();
+        speciesNetwork = speciesNetworkInput.get();
+        geneTree = geneTreeInput.get();
+        embedding = embeddingInput.get();
+        gammaP = gammaInput.get();
+        ploidy = ploidyInput.get();
         popSizes = popSizesInput.get();
         // assert (popSizes.getDimension() == speciesNetwork.getBranchCount());
 
@@ -110,15 +120,38 @@ public class CoalescentSimulator extends Operator {
         snNode.setVisited();  // set visited indicator
 
         final Collection<Node> lineagesAtBottom = networkNodeGeneLineagesMap.get(snNode);
-
         final NetworkNode leftParent = snNode.getLeftParent();
         final NetworkNode rightParent = snNode.getLeftParent();
 
         if (snNode.isReticulation()) {
+            // assign lineages at the bottom to the left and right populations
+            final int reticulationNumber = snNode.getReticulationNumber();
+            final double leftP = gammaP.getArrayValue(reticulationNumber);
+            final Collection<Node> lineagesAtLeft = new HashSet<>();
+            final Collection<Node> lineagesAtRight = new HashSet<>();
+            for (Node lineage : lineagesAtBottom) {
+                if (Randomizer.nextDouble() < leftP)
+                    lineagesAtLeft.add(lineage);
+                else
+                    lineagesAtRight.add(lineage);
+            }
 
+            final double bottomHeight = snNode.getHeight();
+            final int leftBranchNumber = snNode.getLeftBranchNumber();
+            final double leftPopSize = popSizes.getArrayValue(leftBranchNumber);
+            final double leftTopHeight = snNode.getLeftParent().getHeight();
+            List<Node> lineagesAtLeftTop =
+                    simulateCoalescentEvents(lineagesAtLeft, bottomHeight, leftTopHeight, ploidy*leftPopSize);
+            final int rightBranchNumber = snNode.getRightBranchNumber();
+            final double rightPopSize = popSizes.getArrayValue(rightBranchNumber);
+            final double rightTopHeight = snNode.getRightParent().getHeight();
+            List<Node> lineagesAtRightTop =
+                    simulateCoalescentEvents(lineagesAtRight, bottomHeight, rightTopHeight, ploidy*rightPopSize);
 
-
-        } else {
+            networkNodeGeneLineagesMap.putAll(leftParent, lineagesAtLeftTop);
+            networkNodeGeneLineagesMap.putAll(rightParent, lineagesAtRightTop);
+        }
+        else {
             final int speciesBranchNumber = snNode.getNr();
             final double popSize = popSizes.getArrayValue(speciesBranchNumber);
             final double bottomHeight = snNode.getHeight();
@@ -140,9 +173,9 @@ public class CoalescentSimulator extends Operator {
         }
     }
 
-    private List<Node> simulateCoalescentEvents(Collection<Node> lineagesAtBottom, double bottomHeight, double topHeight, double pNu) {
+    private List<Node> simulateCoalescentEvents(Collection<Node> lineages, double bottomHeight, double topHeight, double pNu) {
         // start from the lineages at the bottom
-        List<Node> currentLineages = new ArrayList<>(lineagesAtBottom);
+        List<Node> currentLineages = new ArrayList<>(lineages);
         double currentHeight = bottomHeight;
 
         // then go up backward in time

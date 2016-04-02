@@ -35,12 +35,10 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     protected double ploidy;
 
-    private int geneTreeNodeCount;
-    private int speciesLeafNodeCount;
-    private int speciesBranchCount;
     private boolean needsUpdate;
     private IntegerParameter embedding;
     private RealParameter gamma;
+    private int speciesLeafNodeCount;
 
     // the coalescent times of this gene tree for all species branches
     protected ListMultimap<Integer, Double> coalescentTimes = ArrayListMultimap.create();
@@ -114,10 +112,10 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         gamma = gammaInput.get();
         logGammaSum = 0.0;
 
-        geneTreeNodeCount = geneTreeInput.get().getNodeCount();
-        speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
-        speciesBranchCount = speciesNetwork.getBranchCount();  // each reticulation node has two branches
+        final int geneTreeNodeCount = geneTree.getNodeCount();
+        final int speciesBranchCount = speciesNetwork.getBranchCount();  // each reticulation node has two branches
         speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
+        speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
 
         // reset coalescent arrays as these values need to be recomputed after any changes to the species or gene tree
         coalescentLineageCounts.clear();
@@ -175,7 +173,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
     public double[][] getSpeciesOccupancy() throws Exception {
         if (needsUpdate) update();
-
         return speciesOccupancy;
     }
 
@@ -206,7 +203,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
      * if height is equal, consider distance from root (depth)
      * if depth is equal, consider assigned node number
      */
-    final class NodeHeightComparator implements Comparator<Node> {
+    public class NodeHeightComparator implements Comparator<Node> {
         final int lessThan = -1;
         final int greaterThan = 1;
 

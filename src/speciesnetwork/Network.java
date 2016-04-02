@@ -164,30 +164,45 @@ public class Network extends StateNode {
      * @return the number of nodes
      */
     public int getNodeCount() {
-        if (nodeCount < 0)
-            nodeCount = this.root.getNodeCount();
+        nodeCount = root.getNodeCount();
         return nodeCount;
     }
 
     public int getSpeciationNodeCount() {
-        if (speciationNodeCount < 0) {
-            speciationNodeCount = root.getSpeciationNodeCount();
-        }
+        speciationNodeCount = root.getSpeciationNodeCount();
         return speciationNodeCount;
     }
 
     public int getLeafNodeCount() {
-        if (leafNodeCount < 0) {
+        if (leafNodeCount < 0)  // assuming no change after set
             leafNodeCount = root.getLeafNodeCount();
-        }
         return leafNodeCount;
     }
 
     public int getReticulationNodeCount() {
-        if (reticulationNodeCount < 0) {
-            reticulationNodeCount = root.getReticulationNodeCount();
-        }
+        reticulationNodeCount = root.getReticulationNodeCount();
         return reticulationNodeCount;
+    }
+
+    /**
+     * @return the number of branches in the network, including the root branch
+     */
+    public int getBranchCount() {
+        return getNodeCount() + getReticulationNodeCount();
+    }
+
+    /**
+     * @return the number of branches at the given time
+     */
+    public int getBranchCount(double time) {
+        int nB = 1;
+        for (NetworkNode node : networkNodes) {
+            if (node.getHeight() > time) {
+                if (node.isReticulation()) nB--;
+                else nB++;
+            }
+        }
+        return  nB;
     }
 
     /**
@@ -250,27 +265,6 @@ public class Network extends StateNode {
         for (final NetworkNode child : node.getChildren()) {
             listNodes(child, nodes);
         }
-    }
-
-    /**
-     * @return the number of branches at the given time
-     */
-    public int getBranchCount(double time) {
-        int nB = 1;
-        for (NetworkNode node : networkNodes) {
-            if (node.getHeight() > time) {
-                if (node.isReticulation()) nB--;
-                else nB++;
-            }
-        }
-        return  nB;
-    }
-
-    /**
-     * @return the number of branches in the network, including the root branch
-     */
-    public int getBranchCount() {
-        return getNodeCount() + getReticulationNodeCount();
     }
 
     public double getNetworkLength () {
