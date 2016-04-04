@@ -52,8 +52,6 @@ public class NetworkNode extends BEASTObject {
 
     private NetworkNode clone;
 
-    // whether the node has been visited, say by a recursive method
-    protected boolean visited = false;
     /**
      * status of this node after an operation is performed on the state
      */
@@ -257,6 +255,11 @@ public class NetworkNode extends BEASTObject {
         return nParents == 2;
     }
 
+    // whether the node has been visited, say by a recursive method
+    private boolean visited = false; // this should be used in a public method
+
+    private boolean touched = false; // this is only used inside this class
+
     /* get and (re)set the visited indicator */
     public boolean isVisited() {
         return visited;
@@ -267,78 +270,81 @@ public class NetworkNode extends BEASTObject {
     public void resetVisited() {
         visited = false;
     }
+    public void resetAllVisited() {
+        visited = false;
+        if (leftChild != null) leftChild.resetAllVisited();
+        if (rightChild != null) rightChild.resetAllVisited();
+    }
 
-    /* reset all the visited indicators */
-    public void recursiveResetVisited() {
-        resetVisited ();
-        if (leftChild != null) leftChild.recursiveResetVisited();
-        if (rightChild != null) rightChild.recursiveResetVisited();
+    private void resetAllTouched() {
+        touched = false;
+        if (leftChild != null) leftChild.resetAllTouched();
+        if (rightChild != null) rightChild.resetAllTouched();
     }
 
     // returns total node count (leaf, internal including root) of subtree defined by this node
     public int getNodeCount() {
-        recursiveResetVisited();
+        resetAllTouched();
         return recurseNodeCount();
     }
     private int recurseNodeCount() {
-        if (visited) return 0;
+        if (touched) return 0;
 
         int nodeCount = 1;
         if (leftChild != null) nodeCount += leftChild.recurseNodeCount();
         if (rightChild != null) nodeCount += rightChild.recurseNodeCount();
 
-        setVisited();
+        touched = true;
         return nodeCount;
     }
 
     public int getLeafNodeCount() {
-        recursiveResetVisited();
+        resetAllTouched();
         return recurseLeafNodeCount();
     }
     private int recurseLeafNodeCount() {
-        if (visited) {
+        if (touched)
             return 0;
-        } else if (nChildren == 0) {
+        else if (nChildren == 0)
             return 1;
-        }
 
         int nodeCount = 0;
         if (leftChild != null) nodeCount += leftChild.recurseLeafNodeCount();
         if (rightChild != null) nodeCount += rightChild.recurseLeafNodeCount();
 
-        setVisited();
+        touched = true;
         return nodeCount;
     }
 
     public int getSpeciationNodeCount() {
-        recursiveResetVisited();
+        resetAllTouched();
         return recurseSpeciationNodeCount();
     }
     private int recurseSpeciationNodeCount() {
-        if (visited) return 0;
+        if (touched) return 0;
 
         // don't count reticulation nodes
         int nodeCount = (leftChild != null && rightChild != null) ? 1 : 0;
         if (leftChild != null) nodeCount += leftChild.recurseSpeciationNodeCount();
         if (rightChild != null) nodeCount += rightChild.recurseSpeciationNodeCount();
 
-        setVisited();
+        touched = true;
         return nodeCount;
     }
 
     public int getReticulationNodeCount() {
-        recursiveResetVisited();
+        resetAllTouched();
         return recurseReticulationNodeCount();
     }
     private int recurseReticulationNodeCount() {
-        if (visited) return 0;
+        if (touched) return 0;
 
         // only count reticulation nodes
         int nodeCount = (leftParent != null && rightParent != null) ? 1 : 0;
         if (leftChild != null) nodeCount += leftChild.recurseReticulationNodeCount();
         if (rightChild != null) nodeCount += rightChild.recurseReticulationNodeCount();
 
-        setVisited();
+        touched = true;
         return nodeCount;
     }
 
@@ -347,16 +353,16 @@ public class NetworkNode extends BEASTObject {
      */
     public List<NetworkNode> getAllChildNodes() {
         final List<NetworkNode> childNodes = new ArrayList<>();
-        recursiveResetVisited();
+        resetAllTouched();
         if (!this.isLeaf()) getAllChildNodes(childNodes);
         return childNodes;
     }
     // recursive
     private void getAllChildNodes(final List<NetworkNode> childNodes) {
-        if (visited) return;
+        if (touched) return;
 
         childNodes.add(this);
-        setVisited();
+        touched = true;
         if (leftChild != null) leftChild.getAllChildNodes(childNodes);
         if (rightChild != null) rightChild.getAllChildNodes(childNodes);
     }
@@ -404,26 +410,26 @@ public class NetworkNode extends BEASTObject {
      * assign values to a network in array representation
      */
     public void assignTo (final NetworkNode[] nodes) {
-        recursiveResetVisited();
+        resetAllTouched();
         recursiveAssignTo(nodes);
     }
     private void recursiveAssignTo(final NetworkNode[] nodes) {
-        if (!visited) {
-            final NetworkNode node = nodes[getNr()];
-            node.height = height;
-            node.labelNr = labelNr;
-            node.metaDataString = metaDataString;
-            node.metaData = new TreeMap<>(metaData);
-            node.setID(getID());
-            setVisited();
-            if (leftChild != null) {
-                node.setLeftChild(nodes[getLeftChild().getNr()]);
-                getLeftChild().recursiveAssignTo(nodes);
-            }
-            if (rightChild != null) {
-                node.setRightChild(nodes[getRightChild().getNr()]);
-                getRightChild().recursiveAssignTo(nodes);
-            }
+        if (touched) return;
+
+        final NetworkNode node = nodes[getNr()];
+        node.height = height;
+        node.labelNr = labelNr;
+        node.metaDataString = metaDataString;
+        node.metaData = new TreeMap<>(metaData);
+        node.setID(getID());
+        touched = true;
+        if (leftChild != null) {
+            node.setLeftChild(nodes[getLeftChild().getNr()]);
+            getLeftChild().recursiveAssignTo(nodes);
+        }
+        if (rightChild != null) {
+            node.setRightChild(nodes[getRightChild().getNr()]);
+            getRightChild().recursiveAssignTo(nodes);
         }
     }
 
@@ -431,25 +437,25 @@ public class NetworkNode extends BEASTObject {
      * assign values from a network in array representation
      */
     public void assignFrom (final NetworkNode[] nodes, final NetworkNode node) {
-        recursiveResetVisited();
+        resetAllTouched();
         recursiveAssignFrom(nodes, node);
     }
     private void recursiveAssignFrom(final NetworkNode[] nodes, final NetworkNode node) {
-        if (!visited) {
-            height = node.height;
-            labelNr = node.labelNr;
-            metaDataString = node.metaDataString;
-            metaData = new TreeMap<>(node.metaData);
-            setID(node.getID());
-            setVisited();
-            if (node.getLeftChild() != null) {
-                setLeftChild(nodes[node.getLeftChild().getNr()]);
-                getLeftChild().recursiveAssignFrom(nodes, node.getLeftChild());
-            }
-            if (node.getRightChild() != null) {
-                setRightChild(nodes[node.getRightChild().getNr()]);
-                getRightChild().recursiveAssignFrom(nodes, node.getRightChild());
-            }
+        if (touched) return;
+
+        height = node.height;
+        labelNr = node.labelNr;
+        metaDataString = node.metaDataString;
+        metaData = new TreeMap<>(node.metaData);
+        setID(node.getID());
+        touched = true;
+        if (node.getLeftChild() != null) {
+            setLeftChild(nodes[node.getLeftChild().getNr()]);
+            getLeftChild().recursiveAssignFrom(nodes, node.getLeftChild());
+        }
+        if (node.getRightChild() != null) {
+            setRightChild(nodes[node.getRightChild().getNr()]);
+            getRightChild().recursiveAssignFrom(nodes, node.getRightChild());
         }
     }
 
@@ -458,21 +464,20 @@ public class NetworkNode extends BEASTObject {
      * @param scale scale factor
      */
     public void scale (final double scale) {
-        recursiveResetVisited();
+        resetAllTouched();
         recursiveScale(scale);
     }
     private void recursiveScale(final double scale) {
         startEditing();
         isDirty |= Network.IS_DIRTY;
-        if (!isLeaf() && !visited) {
+        if (!isLeaf() && !touched) {
             height *= scale;
-            setVisited();
+            touched = true;
             if (getLeftChild() != null)
                 getLeftChild().recursiveScale(scale);
             if (getRightChild() != null)
                 getRightChild().recursiveScale(scale);
-            //if (height < getLeftChild().height || height < getRightChild().height)
-            //    throw new IllegalArgumentException("Scale gives negative branch length");
+            // if (height < getLeftChild().height || height < getRightChild().height);
         }
     }
 
