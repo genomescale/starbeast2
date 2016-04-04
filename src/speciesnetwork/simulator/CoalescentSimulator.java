@@ -5,9 +5,7 @@ import java.util.*;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
 import beast.core.Operator;
-import beast.core.StateNodeInitialiser;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
@@ -49,6 +47,10 @@ public class CoalescentSimulator extends Operator {
     private double ploidy;
 
     private Multimap<NetworkNode, Node> networkNodeGeneLineagesMap = HashMultimap.create();
+    private Multimap<NetworkNode, Node> tipsMap = HashMultimap.create();
+
+    private int nodeIndex;  //node index number
+    private int speciesLeafNodeCount;
 
     @Override
     public void initAndValidate() {
@@ -59,8 +61,6 @@ public class CoalescentSimulator extends Operator {
         ploidy = ploidyInput.get();
         popSizes = popSizesInput.get();
         // assert (popSizes.getDimension() == speciesNetwork.getBranchCount());
-
-        networkNodeGeneLineagesMap.clear();
 
         // generate map of tip names to tip nodes
         final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
@@ -80,7 +80,7 @@ public class CoalescentSimulator extends Operator {
             final TaxonSet speciesTaxonSet = (TaxonSet) speciesTip;
             for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
                 final Node geneNode = geneNodeMap.get(geneTip.getID());
-                networkNodeGeneLineagesMap.put(speciesNode, geneNode);
+                tipsMap.put(speciesNode, geneNode);
             }
         }
     }
@@ -95,12 +95,16 @@ public class CoalescentSimulator extends Operator {
                 embedding.setMatrixValue(i, j, -1);
             }
         }
-
-        NetworkNode networkRoot = speciesNetwork.getRoot();
+        // initialize species network tip to gene tree tips map
+        networkNodeGeneLineagesMap.clear();
+        networkNodeGeneLineagesMap.putAll(tipsMap);
         // reset visited indicator
-        networkRoot.recursiveResetVisited();
+        NetworkNode networkRoot = speciesNetwork.getRoot();
+        networkRoot.resetAllVisited();
 
         // simulate the gene tree
+        nodeIndex = 0;
+        speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
         simulate(networkRoot);
 
         return 0.0;
@@ -121,7 +125,7 @@ public class CoalescentSimulator extends Operator {
 
         final Collection<Node> lineagesAtBottom = networkNodeGeneLineagesMap.get(snNode);
         final NetworkNode leftParent = snNode.getLeftParent();
-        final NetworkNode rightParent = snNode.getLeftParent();
+        final NetworkNode rightParent = snNode.getRightParent();
 
         if (snNode.isReticulation()) {
             // assign lineages at the bottom to the left and right populations
@@ -150,9 +154,16 @@ public class CoalescentSimulator extends Operator {
 
             networkNodeGeneLineagesMap.putAll(leftParent, lineagesAtLeftTop);
             networkNodeGeneLineagesMap.putAll(rightParent, lineagesAtRightTop);
+            // update embedding
+            final int traversalLeftNumber = leftParent.getNr() - speciesLeafNodeCount;
+            for (final Node geneNode : lineagesAtLeftTop)
+                embedding.setMatrixValue(traversalLeftNumber, geneNode.getNr(), 0);
+            final int traversalRightNumber = rightParent.getNr() - speciesLeafNodeCount;
+            for (final Node geneNode : lineagesAtRightTop)
+                embedding.setMatrixValue(traversalRightNumber, geneNode.getNr(), 1);
         }
         else {
-            final int speciesBranchNumber = snNode.getNr();
+            final int speciesBranchNumber = snNode.getBranchNumber(0);
             final double popSize = popSizes.getArrayValue(speciesBranchNumber);
             final double bottomHeight = snNode.getHeight();
             final double topHeight;
@@ -164,12 +175,21 @@ public class CoalescentSimulator extends Operator {
                 topHeight = snNode.getRightParent().getHeight();
 
             List<Node> lineagesAtTop = simulateCoalescentEvents(lineagesAtBottom, bottomHeight, topHeight, ploidy*popSize);
-            if (leftParent != null)
+            if (leftParent != null) {
                 networkNodeGeneLineagesMap.putAll(leftParent, lineagesAtTop);
-            else if (rightParent != null)
+                // update embedding
+                final int traversalLeftNumber = leftParent.getNr() - speciesLeafNodeCount;
+                for (final Node geneNode : lineagesAtTop)
+                    embedding.setMatrixValue(traversalLeftNumber, geneNode.getNr(), 0);
+            } else if (rightParent != null) {
                 networkNodeGeneLineagesMap.putAll(rightParent, lineagesAtTop);
-            else
-                geneTree.setRoot(lineagesAtTop.get(0));
+                // update embedding
+                final int traversalRightNumber = rightParent.getNr() - speciesLeafNodeCount;
+                for (final Node geneNode : lineagesAtTop)
+                    embedding.setMatrixValue(traversalRightNumber, geneNode.getNr(), 1);
+            } else {
+                geneTree.setRoot(lineagesAtTop.get(0));  // bad idea? no
+            }
         }
     }
 
@@ -177,6 +197,8 @@ public class CoalescentSimulator extends Operator {
         // start from the lineages at the bottom
         List<Node> currentLineages = new ArrayList<>(lineages);
         double currentHeight = bottomHeight;
+
+        List<Node> internalNodes = geneTree.getInternalNodes();
 
         // then go up backward in time
         while (currentLineages.size() > 1 && currentHeight < topHeight) {
@@ -194,14 +216,11 @@ public class CoalescentSimulator extends Operator {
                 rnd = Randomizer.nextInt(nLineage - 1);
                 final Node right = currentLineages.get(rnd);
                 currentLineages.remove(right);
-                // create a new node as the parent of the two picked nodes
-                final Node node = new Node();
-                node.setLeft(left);
-                node.setRight(right);
-                left.setParent(node);
-                right.setParent(node);
+                // deal with the parent of the two picked nodes
+                final Node node = internalNodes.get(nodeIndex++);
+                node.setLeft(left);   node.setRight(right);
+                left.setParent(node); right.setParent(node);
                 node.setHeight(currentHeight);
-                //node.setNr();
                 currentLineages.add(node);
             }
         }
