@@ -60,7 +60,7 @@ public class CoalescentSimulator extends Operator {
         gammaP = gammaInput.get();
         ploidy = ploidyInput.get();
         popSizes = popSizesInput.get();
-        // assert (popSizes.getDimension() == speciesNetwork.getBranchCount());
+        // assert popSizes.getDimension() == speciesNetwork.getBranchCount();
 
         // generate map of tip names to tip nodes
         final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
@@ -105,20 +105,22 @@ public class CoalescentSimulator extends Operator {
         // simulate the gene tree
         nodeIndex = 0;
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
-        simulate(networkRoot);
+        simulateGeneTree(networkRoot);
+
+        // simulateSequences(geneTree);
 
         return 0.0;
     }
 
     // recursively simulate lineages coalescent in each population
-    private void simulate(NetworkNode snNode) {
+    private void simulateGeneTree(NetworkNode snNode) {
         if (snNode.isVisited())
             return;
         if (snNode.getLeftChild() != null) {
-            simulate(snNode.getLeftChild());
+            simulateGeneTree(snNode.getLeftChild());
         }
         if (snNode.getRightChild() != null) {
-            simulate(snNode.getRightChild());
+            simulateGeneTree(snNode.getRightChild());
         }
 
         snNode.setVisited();  // set visited indicator
