@@ -20,7 +20,7 @@
   <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((C:0.03,#H1:0.02)S2:0.02,((B:0.01)#H1:0.01,A:0.02)S1:0.03)R"/>
   <run chainLength="100" id="mcmc" spec="MCMC" storeEvery="100">
     <state id="state" storeEvery="100">
-      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.5</parameter>  <!-- H1 S1 -->
+      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.7</parameter>  <!-- H1 S1 -->
       <parameter id="popSizes" estimate="false" name="stateNode">0.01</parameter>
       <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
         <taxonset id="taxonSuperset" spec="TaxonSet">
@@ -39,7 +39,7 @@
         </taxonset>
       </stateNode>
       <tree id="tree:gene1" name="stateNode">
-        <taxonset alignment="@gene1" id="TaxonSet:gene1" spec="TaxonSet" />
+        <taxonset alignment="@gene1" id="taxonset:gene1" spec="TaxonSet" />
       </tree>
       <stateNode id="embedding:gene1" spec="parameter.IntegerParameter">-1</stateNode>
     </state>

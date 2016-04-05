@@ -203,7 +203,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
      * if height is equal, consider distance from root (depth)
      * if depth is equal, consider assigned node number
      */
-    public class NodeHeightComparator implements Comparator<Node> {
+    final class NodeHeightComparator implements Comparator<Node> {
         final int lessThan = -1;
         final int greaterThan = 1;
 

@@ -55,7 +55,7 @@ public class MultispeciesCoalescent extends Distribution {
     @Override
     public double calculateLogP() {
         final Network speciesNetwork = speciesNetworkInput.get();
-        // assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
+        assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
         final int speciesBranchCount = speciesNetwork.getBranchCount();
         final int speciesNodeCount = speciesNetwork.getNodeCount();
 
