@@ -13,7 +13,7 @@ import speciesnetwork.PopulationSizeModel;
 
 public class ConstantPopulationTest extends PopulationTestHelper {
 
-    public ConstantPopulationTest() throws Exception {
+    public ConstantPopulationTest() {
         expectedLogP = -2.52067921; // -0.046217525 -2.474461685
 
         nSpecies = 3;
@@ -41,12 +41,12 @@ public class ConstantPopulationTest extends PopulationTestHelper {
     }
 
     @Test
-    public void testLogP() throws Exception {
+    public void testLogP() {
         super.testLogP();
     }
 
     @Override
-    public TaxonSet generateSuperset() throws Exception {
+    public TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
 
         List<Taxon> taxonListA = new ArrayList<>();
@@ -68,7 +68,7 @@ public class ConstantPopulationTest extends PopulationTestHelper {
     }
 
     @Override
-    public PopulationSizeModel generatePopulationModel() throws Exception {
+    public PopulationSizeModel generatePopulationModel() {
         RealParameter popSizesParameter = new RealParameter();
         popSizesParameter.initByName("value", String.valueOf(popSize));
 

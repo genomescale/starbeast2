@@ -1,1 +1,1 @@
-# starbeast2
+# Species Network

@@ -40,11 +40,11 @@ abstract class PopulationTestHelper {
 
     final double allowedError = 1e-6;
 
-    abstract public TaxonSet generateSuperset() throws Exception;
-    abstract public PopulationSizeModel generatePopulationModel() throws Exception;
+    abstract public TaxonSet generateSuperset();
+    abstract public PopulationSizeModel generatePopulationModel();
 
     @Test
-    public void testLogP() throws Exception {
+    public void testLogP() {
         speciesSuperset = generateSuperset();
         initializeSpeciesNetwork();
         initializeStateNodes();
@@ -61,14 +61,14 @@ abstract class PopulationTestHelper {
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    public void initializeSpeciesNetwork() throws Exception {
+    private void initializeSpeciesNetwork() {
         speciesTree = new TreeParser();
         speciesTree.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true, "adjustTipHeights", false);
         speciesNetwork = new NetworkParser();
         speciesNetwork.initByName("tree", speciesTree);
     }
 
-    public void initializeStateNodes() throws Exception {
+    private void initializeStateNodes() {
         if (state == null) state = new State();
         assertEquals(newickGeneTrees.size(), geneTreeEmbeddings.size());
         for (int i = 0; i < newickGeneTrees.size(); i++) {
@@ -81,7 +81,7 @@ abstract class PopulationTestHelper {
         state.initialise();
     }
 
-    public void initializeGeneTrees(boolean reembed) throws Exception {
+    private void initializeGeneTrees(boolean reembed) {
         for (int i = 0; i < newickGeneTrees.size(); i++) {
             final String geneTreeNewick = newickGeneTrees.get(i);
             TreeParser geneTree = new TreeParser();

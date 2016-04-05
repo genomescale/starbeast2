@@ -36,7 +36,7 @@ public class FlipLoopTest {
     double expectedLogP;
     final double allowedError = 1e-6;
 
-    public FlipLoopTest() throws Exception {
+    public FlipLoopTest() {
         nSpecies = 3;
         nBranches = 8;
         popSize = 0.1;
@@ -55,7 +55,7 @@ public class FlipLoopTest {
     }
 
     @Test
-    public void testOperator() throws Exception {
+    public void testOperator() {
         speciesSuperset = generateSuperset();
         initializeSpeciesNetwork();
         initializeStateNodes();
@@ -71,7 +71,7 @@ public class FlipLoopTest {
         }
     }
 
-    public TaxonSet generateSuperset() throws Exception {
+    private TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
 
         List<Taxon> taxonListA = new ArrayList<>();
@@ -92,14 +92,14 @@ public class FlipLoopTest {
         return new TaxonSet(superSetList);
     }
 
-    public void initializeSpeciesNetwork() throws Exception {
+    private void initializeSpeciesNetwork() {
         speciesTree = new TreeParser();
         speciesTree.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true, "adjustTipHeights", false);
         speciesNetwork = new NetworkParser();
         speciesNetwork.initByName("tree", speciesTree);
     }
 
-    public void initializeGeneTrees(boolean reembed) throws Exception {
+    private void initializeGeneTrees(boolean reembed) {
         for (int i = 0; i < newickGeneTrees.size(); i++) {
             final String geneTreeNewick = newickGeneTrees.get(i);
             TreeParser geneTree = new TreeParser();
@@ -120,7 +120,7 @@ public class FlipLoopTest {
         }
     }
 
-    public void initializeStateNodes() throws Exception {
+    private void initializeStateNodes() {
         if (state == null) state = new State();
         assertEquals(newickGeneTrees.size(), geneTreeEmbeddings.size());
         for (int i = 0; i < newickGeneTrees.size(); i++) {

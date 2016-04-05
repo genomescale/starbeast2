@@ -17,12 +17,11 @@
     <sequence id="gene2_c2" taxon="c2" totalcount="4" value="-" />
   </data -->
 
-  <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((A:0.2,#H1:0.1)d:0.3,((B:0.1)#H1:0.2,C:0.3)e:0.2)f"/>
-
+  <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((C:0.03,#H1:0.02)S2:0.02,((B:0.01)#H1:0.01,A:0.02)S1:0.03)R"/>
   <run chainLength="100" id="mcmc" spec="MCMC" storeEvery="100">
     <state id="state" storeEvery="100">
-      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.5</parameter>
-      <parameter id="popSizes" estimate="false" name="stateNode">0.1</parameter>
+      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.5</parameter>  <!-- H1 S1 -->
+      <parameter id="popSizes" estimate="false" name="stateNode">0.01</parameter>
       <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
         <taxonset id="taxonSuperset" spec="TaxonSet">
           <taxon id="A" spec="TaxonSet">

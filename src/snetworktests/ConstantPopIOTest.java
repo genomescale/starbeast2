@@ -13,7 +13,7 @@ import speciesnetwork.PopulationSizeModel;
 
 public class ConstantPopIOTest extends PopulationTestHelper {
 
-    public ConstantPopIOTest() throws Exception {
+    public ConstantPopIOTest() {
         expectedLogP = -2.010226796; // this should be the right answer (calculated by hand)
 
         nSpecies = 3;
@@ -41,12 +41,12 @@ public class ConstantPopIOTest extends PopulationTestHelper {
     }
 
     @Test
-    public void testLogP() throws Exception {
+    public void testLogP() {
         super.testLogP();
     }
 
     @Override
-    public TaxonSet generateSuperset() throws Exception {
+    public TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
 
         List<Taxon> taxonListA = new ArrayList<>();
@@ -68,7 +68,7 @@ public class ConstantPopIOTest extends PopulationTestHelper {
     }
 
     @Override
-    public PopulationSizeModel generatePopulationModel() throws Exception {
+    public PopulationSizeModel generatePopulationModel() {
         final double alpha = 5.0, beta = 1.0;
         RealParameter alphaParameter = new RealParameter();
         RealParameter betaParameter = new RealParameter();
