@@ -8,6 +8,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
 import beast.core.Description;
+import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
@@ -17,10 +18,12 @@ import beast.util.Randomizer;
  */
 
 @Description("Implements a version of the co-ordinated species and gene tree operator described in Jones (2015)."
-        + "Specifically, this operator moves a species tree node and a set of gene tree nodes related to the"
-        + "species tree node by a uniform amount chosen from a range which preserves the topology of all trees."
-        + "See http://dx.doi.org/10.1101/010199 for full details.")
-public class CoordinatedUniform extends CoordinatedOperator {
+        + "Specifically, this operator moves the species tree root node and a set of gene tree nodes related to the"
+        + "species tree node by a uniform amount chosen from an exponential distribution, offset to preserve the"
+        + "topology of all trees. See http://dx.doi.org/10.1101/010199 for full details.")
+public class CoordinatedExponential extends CoordinatedOperator {
+    public final Input<Double> lambdaInput = new Input<>("lambda", "Lambda parameter of the exponential proposal distribution", 1.0);
+
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
@@ -32,47 +35,39 @@ public class CoordinatedUniform extends CoordinatedOperator {
      */
     @Override
     public double proposal() {
-        final double fLogHastingsRatio = 0.0; // this move is uniform in both directions
+        final double lambda = lambdaInput.get();
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
 
-        final int nInternalNodes = speciesTree.getInternalNodeCount();
-        if (nInternalNodes == 1) { // if there are no internal nodes other than the root
-            return Double.NEGATIVE_INFINITY;
-        } // otherwise select a non-root internal node
-        Node speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-        while (speciesTreeNode.isRoot()) {
-            speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-        }
+        // always operate on the root node
+        Node speciesTreeRoot = speciesTree.getRoot();
 
-        final double speciesTreeNodeHeight = speciesTreeNode.getHeight();
+        final double currentRootHeight = speciesTreeRoot.getHeight();
+        final double leftChildHeight = speciesTreeRoot.getLeft().getHeight();
+        final double rightChildHeight = speciesTreeRoot.getRight().getHeight();
 
         final MinimumDouble tipwardFreedom = new MinimumDouble();
-        final MinimumDouble rootwardFreedom = new MinimumDouble();
-        final SetMultimap<Integer, Node> connectingNodes = getConnectingNodes(speciesTreeNode, tipwardFreedom, rootwardFreedom);
+        final SetMultimap<Integer, Node> connectingNodes = getConnectingNodes(speciesTreeRoot, tipwardFreedom);
 
-        final double leftChildBranchLength = speciesTreeNodeHeight - speciesTreeNode.getLeft().getHeight();
-        final double rightChildBranchLength = speciesTreeNodeHeight - speciesTreeNode.getRight().getHeight();
-        final double speciesTreeNodeBranchLength = speciesTreeNode.getParent().getHeight() - speciesTreeNodeHeight;
-        tipwardFreedom.set(leftChildBranchLength);
-        tipwardFreedom.set(rightChildBranchLength);
-        rootwardFreedom.set(speciesTreeNodeBranchLength);
+        tipwardFreedom.set(currentRootHeight - leftChildHeight);
+        tipwardFreedom.set(currentRootHeight - rightChildHeight);
 
-        final double twf = tipwardFreedom.get();
-        final double rwf = rootwardFreedom.get();
-        final double uniformShift = (Randomizer.nextDouble() * (twf + rwf)) - twf;
+        // the youngest age the species tree root node can be (preserving topologies)
+        final double uniformShift = Randomizer.nextExponential(lambda) - tipwardFreedom.get();
 
-        speciesTreeNode.setHeight(speciesTreeNode.getHeight() + uniformShift);
+        speciesTreeRoot.setHeight(currentRootHeight + uniformShift);
         for (Node geneTreeNode: connectingNodes.values()) {
             geneTreeNode.setHeight(geneTreeNode.getHeight() + uniformShift);
         }
 
+        // worked out using algebra and shit
+        final double fLogHastingsRatio = lambda * uniformShift;
+
         return fLogHastingsRatio;
     }
-    
 
     // identify gene tree nodes which descend through both (and also descend exclusively through)
     // the left and right children of the species tree node of interest
-    private SetMultimap<Integer, Node> getConnectingNodes(Node speciesTreeNode, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
+    private SetMultimap<Integer, Node> getConnectingNodes(Node speciesTreeNode, MinimumDouble tipwardFreedom) {
         final Node leftChildNode = speciesTreeNode.getLeft();
         final Node rightChildNode = speciesTreeNode.getRight();
         final int leftChildNodeNumber = leftChildNode.getNr();
@@ -85,14 +80,14 @@ public class CoordinatedUniform extends CoordinatedOperator {
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final Set<Node> jConnectingNodes = new HashSet<Node>();
-            findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
+            findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom);
             allConnectingNodes.putAll(j, jConnectingNodes);
         }
 
         return allConnectingNodes;
     }
 
-    private descendsThrough findConnectingNodes(Node geneTreeNode, Set<Node> connectingNodes, Set<String> leftChildDescendants, Set<String> rightChildDescendants, MinimumDouble tipwardFreedom, MinimumDouble rootwardFreedom) {
+    private descendsThrough findConnectingNodes(Node geneTreeNode, Set<Node> connectingNodes, Set<String> leftChildDescendants, Set<String> rightChildDescendants, MinimumDouble tipwardFreedom) {
         if (geneTreeNode.isLeaf()) {
             final String descendantName = geneTreeNode.getID();
             if (leftChildDescendants.contains(descendantName)) {
@@ -106,8 +101,8 @@ public class CoordinatedUniform extends CoordinatedOperator {
 
         final Node leftChild = geneTreeNode.getLeft();
         final Node rightChild = geneTreeNode.getRight();
-        final descendsThrough leftDescent = findConnectingNodes(leftChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
-        final descendsThrough rightDescent = findConnectingNodes(rightChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
+        final descendsThrough leftDescent = findConnectingNodes(leftChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom);
+        final descendsThrough rightDescent = findConnectingNodes(rightChild, connectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom);
 
         if (leftDescent == rightDescent) {
             if (leftDescent == descendsThrough.BOTH) {
@@ -121,8 +116,6 @@ public class CoordinatedUniform extends CoordinatedOperator {
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         if (leftDescent == descendsThrough.BOTH) { // the gene tree node left child is a member of a connected component
             if (rightDescent == descendsThrough.NEITHER) { // the gene tree node left child is the root node of a connected component
-                final double connectedComponentRootFreedom = geneTreeNodeHeight - leftChild.getHeight();
-                rootwardFreedom.set(connectedComponentRootFreedom);
                 return descendsThrough.NEITHER;
             } else { // the gene tree node right child descends exclusively through the left XOR right child of the species tree node of interest
                 // so the current gene tree node is part of a connected component but the right child is not
@@ -133,8 +126,6 @@ public class CoordinatedUniform extends CoordinatedOperator {
             }
         } else if (rightDescent == descendsThrough.BOTH) { // the gene tree node right child is a member of a connected component
             if (leftDescent == descendsThrough.NEITHER) { // the gene tree node right child is the root node of a connected component
-                final double connectedComponentRootFreedom = geneTreeNodeHeight - rightChild.getHeight();
-                rootwardFreedom.set(connectedComponentRootFreedom);
                 return descendsThrough.NEITHER;
             } else { // the gene tree node left child descends exclusively through the left XOR right child of the species tree node of interest
              // so the current gene tree node is part of a connected component but the left child is not
