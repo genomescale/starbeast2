@@ -59,7 +59,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
             geneTreeNode.setHeight(geneTreeNode.getHeight() + uniformShift);
         }
 
-        // worked out using algebra and shit
+        // the log ratio of the density of the proposed over the current species tree root heights
         final double fLogHastingsRatio = lambda * uniformShift;
 
         return fLogHastingsRatio;

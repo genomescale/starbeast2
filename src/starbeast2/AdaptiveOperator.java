@@ -72,26 +72,27 @@ public abstract class AdaptiveOperator extends Operator {
             return "";
         }
     }
-    
+
     // chooses 'k' numbers from between 0 and n - 1
     // i.e., random sampling without replacement
+    // this is a Durstenfeld shuffle which terminates after k loops
     protected int[] chooseK() {
-        int[] randomSample = new int[k];
-        int[] available = new int[n];
-        Arrays.fill(available, 1);
+        final int[] sequential = new int[n];
 
-        for (int i = 0; i < k; i++) { // for 'k' choices
-            final int nextRandom = Randomizer.nextInt(n - i) + 1; // pick a random number from 1 to the number of unsampled choices
-            int nextChoice = 0; // the number (index) that will be chosen
-            int j = available[nextChoice];
-            while (j < nextRandom) { // move through the array skipping previously chosen numbers
-                nextChoice++;
-                j += available[nextChoice]; // only increment if this number (index) could be chosen
+        for (int i = 0; i < n; i++) sequential[i] = i;
+
+        for (int i = 0; i < k; i++) {
+            final int j = Randomizer.nextInt(n - i);
+            if (j > 0) { // swap [i] with [i + j]
+                final int i_temp = sequential[i];
+                final int iplusj = i + j;
+                sequential[i] = sequential[iplusj];
+                sequential[iplusj] = i_temp;
             }
-            available[nextChoice] = 0;
-            randomSample[i] = nextChoice;
         }
 
-        return randomSample;
+        final int[] sample = Arrays.copyOf(sequential, k);
+
+        return sample;
     }
 }
