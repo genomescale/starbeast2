@@ -44,7 +44,7 @@ public class NetworkRateExchange extends AdaptiveOperator {
         final int[] network = chooseK(nNodes);
 
         // exchange a new delta between all pairs of nodes in 'network'
-        for (int i = 0; i < discreteK; i++) {
+        for (int i = 0; i < (discreteK - 1); i++) {
             for (int j = i + 1; j < discreteK; j++) {
                 final double delta = (Randomizer.nextDouble() - 0.5) * deltaScaleFactor * (4.0 / discreteK);
                 treeRatesArray[network[i]] += delta;
