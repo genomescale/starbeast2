@@ -21,14 +21,16 @@ public abstract class AdaptiveOperator extends Operator {
     public final Input<Boolean> autoOptimizeInput = new Input<>("autoOptimize", "Adjust 'k' during the MCMC run to improve mixing.", true);
 
     protected boolean autoOptimize;
-    protected int n; // as in binomial coefficient
-    protected int k; // as in binomial coefficient
-    private double continuousK;
+    protected int discreteK;
+    protected double continuousK;
+
+    protected double lower;
+    protected double upper;
 
     @Override
     public void initAndValidate() {
-        k = kInput.get();
-        continuousK = k;
+        discreteK = kInput.get();
+        continuousK = discreteK;
         autoOptimize = autoOptimizeInput.get();
     }
 
@@ -39,7 +41,8 @@ public abstract class AdaptiveOperator extends Operator {
 
     @Override
     public void setCoercableParameterValue(final double value) {
-        continuousK = value;
+        continuousK = Math.min(Math.max(lower, value), upper);
+        discreteK = (int) Math.round(continuousK);
     }
 
     @Override
@@ -47,9 +50,9 @@ public abstract class AdaptiveOperator extends Operator {
         if (autoOptimize) {
             double _delta = calcDelta(logAlpha);
             _delta += Math.log(continuousK);
-            continuousK = Math.exp(_delta);
+            setCoercableParameterValue(Math.exp(_delta));
             continuousK = Math.max(0.5000000001, continuousK);
-            k = (int) Math.round(continuousK);
+            discreteK = (int) Math.round(continuousK);
         }
     }
 
@@ -64,24 +67,31 @@ public abstract class AdaptiveOperator extends Operator {
 
         // new scale factor
         final double newContinuousK = continuousK * ratio;
-        final int newK = (newContinuousK < 0.5000000001) ? 1 : (int) Math.round(newContinuousK); 
+        final int newDiscreteK = (newContinuousK < lower) ? 1 : (int) Math.round(newContinuousK); 
 
-        if (prob < 0.10 || prob > 0.40) {
-            return String.format("Try setting 'k' to about %d", newK);
+        if (newDiscreteK != discreteK && (prob < 0.10 || prob > 0.40)) {
+            return String.format("Try setting 'k' to about %d", newDiscreteK);
         } else {
             return "";
         }
     }
 
+    protected void setLimits(final int lower, final int upper) {
+        this.lower = (double) lower;
+        this.upper = (double) upper;
+        this.lower -= 0.4999999999;
+        this.upper += 0.4999999999;
+    }
+
     // chooses 'k' numbers from between 0 and n - 1
     // i.e., random sampling without replacement
     // this is a Durstenfeld shuffle which terminates after k loops
-    protected int[] chooseK() {
+    protected int[] chooseK(final int n) {
         final int[] sequential = new int[n];
 
         for (int i = 0; i < n; i++) sequential[i] = i;
 
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i < discreteK; i++) {
             final int j = Randomizer.nextInt(n - i);
             if (j > 0) { // swap [i] with [i + j]
                 final int i_temp = sequential[i];
@@ -91,7 +101,7 @@ public abstract class AdaptiveOperator extends Operator {
             }
         }
 
-        final int[] sample = Arrays.copyOf(sequential, k);
+        final int[] sample = Arrays.copyOf(sequential, discreteK);
 
         return sample;
     }
