@@ -53,7 +53,7 @@ public class NetworkRateExchange extends AdaptiveOperator {
         }
 
         for (int i = 0; i < discreteK; i++) {
-            final double newRateI = treeRates.getValue(network[i]);
+            final double newRateI = treeRatesArray[network[i]];
             if (newRateI < lowerBound || newRateI > upperBound) {
                 return Double.NEGATIVE_INFINITY;
             } else {
