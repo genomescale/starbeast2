@@ -30,7 +30,7 @@ public class NetworkRateExchange extends AdaptiveOperator {
         lowerBound = treeRates.getLower();
         upperBound = treeRates.getUpper();
 
-        deltaScaleFactor = deltaInput.get() / nNodes;
+        deltaScaleFactor = 2.0 * deltaInput.get() / nNodes;
 
         setLimits(2, nNodes);
         super.initAndValidate();
@@ -46,18 +46,19 @@ public class NetworkRateExchange extends AdaptiveOperator {
         // exchange a new delta between all pairs of nodes in 'network'
         for (int i = 0; i < (discreteK - 1); i++) {
             for (int j = i + 1; j < discreteK; j++) {
-                final double delta = (Randomizer.nextDouble() - 0.5) * deltaScaleFactor * (4.0 / discreteK);
+                final double delta = (Randomizer.nextDouble() - 0.5) * deltaScaleFactor;
                 treeRatesArray[network[i]] += delta;
                 treeRatesArray[network[j]] -= delta;
             }
         }
 
         for (int i = 0; i < discreteK; i++) {
-            final double newRateI = treeRatesArray[network[i]];
-            if (newRateI < lowerBound || newRateI > upperBound) {
+            final int nodeNumber = network[i];
+            final double newRate = treeRatesArray[nodeNumber];
+            if (newRate < lowerBound || newRate > upperBound) {
                 return Double.NEGATIVE_INFINITY;
             } else {
-                treeRates.setValue(network[i], newRateI);
+                treeRates.setValue(nodeNumber, newRate);
             }
         }
 

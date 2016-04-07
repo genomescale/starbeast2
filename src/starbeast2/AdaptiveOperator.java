@@ -1,10 +1,5 @@
 package starbeast2;
 
-
-
-import java.util.Arrays;
-
-import beast.core.Description;
 import beast.core.Input;
 import beast.core.Operator;
 import beast.util.Randomizer;
@@ -15,7 +10,6 @@ import beast.util.Randomizer;
  *
  * @author Huw A. Ogilvie
  */
-@Description("A generic operator for use with a sum-constrained (possibly weighted) vector parameter.")
 public abstract class AdaptiveOperator extends Operator {
     public final Input<Integer> kInput = new Input<>("k", "Number of operations to perform per step.", 1);
     public final Input<Boolean> autoOptimizeInput = new Input<>("autoOptimize", "Adjust 'k' during the MCMC run to improve mixing.", true);
@@ -51,8 +45,6 @@ public abstract class AdaptiveOperator extends Operator {
             double _delta = calcDelta(logAlpha);
             _delta += Math.log(continuousK);
             setCoercableParameterValue(Math.exp(_delta));
-            continuousK = Math.max(0.5000000001, continuousK);
-            discreteK = (int) Math.round(continuousK);
         }
     }
 
@@ -101,8 +93,6 @@ public abstract class AdaptiveOperator extends Operator {
             }
         }
 
-        final int[] sample = Arrays.copyOf(sequential, discreteK);
-
-        return sample;
+        return sequential;
     }
 }

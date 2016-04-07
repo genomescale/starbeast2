@@ -1,7 +1,6 @@
 package starbeast2;
 
 import beast.core.Input;
-import beast.core.Operator;
 import beast.core.parameter.RealParameter;
 import beast.core.Input.Validate;
 import beast.util.Randomizer;
@@ -15,7 +14,7 @@ import beast.util.Randomizer;
  * 
  */
 
-public class DiffuseRateExchange extends Operator {
+public class DiffuseRateExchange extends AdaptiveOperator {
     final public Input<RealParameter> treeRatesInput = new Input<>("treeRates", "The branch rates.", Validate.REQUIRED);
     final public Input<Double> deltaInput = new Input<>("delta", "Magnitude of change for two randomly picked values.", 1.0);
 
@@ -31,35 +30,35 @@ public class DiffuseRateExchange extends Operator {
         lowerBound = treeRates.getLower();
         upperBound = treeRates.getUpper();
 
-        deltaScaleFactor = deltaInput.get() / nNodes;
+        deltaScaleFactor = 2.0 * deltaInput.get() / nNodes;
+
+        setLimits(1, nNodes / 2);
+        super.initAndValidate();
     }
 
+    // symmetric proposal distribution
     @Override
     public double proposal() {
-        // symmetric proposal distribution
-        final double delta = (Randomizer.nextDouble() - 0.5) * deltaScaleFactor * 2.0;
-
         final RealParameter treeRates = treeRatesInput.get();
-        final int nodeNumber = Randomizer.nextInt(nNodes);
-        final double originalBranchRate = treeRates.getValue(nodeNumber);
-        final double newBranchRate = originalBranchRate + delta;
-        if (newBranchRate < lowerBound || newBranchRate > upperBound) {
-            return Double.NEGATIVE_INFINITY;
-        } else {
-            treeRates.setValue(nodeNumber, newBranchRate);
+        final double delta = (Randomizer.nextDouble() - 0.5) * deltaScaleFactor;
+        final double reciprocalDelta = delta * discreteK / (nNodes - discreteK);
+        final double[] treeRatesArray = treeRates.getDoubleValues();
+
+        final int[] permutation = chooseK(nNodes);
+        for (int i = 0; i < nNodes; i++) {
+            final int nodeNumber = permutation[i];
+            final double originalBranchRate = treeRatesArray[nodeNumber];
+            final double newBranchRate = (i < discreteK) ? originalBranchRate + delta : originalBranchRate - reciprocalDelta;
+            if (newBranchRate < lowerBound || newBranchRate > upperBound) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                treeRatesArray[nodeNumber] = newBranchRate;
+            }
         }
 
-        final double diffuseDelta = delta / (nNodes - 1);
-        for (int otherNodeNumber = 0; otherNodeNumber < nNodes; otherNodeNumber++) {
-            if (otherNodeNumber != nodeNumber) {
-                final double originalOtherBranchRate = treeRates.getValue(otherNodeNumber);
-                final double newOtherBranchRate = originalOtherBranchRate - diffuseDelta;
-                if (newOtherBranchRate < lowerBound || newOtherBranchRate > upperBound) {
-                    return Double.NEGATIVE_INFINITY;
-                } else {
-                    treeRates.setValue(otherNodeNumber, newOtherBranchRate);
-                }
-            }
+        for (int i = 0; i < nNodes; i++) {
+            final double newRate = treeRatesArray[i];
+            treeRates.setValue(i, newRate);
         }
 
         return 0.0;
