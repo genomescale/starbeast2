@@ -12,9 +12,9 @@ import beast.util.Randomizer;
  */
 public abstract class AdaptiveOperator extends Operator {
     public final Input<Integer> kInput = new Input<>("k", "Number of operations to perform per step.", 1);
-    public final Input<Boolean> autoOptimizeInput = new Input<>("autoOptimize", "Adjust 'k' during the MCMC run to improve mixing.", true);
+    public final Input<Boolean> optimiseInput = new Input<>("optimise", "Adjust 'k' during the MCMC run to improve mixing.", true);
 
-    protected boolean autoOptimize;
+    protected boolean optimise;
     protected int discreteK;
     protected double continuousK;
 
@@ -25,7 +25,7 @@ public abstract class AdaptiveOperator extends Operator {
     public void initAndValidate() {
         discreteK = kInput.get();
         continuousK = discreteK;
-        autoOptimize = autoOptimizeInput.get();
+        optimise = optimiseInput.get();
     }
 
     @Override
@@ -35,16 +35,20 @@ public abstract class AdaptiveOperator extends Operator {
 
     @Override
     public void setCoercableParameterValue(final double value) {
-        continuousK = Math.min(Math.max(lower, value), upper);
+        continuousK = value;
+        if (continuousK < lower) continuousK = lower;
+        else if (continuousK > upper) continuousK = upper;
         discreteK = (int) Math.round(continuousK);
     }
 
     @Override
     public void optimize(final double logAlpha) {
-        if (autoOptimize) {
-            double _delta = calcDelta(logAlpha);
-            _delta += Math.log(continuousK);
-            setCoercableParameterValue(Math.exp(_delta));
+        if (optimise) {
+            final double currentK = continuousK;
+            final double delta = calcDelta(logAlpha);
+            final double logK = delta + Math.log(currentK);
+            setCoercableParameterValue(Math.exp(logK));
+            // System.out.println(String.format("%f = exp(%f) = exp(cd(%g) + ln(%f)) = exp(%f + ln(%f))", continuousK, logK, logAlpha, currentK, delta, currentK));
         }
     }
 
@@ -59,12 +63,12 @@ public abstract class AdaptiveOperator extends Operator {
 
         // new scale factor
         final double newContinuousK = continuousK * ratio;
-        final int newDiscreteK = (newContinuousK < lower) ? 1 : (int) Math.round(newContinuousK); 
+        final int newDiscreteK = (int) Math.round(newContinuousK); 
 
-        if (newDiscreteK != discreteK && (prob < 0.10 || prob > 0.40)) {
-            return String.format("Try setting 'k' to about %d", newDiscreteK);
+        if ((newDiscreteK != discreteK) && (newDiscreteK >= lower) && (newDiscreteK <= upper) && (prob < 0.10 || prob > 0.40)) {
+            return String.format("k = %d... Try setting it to about %d", discreteK, newDiscreteK);
         } else {
-            return "";
+            return String.format("k = %d", discreteK);
         }
     }
 

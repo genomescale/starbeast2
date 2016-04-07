@@ -22,10 +22,21 @@ import beast.util.Randomizer;
         + "species tree node by a uniform amount chosen from an exponential distribution, offset to preserve the"
         + "topology of all trees. See http://dx.doi.org/10.1101/010199 for full details.")
 public class CoordinatedExponential extends CoordinatedOperator {
-    public final Input<Double> lambdaInput = new Input<>("lambda", "Lambda parameter of the exponential proposal distribution", 1.0);
+    public final Input<Double> betaInput = new Input<>("beta", "Beta parameter of the exponential proposal distribution", 1.0);
+    public final Input<Boolean> optimiseInput = new Input<>("optimise", "Adjust 'k' during the MCMC run to improve mixing.", true);
 
+    protected boolean optimise;
+    private double beta;
+    private double lambda;
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
+    }
+
+    @Override
+    public void initAndValidate() {
+        beta = betaInput.get();
+        lambda = 1.0 / beta;
+        optimise = optimiseInput.get();
     }
 
     /**
@@ -35,7 +46,6 @@ public class CoordinatedExponential extends CoordinatedOperator {
      */
     @Override
     public double proposal() {
-        final double lambda = lambdaInput.get();
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
 
         // always operate on the root node
@@ -143,6 +153,28 @@ public class CoordinatedExponential extends CoordinatedOperator {
             tipwardFreedom.set(rightChildBranchLength);
             connectingNodes.add(geneTreeNode);
             return descendsThrough.BOTH;
+        }
+    }
+
+    @Override
+    public double getCoercableParameterValue() {
+        return beta;
+    }
+
+    @Override
+    public void setCoercableParameterValue(final double value) {
+        beta = value;
+        lambda = 1.0 / beta;
+    }
+
+    @Override
+    public void optimize(final double logAlpha) {
+        if (optimise) {
+            final double currentBeta = beta;
+            final double delta = calcDelta(logAlpha);
+            final double logBeta = delta + Math.log(currentBeta);
+            setCoercableParameterValue(Math.exp(logBeta));
+            // System.out.println(String.format("%f = exp(%f) = exp(cd(%g) + ln(%f)) = exp(%f + ln(%f))", continuousK, logK, logAlpha, currentK, delta, currentK));
         }
     }
 }
