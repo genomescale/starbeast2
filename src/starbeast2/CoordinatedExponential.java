@@ -156,7 +156,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
         }
     }
 
-    @Override
+    /*@Override
     public double getCoercableParameterValue() {
         return beta;
     }
@@ -177,4 +177,22 @@ public class CoordinatedExponential extends CoordinatedOperator {
             // System.out.println(String.format("%f = exp(%f) = exp(cd(%g) + ln(%f)) = exp(%f + ln(%f))", continuousK, logK, logAlpha, currentK, delta, currentK));
         }
     }
+
+    @Override
+    public final String getPerformanceSuggestion() {
+        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        final double targetProb = getTargetAcceptanceProbability();
+
+        double ratio = prob / targetProb;
+        if (ratio > 2.0) ratio = 2.0;
+        if (ratio < 0.5) ratio = 0.5;
+
+        final double newBeta = beta * ratio;
+
+        if (prob < 0.10 || prob > 0.40) {
+            return String.format("Try setting beta to about %f", newBeta);
+        } else {
+            return "";
+        }
+    }*/
 }
