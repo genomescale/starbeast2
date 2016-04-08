@@ -111,6 +111,7 @@ public class CoalescentSimulator extends Operator {
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
         simulateGeneTree(networkRoot);
 
+        // simulate alignment on the gene tree
         simulateSequences();
 
         return 0.0;
