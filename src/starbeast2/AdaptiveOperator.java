@@ -23,8 +23,7 @@ public abstract class AdaptiveOperator extends Operator {
 
     @Override
     public void initAndValidate() {
-        discreteK = kInput.get();
-        continuousK = discreteK;
+        setCoercableParameterValue(kInput.get());
         optimise = optimiseInput.get();
     }
 
