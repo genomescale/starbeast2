@@ -2,17 +2,20 @@ package speciesnetwork.simulator;
 
 import java.util.*;
 
+import beast.app.seqgen.*;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
+import beast.util.XMLProducer;
 import speciesnetwork.*;
 
 import com.google.common.collect.HashMultimap;
@@ -38,6 +41,7 @@ public class CoalescentSimulator extends Operator {
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     public Input<TaxonSet> taxonSuperSetInput =
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<SequenceSimulator> seqSimulatorInput = new Input<>("sequenceSimulator", "Sequence simulator.");
 
     private Network speciesNetwork;
     private Tree geneTree;
@@ -107,7 +111,7 @@ public class CoalescentSimulator extends Operator {
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
         simulateGeneTree(networkRoot);
 
-        // simulateSequences(geneTree);
+        simulateSequences();
 
         return 0.0;
     }
@@ -228,5 +232,15 @@ public class CoalescentSimulator extends Operator {
         }
 
         return currentLineages;
+    }
+
+    private void simulateSequences() {
+        SequenceSimulator seqSimulator = seqSimulatorInput.get();
+        if (seqSimulator == null) return;
+
+        Alignment alignment = seqSimulator.simulate();
+
+        // print the alignment to screen TODO: print to a XML file
+        System.out.println(new XMLProducer().toRawXML(alignment));
     }
 }
