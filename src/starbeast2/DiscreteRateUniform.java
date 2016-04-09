@@ -25,7 +25,7 @@ public class DiscreteRateUniform extends AdaptiveOperator {
         lowerBound = treeRates.getLower();
         integerRange = 1 + treeRates.getUpper() - lowerBound;
 
-        setLimits(3, nNodes);
+        setLimits(1, nNodes);
         super.initAndValidate();
     }
 
