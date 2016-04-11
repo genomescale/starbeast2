@@ -49,7 +49,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
 
         // always operate on the root node
-        Node speciesTreeRoot = speciesTree.getRoot();
+        final Node speciesTreeRoot = speciesTree.getRoot();
 
         final double currentRootHeight = speciesTreeRoot.getHeight();
         final double leftChildHeight = speciesTreeRoot.getLeft().getHeight();
@@ -60,6 +60,13 @@ public class CoordinatedExponential extends CoordinatedOperator {
 
         tipwardFreedom.set(currentRootHeight - leftChildHeight);
         tipwardFreedom.set(currentRootHeight - rightChildHeight);
+
+        // sets beta to equal the mean waiting time between the first and second speciation events
+        // I think this is an example of vanishing adaptation (Andrieu and Thoms 2008)
+        if (optimise) {
+            final int nCalls = m_nNrRejected + m_nNrAccepted;
+            beta = ((beta * nCalls) + tipwardFreedom.get()) / (nCalls + 1);
+        }
 
         // the youngest age the species tree root node can be (preserving topologies)
         final double uniformShift = Randomizer.nextExponential(lambda) - tipwardFreedom.get();
@@ -156,7 +163,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
         }
     }
 
-    /*@Override
+    @Override
     public double getCoercableParameterValue() {
         return beta;
     }
@@ -166,33 +173,4 @@ public class CoordinatedExponential extends CoordinatedOperator {
         beta = value;
         lambda = 1.0 / beta;
     }
-
-    @Override
-    public void optimize(final double logAlpha) {
-        if (optimise) {
-            final double currentBeta = beta;
-            final double delta = calcDelta(logAlpha);
-            final double logBeta = delta + Math.log(currentBeta);
-            setCoercableParameterValue(Math.exp(logBeta));
-            // System.out.println(String.format("%f = exp(%f) = exp(cd(%g) + ln(%f)) = exp(%f + ln(%f))", continuousK, logK, logAlpha, currentK, delta, currentK));
-        }
-    }
-
-    @Override
-    public final String getPerformanceSuggestion() {
-        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
-        final double targetProb = getTargetAcceptanceProbability();
-
-        double ratio = prob / targetProb;
-        if (ratio > 2.0) ratio = 2.0;
-        if (ratio < 0.5) ratio = 0.5;
-
-        final double newBeta = beta * ratio;
-
-        if (prob < 0.10 || prob > 0.40) {
-            return String.format("Try setting beta to about %f", newBeta);
-        } else {
-            return "";
-        }
-    }*/
 }
