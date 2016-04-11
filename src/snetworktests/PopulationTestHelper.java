@@ -55,7 +55,7 @@ abstract class PopulationTestHelper {
         populationModel.initPopSizes(popSize);
 
         msc = new MultispeciesCoalescent();
-        msc.initByName("speciesNetwork", speciesNetwork, "geneTree", geneTreeWrappers, "populationModel", populationModel);
+        msc.initByName("speciesNetwork", speciesNetwork, "geneTreeWithin", geneTreeWrappers, "populationModel", populationModel);
 
         double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
