@@ -8,72 +8,61 @@
     <sequence id="gene1_c1" taxon="c1" totalcount="4" value="-"/>
     <sequence id="gene1_c2" taxon="c2" totalcount="4" value="-"/>
   </data>
+  <data id="gene2" name="alignment">
+    <sequence id="gene2_a1" taxon="a1" totalcount="4" value="-"/>
+    <sequence id="gene2_a2" taxon="a2" totalcount="4" value="-"/>
+    <sequence id="gene2_b1" taxon="b1" totalcount="4" value="-"/>
+    <sequence id="gene2_b2" taxon="b2" totalcount="4" value="-"/>
+    <sequence id="gene2_c1" taxon="c1" totalcount="4" value="-"/>
+    <sequence id="gene2_c2" taxon="c2" totalcount="4" value="-"/>
+  </data>
 
   <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick="true" adjustTipHeights="false" newick="((C:0.03,#H1:0.02)S2:0.02,((B:0.01)#H1:0.01,A:0.02)S1:0.03)R"/>
-  <run chainLength="10" id="mcmc" spec="MCMC">
-    <state id="state" storeEvery="100">
-      <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.7</parameter>  <!-- H1 S1 -->
-      <parameter id="popSizes" estimate="false" name="stateNode">0.01</parameter>
-      <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
-        <taxonset id="taxonSuperset" spec="TaxonSet">
-          <taxon id="A" spec="TaxonSet">
-            <taxon id="a1" spec="Taxon"/>
-            <taxon id="a2" spec="Taxon"/>
-          </taxon>
-          <taxon id="B" spec="TaxonSet">
-            <taxon id="b1" spec="Taxon"/>
-            <taxon id="b2" spec="Taxon"/>
-          </taxon>
-          <taxon id="C" spec="TaxonSet">
-            <taxon id="c1" spec="Taxon"/>
-            <taxon id="c2" spec="Taxon"/>
-          </taxon>
-        </taxonset>
-      </stateNode>
+  <stateNode id="network:species" spec="speciesnetwork.NetworkParser" tree="@tree:species">
+    <taxonset id="taxonSuperset" spec="TaxonSet">
+      <taxon id="A" spec="TaxonSet">
+        <taxon id="a1" spec="Taxon"/>
+        <taxon id="a2" spec="Taxon"/>
+      </taxon>
+      <taxon id="B" spec="TaxonSet">
+        <taxon id="b1" spec="Taxon"/>
+        <taxon id="b2" spec="Taxon"/>
+      </taxon>
+      <taxon id="C" spec="TaxonSet">
+        <taxon id="c1" spec="Taxon"/>
+        <taxon id="c2" spec="Taxon"/>
+      </taxon>
+    </taxonset>
+  </stateNode>
+  <parameter id="gammaP" lower="0.0" upper="1.0" estimate="false" name="stateNode">0.7</parameter>  <!-- H1 S1 -->
+  <parameter id="popSizes" estimate="false" name="stateNode">0.01</parameter>
+
+  <siteModel id="siteModel:gene1" mutationRate="1.0" proportionInvariant="0.0" spec="SiteModel">
+    <substModel id="jc:gene1" spec="JukesCantor"/>
+  </siteModel>
+  <siteModel id="siteModel:gene2" mutationRate="1.0" proportionInvariant="0.0" spec="SiteModel">
+    <substModel id="jc:gene2" spec="JukesCantor"/>
+  </siteModel>
+  <branchRateModel clock.rate="1.0" id="clock:gene1" spec="beast.evolution.branchratemodel.StrictClockModel"/>
+  <branchRateModel clock.rate="1.0" id="clock:gene2" spec="beast.evolution.branchratemodel.StrictClockModel"/>
+
+  <run id="coalSimulator" spec="speciesnetwork.simulator.CoalescentSimulator" speciesNetwork="@network:species" gamma="@gammaP" popSizes="@popSizes" taxonSuperset="@taxonSuperset">
+    <state id="state">
       <tree id="tree:gene1" name="stateNode">
         <taxonset alignment="@gene1" id="taxonset:gene1" spec="TaxonSet"/>
       </tree>
+      <tree id="tree:gene2" name="stateNode">
+        <taxonset alignment="@gene2" id="taxonset:gene2" spec="TaxonSet"/>
+      </tree>
       <stateNode id="embedding:gene1" spec="parameter.IntegerParameter">-1</stateNode>
+      <stateNode id="embedding:gene2" spec="parameter.IntegerParameter">-1</stateNode>
     </state>
 
-    <init estimate="false" id="initializer" method="random" spec="speciesnetwork.StarBeastInitializer" speciesNetwork="@network:species" geneTree="@tree:gene1">
-      <rebuildEmbedding id="reEmbedding:gene1" spec="speciesnetwork.operators.RebuildEmbedding" geneTree="@tree:gene1" embedding="@embedding:gene1" speciesNetwork="@network:species" taxonSuperset="@taxonSuperset" weight="0.0"/>
-      <populationModel popSizes="@popSizes" id="popModel" spec="speciesnetwork.ConstantPopulation"/>
-    </init>
-
-    <distribution id="posterior" spec="util.CompoundDistribution">
-      <distribution id="speciescoalescent" spec="speciesnetwork.MultispeciesCoalescent" populationModel="@popModel" speciesNetwork="@network:species">
-        <!-- geneTreeWithin id="geneTree:gene1" ploidy="2.0" spec="speciesnetwork.GeneTreeInSpeciesNetwork" geneTree="@tree:gene1" embedding="@embedding:gene1" speciesNetwork="@network:species" gamma="@gammaP"/ -->
-      </distribution>
-      <distribution id="prior" spec="util.CompoundDistribution">
-      </distribution>
-      <distribution id="likelihood" spec="util.CompoundDistribution">
-        <distribution data="@gene1" id="likelihood:gene1" spec="TreeLikelihood" tree="@tree:gene1">
-          <siteModel id="siteModel:gene1" mutationRate="1.0" proportionInvariant="0.0" spec="SiteModel">
-            <substModel id="jc:gene1" spec="JukesCantor"/>
-          </siteModel>
-          <branchRateModel clock.rate="1.0" id="clock:gene1" spec="beast.evolution.branchratemodel.StrictClockModel" />
-        </distribution>
-      </distribution>
-    </distribution>
-
-    <operator id="coalSimulator:gene1" spec="speciesnetwork.simulator.CoalescentSimulator" ploidy="2.0" geneTree="@tree:gene1" embedding="@embedding:gene1" speciesNetwork="@network:species" gamma="@gammaP" popSizes="@popSizes" taxonSuperset="@taxonSuperset" weight="1.0">
-      <sequenceSimulator id="seqgen" spec="beast.app.seqgen.SequenceSimulator" data="@gene1" tree="@tree:gene1" siteModel="@siteModel:gene1" sequencelength="100"/>
-    </operator>
-
-    <!-- logger id="screenlog" logEvery="10" model="@posterior">
-      <log idref="posterior"/>
-      <log idref="prior"/>
-      <log idref="likelihood"/>
-    </logger -->
-    <logger fileName="simulate.species.trees" id="treelog:species" logEvery="1" mode="tree">
-      <log id="networkLogger:species" spec="speciesnetwork.SpeciesNetworkLogger" speciesNetwork="@network:species"/>
-    </logger>
-    <logger fileName="simulate.gene1.log" id="tracelog:gene1" logEvery="1">
-      <log idref="embedding:gene1"/>
-    </logger>
-    <logger fileName="simulate.gene1.trees" id="treelog:gene1" logEvery="1" mode="tree">
-      <log id="treeLogger:gene1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@tree:gene1"/>
-    </logger>
+    <geneTree idref="tree:gene1"/>
+    <geneTree idref="tree:gene2"/>
+    <embedding idref="embedding:gene1"/>
+    <embedding idref="embedding:gene2"/>
+    <sequenceSimulator id="seqgen:gene1" spec="beast.app.seqgen.SequenceSimulator" data="@gene1" tree="@tree:gene1" siteModel="@siteModel:gene1" sequencelength="100"/>
+    <sequenceSimulator id="seqgen:gene2" spec="beast.app.seqgen.SequenceSimulator" data="@gene2" tree="@tree:gene2" siteModel="@siteModel:gene2" sequencelength="100"/>
   </run>
 </beast>
