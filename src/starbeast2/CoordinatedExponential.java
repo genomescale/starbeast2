@@ -28,6 +28,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
     protected boolean optimise;
     private double beta;
     private double lambda;
+    private double waitingTime;
     private enum descendsThrough {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
@@ -60,13 +61,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
 
         tipwardFreedom.set(currentRootHeight - leftChildHeight);
         tipwardFreedom.set(currentRootHeight - rightChildHeight);
-
-        // sets beta to equal the mean waiting time between the first and second speciation events
-        // I think this is an example of vanishing adaptation (Andrieu and Thoms 2008)
-        if (optimise) {
-            final int nCalls = m_nNrRejected + m_nNrAccepted;
-            beta = ((beta * nCalls) + tipwardFreedom.get()) / (nCalls + 1);
-        }
+        waitingTime = tipwardFreedom.get();
 
         // the youngest age the species tree root node can be (preserving topologies)
         final double uniformShift = Randomizer.nextExponential(lambda) - tipwardFreedom.get();
@@ -172,5 +167,16 @@ public class CoordinatedExponential extends CoordinatedOperator {
     public void setCoercableParameterValue(final double value) {
         beta = value;
         lambda = 1.0 / beta;
+    }
+
+    // optimizes beta so that it converges on the mean waiting time
+    // between the first (root) and second speciation events
+    @Override
+    public void optimize(final double logAlpha) {
+        if (optimise) {
+            final double count = (m_nNrRejectedForCorrection + m_nNrAcceptedForCorrection + 1.0);
+            final double delta = (waitingTime - beta) / count;
+            setCoercableParameterValue(beta + delta);
+        }
     }
 }
