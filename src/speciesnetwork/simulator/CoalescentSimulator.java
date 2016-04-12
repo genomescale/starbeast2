@@ -1,6 +1,8 @@
 package speciesnetwork.simulator;
 
 import java.io.IOException;
+import java.io.File;
+import java.io.PrintStream;
 import java.util.*;
 
 import beast.app.seqgen.*;
@@ -11,13 +13,11 @@ import beast.core.Runnable;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
+import beast.core.util.Log;
+import beast.evolution.alignment.*;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import beast.util.XMLProducer;
 import speciesnetwork.*;
 
 import com.google.common.collect.HashMultimap;
@@ -49,6 +49,8 @@ public class CoalescentSimulator extends Runnable {
 
     public Input<List<SequenceSimulator>> seqSimulatorsInput =
             new Input<>("sequenceSimulator", "Sequence simulator.", new ArrayList<>());
+    public Input<String> outputFileNameInput =
+            new Input<>("outputFileName", "If provided, write to this file rather than to standard out.");
 
     private Network speciesNetwork;
     private RealParameter gammaP;
@@ -57,11 +59,13 @@ public class CoalescentSimulator extends Runnable {
     private List<IntegerParameter> embeddings;
     private RealParameter ploidies;
 
+    private int nrOfGeneTrees;
+    private int speciesLeafNodeCount;
     private Multimap<NetworkNode, Node> networkNodeGeneLineagesMap = HashMultimap.create();
     private int nodeIndex;  //node index number
-    private int speciesLeafNodeCount;
 
     private List<SequenceSimulator> seqSimulators;
+    private List<Alignment> alignments = new ArrayList<>();
 
     @Override
     public void initAndValidate() {
@@ -72,10 +76,12 @@ public class CoalescentSimulator extends Runnable {
         embeddings = embeddingsInput.get();
         ploidies = ploidiesInput.get();
         seqSimulators = seqSimulatorsInput.get();
+        speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
 
         // sanity check
         if (geneTrees == null || embeddings == null || geneTrees.size() != embeddings.size())
             throw new RuntimeException("Check gene tree and embedding input!");
+        nrOfGeneTrees = geneTrees.size();
 
         // initialize state nodes, essential
         State state = startStateInput.get();
@@ -91,10 +97,12 @@ public class CoalescentSimulator extends Runnable {
             popSizes.setDimension(speciesBranchCount);
         if (gammaP.getDimension() != speciesReticulationNodeCount)
             gammaP.setDimension(speciesReticulationNodeCount);
+        if (ploidies == null) ploidies = new RealParameter("2.0");
+        ploidies.setDimension(nrOfGeneTrees);
 
         final int traversalNodeCount = speciesNetwork.getNodeCount() - speciesNetwork.getLeafNodeCount();
         // simulate each gene tree and alignment
-        for (int ig = 0; ig < geneTrees.size(); ig++) {
+        for (int ig = 0; ig < nrOfGeneTrees; ig++) {
             Tree geneTree = geneTrees.get(ig);
             IntegerParameter embedding = embeddings.get(ig);
 
@@ -109,21 +117,21 @@ public class CoalescentSimulator extends Runnable {
             networkNodeGeneLineagesMap.clear();
             // generate map of tip names to tip nodes
             final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
-            for (NetworkNode leafNode: speciesNetwork.getLeafNodes()) {
+            for (NetworkNode leafNode : speciesNetwork.getLeafNodes()) {
                 final String speciesName = leafNode.getID();
                 speciesNodeMap.put(speciesName, leafNode);
             }
             final Map<String, Node> geneNodeMap = new HashMap<>();
-            for (Node leafNode: geneTree.getExternalNodes()) {
+            for (Node leafNode : geneTree.getExternalNodes()) {
                 final String geneName = leafNode.getID();
                 geneNodeMap.put(geneName, leafNode);
             }
             // multimap of species network tip node to gene tree tip nodes
             final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
-            for (Taxon speciesTip: taxonSuperSet.taxonsetInput.get()) {
+            for (Taxon speciesTip : taxonSuperSet.taxonsetInput.get()) {
                 final NetworkNode speciesNode = speciesNodeMap.get(speciesTip.getID());
                 final TaxonSet speciesTaxonSet = (TaxonSet) speciesTip;
-                for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
+                for (Taxon geneTip : speciesTaxonSet.taxonsetInput.get()) {
                     final Node geneNode = geneNodeMap.get(geneTip.getID());
                     networkNodeGeneLineagesMap.put(speciesNode, geneNode);
                 }
@@ -135,16 +143,189 @@ public class CoalescentSimulator extends Runnable {
 
             // simulate the gene tree
             nodeIndex = 0;
-            speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
-            double ploidy = 2.0;
-            if (ploidies != null && ploidies.getDimension() > ig)
-                ploidy = ploidies.getArrayValue(ig);
-            simulateGeneTree(networkRoot, geneTree, embedding, ploidy);
+            simulateGeneTree(networkRoot, geneTree, embedding, ploidies.getValue(ig));
 
             // simulate alignment on the gene tree
-            if (seqSimulators != null)
-                simulateSequences(ig);
+            if (seqSimulators != null) {
+                alignments.add(seqSimulators.get(ig).simulate());
+            }
         }
+
+        // output
+        writeXMLOutput();
+    }
+
+    private void writeXMLOutput() throws IOException {
+        String outputFileName = outputFileNameInput.get();
+        PrintStream out;  // where to print
+        if (outputFileName == null) {
+            out = System.out;
+        } else {
+            String msg = "Writing";
+            if (new File(outputFileName).exists())
+                msg = "Warning: Overwriting";
+            Log.warning.println(msg + " file " + outputFileName);
+            out = new PrintStream(outputFileName);
+        }
+
+        // print header
+        out.println("<?xml version='1.0' encoding='UTF-8'?>");
+        out.println("<beast namespace=\"beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:" +
+                "beast.core.util:beast.evolution.operators:beast.evolution.sitemodel:" +
+                "beast.evolution.substitutionmodel:beast.evolution.likelihood\" version=\"2.0\">");
+        // print sequence data
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("    <data id=\"gene" + (i+1) + "\" name=\"alignment\">");
+            if (seqSimulators != null) {  // have simulated alignments
+                Alignment alignment = alignments.get(i);
+                List<Sequence> sequences = alignment.sequenceInput.get();
+                for (Sequence seq : sequences)
+                    out.println("        <sequence taxon=\"" + seq.getTaxon() + "\" value=\"" + seq.getData() + "\"/>");
+            } else {
+                Tree geneTree = geneTrees.get(i);
+                for (Node leaf : geneTree.getExternalNodes())
+                    out.println("        <sequence taxon=\"" + leaf.getID() + "\" totalcount=\"4\" value=\"-\"/>");
+            }
+            out.println("    </data>");
+        }
+        out.println("");  // mappings
+        out.println("    <map name=\"Uniform\">beast.math.distributions.Uniform</map>\n" +
+                    "    <map name=\"Exponential\">beast.math.distributions.Exponential</map>\n" +
+                    "    <map name=\"LogNormal\">beast.math.distributions.LogNormalDistributionModel</map>\n" +
+                    "    <map name=\"Normal\">beast.math.distributions.Normal</map>\n" +
+                    "    <map name=\"Beta\">beast.math.distributions.Beta</map>\n" +
+                    "    <map name=\"Gamma\">beast.math.distributions.Gamma</map>\n" +
+                    "    <map name=\"LaplaceDistribution\">beast.math.distributions.LaplaceDistribution</map>\n" +
+                    "    <map name=\"InverseGamma\">beast.math.distributions.InverseGamma</map>\n" +
+                    "    <map name=\"OneOnX\">beast.math.distributions.OneOnX</map>\n" +
+                    "    <map name=\"prior\">beast.math.distributions.Prior</map>\n");
+        // print species network
+        out.println("    <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick=\"true\" " +
+                "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            Tree geneTree = geneTrees.get(i);
+            out.println("    <init spec='beast.util.TreeParser' id='tree:gene" + (i+1) + "' IsLabelledNewick=\"true\" " +
+                                "newick=\"" + geneTree.getRoot().toNewick() + "\"/>");
+        }
+        out.println("");  // MCMC block
+        out.println("    <run chainLength=\"1000000\" id=\"mcmc\" spec=\"MCMC\">");
+        // print states
+        out.println("        <state id=\"state\" storeEvery=\"100\">");
+        StringBuilder buf = new StringBuilder();
+        for (int k = 0; k < gammaP.getDimension(); k++) {
+            buf.append(gammaP.getValue(k));  buf.append(" ");
+        }
+        out.println("            <parameter id=\"gammaP\" lower=\"0.0\" upper=\"1.0\" name=\"stateNode\">" + buf + "</parameter>");
+        out.println("            <stateNode id=\"network:species\" spec=\"speciesnetwork.NetworkParser\" tree=\"@tree:species\">");
+        out.println("                <taxonset id=\"taxonSuperset\" spec=\"TaxonSet\">");
+        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
+        for (Taxon speciesTip : taxonSuperSet.taxonsetInput.get()) {
+            out.println("                    <taxon id=\"" + speciesTip.getID() + "\" spec=\"TaxonSet\">");
+            final TaxonSet speciesTaxonSet = (TaxonSet) speciesTip;
+            for (Taxon geneTip : speciesTaxonSet.taxonsetInput.get())
+                out.println("                        <taxon id=\"" + geneTip.getID() + "\" spec=\"Taxon\"/>");
+            out.println("                    </taxon>");
+        }
+        out.println("                </taxonset>");
+        out.println("            </stateNode>");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            // print gene tree
+            out.println("            <tree idref=\"tree:gene" + (i+1) + "\" name=\"stateNode\">");
+            out.println("                <taxonset alignment=\"@gene" + (i+1) + "\" " +
+                                                 "id=\"taxonset:gene" + (i+1) + "\" spec=\"TaxonSet\"/>");
+            out.println("            </tree>");
+            // print embedding
+            IntegerParameter embedding = embeddings.get(i);
+            buf = new StringBuilder();
+            for (int k = 0; k < embedding.getDimension(); k++) {
+                buf.append(embedding.getValue(k));  buf.append(" ");
+            }
+            out.println("            <stateNode id=\"embedding:gene" + (i+1) + "\" spec=\"parameter.IntegerParameter\" " +
+                                     "minordimension=\"" + embedding.getMinorDimension1() + "\">" + buf + "</stateNode>");
+        }
+        out.println("        </state>\n");
+        // starbeast initializer
+        out.println("        <init estimate=\"false\" id=\"initializer\" method=\"random\" " +
+                                "spec=\"speciesnetwork.StarBeastInitializer\" speciesNetwork=\"@network:species\">");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("            <geneTree idref=\"tree:gene" + (i+1) + "\"/>");
+            out.println("            <rebuildEmbedding idref=\"rebuildEmbedding:gene" + (i+1) + "\"/>");
+        }
+        buf = new StringBuilder();
+        for (int k = 0; k < popSizes.getDimension(); k++) {
+            buf.append(popSizes.getValue(k));  buf.append(" ");
+        }
+        out.println("            <populationModel id=\"popModel\" popSizes=\"" + buf + "\" " +
+                                                "spec=\"speciesnetwork.ConstantPopulation\"/>");
+        out.println("            <!-- populationModel alpha=\"2.0\" beta=\"1.0\" id=\"popModel\" " +
+                                                "spec=\"speciesnetwork.ConstantPopulationIO\"/ -->");
+        out.println("        </init>\n");
+        // posterior
+        out.println("        <distribution id=\"posterior\" spec=\"util.CompoundDistribution\">");
+        out.println("            <distribution id=\"speciescoalescent\" populationModel=\"@popModel\" " +
+                                    "spec=\"speciesnetwork.MultispeciesCoalescent\" speciesNetwork=\"@network:species\">");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("                <geneTreeWithin id=\"geneTree:gene" + (i+1) + "\" ploidy=\"2.0\" " +
+                    "spec=\"speciesnetwork.GeneTreeInSpeciesNetwork\" speciesNetwork=\"@network:species\" " +
+                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" gamma=\"@gammaP\"/>");
+        }
+        out.println("            </distribution>");
+        out.println("            <distribution id=\"prior\" spec=\"util.CompoundDistribution\">");  // prior
+        out.println("            </distribution>");
+        out.println("            <distribution id=\"likelihood\" spec=\"util.CompoundDistribution\">");  // likelihood
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("                <distribution data=\"@gene" + (i+1) + "\" id=\"likelihood:gene" + (i+1) + "\" " +
+                                                 "tree=\"@tree:gene" + (i+1) + "\" spec=\"TreeLikelihood\">");
+            out.println("                    <siteModel id=\"siteModel:gene" + (i+1) + "\" mutationRate=\"1.0\" " +
+                                                    "proportionInvariant=\"0.0\" spec=\"SiteModel\">");
+            out.println("                        <substModel id=\"jc:gene" + (i+1) + "\" spec=\"JukesCantor\"/>");
+            out.println("                    </siteModel>");
+            out.println("                    <branchRateModel clock.rate=\"1.0\" id=\"clock:gene" + (i+1) + "\" " +
+                                                "spec=\"beast.evolution.branchratemodel.StrictClockModel\"/>");
+            out.println("                </distribution>");
+        }
+        out.println("            </distribution>");
+        out.println("        </distribution>\n");
+        // operators
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("        <operator id=\"rebuildEmbedding:gene" + (i+1) + "\" " +
+                    "spec=\"speciesnetwork.operators.RebuildEmbedding\" taxonSuperset=\"@taxonSuperset\" " +
+                    "speciesNetwork=\"@network:species\" geneTree=\"@tree:gene" + (i+1) + "\" " +
+                    "embedding=\"@embedding:gene" + (i+1) + "\" weight=\"1.0\"/>");
+        }
+        // loggers
+        out.println("");
+        out.println("        <logger id=\"screenlog\" logEvery=\"100\" model=\"@posterior\">");
+        out.println("            <log idref=\"posterior\"/>\n" +
+                    "            <log idref=\"speciescoalescent\"/>\n" +
+                    "            <log idref=\"prior\"/>\n" +
+                    "            <log idref=\"likelihood\"/>");
+        out.println("        </logger>");
+        out.println("        <logger fileName=\"" + outputFileName + ".trace.log\" id=\"tracelog\" " +
+                            "logEvery=\"100\" model=\"@posterior\" sort=\"smart\">");
+        out.println("            <log idref=\"posterior\"/>\n" +
+                    "            <log idref=\"speciescoalescent\"/>\n" +
+                    "            <log idref=\"prior\"/>\n" +
+                    "            <log idref=\"likelihood\"/>");
+        out.println("        </logger>");
+        out.println("        <logger fileName=\"" + outputFileName + ".species.trees\" id=\"treelog:species\" " +
+                             "logEvery=\"100\" mode=\"tree\">");
+        out.println("            <log id=\"networkLogger:species\" spec=\"speciesnetwork.SpeciesNetworkLogger\" " +
+                                    "speciesNetwork=\"@network:species\"/>");
+        out.println("        </logger>");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("        <logger fileName=\"" + outputFileName + ".gene" + (i+1) + ".log\" " +
+                                    "id=\"embedlog:gene" + (i+1) + "\" logEvery=\"100\" sort=\"smart\">");
+            out.println("            <log idref=\"embedding:gene" + (i+1) + "\"/>");
+            out.println("        </logger>");
+            out.println("        <logger fileName=\"" + outputFileName + ".gene" + (i+1) + ".trees\" " +
+                                    "id=\"treelog:gene" + (i+1) + "\" logEvery=\"100\" mode=\"tree\">");
+            out.println("            <log id=\"treeLogger:gene" + (i+1) + "\" tree=\"@tree:gene" + (i+1) + "\" " +
+                                        "spec=\"beast.evolution.tree.TreeWithMetaDataLogger\"/>");
+            out.println("        </logger>");
+        }
+        out.println("    </run>");
+        out.println("</beast>");
     }
 
     // recursively simulate lineages coalescent in each population
@@ -167,7 +348,7 @@ public class CoalescentSimulator extends Runnable {
         if (snNode.isReticulation()) {
             // assign lineages at the bottom to the left and right populations
             final int reticulationNumber = snNode.getReticulationNumber();
-            final double leftP = gammaP.getArrayValue(reticulationNumber);
+            final double leftP = gammaP.getValue(reticulationNumber);
             final Collection<Node> lineagesAtLeft = new HashSet<>();
             final Collection<Node> lineagesAtRight = new HashSet<>();
             for (Node lineage : lineagesAtBottom) {
@@ -179,12 +360,12 @@ public class CoalescentSimulator extends Runnable {
 
             final double bottomHeight = snNode.getHeight();
             final int leftBranchNumber = snNode.getLeftBranchNumber();
-            final double lPopSize = popSizes.getArrayValue(leftBranchNumber);
+            final double lPopSize = popSizes.getValue(leftBranchNumber);
             final double lTopHeight = snNode.getLeftParent().getHeight();
             List<Node> lineagesAtLeftTop =
                     simulateCoalescentEvents(lineagesAtLeft, bottomHeight, lTopHeight, ploidy*lPopSize, geneTree);
             final int rightBranchNumber = snNode.getRightBranchNumber();
-            final double rPopSize = popSizes.getArrayValue(rightBranchNumber);
+            final double rPopSize = popSizes.getValue(rightBranchNumber);
             final double rTopHeight = snNode.getRightParent().getHeight();
             List<Node> lineagesAtRightTop =
                     simulateCoalescentEvents(lineagesAtRight, bottomHeight, rTopHeight, ploidy*rPopSize, geneTree);
@@ -201,7 +382,7 @@ public class CoalescentSimulator extends Runnable {
         }
         else {
             final int speciesBranchNumber = snNode.getBranchNumber(0);
-            final double popSize = popSizes.getArrayValue(speciesBranchNumber);
+            final double popSize = popSizes.getValue(speciesBranchNumber);
             final double bottomHeight = snNode.getHeight();
             final double topHeight;
             if (leftParent == null && rightParent == null)  // network root
@@ -265,14 +446,5 @@ public class CoalescentSimulator extends Runnable {
         }
 
         return currentLineages;
-    }
-
-    private void simulateSequences(int locus) {
-        SequenceSimulator seqSimulator = seqSimulators.get(locus);
-
-        Alignment alignment = seqSimulator.simulate();
-
-        // print the alignment to screen TODO: print to a XML file
-        System.out.println(new XMLProducer().toRawXML(alignment));
     }
 }

@@ -46,7 +46,7 @@
   <branchRateModel clock.rate="1.0" id="clock:gene1" spec="beast.evolution.branchratemodel.StrictClockModel"/>
   <branchRateModel clock.rate="1.0" id="clock:gene2" spec="beast.evolution.branchratemodel.StrictClockModel"/>
 
-  <run id="coalSimulator" spec="speciesnetwork.simulator.CoalescentSimulator" speciesNetwork="@network:species" gamma="@gammaP" popSizes="@popSizes" taxonSuperset="@taxonSuperset">
+  <run id="coalSimulator" outputFileName="simulate_output.xml" spec="speciesnetwork.simulator.CoalescentSimulator" speciesNetwork="@network:species" gamma="@gammaP" popSizes="@popSizes" taxonSuperset="@taxonSuperset">
     <state id="state">
       <tree id="tree:gene1" name="stateNode">
         <taxonset alignment="@gene1" id="taxonset:gene1" spec="TaxonSet"/>
