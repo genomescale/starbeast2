@@ -19,7 +19,7 @@ public class DiscreteRateCycle extends AdaptiveOperator {
     public void initAndValidate() {
         final IntegerParameter treeRates = treeRatesInput.get();
         nNodes = treeRates.getDimension();
-        setLimits(3, nNodes);
+        setLimits(2, nNodes);
         super.initAndValidate();
     }
 
