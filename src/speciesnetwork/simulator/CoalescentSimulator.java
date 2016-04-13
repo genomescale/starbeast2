@@ -199,18 +199,19 @@ public class CoalescentSimulator extends Runnable {
                     "    <map name=\"InverseGamma\">beast.math.distributions.InverseGamma</map>\n" +
                     "    <map name=\"OneOnX\">beast.math.distributions.OneOnX</map>\n" +
                     "    <map name=\"prior\">beast.math.distributions.Prior</map>\n");
-        // print species network
+        // print initial species network
         out.println("    <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick=\"true\" " +
                 "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>");
+        // print initial gene trees
         for (int i = 0; i < nrOfGeneTrees; i++) {
             Tree geneTree = geneTrees.get(i);
             out.println("    <init spec='beast.util.TreeParser' id='tree:gene" + (i+1) + "' IsLabelledNewick=\"true\" " +
                                 "newick=\"" + geneTree.getRoot().toNewick() + "\"/>");
         }
-        out.println("");  // MCMC block
-        out.println("    <run chainLength=\"1000000\" id=\"mcmc\" spec=\"MCMC\">");
-        // print states
-        out.println("        <state id=\"state\" storeEvery=\"100\">");
+        out.println("");
+        out.println("    <run chainLength=\"1000000\" id=\"mcmc\" spec=\"MCMC\">");  // MCMC block
+        out.println("        <state id=\"state\" storeEvery=\"100\">");  // states
+        // print state nodes
         StringBuilder buf = new StringBuilder();
         for (int k = 0; k < gammaP.getDimension(); k++) {
             buf.append(gammaP.getValue(k));  buf.append(" ");
@@ -243,27 +244,29 @@ public class CoalescentSimulator extends Runnable {
             out.println("            <stateNode id=\"embedding:gene" + (i+1) + "\" spec=\"parameter.IntegerParameter\" " +
                                      "minordimension=\"" + embedding.getMinorDimension1() + "\">" + buf + "</stateNode>");
         }
-        out.println("        </state>\n");
+        out.println("        </state>\n");  // end of states
         // starbeast initializer
         out.println("        <init estimate=\"false\" id=\"initializer\" method=\"random\" " +
                                 "spec=\"speciesnetwork.StarBeastInitializer\" speciesNetwork=\"@network:species\">");
         for (int i = 0; i < nrOfGeneTrees; i++) {
             out.println("            <geneTree idref=\"tree:gene" + (i+1) + "\"/>");
-            out.println("            <rebuildEmbedding idref=\"rebuildEmbedding:gene" + (i+1) + "\"/>");
+            out.println("            <rebuildEmbedding id=\"rebuildEmbedding:gene" + (i+1) + "\" taxonSuperset=\"@taxonSuperset\" " +
+                    "spec=\"speciesnetwork.operators.RebuildEmbedding\" speciesNetwork=\"@network:species\" " +
+                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"0.0\"/>");
         }
         buf = new StringBuilder();
         for (int k = 0; k < popSizes.getDimension(); k++) {
             buf.append(popSizes.getValue(k));  buf.append(" ");
         }
-        out.println("            <populationModel id=\"popModel\" popSizes=\"" + buf + "\" " +
-                                                "spec=\"speciesnetwork.ConstantPopulation\"/>");
-        out.println("            <!-- populationModel alpha=\"2.0\" beta=\"1.0\" id=\"popModel\" " +
-                                                "spec=\"speciesnetwork.ConstantPopulationIO\"/ -->");
         out.println("        </init>\n");
-        // posterior
+        // print posterior, prior, and likelihood stuff
         out.println("        <distribution id=\"posterior\" spec=\"util.CompoundDistribution\">");
-        out.println("            <distribution id=\"speciescoalescent\" populationModel=\"@popModel\" " +
-                                    "spec=\"speciesnetwork.MultispeciesCoalescent\" speciesNetwork=\"@network:species\">");
+        out.println("            <distribution id=\"coalescent\" spec=\"speciesnetwork.MultispeciesCoalescent\" " +
+                                    "speciesNetwork=\"@network:species\">");
+        out.println("                <populationModel id=\"popModel\" popSizes=\"" + buf + "\" " +
+                                        "spec=\"speciesnetwork.ConstantPopulation\"/>");
+        out.println("                <!-- populationModel alpha=\"2.0\" beta=\"1.0\" id=\"popModel\" " +
+                                        "spec=\"speciesnetwork.ConstantPopulationIO\"/ -->");
         for (int i = 0; i < nrOfGeneTrees; i++) {
             out.println("                <geneTreeWithin id=\"geneTree:gene" + (i+1) + "\" ploidy=\"2.0\" " +
                     "spec=\"speciesnetwork.GeneTreeInSpeciesNetwork\" speciesNetwork=\"@network:species\" " +
@@ -286,25 +289,27 @@ public class CoalescentSimulator extends Runnable {
         }
         out.println("            </distribution>");
         out.println("        </distribution>\n");
-        // operators
+        // print operators
         for (int i = 0; i < nrOfGeneTrees; i++) {
-            out.println("        <operator id=\"rebuildEmbedding:gene" + (i+1) + "\" " +
-                    "spec=\"speciesnetwork.operators.RebuildEmbedding\" taxonSuperset=\"@taxonSuperset\" " +
-                    "speciesNetwork=\"@network:species\" geneTree=\"@tree:gene" + (i+1) + "\" " +
-                    "embedding=\"@embedding:gene" + (i+1) + "\" weight=\"1.0\"/>");
+            out.println("        <operator id=\"scaleAndRebuild:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
+                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"5.0\">");
+            out.println("            <operator id=\"scale:gene" + (i+1) + "\" scaleFactor=\"0.1\" spec=\"ScaleOperator\" " +
+                                        "tree=\"@tree:gene" + (i+1) + "\" weight=\"5.0\"/>");
+            out.println("        </operator>");
         }
-        // loggers
+        // print loggers
         out.println("");
         out.println("        <logger id=\"screenlog\" logEvery=\"100\" model=\"@posterior\">");
         out.println("            <log idref=\"posterior\"/>\n" +
-                    "            <log idref=\"speciescoalescent\"/>\n" +
+                    "            <log idref=\"coalescent\"/>\n" +
                     "            <log idref=\"prior\"/>\n" +
                     "            <log idref=\"likelihood\"/>");
         out.println("        </logger>");
         out.println("        <logger fileName=\"" + outputFileName + ".trace.log\" id=\"tracelog\" " +
                             "logEvery=\"100\" model=\"@posterior\" sort=\"smart\">");
         out.println("            <log idref=\"posterior\"/>\n" +
-                    "            <log idref=\"speciescoalescent\"/>\n" +
+                    "            <log idref=\"coalescent\"/>\n" +
                     "            <log idref=\"prior\"/>\n" +
                     "            <log idref=\"likelihood\"/>");
         out.println("        </logger>");
@@ -324,7 +329,7 @@ public class CoalescentSimulator extends Runnable {
                                         "spec=\"beast.evolution.tree.TreeWithMetaDataLogger\"/>");
             out.println("        </logger>");
         }
-        out.println("    </run>");
+        out.println("    </run>");  // end of MCMC
         out.println("</beast>");
     }
 
