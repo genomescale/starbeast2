@@ -8,6 +8,7 @@ import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.StateNode;
 import beast.core.parameter.IntegerParameter;
+import beast.core.util.Log;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
@@ -82,8 +83,10 @@ public class JointReembedding extends Operator {
     public double proposal() {
         // count the number of alternative traversing choices for the current state (n0)
         final int oldChoices = getNumberOfChoices();
-        if (oldChoices < 0)
-            return Double.NEGATIVE_INFINITY;  // not a valid embedding
+        if (oldChoices < 0) {
+            throw new RuntimeException("Developer ERROR: current embedding invalid!");
+            // return Double.NEGATIVE_INFINITY;  // not a valid embedding
+        }
 
         // first make the operation
         Operator op = operatorInput.get();
