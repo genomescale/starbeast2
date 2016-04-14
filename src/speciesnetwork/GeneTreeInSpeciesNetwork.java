@@ -54,7 +54,8 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = embeddingInput.isDirty() || geneTreeInput.isDirty() || speciesNetworkInput.isDirty();
+        needsUpdate = gammaInput.isDirty() || embeddingInput.isDirty() ||
+                      geneTreeInput.isDirty() || speciesNetworkInput.isDirty();
         return needsUpdate;
     }
 
