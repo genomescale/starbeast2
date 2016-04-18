@@ -25,6 +25,9 @@ public class CoordinatedExponential extends CoordinatedOperator {
     public final Input<Double> betaInput = new Input<>("beta", "Beta parameter of the exponential proposal distribution", 1.0);
     public final Input<Boolean> optimiseInput = new Input<>("optimise", "Adjust 'k' during the MCMC run to improve mixing.", true);
 
+    // scaled so that the median of the proposal distribution is equal to the mean waiting time
+    // so half the time proposals will be above expectation, and half below
+    private final double waitingTimeScale = 1.4426950408889634;
     protected boolean optimise;
     private double beta;
     private double lambda;
@@ -61,7 +64,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
 
         tipwardFreedom.set(currentRootHeight - leftChildHeight);
         tipwardFreedom.set(currentRootHeight - rightChildHeight);
-        waitingTime = tipwardFreedom.get();
+        waitingTime = tipwardFreedom.get() * waitingTimeScale;
 
         // the youngest age the species tree root node can be (preserving topologies)
         final double uniformShift = Randomizer.nextExponential(lambda) - tipwardFreedom.get();
