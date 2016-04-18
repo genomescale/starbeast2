@@ -134,8 +134,8 @@ public class CoordinatedExponential extends CoordinatedOperator {
                 return descendsThrough.NEITHER;
             } else { // the gene tree node right child descends exclusively through the left XOR right child of the species tree node of interest
                 // so the current gene tree node is part of a connected component but the right child is not
-                final double connectedComponentDescendantBranchLength = geneTreeNodeHeight - rightChild.getHeight();
-                tipwardFreedom.set(connectedComponentDescendantBranchLength);
+                final double connectedComponentTipFreedom = geneTreeNodeHeight - rightChild.getHeight();
+                tipwardFreedom.set(connectedComponentTipFreedom);
                 connectingNodes.add(geneTreeNode);
                 return descendsThrough.BOTH;
             }
@@ -143,7 +143,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
             if (leftDescent == descendsThrough.NEITHER) { // the gene tree node right child is the root node of a connected component
                 return descendsThrough.NEITHER;
             } else { // the gene tree node left child descends exclusively through the left XOR right child of the species tree node of interest
-             // so the current gene tree node is part of a connected component but the left child is not
+                // so the current gene tree node is part of a connected component but the left child is not
                 final double connectedComponentTipFreedom = geneTreeNodeHeight - leftChild.getHeight();
                 tipwardFreedom.set(connectedComponentTipFreedom);
                 connectingNodes.add(geneTreeNode);
