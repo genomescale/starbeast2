@@ -201,8 +201,8 @@ public class CoalescentSimulator extends Runnable {
                     "    <map name=\"prior\">beast.math.distributions.Prior</map>\n");
         // print initial species network
         out.println("    <init spec='beast.util.TreeParser' id='tree:species' IsLabelledNewick=\"true\" " +
-                "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>");
-        // print initial gene trees
+                            "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>");
+        // print initial/true gene trees
         for (int i = 0; i < nrOfGeneTrees; i++) {
             Tree geneTree = geneTrees.get(i);
             out.println("    <init spec='beast.util.TreeParser' id='tree:gene" + (i+1) + "' IsLabelledNewick=\"true\" " +
@@ -230,12 +230,11 @@ public class CoalescentSimulator extends Runnable {
         out.println("                </taxonset>");
         out.println("            </stateNode>");
         for (int i = 0; i < nrOfGeneTrees; i++) {
-            // print gene tree
             out.println("            <tree idref=\"tree:gene" + (i+1) + "\" name=\"stateNode\">");
             out.println("                <taxonset alignment=\"@gene" + (i+1) + "\" " +
                                                  "id=\"taxonset:gene" + (i+1) + "\" spec=\"TaxonSet\"/>");
             out.println("            </tree>");
-            // print embedding
+            // print true embedding
             IntegerParameter embedding = embeddings.get(i);
             buf = new StringBuilder();
             for (int k = 0; k < embedding.getDimension(); k++) {
@@ -294,45 +293,38 @@ public class CoalescentSimulator extends Runnable {
         out.println("        </distribution>\n");
         // print operators
         for (int i = 0; i < nrOfGeneTrees; i++) {
-            out.println("        <operator id=\"scaleAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"3.0\">");
+            out.println("        <operator id=\"scaleAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"3.0\">");
             out.println("            <operator id=\"scale:gene" + (i+1) + "\" spec=\"ScaleOperator\" " +
                                         "scaleFactor=\"0.5\" tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"scaleRootAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"2.0\">");
+            out.println("        <operator id=\"scaleRootAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"2.0\">");
             out.println("            <operator id=\"scaleRoot:gene" + (i+1) + "\" spec=\"ScaleOperator\" " +
                       "rootOnly=\"true\" scaleFactor=\"0.5\" tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"uniformAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"20.0\">");
+            out.println("        <operator id=\"uniformAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"20.0\">");
             out.println("            <operator id=\"uniform:gene" + (i+1) + "\" spec=\"Uniform\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"subSlideAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"10.0\">");
+            out.println("        <operator id=\"subSlideAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"10.0\">");
             out.println("            <operator id=\"subSlide:gene" + (i+1) + "\" spec=\"SubtreeSlide\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"narrowAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"10.0\">");
+            out.println("        <operator id=\"narrowAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"10.0\">");
             out.println("            <operator id=\"narrow:gene" + (i+1) + "\" spec=\"Exchange\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"wideAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"3.0\">");
+            out.println("        <operator id=\"wideAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"3.0\">");
             out.println("            <operator id=\"wide:gene" + (i+1) + "\" spec=\"Exchange\" " +
                                          "isNarrow=\"false\" tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
-            out.println("        <operator id=\"WBAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork." +
-                    "operators.JointReembedding\" speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" " +
-                    "geneTree=\"@tree:gene" + (i+1) + "\" embedding=\"@embedding:gene" + (i+1) + "\" weight=\"2.0\">");
+            out.println("        <operator id=\"WBAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"2.0\">");
             out.println("            <operator id=\"WilsonBalding:gene" + (i+1) + "\" spec=\"WilsonBalding\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>\n");

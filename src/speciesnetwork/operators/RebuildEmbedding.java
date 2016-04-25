@@ -26,8 +26,8 @@ import com.google.common.collect.Multimap;
 
 @Description("Rebuild the embedding of a gene tree in the species network.")
 public class RebuildEmbedding extends Operator {
-    public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Validate.REQUIRED);
+    public Input<Tree> geneTreeInput = new Input<>("geneTree", "The gene tree.", Validate.REQUIRED);
     public Input<TaxonSet> taxonSuperSetInput =
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput =
@@ -80,35 +80,16 @@ public class RebuildEmbedding extends Operator {
         // count the number of alternative traversing choices for the current state (n0)
         final int oldChoices = getNumberOfChoices();
         if (oldChoices < 0)
-            return Double.NEGATIVE_INFINITY;  // not a valid embedding
+            throw new RuntimeException("Developer ERROR: current embedding invalid!");
 
         // rebuild the embedding
-        resetEmbedding();
-        for (final Node geneLeaf : geneTree.getExternalNodes()) {
-            setLeafNodeHeirs(geneLeaf);
-            recurseGeneHeirs(geneLeaf);
-        }
-        for (final NetworkNode speciesLeaf : speciesNetwork.getLeafNodes()) {
-            recurseSpeciesHeirs(speciesLeaf);
-        }
-        if (!recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot()))
+        if (!initializeEmbedding())
             return Double.NEGATIVE_INFINITY;
 
+        // count the number of alternative traversing choices for the new state (n1)
         final int newChoices = getNumberOfChoices();
         if (newChoices < 0)
-            return Double.NEGATIVE_INFINITY;  // not a valid embedding
-
-        // print matrix for debugging
-        /* StringBuffer sb = new StringBuffer();
-        for (int i = -1; i < embedding.getMinorDimension2(); i++) {
-            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                if (i == -1) sb.append(j);
-                else sb.append(embedding.getMatrixValue(i, j));
-                sb.append(" ");
-            }
-            sb.append("\n");
-        }
-        System.out.println(sb); */
+            throw new RuntimeException("Developer ERROR: new embedding invalid!");
 
         // the proposal ratio is (2^n1)/(2^n0)
         return (newChoices - oldChoices) * Math.log(2);
@@ -117,6 +98,8 @@ public class RebuildEmbedding extends Operator {
     public boolean initializeEmbedding() {
         resetEmbedding();
 
+        geneNodeHeirs.clear();
+        speciesNodeHeirs.clear();
         for (final Node geneLeaf: geneTree.getExternalNodes()) {
             setLeafNodeHeirs(geneLeaf);
             recurseGeneHeirs(geneLeaf);
@@ -124,6 +107,7 @@ public class RebuildEmbedding extends Operator {
         for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
             recurseSpeciesHeirs(speciesLeaf);
         }
+
         // rebuild the embedding
         return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot());
     }

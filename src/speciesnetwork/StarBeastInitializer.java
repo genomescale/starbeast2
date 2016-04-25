@@ -55,7 +55,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<List<Tree>> geneTreesInput =
             new Input<>("geneTree", "Gene tree to initialize.", new ArrayList<>());
     final public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding",
-            "Operator which rebuilds embedding of gene trees within species tree.", new ArrayList<>());
+            "Operator which rebuilds embedding of gene trees within species network.", new ArrayList<>());
     final public Input<YuleHybridModel> hybridYuleInput = new Input<>("hybridYule",
             "The species network (with hybridization) to initialize.", Validate.XOR, speciesNetworkInput);
     final public Input<RealParameter> birthRateInput =
