@@ -20,7 +20,7 @@ import beast.evolution.tree.TreeInterface;
  */
 
 public class SpeciesTree extends TreeWrapper {
-    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Tree object for this wrapper.", Validate.OPTIONAL); // for compatibility
 
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
@@ -39,12 +39,15 @@ public class SpeciesTree extends TreeWrapper {
         }
 
         // generate map of gene tree tip node names to species tree tip node numbers
-        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
+        final TaxonSet taxonSuperSet = treeInput.get().getTaxonset();
         final Set<Taxon> speciesSet = new HashSet<>(taxonSuperSet.taxonsetInput.get());
 
         for (Taxon species: speciesSet) {
             final String speciesName = species.getID();
-            final int speciesNumber = speciesNumberMap.get(speciesName);
+            int speciesNumber = 0;
+            if (speciesNumberMap.containsKey(speciesName)) { // skipped for BEAUTi
+                speciesNumber = speciesNumberMap.get(speciesName);
+            }
             final TaxonSet speciesTaxonSet = (TaxonSet) species;
             final Set<Taxon> tipSet = new HashSet<>(speciesTaxonSet.taxonsetInput.get());
 

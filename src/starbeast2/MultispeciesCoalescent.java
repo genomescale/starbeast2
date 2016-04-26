@@ -10,6 +10,7 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
+import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 
@@ -24,6 +25,7 @@ public class MultispeciesCoalescent extends Distribution {
     public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
     public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
     public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
+    public Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "Taxon set (for BEAUTi templates).", Validate.OPTIONAL); // for BEAUTi templates
 
     private int nGeneTrees;
     private int speciesTreeNodeCount;

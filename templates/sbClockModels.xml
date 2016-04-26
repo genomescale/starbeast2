@@ -1,0 +1,108 @@
+<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions">
+	<!-- Clock models -->
+	<mergewith point="sbClockModelTemplates">
+		<!-- Plain ol' strict clock -->
+		<subtemplate id="StrictClock" class="beast.evolution.branchratemodel.StrictClockModel" mainid="StrictClock.c:$(n)">
+<![CDATA[
+			<branchRateModel spec="StrictClockModel" id="StrictClock.c:$(n)">
+				<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
+			</branchRateModel>
+
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
+
+			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
+				<up idref="clockRate.c:$(n)"/>
+				<down idref="Tree.t:$(n)"/>
+			</upDownOperator>
+
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+				<distr spec="beast.math.distributions.Exponential">
+					<mean id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
+			</prior>
+]]>
+
+			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Prior on the overall clock rate of partition c:$(n)
+			</connect>
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Scale substitution rate of partition c:$(n)
+			</connect>
+			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
+				Scale up substitution rate c:$(n) and scale down tree t:($n)
+			</connect>
+
+			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inposterior(StrictClock.c:$(n))"/>
+		</subtemplate>
+
+		<!-- UCLN relaxed clock that applies to each gene tree branch -->
+		<subtemplate id="GeneTreeRelaxedClock" class="starbeast2.DiscreteRates" mainid="GeneTreeRelaxedClock.c:$(n)">
+<![CDATA[
+			<branchRateModel estimateRoot="false" id="GeneTreeRelaxedClock.c:$(n)" spec="starbeast2.DiscreteRates" tree="@Tree.t:$(n)">
+				<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
+				<rates dimension="10" value="1" estimate="true" id="branchRates.c:$(n)" spec="parameter.IntegerParameter"/>
+				<LogNormal id="branchRatesDistr.c:$(n)" meanInRealSpace="true" name="distr">
+					<parameter name="M" id="branchRatesMean.c:$(n)" lower="1.0" value="1.0" upper="1.0" estimate="false" />
+					<parameter name="S" id="branchRatesStdev.c:$(n)" lower="0.01" value="0.32" estimate="true" />
+				</LogNormal>
+			</branchRateModel>
+
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
+			<operator id="branchRatesStdevScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="3.0" parameter="@branchRatesStdev.c:$(n)"/>
+
+			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
+				<up idref="clockRate.c:$(n)"/>
+				<down idref="Tree.t:$(n)"/>
+			</upDownOperator>
+
+			<operator id="branchRatesCycle.c:$(n)" k="2" optimise="false" spec="starbeast2.DiscreteRateCycle" treeRates="@branchRates.c:$(n)" weight="9.0" />
+			<operator id="branchRatesUniform.c:$(n)" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@branchRates.c:$(n)" weight="9.0" />
+
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+				<distr spec="beast.math.distributions.Exponential">
+					<mean id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
+			</prior>
+
+			<prior id="branchRatesStdevPrior.c:$(n)" x="@branchRatesStdev.c:$(n)">
+				<distr spec="beast.math.distributions.Exponential">
+					<mean id="branchRatesStdevPriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
+			</prior>
+]]>
+			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="branchRates.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true"/>
+			<connect srcID="branchRatesStdev.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(branchRates.c:$(n)) and branchRatesStdev.c:$(n)/estimate=true"/>
+
+			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Prior on the overall clock rate of partition c:$(n)
+			</connect>
+			<connect srcID="branchRatesStdevPrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(branchRates.c:$(n)) and branchRatesStdev.c:$(n)/estimate=true">
+				Prior on the spread of branch rates of partition c:$(n)
+			</connect>
+
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Scale substitution rate of partition c:$(n)
+			</connect>
+			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
+				Scale up substitution rate c:$(n) and scale down tree t:($n)
+			</connect>
+			<connect srcID="branchRatesStdevScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(branchRates.c:$(n)) and branchRatesStdev.c:$(n)/estimate=true">
+				Scale substitution rate of partition c:$(n)
+			</connect>
+
+			<connect srcID="branchRatesCycle.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true">
+				Cycle the substitution rates around a subset of branches by one step
+			</connect>
+			<connect srcID="branchRatesUniform.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true">
+				Sample the substitution rate category uniformly
+			</connect>
+
+			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inposterior(GeneTreeRelaxedClock.c:$(n))"/>
+			<connect srcID="branchRatesStdev.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(branchRates.c:$(n)) and branchRatesStdev.c:$(n)/estimate=true"/>
+
+			<connect srcID="GeneTreeRelaxedClock.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeRelaxedClock.c:$(n))"/>
+		</subtemplate>
+	</mergewith>
+</beast>

@@ -1,0 +1,128 @@
+<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions">
+	<mergewith point="sbMisc">
+		<fragment id="TreeOperators" spec="beast.app.beauti.Fragment">
+<![CDATA[
+			<operator id="$(m)TreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
+			<operator id="$(m)TreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
+			<operator id="$(m)UniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="$(m)SubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
+			<operator id="$(m)Narrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="$(m)Wide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="$(m)WilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
+]]>
+
+			<connect srcID="$(m)TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Scales all internal nodes for tree t:$(n)
+			</connect>
+			<connect srcID="$(m)TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Scales root node for tree t:$(n)
+			</connect>
+			<connect srcID="$(m)UniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Draws new internal node heights uniformally for tree t:$(n)
+			</connect>
+			<connect srcID="$(m)SubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Performs subtree slide rearrangement of tree t:$(n)
+			</connect>
+			<connect srcID="$(m)Narrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Narrow exchange performs local rearrangement of tree t:$(n)
+			</connect>
+			<connect srcID="$(m)Wide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Wide exchange performs global rearrangement of tree t:$(n)
+			</connect>
+			<connect srcID="$(m)WilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+				Performs Wilson-Balding global rearrangement of tree t:$(n)
+			</connect>
+		</fragment>
+	</mergewith>
+
+	<!-- tree priors -->
+	<mergewith point="sbTreePriorTemplates">
+		<!-- Plain ol' Yule -->
+		<subtemplate id="YuleModel" class="beast.evolution.speciation.YuleModel" mainid="YuleModel.t:$(n)">
+<![CDATA[
+			<distribution id="YuleModel.t:$(n)" spec="beast.evolution.speciation.YuleModel" tree="@Tree.t:$(n)">
+				<birthDiffRate spec="parameter.RealParameter" id="speciationRate.t:$(n)" value="1.0" lower="0.0" upper="10000.0" estimate="true" />
+			</distribution>
+
+			<prior id="speciationRatePrior.t:$(n)" x="@speciationRate.t:$(n)">
+				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			</prior>
+
+			<operator id="speciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@speciationRate.t:$(n)"/>
+]]>
+
+			<plate fragment="TreeOperators" var="m" range=""/>
+
+			<connect srcID="YuleModel.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true">
+				Yule speciation prior applied to the species tree
+			</connect>
+			<connect srcID="speciationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
+
+			<connect srcID="speciationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true">
+				Prior on net diversification rate (speciation - extinction) applied to the species tree
+			</connect>
+
+			<connect srcID="speciationRateScale.t:Species" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true">
+				Scale the net diversification rate of tree t:Species
+			</connect>
+
+			<connect srcID="YuleModel.t:Species" targetID="tracelog" inputName="log" if="inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true"/>
+			<connect srcID="speciationRate.t:Species" targetID="tracelog" inputName="log" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
+
+			<connect srcID="speciationRate.t:Species" targetID="SBI" inputName="birthRate" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species)"/>
+		</subtemplate>
+
+		<!-- Birth Death model (parameterized as per Gernhard 2008) -->
+		<subtemplate id="BirthDeathModel" class="beast.evolution.speciation.BirthDeathGernhard08Model"
+					 mainid="BirthDeathModel.t:$(n)">
+<![CDATA[
+			<distribution id="BirthDeathModel.t:$(n)" spec="beast.evolution.speciation.BirthDeathGernhard08Model" tree="@Tree.t:$(n)">
+				<birthDiffRate spec="parameter.RealParameter" id="netDiversificationRate.t:$(n)" value="1.0" lower="0.0" upper="10000.0" estimate="true" />
+				<relativeDeathRate spec="parameter.RealParameter" id="ExtinctionFraction.t:$(n)" value="0.0" lower="0.0" upper="1.0" estimate="true" />
+			</distribution>
+
+			<prior id="netDiversificationRatePrior.t:$(n)" x="@netDiversificationRate.t:$(n)">
+				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			</prior>
+			<prior id="ExtinctionFractionPrior.t:$(n)" x="@ExtinctionFraction.t:$(n)">
+				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
+			</prior>
+
+			<operator id="netDiversificationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@netDiversificationRate.t:$(n)"/>
+			<operator id="ExtinctionFractionScale.t:$(n)" parameter="@ExtinctionFraction.t:$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="0.5" />
+			<operator id="ExtinctionFractionUniform.t:$(n)" parameter="@ExtinctionFraction.t:$(n)" spec="UniformOperator" weight="0.5" />
+]]>
+
+			<plate fragment="TreeOperators" var="m" range="BirthDeathModel"/>
+
+			<connect srcID="BirthDeathModel.t:Species" targetID="prior" inputName="distribution" if="inposterior(BirthDeathModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true">
+				Birth-Death speciation prior applied to the species tree
+			</connect>
+			<connect srcID="netDiversificationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
+			<connect srcID="ExtinctionFraction.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true"/>
+
+			<connect srcID="netDiversificationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true">
+				Prior on net diversification rate (speciation - extinction) applied to the species tree
+			</connect>
+			<connect srcID="ExtinctionFractionPrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true">
+				Prior on extinction fraction (extinction / speciation) applied to the species tree
+			</connect>
+
+			<connect srcID="netDiversificationRateScale.t:Species" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true">
+				Scale the net diversification rate of tree t:Species
+			</connect>
+			<connect srcID="ExtinctionFractionScale.t:Species" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true">
+				Scale the extinction fraction of tree t:Species
+			</connect>
+			<connect srcID="ExtinctionFractionUniform.t:Species" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true">
+				Sample uniformly the extinction fraction of tree t:Species
+			</connect>
+
+			<connect srcID="BirthDeathModel.t:Species" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true"/>
+			<connect srcID="netDiversificationRate.t:Species" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
+			<connect srcID="ExtinctionFraction.t:Species" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true"/>
+
+			<connect srcID="netDiversificationRate.t:Species" targetID="SBI" inputName="birthRate" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species)"/>
+		</subtemplate>
+	</mergewith>
+</beast>
