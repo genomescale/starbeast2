@@ -60,7 +60,7 @@ abstract class ExchangeTestHelper {
         state.initialise();
 
         populationModel = new ConstantPopulation();
-        populationModel.initByName("popSizes", popSizesParameter);
+        populationModel.initByName("populationSizes", popSizesParameter);
 
         msc = new MultispeciesCoalescent();
         msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
@@ -103,9 +103,9 @@ abstract class ExchangeTestHelper {
 
     public void initializeSpeciesTree(TaxonSet speciesSuperSet) throws Exception {
         speciesTree = new TreeParser();
-        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperSet);
         speciesTreeWrapper = new SpeciesTree();
-        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperSet);
+        speciesTreeWrapper.initByName("tree", speciesTree);
     }
 
     public void initializeGeneTrees() throws Exception {

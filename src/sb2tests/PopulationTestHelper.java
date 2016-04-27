@@ -56,9 +56,9 @@ abstract class PopulationTestHelper {
 
     public void initializeSpeciesTree(TaxonSet speciesSuperset) throws Exception {
         speciesTree = new TreeParser();
-        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
         speciesTreeWrapper = new SpeciesTree();
-        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperset);
+        speciesTreeWrapper.initByName("tree", speciesTree);
     }
 
     public void initializeGeneTrees() throws Exception {

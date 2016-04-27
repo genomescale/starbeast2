@@ -15,10 +15,11 @@ import starbeast2.MultispeciesPopulationModel;
 public class MissingDataConstantIO extends PopulationTestHelper {
     private final double alpha = 1.5;
     private final double beta = 2.5;
+    private final double mean = beta / (alpha - 1.0);
     private final int individualsPerSpecies = 2;
 
     private RealParameter alphaParameter;
-    private RealParameter betaParameter;
+    private RealParameter meanParameter;
 
     public MissingDataConstantIO() throws Exception {
         popSize = 0.3;
@@ -27,10 +28,10 @@ public class MissingDataConstantIO extends PopulationTestHelper {
         expectedLogP = -10.956285249389675; // haven't checked this is the right answer
 
         alphaParameter = new RealParameter();
-        betaParameter = new RealParameter();
+        meanParameter = new RealParameter();
 
         alphaParameter.initByName("value", String.valueOf(alpha));
-        betaParameter.initByName("value", String.valueOf(beta));
+        meanParameter.initByName("value", String.valueOf(mean));
         
         newickSpeciesTree = "((s0:0.32057156677143211,s3:0.32057156677143211):1.2653250035015629,(s1:0.56540722294658641,s2:0.56540722294658641):1.0204893473264085)";
         newickGeneTrees.add("((((s0_tip1:0.3416660303037105,s3_tip0:0.3416660303037105):0.024561190897159135,s0_tip0:0.36622722120086965):0.0643095990846464,s3_tip1:0.43053682028551604):1.4201019862262891,(s2_tip0:0.19897724687831703,s2_tip1:0.19897724687831703):1.651661559633488)");
@@ -46,11 +47,11 @@ public class MissingDataConstantIO extends PopulationTestHelper {
     public MultispeciesPopulationModel generatePopulationModel() throws Exception {
         State state = new State();
         state.initByName("stateNode", alphaParameter);
-        state.initByName("stateNode", betaParameter);
+        state.initByName("stateNode", meanParameter);
         state.initialise();
 
         MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
-        populationModel.initByName("alpha", alphaParameter, "beta", betaParameter);
+        populationModel.initByName("populationShape", alphaParameter, "populationMean", meanParameter);
         
         return populationModel;
     }

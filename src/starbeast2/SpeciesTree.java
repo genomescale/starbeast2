@@ -8,8 +8,6 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import beast.core.Input;
-import beast.core.Input.Validate;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
@@ -20,8 +18,6 @@ import beast.evolution.tree.TreeInterface;
  */
 
 public class SpeciesTree extends TreeWrapper {
-    public Input<TaxonSet> taxonSuperSetInput = new Input<>("taxonSuperSet", "Tree object for this wrapper.", Validate.OPTIONAL); // for compatibility
-
     final private Map<String, Integer> tipNumberMap = new HashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 

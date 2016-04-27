@@ -204,9 +204,9 @@ public class StarbeastClockTest {
 
     public void initializeTrees(TaxonSet speciesSuperSet) throws Exception {
         speciesTree = new TreeParser();
-        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true);
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperSet);
         speciesTreeWrapper = new SpeciesTree();
-        speciesTreeWrapper.initByName("tree", speciesTree, "taxonSuperSet", speciesSuperSet);
+        speciesTreeWrapper.initByName("tree", speciesTree);
 
         geneTree = new TreeParser();
         geneTree.initByName("newick", newickGeneTree, "IsLabelledNewick", true);

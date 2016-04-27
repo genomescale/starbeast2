@@ -105,7 +105,7 @@
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
 		<mergepoint id="aux-partitions-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="distribution/distribution[id='speciescoalescent']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
+		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/geneTree" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
@@ -268,6 +268,7 @@
 		<mergepoint id="sbSubstModelTemplates"/>
 		<mergepoint id="sbClockModelTemplates"/>
 		<mergepoint id="sbTreePriorTemplates"/>
+		<mergepoint id="sbPopModelTemplates"/>
 		<mergepoint id="parametricDistributions"/>
 
 	</beauticonfig>
@@ -296,9 +297,9 @@
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">
-			<distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" taxonset="@taxonsuperset">
-				<populationModel alpha="2.0" id="popModel.Species" spec="starbeast2.ConstantPopulationIO">
-					<parameter name="beta" id="popMean.Species" lower="0.0" value="1.0" estimate="true"/>
+			<distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
+				<populationModel populationShape="2.0" id="constantPopIOModel.Species" spec="starbeast2.ConstantPopulationIO">
+					<parameter name="populationMean" id="popMean.Species" lower="0.0" value="1.0" estimate="true"/>
 				</populationModel>
 				<speciesTree id="speciesTree" spec="starbeast2.SpeciesTree" tree="@Tree.t:Species"/>
 			</distribution>
@@ -366,6 +367,6 @@
 			<log idref="prior"/>
 		</logger>
 
-		<init id="SBI" estimate="false" spec="starbeast2.StarBeastInitializer" speciesTree="@Tree.t:Species" birthRate="@speciationRate.t:Species" populationModel="@popModel.Species"/>
+		<init id="SBI" estimate="false" spec="starbeast2.StarBeastInitializer" speciesTree="@Tree.t:Species" birthRate="@speciationRate.t:Species" populationModel="@constantPopIOModel.Species"/>
 	</run>
 </beast>

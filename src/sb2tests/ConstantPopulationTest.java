@@ -62,7 +62,7 @@ public class ConstantPopulationTest extends PopulationTestHelper {
         state.initialise();
 
         MultispeciesPopulationModel populationModel = new ConstantPopulation();
-        populationModel.initByName("popSizes", popSizesParameter);
+        populationModel.initByName("populationSizes", popSizesParameter);
         
         return populationModel;
     }

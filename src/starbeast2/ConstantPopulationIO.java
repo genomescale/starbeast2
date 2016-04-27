@@ -12,8 +12,8 @@ import beast.evolution.tree.Node;
  */
 
 public class ConstantPopulationIO extends MultispeciesPopulationModel {
-    public Input<RealParameter> invgammaShapeInput = new Input<RealParameter>("alpha", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
-    public Input<RealParameter> invgammaScaleInput = new Input<RealParameter>("beta", "Scale of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+    public Input<RealParameter> populationShapeInput = new Input<RealParameter>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
+    public Input<RealParameter> populationMeanInput = new Input<RealParameter>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() {
@@ -21,11 +21,11 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
 
     @Override
     public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
-        final RealParameter invgammaShape = invgammaShapeInput.get();
-        final RealParameter invgammaScale = invgammaScaleInput.get();
+        final RealParameter invgammaShape = populationShapeInput.get();
+        final RealParameter invgammaMean = populationMeanInput.get();
         final double alpha = invgammaShape.getValue();
-        final double beta = invgammaScale.getValue();
-        
+        final double beta = invgammaMean.getValue() * (alpha - 1.0);
+
         final int nGenes = perGenePloidy.length;
 
         int branchQ = 0;

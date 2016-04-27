@@ -14,7 +14,7 @@ import beast.evolution.tree.Node;
  */
 
 public class ConstantPopulation extends MultispeciesPopulationModel {
-    public Input<RealParameter> popSizesInput = new Input<RealParameter>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
+    public Input<RealParameter> popSizesInput = new Input<RealParameter>("populationSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     @Override
     public void initAndValidate() {
