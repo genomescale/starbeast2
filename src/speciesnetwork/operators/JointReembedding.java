@@ -36,17 +36,18 @@ public class JointReembedding extends Operator {
         Network speciesNetwork = reembedOp.speciesNetworkInput.get();
         Tree geneTree = reembedOp.geneTreeInput.get();
         // print matrix for debugging
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+        // StringBuffer sb = new StringBuffer();
+        /* for (int i = 0; i < embedding.getMinorDimension2(); i++) {
             for (int j = 0; j < embedding.getMinorDimension1(); j++) {
                 sb.append(embedding.getMatrixValue(i, j));
                 sb.append("\t");
             }
             sb.append("\n");
         }
-        sb.append(geneTree.getRoot().toNewick()); sb.append("\n");
-        sb.append(geneTree.getRoot().toString()); sb.append("\n");
-        System.out.println(sb);
+        sb.append(geneTree.getRoot().toNewick());
+        sb.append("\n");
+        sb.append(geneTree.getRoot().toString());
+        System.out.println(sb); */
 
         // count the number of alternative traversing choices for the current state (n0)
         final int oldChoices = reembedOp.getNumberOfChoices();
@@ -68,17 +69,18 @@ public class JointReembedding extends Operator {
             return Double.NEGATIVE_INFINITY;
 
         // print matrix for debugging
-        sb = new StringBuffer();
-        for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+        // sb = new StringBuffer();
+        /* for (int i = 0; i < embedding.getMinorDimension2(); i++) {
             for (int j = 0; j < embedding.getMinorDimension1(); j++) {
                 sb.append(embedding.getMatrixValue(i, j));
                 sb.append("\t");
             }
             sb.append("\n");
         }
-        sb.append(geneTree.getRoot().toNewick()); sb.append("\n");
-        sb.append(geneTree.getRoot().toString()); sb.append("\n");
-        System.out.println(sb);
+        sb.append(geneTree.getRoot().toNewick());
+        sb.append("\n");
+        sb.append(geneTree.getRoot().toString());
+        System.out.println(sb); */
 
         // count the number of alternative traversing choices for the new state (n1)
         final int newChoices = reembedOp.getNumberOfChoices();

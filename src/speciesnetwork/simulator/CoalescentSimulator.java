@@ -1,8 +1,6 @@
 package speciesnetwork.simulator;
 
-import java.io.IOException;
-import java.io.File;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 import beast.app.seqgen.*;
@@ -13,7 +11,6 @@ import beast.core.Runnable;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
-import beast.core.util.Log;
 import beast.evolution.alignment.*;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
@@ -164,7 +161,7 @@ public class CoalescentSimulator extends Runnable {
             String msg = "Writing";
             if (new File(outputFileName).exists())
                 msg = "Warning: Overwriting";
-            Log.warning.println(msg + " file " + outputFileName);
+            System.err.println(msg + " file " + outputFileName);
             out = new PrintStream(outputFileName);
         }
 
@@ -309,12 +306,12 @@ public class CoalescentSimulator extends Runnable {
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
             out.println("        <operator id=\"subSlideAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
-                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"10.0\">");
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"15.0\">");
             out.println("            <operator id=\"subSlide:gene" + (i+1) + "\" spec=\"SubtreeSlide\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
             out.println("        <operator id=\"narrowAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
-                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"10.0\">");
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"15.0\">");
             out.println("            <operator id=\"narrow:gene" + (i+1) + "\" spec=\"Exchange\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
@@ -324,7 +321,7 @@ public class CoalescentSimulator extends Runnable {
                                          "isNarrow=\"false\" tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>");
             out.println("        <operator id=\"WBAndEmbed:gene" + (i+1) + "\" spec=\"speciesnetwork.operators." +
-                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"2.0\">");
+                    "JointReembedding\" rebuildEmbedding=\"@rebuildEmbedding:gene" + (i+1) + "\" weight=\"3.0\">");
             out.println("            <operator id=\"WilsonBalding:gene" + (i+1) + "\" spec=\"WilsonBalding\" " +
                                                             "tree=\"@tree:gene" + (i+1) + "\" weight=\"0.0\"/>");
             out.println("        </operator>\n");
@@ -333,7 +330,7 @@ public class CoalescentSimulator extends Runnable {
                                 "scaleFactor=\"0.5\" weight=\"1.0\"/>");
         // print loggers
         out.println("");
-        out.println("        <logger id=\"screenlog\" logEvery=\"100\" model=\"@posterior\">");
+        out.println("        <logger id=\"screenlog\" logEvery=\"1000\" model=\"@posterior\">");
         out.println("            <log idref=\"posterior\"/>");
         out.println("            <log idref=\"likelihood\"/>");
         out.println("            <log idref=\"prior\"/>");
@@ -481,8 +478,8 @@ public class CoalescentSimulator extends Runnable {
                 currentLineages.remove(right);
                 // deal with the parent of the two picked nodes
                 final Node node = internalNodes.get(nodeIndex++);
-                node.setLeft(left);   node.setRight(right);
                 left.setParent(node); right.setParent(node);
+                node.setLeft(left);   node.setRight(right);
                 node.setHeight(currentHeight);
                 currentLineages.add(node);
             }

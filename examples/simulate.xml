@@ -62,7 +62,7 @@
     <geneTree idref="tree:gene2"/>
     <embedding idref="embedding:gene1"/>
     <embedding idref="embedding:gene2"/>
-    <sequenceSimulator id="seqgen:gene1" spec="beast.app.seqgen.SequenceSimulator" data="@gene1" tree="@tree:gene1" siteModel="@siteModel:gene1" sequencelength="100"/>
-    <sequenceSimulator id="seqgen:gene2" spec="beast.app.seqgen.SequenceSimulator" data="@gene2" tree="@tree:gene2" siteModel="@siteModel:gene2" sequencelength="100"/>
+    <sequenceSimulator id="seqgen:gene1" spec="beast.app.seqgen.SequenceSimulator" data="@gene1" tree="@tree:gene1" siteModel="@siteModel:gene1" sequencelength="200"/>
+    <sequenceSimulator id="seqgen:gene2" spec="beast.app.seqgen.SequenceSimulator" data="@gene2" tree="@tree:gene2" siteModel="@siteModel:gene2" sequencelength="200"/>
   </run>
 </beast>
