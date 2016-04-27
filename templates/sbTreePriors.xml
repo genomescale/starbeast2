@@ -2,34 +2,34 @@
 	<mergewith point="sbMisc">
 		<fragment id="TreeOperators" spec="beast.app.beauti.Fragment">
 <![CDATA[
-			<operator id="$(m)TreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
-			<operator id="$(m)TreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
-			<operator id="$(m)UniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
-			<operator id="$(m)SubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
-			<operator id="$(m)Narrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
-			<operator id="$(m)Wide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
-			<operator id="$(m)WilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="TreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
+			<operator id="TreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
+			<operator id="UniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="SubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
+			<operator id="Narrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="Wide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="WilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
 ]]>
 
-			<connect srcID="$(m)TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Scales all internal nodes for tree t:$(n)
 			</connect>
-			<connect srcID="$(m)TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Scales root node for tree t:$(n)
 			</connect>
-			<connect srcID="$(m)UniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="UniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Draws new internal node heights uniformally for tree t:$(n)
 			</connect>
-			<connect srcID="$(m)SubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="SubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Performs subtree slide rearrangement of tree t:$(n)
 			</connect>
-			<connect srcID="$(m)Narrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="Narrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Narrow exchange performs local rearrangement of tree t:$(n)
 			</connect>
-			<connect srcID="$(m)Wide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="Wide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Wide exchange performs global rearrangement of tree t:$(n)
 			</connect>
-			<connect srcID="$(m)WilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
+			<connect srcID="WilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior($(m).t:$(n)) and Tree.t:$(n)/estimate=true">
 				Performs Wilson-Balding global rearrangement of tree t:$(n)
 			</connect>
 		</fragment>
@@ -51,7 +51,7 @@
 			<operator id="speciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@speciationRate.t:$(n)"/>
 ]]>
 
-			<plate fragment="TreeOperators" var="m" range=""/>
+			<plate fragment="TreeOperators" var="m" range="YuleModel"/>
 
 			<connect srcID="YuleModel.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true">
 				Yule speciation prior applied to the species tree

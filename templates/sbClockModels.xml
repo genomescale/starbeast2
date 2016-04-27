@@ -30,7 +30,7 @@
 				Scale substitution rate of partition c:$(n)
 			</connect>
 			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
-				Scale up substitution rate c:$(n) and scale down tree t:($n)
+				Scale up substitution rate c:$(n) and scale down tree t:$(n)
 			</connect>
 
 			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inposterior(StrictClock.c:$(n))"/>
@@ -86,7 +86,7 @@
 				Scale substitution rate of partition c:$(n)
 			</connect>
 			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
-				Scale up substitution rate c:$(n) and scale down tree t:($n)
+				Scale up substitution rate c:$(n) and scale down tree t:$(n)
 			</connect>
 			<connect srcID="branchRatesStdevScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(branchRates.c:$(n)) and branchRatesStdev.c:$(n)/estimate=true">
 				Scale substitution rate of partition c:$(n)
