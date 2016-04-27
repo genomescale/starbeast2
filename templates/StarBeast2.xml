@@ -273,8 +273,6 @@
 
 	</beauticonfig>
 
-	<mergepoint id="sbMisc"/>
-
 	<taxonset spec="beast.evolution.alignment.TaxonSet" id="taxonsuperset">
 		<!--
 		need to specify at least one taxon for a TaxonSet, so insert a dummy taxon here
