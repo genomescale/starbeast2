@@ -198,15 +198,7 @@ public class CoalescentSimulator extends Runnable {
                     "    <map name=\"prior\">beast.math.distributions.Prior</map>\n");
         // print initial species network
         out.println("    <init spec=\"beast.util.TreeParser\" id=\"newick:species\" IsLabelledNewick=\"true\" " +
-                            "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>");
-        // print initial/true gene trees
-        for (int i = 0; i < nrOfGeneTrees; i++) {
-            Tree geneTree = geneTrees.get(i);
-            out.println("    <init spec=\"beast.util.TreeParser\" id=\"newick:gene" + (i+1) + "\" " +
-                                "initial=\"@tree:gene" + (i+1) + "\" taxa=\"@gene" + (i+1) + "\" IsLabelledNewick=\"true\" " +
-                                "newick=\"" + geneTree.getRoot().toNewick() + "\"/>");
-        }
-        out.println("");
+                            "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>\n");
         out.println("    <run chainLength=\"1000000\" id=\"mcmc\" spec=\"MCMC\">");  // MCMC block
         out.println("        <state id=\"state\" storeEvery=\"100\">");  // states
         // print state nodes
@@ -239,6 +231,13 @@ public class CoalescentSimulator extends Runnable {
                                         embedding.getMinorDimension1() + "\">" + (-1) + "</stateNode>");
         }
         out.println("        </state>\n");  // end of states
+        // print initial/true gene trees
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            Tree geneTree = geneTrees.get(i);
+            out.println("        <init spec=\"beast.util.TreeParser\" id=\"newick:gene" + (i+1) + "\" " +
+                    "initial=\"@tree:gene" + (i+1) + "\" taxa=\"@gene" + (i+1) + "\" IsLabelledNewick=\"true\" " +
+                    "newick=\"" + geneTree.getRoot().toNewick() + "\"/>");
+        }
         // starbeast initializer
         out.println("        <init estimate=\"false\" id=\"initializer\" method=\"random\" " +
                                 "spec=\"speciesnetwork.StarBeastInitializer\" speciesNetwork=\"@network:species\">");

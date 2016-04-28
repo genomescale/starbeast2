@@ -7,13 +7,8 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.StateNode;
-import beast.core.parameter.IntegerParameter;
-import beast.evolution.tree.Tree;
-
-import speciesnetwork.Network;
 
 /**
- * @author Huw Ogilvie
  * @author Chi Zhang
  */
 
@@ -31,23 +26,6 @@ public class JointReembedding extends Operator {
     @Override
     public double proposal() {
         RebuildEmbedding reembedOp = rebuildEmbeddingInput.get();
-
-        IntegerParameter embedding = reembedOp.embeddingInput.get();
-        Network speciesNetwork = reembedOp.speciesNetworkInput.get();
-        Tree geneTree = reembedOp.geneTreeInput.get();
-        // print matrix for debugging
-        // StringBuffer sb = new StringBuffer();
-        /* for (int i = 0; i < embedding.getMinorDimension2(); i++) {
-            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                sb.append(embedding.getMatrixValue(i, j));
-                sb.append("\t");
-            }
-            sb.append("\n");
-        }
-        sb.append(geneTree.getRoot().toNewick());
-        sb.append("\n");
-        sb.append(geneTree.getRoot().toString());
-        System.out.println(sb); */
 
         // count the number of alternative traversing choices for the current state (n0)
         final int oldChoices = reembedOp.getNumberOfChoices();
@@ -68,20 +46,6 @@ public class JointReembedding extends Operator {
         if (!reembedOp.initializeEmbedding())
             return Double.NEGATIVE_INFINITY;
 
-        // print matrix for debugging
-        // sb = new StringBuffer();
-        /* for (int i = 0; i < embedding.getMinorDimension2(); i++) {
-            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                sb.append(embedding.getMatrixValue(i, j));
-                sb.append("\t");
-            }
-            sb.append("\n");
-        }
-        sb.append(geneTree.getRoot().toNewick());
-        sb.append("\n");
-        sb.append(geneTree.getRoot().toString());
-        System.out.println(sb); */
-
         // count the number of alternative traversing choices for the new state (n1)
         final int newChoices = reembedOp.getNumberOfChoices();
         if (newChoices < 0)
@@ -95,7 +59,7 @@ public class JointReembedding extends Operator {
         List<StateNode> stateNodeList = new ArrayList<>();
 
         stateNodeList.addAll(treeOperatorInput.get().listStateNodes());
-        stateNodeList.addAll(super.listStateNodes());
+        stateNodeList.addAll(rebuildEmbeddingInput.get().listStateNodes());
 
         return stateNodeList;
     }
