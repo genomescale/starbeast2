@@ -79,7 +79,8 @@ public class RebuildEmbedding extends Operator {
             throw new RuntimeException("Developer ERROR: current embedding invalid!");
 
         // rebuild the embedding
-        if (!initializeEmbedding())
+        resetEmbedding();
+        if (!recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot()))
             return Double.NEGATIVE_INFINITY;
 
         // count the number of alternative traversing choices for the new state (n1)
@@ -92,9 +93,9 @@ public class RebuildEmbedding extends Operator {
     }
 
     public boolean initializeEmbedding() {
-        resetEmbedding();
         getNodeHeirs();
         // rebuild the embedding
+        resetEmbedding();
         return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot());
     }
 
