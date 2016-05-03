@@ -145,7 +145,7 @@ public class CoalescentSimulator extends Runnable {
             simulateGeneTree(networkRoot, geneTree, embedding, ploidies.getValue(ig));
 
             // simulate alignment on the gene tree
-            if (seqSimulators != null) {
+            if (seqSimulators.size() > ig) {
                 alignments.add(seqSimulators.get(ig).simulate());
             }
         }
@@ -175,7 +175,7 @@ public class CoalescentSimulator extends Runnable {
         // print sequence data
         for (int i = 0; i < nrOfGeneTrees; i++) {
             out.println("    <data id=\"gene" + (i+1) + "\" name=\"alignment\">");
-            if (seqSimulators != null) {  // have simulated alignments
+            if (seqSimulators.size() > i) {  // have simulated alignments
                 Alignment alignment = alignments.get(i);
                 List<Sequence> sequences = alignment.sequenceInput.get();
                 for (Sequence seq : sequences)
