@@ -46,7 +46,7 @@
   <branchRateModel clock.rate="1.0" id="clock:gene1" spec="beast.evolution.branchratemodel.StrictClockModel"/>
   <branchRateModel clock.rate="1.0" id="clock:gene2" spec="beast.evolution.branchratemodel.StrictClockModel"/>
 
-  <run id="coalSimulator" outputFileName="sim_3s_2loci.xml" spec="speciesnetwork.simulator.CoalescentSimulator" speciesNetwork="@network:species" gamma="@gammaP" popSizes="@popSizes" taxonSuperset="@taxonSuperset">
+  <run id="coalSimulator" outputFileName="sim_3s_2loci.xml" spec="speciesnetwork.simulator.CoalescentSimulator" taxonSuperset="@taxonSuperset">
     <state id="state">
       <tree id="tree:gene1" name="stateNode">
         <taxonset alignment="@gene1" id="taxonset:gene1" spec="TaxonSet"/>
@@ -58,10 +58,9 @@
       <stateNode id="embedding:gene2" spec="parameter.IntegerParameter">-1</stateNode>
     </state>
 
-    <geneTree idref="tree:gene1"/>
-    <geneTree idref="tree:gene2"/>
-    <embedding idref="embedding:gene1"/>
-    <embedding idref="embedding:gene2"/>
+    <speciesNetwork idref="network:species"/> <gamma idref="gammaP"/> <popSizes idref="popSizes"/>
+    <geneTree idref="tree:gene1"/> <embedding idref="embedding:gene1"/>
+    <geneTree idref="tree:gene2"/> <embedding idref="embedding:gene2"/>
     <sequenceSimulator id="seqgen:gene1" spec="beast.app.seqgen.SequenceSimulator" data="@gene1" tree="@tree:gene1" siteModel="@siteModel:gene1" sequencelength="200"/>
     <sequenceSimulator id="seqgen:gene2" spec="beast.app.seqgen.SequenceSimulator" data="@gene2" tree="@tree:gene2" siteModel="@siteModel:gene2" sequencelength="200"/>
   </run>

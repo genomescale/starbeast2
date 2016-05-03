@@ -26,28 +26,30 @@ import com.google.common.collect.Multimap;
 
 @Description("Simulate gene trees given a species network (multispecies coalescent).")
 public class CoalescentSimulator extends Runnable {
-    public Input<Network> speciesNetworkInput =
+    final public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "Species network for embedding the gene tree.", Validate.REQUIRED);
-    public Input<RealParameter> gammaInput =
+    final public Input<RealParameter> gammaInput =
             new Input<>("gamma", "Inheritance probabilities (traversing left backward in time).", Validate.REQUIRED);
-    public Input<RealParameter> popSizesInput =
+    final public Input<RealParameter> popSizesInput =
             new Input<>("popSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
-    public Input<TaxonSet> taxonSuperSetInput =
+    final public Input<TaxonSet> taxonSuperSetInput =
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Validate.REQUIRED);
 
-    public Input<List<Tree>> geneTreesInput =
+    final public Input<List<Tree>> geneTreesInput =
             new Input<>("geneTree", "Gene tree embedded in the species network.", new ArrayList<>());
-    public Input<List<IntegerParameter>> embeddingsInput =
+    final public Input<List<IntegerParameter>> embeddingsInput =
             new Input<>("embedding", "Map of gene tree traversal within the species network.", new ArrayList<>());
-    public Input<RealParameter> ploidiesInput =
+    final public Input<RealParameter> ploidiesInput =
             new Input<>("ploidy", "Ploidy (copy number) for each gene (default is 2).");
-    public Input<State> startStateInput =
+    final public Input<State> startStateInput =
             new Input<>("state", "elements of the state space", Validate.REQUIRED);
 
-    public Input<List<SequenceSimulator>> seqSimulatorsInput =
+    final public Input<List<SequenceSimulator>> seqSimulatorsInput =
             new Input<>("sequenceSimulator", "Sequence simulator.", new ArrayList<>());
-    public Input<String> outputFileNameInput =
+    final public Input<String> outputFileNameInput =
             new Input<>("outputFileName", "If provided, write to this file rather than to standard out.");
+
+    final public Input<Integer> iterationsInput = new Input<>("iterations","Number of iterations to simulate.");
 
     private Network speciesNetwork;
     private RealParameter gammaP;
