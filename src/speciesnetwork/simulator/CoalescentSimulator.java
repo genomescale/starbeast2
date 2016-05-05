@@ -202,7 +202,7 @@ public class CoalescentSimulator extends Runnable {
         out.println("    <init spec=\"beast.util.TreeParser\" id=\"newick:species\" IsLabelledNewick=\"true\" " +
                             "adjustTipHeights=\"false\" newick=\"" + speciesNetwork.toString() + "\"/>\n");
         out.println("    <run chainLength=\"1000000\" id=\"mcmc\" spec=\"MCMC\">");  // MCMC block
-        out.println("        <state id=\"state\" storeEvery=\"100\">");  // states
+        out.println("        <state id=\"state\" storeEvery=\"1000\">");  // states
         // print state nodes
         StringBuilder buf = new StringBuilder();
         for (int k = 0; k < gammaP.getDimension(); k++) {
@@ -326,7 +326,7 @@ public class CoalescentSimulator extends Runnable {
             out.println("        </operator>\n");
         }
         out.println("        <operator id=\"gammaScaler\" spec=\"ScaleOperator\" parameter=\"@gammaP\" " +
-                                "scaleFactor=\"0.5\" weight=\"1.0\"/>");
+                                "scaleFactor=\"0.25\" weight=\"10.0\"/>");
         // print loggers
         out.println("");
         out.println("        <logger id=\"screenlog\" logEvery=\"1000\" model=\"@posterior\">");
@@ -336,7 +336,7 @@ public class CoalescentSimulator extends Runnable {
         out.println("            <log idref=\"coalescent\"/>");
         out.println("        </logger>");
         out.println("        <logger fileName=\"" + outputFileName + ".trace.log\" id=\"tracelog\" " +
-                            "logEvery=\"100\" model=\"@posterior\" sort=\"smart\">");
+                            "logEvery=\"200\" model=\"@posterior\" sort=\"smart\">");
         out.println("            <log idref=\"posterior\"/>");
         out.println("            <log idref=\"likelihood\"/>");
         out.println("            <log idref=\"prior\"/>");
@@ -347,18 +347,18 @@ public class CoalescentSimulator extends Runnable {
                                         "spec=\"beast.evolution.tree.TreeHeightLogger\"/>");
         }
         out.println("        </logger>");
-        out.println("        <logger fileName=\"" + outputFileName + ".species.trees\" id=\"treelog:species\" " +
-                             "logEvery=\"100\" mode=\"tree\">");
+        out.println("        <!--logger fileName=\"" + outputFileName + ".species.trees\" id=\"treelog:species\" " +
+                             "logEvery=\"200\" mode=\"tree\">");
         out.println("            <log id=\"networkLogger:species\" spec=\"speciesnetwork.SpeciesNetworkLogger\" " +
                                     "speciesNetwork=\"@network:species\"/>");
-        out.println("        </logger>");
+        out.println("        </logger-->");
         for (int i = 0; i < nrOfGeneTrees; i++) {
             out.println("        <logger fileName=\"" + outputFileName + ".gene" + (i+1) + ".log\" " +
-                                    "id=\"embedlog:gene" + (i+1) + "\" logEvery=\"100\" sort=\"smart\">");
+                                    "id=\"embedlog:gene" + (i+1) + "\" logEvery=\"200\" sort=\"smart\">");
             out.println("            <log idref=\"embedding:gene" + (i+1) + "\"/>");
             out.println("        </logger>");
             out.println("        <logger fileName=\"" + outputFileName + ".gene" + (i+1) + ".trees\" " +
-                                    "id=\"treelog:gene" + (i+1) + "\" logEvery=\"100\" mode=\"tree\">");
+                                    "id=\"treelog:gene" + (i+1) + "\" logEvery=\"200\" mode=\"tree\">");
             out.println("            <log id=\"treeLogger:gene" + (i+1) + "\" tree=\"@tree:gene" + (i+1) + "\" " +
                                         "spec=\"beast.evolution.tree.TreeWithMetaDataLogger\"/>");
             out.println("        </logger>");
