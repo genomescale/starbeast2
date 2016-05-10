@@ -13,6 +13,7 @@ import beast.math.distributions.LogNormalDistributionModel;
 public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
     final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
+    final public Input<Boolean> noCacheInput = new Input<>("noCache", "Always recalculate branch rates.", false);
     final public Input<IntegerParameter> branchRatesInput = new Input<>("rates", "Discrete per-branch rates.", Input.Validate.REQUIRED);
     final public Input<LogNormalDistributionModel> rateDistributionInput = new Input<>("distr", "The distribution governing the rates among branches. Must have mean of 1.", Input.Validate.REQUIRED);
 
@@ -27,6 +28,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     private int nEstimatedRates;
     private int rootNodeNumber;
     private boolean estimateRoot;
+    private boolean noCache;
     private boolean needsUpdate;
     private boolean binRatesNeedsUpdate;
 
@@ -82,6 +84,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
         final TreeInterface speciesTree = treeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();
         estimateRoot = estimateRootInput.get().booleanValue();
+        noCache = noCacheInput.get().booleanValue();
         rootNodeNumber = speciesTree.getRoot().getNr();
         ratesArray = new double[speciesNodes.length];
         storedRatesArray = new double[speciesNodes.length];
@@ -111,7 +114,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     private void update() {
         final LogNormalDistributionModel rateDistribution = rateDistributionInput.get();
 
-        if (binRatesNeedsUpdate) {
+        if (binRatesNeedsUpdate || noCache) {
             try {
                 for (int i = 0; i < nBins; i++) {
                     binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins);
@@ -148,7 +151,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
 
     @Override
     public double[] getRatesArray() {
-        if (needsUpdate) {
+        if (needsUpdate || noCache) {
             synchronized (this) {
                 update();
                 needsUpdate = false;
@@ -160,7 +163,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
 
     @Override
     public double getRateForBranch(Node node) {
-        if (needsUpdate) {
+        if (needsUpdate || noCache) {
             synchronized (this) {
                 update();
                 needsUpdate = false;

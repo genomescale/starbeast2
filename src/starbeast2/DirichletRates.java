@@ -11,6 +11,7 @@ import beast.evolution.tree.TreeInterface;
 public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
     final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
+    final public Input<Boolean> noCacheInput = new Input<>("noCache", "Always recalculate branch rates.", false);
     final public Input<RealParameter> treeRatesInput = new Input<>("treeRates", "Per-branch rates. Must have a log standard normal prior distribution.", Input.Validate.REQUIRED);
 
     private double[] realRatesArray;
@@ -19,6 +20,7 @@ public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeR
     private int nEstimatedRates;
     private int rootNodeNumber;
     private boolean estimateRoot;
+    private boolean noCache;
     private boolean needsUpdate;
 
     @Override
@@ -47,6 +49,7 @@ public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeR
         final TreeInterface speciesTree = treeInput.get();
         final Node[] speciesNodes = speciesTree.getNodesAsArray();
         estimateRoot = estimateRootInput.get().booleanValue();
+        noCache = noCacheInput.get().booleanValue();
         rootNodeNumber = speciesTree.getRoot().getNr();
         realRatesArray = new double[speciesNodes.length];
         storedRatesArray = new double[speciesNodes.length];
@@ -83,7 +86,7 @@ public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeR
 
     @Override
     public double[] getRatesArray() {
-        if (needsUpdate) {
+        if (needsUpdate || noCache) {
             synchronized (this) {
                 update();
                 needsUpdate = false;
@@ -95,7 +98,7 @@ public class DirichletRates extends BranchRateModel.Base implements SpeciesTreeR
 
     @Override
     public double getRateForBranch(Node node) {
-        if (needsUpdate) {
+        if (needsUpdate || noCache) {
             synchronized (this) {
                 update();
                 needsUpdate = false;
