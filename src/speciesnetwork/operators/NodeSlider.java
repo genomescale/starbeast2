@@ -52,6 +52,36 @@ public class NodeSlider extends Operator {
         final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
         final double windowSize = windowSizeInput.get();
 
+        StringBuffer sb = new StringBuffer();
+        sb.append(speciesNetwork.toString());
+        System.out.println(sb);
+
+        // check the embedding in the current species network
+        for (int ig = 0; ig < geneTrees.size(); ig++) {
+            IntegerParameter embedding = embeddings.get(ig);
+            Tree geneTree = geneTrees.get(ig);
+
+            // print matrix for debugging
+            sb = new StringBuffer();
+            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                    sb.append(embedding.getMatrixValue(i, j));
+                    sb.append("\t");
+                }
+                sb.append("\n");
+            }
+            sb.append(geneTree.getRoot().toNewick());
+            sb.append("\n");
+            sb.append(geneTree.getRoot().toString());
+            System.out.println(sb);
+
+            RebuildEmbedding rebuildOperator = new RebuildEmbedding();
+            rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
+                    "geneTree", geneTree, "embedding", embedding);
+            if(rebuildOperator.getNumberOfChoices() < 0)
+                throw new RuntimeException("Developer ERROR: current embedding invalid! geneTree " + ig);
+        }
+
         // pick an internal node randomly
         List<NetworkNode> intNodes = speciesNetwork.getInternalNodes();
         NetworkNode snNode = intNodes.get(Randomizer.nextInt(intNodes.size()));
@@ -71,7 +101,8 @@ public class NodeSlider extends Operator {
             lower = leftChild.getHeight();
         if (rightChild != null && lower < rightChild.getHeight())
             lower = rightChild.getHeight();
-        if (lower >= upper) return Double.NEGATIVE_INFINITY;  // something is wrong
+        if (lower >= upper)
+            throw new RuntimeException("Developer ERROR: upper bound must be larger than lower bound!");
 
         // propose a new height, reflect it back if it's outside the boundary
         final double oldHeight = snNode.getHeight();
@@ -86,13 +117,33 @@ public class NodeSlider extends Operator {
         // update the new node height
         snNode.setHeight(newHeight);
 
+        sb = new StringBuffer();
+        sb.append("\n");
+        sb.append(speciesNetwork.toString());
+        System.out.println(sb);
+
         // check the embedding in the new species network
-        for (int i = 0; i < geneTrees.size(); i++) {
-            IntegerParameter embedding = embeddings.get(i);
-            Tree geneTree = geneTrees.get(i);
+        for (int ig = 0; ig < geneTrees.size(); ig++) {
+            IntegerParameter embedding = embeddings.get(ig);
+            Tree geneTree = geneTrees.get(ig);
+
+            // print matrix for debugging
+            sb = new StringBuffer();
+            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                    sb.append(embedding.getMatrixValue(i, j));
+                    sb.append("\t");
+                }
+                sb.append("\n");
+            }
+            sb.append(geneTree.getRoot().toNewick());
+            sb.append("\n");
+            sb.append(geneTree.getRoot().toString());
+            System.out.println(sb);
+
             RebuildEmbedding rebuildOperator = new RebuildEmbedding();
-            rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork,
-                    "taxonSuperset", taxonSuperSet, "embedding", embedding);
+            rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
+                    "geneTree", geneTree, "embedding", embedding);
             if(rebuildOperator.getNumberOfChoices() < 0)
                 return Double.NEGATIVE_INFINITY;  // not a valid embedding
         }

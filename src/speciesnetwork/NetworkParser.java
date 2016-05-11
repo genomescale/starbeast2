@@ -33,6 +33,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         rebuildNetwork(treeRoot.getLeft(), root, true);
         rebuildNetwork(treeRoot.getRight(), root, false);
         root.updateSizes();
+        super.initAndValidate();  // necessary to update storedNetworkNodes
     }
 
     private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) {

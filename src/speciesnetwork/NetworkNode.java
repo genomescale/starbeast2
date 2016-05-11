@@ -402,6 +402,8 @@ public class NetworkNode extends BEASTObject {
             clone.setID(getID());
             if (leftChild != null) clone.setLeftChild(getLeftChild().recursiveCopy());
             if (rightChild != null) clone.setRightChild(getRightChild().recursiveCopy());
+            clone.nChildren = nChildren;
+            clone.nParents = nParents;
         }
         return clone;
     }
