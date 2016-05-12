@@ -12,6 +12,7 @@ import beast.math.distributions.LogNormalDistributionModel;
 
 public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
+    final public Input<Integer> nBinsInput = new Input<>("nBins", "Number of discrete branch rate bins (default is equal to the number of estimated branch rates).", -1);
     final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
     final public Input<Boolean> noCacheInput = new Input<>("noCache", "Always recalculate branch rates.", false);
     final public Input<IntegerParameter> branchRatesInput = new Input<>("rates", "Discrete per-branch rates.", Input.Validate.REQUIRED);
@@ -95,7 +96,8 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
             nEstimatedRates = speciesNodes.length - 1;
         }
 
-        nBins = nEstimatedRates;
+        final int nBinsSupplied = nBinsInput.get().intValue();
+        nBins = (nBinsSupplied <= 0) ? nEstimatedRates : nBinsSupplied;
 
         branchRates.setDimension(nEstimatedRates);
         branchRates.setLower(0);
