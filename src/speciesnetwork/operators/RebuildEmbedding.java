@@ -251,12 +251,16 @@ public class RebuildEmbedding extends Operator {
                     else if (embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 1)
                         return recurseNumberOfChoices(geneTreeNode, rightSpecies, nChoices);
                     else return false;
-                } else
-                    return recurseNumberOfChoices(geneTreeNode, leftSpecies, nChoices);
+                } else {
+                    return embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 0 &&
+                           recurseNumberOfChoices(geneTreeNode, leftSpecies, nChoices);
+                }
             } else if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
-                return recurseNumberOfChoices(geneTreeNode, rightSpecies, nChoices);
-            } else
+                return embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 1 &&
+                       recurseNumberOfChoices(geneTreeNode, rightSpecies, nChoices);
+            } else {
                 return false;  // for a valid embedding, should never go here
+            }
         } else if (geneTreeNode.isLeaf()) {
             return true;
         } else {

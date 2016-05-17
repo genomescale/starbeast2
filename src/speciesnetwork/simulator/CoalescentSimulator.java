@@ -327,6 +327,14 @@ public class CoalescentSimulator extends Runnable {
         }
         out.println("        <operator id=\"gammaScaler\" spec=\"ScaleOperator\" parameter=\"@gammaP\" " +
                                 "scaleFactor=\"0.25\" weight=\"10.0\"/>");
+        out.println("        <operator id=\"nodeSlider\" spec=\"speciesnetwork.operators.NodeSlider\" " +
+                "speciesNetwork=\"@network:species\" taxonSuperset=\"@taxonSuperset\" weight=\"50.0\">");
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            out.println("            <geneTree idref=\"tree:gene" + (i + 1) + "\"/>");
+            out.println("            <embedding idref=\"embedding:gene" + (i + 1) + "\"/>");
+        }
+        out.println("        </operator>");
+
         // print loggers
         out.println("");
         out.println("        <logger id=\"screenlog\" logEvery=\"1000\" model=\"@posterior\">");
@@ -347,11 +355,11 @@ public class CoalescentSimulator extends Runnable {
                                         "spec=\"beast.evolution.tree.TreeHeightLogger\"/>");
         }
         out.println("        </logger>");
-        out.println("        <!--logger fileName=\"" + outputFileName + ".species.trees\" id=\"treelog:species\" " +
+        out.println("        <logger fileName=\"" + outputFileName + ".species.trees\" id=\"treelog:species\" " +
                              "logEvery=\"200\" mode=\"tree\">");
         out.println("            <log id=\"networkLogger:species\" spec=\"speciesnetwork.SpeciesNetworkLogger\" " +
                                     "speciesNetwork=\"@network:species\"/>");
-        out.println("        </logger-->");
+        out.println("        </logger>");
         for (int i = 0; i < nrOfGeneTrees; i++) {
             out.println("        <logger fileName=\"" + outputFileName + ".gene" + (i+1) + ".log\" " +
                                     "id=\"embedlog:gene" + (i+1) + "\" logEvery=\"200\" sort=\"smart\">");
