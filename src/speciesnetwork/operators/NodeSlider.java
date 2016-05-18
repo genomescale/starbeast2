@@ -42,7 +42,8 @@ public class NodeSlider extends Operator {
     /**
      * Propose a new network-node height from a uniform distribution.
      * If the new value is outside the boundary, the excess is reflected back into the interval.
-     * The proposal ratio is 1.0.
+     * The proposal ratio of this slider move is 1.0.
+     * Then rebuild the embedding of the gene trees.
      */
     @Override
     public double proposal() {
@@ -56,6 +57,7 @@ public class NodeSlider extends Operator {
         // sb.append(speciesNetwork.toString());
         // sb.append("\n");
         // check the embedding in the current species network
+        int oldChoices = 0;
         for (int ig = 0; ig < geneTrees.size(); ig++) {
             IntegerParameter embedding = embeddings.get(ig);
             Tree geneTree = geneTrees.get(ig);
@@ -63,7 +65,9 @@ public class NodeSlider extends Operator {
             RebuildEmbedding rebuildOperator = new RebuildEmbedding();
             rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
                     "geneTree", geneTree, "embedding", embedding);
-            if(rebuildOperator.getNumberOfChoices() < 0)
+            final int nChoices = rebuildOperator.getNumberOfChoices();
+            oldChoices += nChoices;
+            if(nChoices < 0)
                 throw new RuntimeException("Developer ERROR: current embedding invalid! geneTree " + ig);
         }
 
@@ -105,7 +109,8 @@ public class NodeSlider extends Operator {
         // sb.append(speciesNetwork.toString());
         // sb.append("\n");
         // System.out.println(sb);
-        // check the embedding in the new species network
+        // update the embedding in the new species network
+        int newChoices = 0;
         for (int ig = 0; ig < geneTrees.size(); ig++) {
             IntegerParameter embedding = embeddings.get(ig);
             Tree geneTree = geneTrees.get(ig);
@@ -113,10 +118,16 @@ public class NodeSlider extends Operator {
             RebuildEmbedding rebuildOperator = new RebuildEmbedding();
             rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
                     "geneTree", geneTree, "embedding", embedding);
-            if(rebuildOperator.getNumberOfChoices() < 0)
-                return Double.NEGATIVE_INFINITY;  // not a valid embedding
+            // rebuild the embedding
+            if (!rebuildOperator.initializeEmbedding())
+                return Double.NEGATIVE_INFINITY;
+
+            final int nChoices = rebuildOperator.getNumberOfChoices();
+            newChoices += nChoices;
+            if(newChoices < 0)
+                throw new RuntimeException("Developer ERROR: new embedding invalid! geneTree " + ig);
         }
 
-        return 0.0;
+        return (newChoices - oldChoices) * Math.log(2);
     }
 }
