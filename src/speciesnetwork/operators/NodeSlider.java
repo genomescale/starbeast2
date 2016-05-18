@@ -29,7 +29,7 @@ public class NodeSlider extends Operator {
     public Input<TaxonSet> taxonSuperSetInput =
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Input.Validate.REQUIRED);
     public Input<Double> windowSizeInput =
-            new Input<>("windowSize", "The size of the sliding window, default 0.1.", 0.1);
+            new Input<>("windowSize", "The size of the sliding window, default 0.01.", 0.01);
 
     // empty constructor to facilitate construction by XML + initAndValidate
     public NodeSlider() {
