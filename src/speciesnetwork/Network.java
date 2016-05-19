@@ -27,7 +27,7 @@ public class Network extends StateNode {
             new Input<>("taxonset", "Set of taxa at the leafs of the network.");
 
     /**
-     * state of dirtiness of a node in the tree
+     * state of dirtiness of a node in the network
      * DIRTY means a property on the node has changed, but not the topology. "property" includes the node height
      *       and that branch length to its parent.
      * FILTHY means the node's parent or child has changed.
@@ -572,10 +572,8 @@ public class Network extends StateNode {
 
     public void addLeafNode(final NetworkNode newNode) {
         final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        if (nodeCount > 0) {
-            System.arraycopy(networkNodes, 0, tmp, 1, nodeCount);
-            networkNodes = tmp;
-        }
+        System.arraycopy(networkNodes, 0, tmp, 1, nodeCount);
+        networkNodes = tmp;
         networkNodes[0] = newNode;
         newNode.network = this;
         leafNodeCount++;
@@ -584,11 +582,9 @@ public class Network extends StateNode {
 
     public void addSpeciationNode(final NetworkNode newNode) {
         final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        if (nodeCount > 0) {
-            System.arraycopy(networkNodes, 0, tmp, 0, leafNodeCount);
-            System.arraycopy(networkNodes, leafNodeCount, tmp, leafNodeCount + 1, speciationNodeCount + reticulationNodeCount);
-            networkNodes = tmp;
-        }
+        System.arraycopy(networkNodes, 0, tmp, 0, leafNodeCount);
+        System.arraycopy(networkNodes, leafNodeCount, tmp, leafNodeCount + 1, speciationNodeCount + reticulationNodeCount);
+        networkNodes = tmp;
         networkNodes[leafNodeCount] = newNode;
         newNode.network = this;
         speciationNodeCount++;
@@ -597,11 +593,9 @@ public class Network extends StateNode {
 
     public void addReticulationNode(final NetworkNode newNode) {
         final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        if (nodeCount > 0) {
-            System.arraycopy(networkNodes, 0, tmp, 0, nodeCount - 1);
-            tmp[nodeCount] = networkNodes[nodeCount - 1];
-            networkNodes = tmp;
-        }
+        System.arraycopy(networkNodes, 0, tmp, 0, nodeCount - 1);
+        tmp[nodeCount] = networkNodes[nodeCount - 1];
+        networkNodes = tmp;
         networkNodes[nodeCount - 1] = newNode;
         newNode.network = this;
         reticulationNodeCount++;
@@ -615,4 +609,3 @@ public class Network extends StateNode {
         }
     }
 }
-
