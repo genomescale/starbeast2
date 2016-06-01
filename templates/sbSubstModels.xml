@@ -192,12 +192,12 @@
 					 suppressInputs="beast.evolution.substitutionmodel.GTR.eigenSystem">
 <![CDATA[
 			<plugin spec="GTR" id="gtr.s:$(n)">
-				<parameter id="rateAC.s:$(n)" name="rateAC" value="1.0" lower="0.0" estimate="true"/>
-				<parameter id="rateAG.s:$(n)" name="rateAG" value="1.0" lower="0.0" estimate="true"/>
-				<parameter id="rateAT.s:$(n)" name="rateAT" value="1.0" lower="0.0" estimate="true"/>
-				<parameter id="rateCG.s:$(n)" name="rateCG" value="1.0" lower="0.0" estimate="true"/>
-				<parameter id="rateCT.s:$(n)" name="rateCT" value="1.0" lower="0.0" estimate="false"/>
-				<parameter id="rateGT.s:$(n)" name="rateGT" value="1.0" lower="0.0" estimate="true"/>
+				<parameter id="rateAC.s:$(n)" name="rateAC" value="1.0" lower="0.001" estimate="true"/>
+				<parameter id="rateAG.s:$(n)" name="rateAG" value="1.0" lower="0.001" estimate="true"/>
+				<parameter id="rateAT.s:$(n)" name="rateAT" value="1.0" lower="0.001" estimate="true"/>
+				<parameter id="rateCG.s:$(n)" name="rateCG" value="1.0" lower="0.001" estimate="true"/>
+				<parameter id="rateCT.s:$(n)" name="rateCT" value="1.0" lower="0.001" estimate="false"/>
+				<parameter id="rateGT.s:$(n)" name="rateGT" value="1.0" lower="0.001" estimate="true"/>
 				<frequencies id="estimatedFreqs.s:$(n)" spec="Frequencies">
 					<frequencies id="freqParameter.s:$(n)" spec="parameter.RealParameter" dimension="4" value="0.25" lower="0" upper="1"/>
 				</frequencies>
