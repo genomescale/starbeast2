@@ -1,4 +1,4 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions" templateinfo="StarBEAST2 template for strict clocks and analytical population size integration.">
+<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions" templateinfo="StarBEAST2 template for species tree UCLN relaxed clock.">
 
 <map name="connect" reserved="true">beast.app.beauti.BeautiConnector</map>
 <map name="subtemplate" reserved="true">beast.app.beauti.BeautiSubTemplate</map>
@@ -150,9 +150,7 @@
 				<siteModel idref="SiteModel.s:$(n)"/>
 				<branchRateModel id="SpeciesTreeRelaxedClock.c:$(n)" spec="starbeast2.StarBeastClock" geneTree="@geneTree.t:$(n)">
 					<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
-					<speciesTreeRates estimateRoot="true" spec="starbeast2.DiscreteRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species">
-						<LogNormal id="branchRatesDistr.Species" M="1.0" S="@branchRatesStdev.Species" meanInRealSpace="true" name="distr"/>
-					</speciesTreeRates>
+					<speciesTreeRates estimateRoot="true" spec="starbeast2.UncorrelatedRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species" stdev="@branchRatesStdev.Species"/>
 				</branchRateModel>
 			</plugin>
 
@@ -378,6 +376,7 @@
 			<log idref="YuleModel.t:Species"/>
 			<log idref="popMean.Species"/>
 			<log id="TreeHeight.Species" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
+			<log idref="branchRatesStdev.Species"/>
 		</logger>
 
 		<logger fileName="species.trees" id="speciesTreeLogger" logEvery="5000" mode="tree">

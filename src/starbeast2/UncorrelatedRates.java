@@ -39,18 +39,13 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
 
     @Override
     public boolean requiresRecalculation() {
-        // This check is not reliable
-        /* if (rateDistributionInput.get().isDirtyCalculation()) {
-            binRatesNeedsUpdate = true;
-        } else {
-            binRatesNeedsUpdate = false;
-        } */
-
         if (useLogNormal) {
             final double proposedLogNormalStdev = stdevInput.get().getValue();
             if (proposedLogNormalStdev != currentLogNormalStdev) {
                 binRatesNeedsUpdate = true;
                 currentLogNormalStdev = proposedLogNormalStdev;
+            } else {
+                binRatesNeedsUpdate = false;
             }
         }
 
@@ -142,7 +137,7 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
 
             try {
                 for (int i = 0; i < nBins; i++) {
-                    binRates[i] = normalDistr.inverseCumulativeProbability((i + 0.5) / nBins);
+                    binRates[i] = Math.exp(normalDistr.inverseCumulativeProbability((i + 0.5) / nBins));
                 }
             } catch (MathException e) {
                 throw new RuntimeException("Failed to compute inverse cumulative probability!");
