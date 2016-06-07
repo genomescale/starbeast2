@@ -13,11 +13,10 @@ import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
-import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
 import starbeast2.UncorrelatedRates;
 
-public class DiscreteRatesTest {
+public class UncorrelatedRatesTest {
     private String newickTree = "((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)";
     private TreeParser testTree;
 
@@ -27,19 +26,21 @@ public class DiscreteRatesTest {
     final double allowedError = 10e-6;
 
     private RealParameter meanRateParameter;
+    private RealParameter stdevParameter;
     private IntegerParameter branchRatesParameter;
 
     private UncorrelatedRates clockModel;
-    private LogNormalDistributionModel branchRateDistribution;
 
     @Test
     public void testRates() throws Exception {
         initializeTree();
 
         meanRateParameter = new RealParameter();
+        stdevParameter = new RealParameter();
         branchRatesParameter = new IntegerParameter();
 
         meanRateParameter.initByName("value", String.valueOf(meanRate));
+        stdevParameter.initByName("value", String.valueOf(1.0));
         branchRatesParameter.initByName("value", String.valueOf(initialBranchRate));
 
         // Create dummy state to allow statenode editing
@@ -48,11 +49,8 @@ public class DiscreteRatesTest {
         state.initByName("stateNode", branchRatesParameter);
         state.initialise();
 
-        branchRateDistribution = new LogNormalDistributionModel();
-        branchRateDistribution.initByName("M", "1.0", "S", "1.0", "meanInRealSpace", true);
-
         clockModel = new UncorrelatedRates();
-        clockModel.initByName("tree", testTree, "rates", branchRatesParameter, "distr", branchRateDistribution, "estimateRoot", false, "clock.rate", meanRateParameter);
+        clockModel.initByName("tree", testTree, "rates", branchRatesParameter, "stdev", stdevParameter, "estimateRoot", false, "clock.rate", meanRateParameter);
 
         initializeRates();
         checkRates();

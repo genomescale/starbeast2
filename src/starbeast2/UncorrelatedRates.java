@@ -43,7 +43,6 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
             final double proposedLogNormalStdev = stdevInput.get().getValue();
             if (proposedLogNormalStdev != currentLogNormalStdev) {
                 binRatesNeedsUpdate = true;
-                currentLogNormalStdev = proposedLogNormalStdev;
             } else {
                 binRatesNeedsUpdate = false;
             }
@@ -132,6 +131,7 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
     private void update() {
         if (useLogNormal && (binRatesNeedsUpdate || noCache)) {
             // set the mean in real space to equal 1
+            currentLogNormalStdev = stdevInput.get().getValue();
             final double newMean = -(0.5 * currentLogNormalStdev * currentLogNormalStdev);
             final NormalDistribution normalDistr = new NormalDistributionImpl(newMean, currentLogNormalStdev);
 

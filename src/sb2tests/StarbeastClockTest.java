@@ -16,7 +16,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
-import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
 import starbeast2.UncorrelatedRates;
 import starbeast2.GeneTree;
@@ -43,11 +42,11 @@ public class StarbeastClockTest {
     final double allowedError = 10e-6;
 
     private RealParameter meanRateParameter;
+    private RealParameter stdevParameter;
     private IntegerParameter branchRatesParameter;
 
     private StarBeastClock geneTreeClock;
     private UncorrelatedRates speciesTreeClock;
-    private LogNormalDistributionModel speciesRateDistribution;
 
     public StarbeastClockTest() {
         newickSpeciesTree = "((a:1.5,b:1.5):0.5,c:2.0)";
@@ -60,9 +59,11 @@ public class StarbeastClockTest {
         initializeTrees(speciesSuperSet);
 
         meanRateParameter = new RealParameter();
+        stdevParameter = new RealParameter();
         branchRatesParameter = new IntegerParameter();
 
         meanRateParameter.initByName("value", String.valueOf(meanRate));
+        stdevParameter.initByName("value", String.valueOf(1.0));
         branchRatesParameter.initByName("value", String.valueOf(initialBranchRate));
 
         // Create dummy state to allow statenode editing
@@ -71,11 +72,8 @@ public class StarbeastClockTest {
         state.initByName("stateNode", branchRatesParameter);
         state.initialise();
 
-        speciesRateDistribution = new LogNormalDistributionModel();
-        speciesRateDistribution.initByName("M", "1.0", "S", "1.0", "meanInRealSpace", true);
-
         speciesTreeClock = new UncorrelatedRates();
-        speciesTreeClock.initByName("tree", speciesTree, "rates", branchRatesParameter, "distr", speciesRateDistribution, "estimateRoot", true);
+        speciesTreeClock.initByName("tree", speciesTree, "rates", branchRatesParameter, "stdev", stdevParameter, "estimateRoot", true);
         initializeRates();
 
         geneTreeClock = new StarBeastClock();

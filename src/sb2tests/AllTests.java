@@ -9,7 +9,7 @@ import org.junit.runners.Suite.SuiteClasses;
     ConstantIOTest.class,
     ConstantPopulationTest.class,
     ContinuousRatesTest.class,
-    DiscreteRatesTest.class,
+    UncorrelatedRatesTest.class,
     StarbeastClockTest.class,
     LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
