@@ -151,5 +151,74 @@
 
 			<connect srcID="GeneTreeUCED.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeUCED.c:$(n))"/>
 		</subtemplate>
+
+		<!-- RLC relaxed clock that applies to each gene tree branch -->
+		<subtemplate id="Random Local Clock" class="starbeast2.RandomLocalRates" mainid="GeneTreeRLC.c:$(n)">
+<![CDATA[
+			<branchRateModel id="GeneTreeRLC.c:$(n)" spec="starbeast2.RandomLocalRates" tree="@Tree.t:$(n)">
+				<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
+				<rates dimension="10" value="1.0" estimate="true" id="branchRates.c:$(n)" spec="parameter.RealParameter"/>
+				<indicators dimension="10" value="true" estimate="true" id="indicators.c:$(n)" spec="parameter.BooleanParameter"/>
+			</branchRateModel>
+
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
+
+			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
+				<up idref="clockRate.c:$(n)"/>
+				<down idref="Tree.t:$(n)"/>
+			</upDownOperator>
+
+			<operator id="branchRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" parameter="@branchRates.c:$(n)" weight="9.0"/>
+			<operator id="indicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@indicators.c:$(n)" weight="9.0"/>
+
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+				<distr spec="beast.math.distributions.Exponential">
+					<mean id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
+			</prior>
+
+			<prior id="branchRatePrior.c:$(n)" name="distribution" x="@branchRates.c:$(n)">
+				<distr spec="beast.math.distributions.Gamma">
+					<parameter estimate="false" id="branchRatePriorAlpha.$(n)" name="alpha" lower="0.0" value="0.5"/>
+					<parameter estimate="false" id="branchRatePriorBeta.$(n)" name="beta" lower="0.0" value="2.0"/>
+				</distr>
+			</prior>
+
+			<prior id="indicatorSumPrior.c:$(n)" name="distribution">
+				<x id="indicatorSum.c:$(n)" spec="beast.core.util.Sum" arg="@indicators.c:$(n)"/>
+				<distr spec="beast.math.distributions.Poisson">
+					<lambda spec="parameter.RealParameter" estimate="false" value="0.6931471805599453"/>
+				</distr>
+			</prior>
+]]>
+			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="branchRates.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true"/>
+			<connect srcID="indicators.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(indicators.c:$(n)) and indicators.c:$(n)/estimate=true"/>
+
+			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Prior on the overall clock rate of partition c:$(n)
+			</connect>
+
+			<connect srcID="branchRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true"/>
+			<connect srcID="indicatorSumPrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(indicators.c:$(n)) and indicators.c:$(n)/estimate=true"/>
+
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Scale substitution rate of partition c:$(n)
+			</connect>
+			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
+				Scale up substitution rate c:$(n) and scale down tree t:$(n)
+			</connect>
+
+			<connect srcID="branchRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(branchRates.c:$(n)) and branchRates.c:$(n)/estimate=true">
+				Scale individual branch rates
+			</connect>
+			<connect srcID="indicatorFlipper.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(indicators.c:$(n)) and indicators.c:$(n)/estimate=true">
+				Turn branch rate indicators on or off for more or less branch rate changes
+			</connect>
+
+			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inposterior(GeneTreeRLC.c:$(n))"/>
+
+			<connect srcID="GeneTreeRLC.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeRLC.c:$(n))"/>
+		</subtemplate>
 	</mergewith>
 </beast>

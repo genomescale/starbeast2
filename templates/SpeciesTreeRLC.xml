@@ -1,4 +1,4 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions" templateinfo="StarBEAST2 template for strict or gene tree relaxed clocks.">
+<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions" templateinfo="StarBEAST2 template for species tree UCED relaxed clock.">
 
 <map name="connect" reserved="true">beast.app.beauti.BeautiConnector</map>
 <map name="subtemplate" reserved="true">beast.app.beauti.BeautiSubTemplate</map>
@@ -148,8 +148,9 @@
 				<data idref="data"/>
 				<tree idref="Tree.t:$(n)"/>
 				<siteModel idref="SiteModel.s:$(n)"/>
-				<branchRateModel id="StrictClock.c:$(n)" spec="StrictClockModel">
+				<branchRateModel id="SpeciesTreeRelaxedClock.c:$(n)" spec="starbeast2.StarBeastClock" geneTree="@geneTree.t:$(n)">
 					<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
+					<speciesTreeRates spec="starbeast2.RandomLocalRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species" indicators="indicators.Species"/>
 				</branchRateModel>
 			</plugin>
 
@@ -171,6 +172,12 @@
 
 			<prior id="PropInvariantPrior.t:$(n)" x="@proportionInvariant.s:$(n)">
 				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
+			</prior>
+
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+				<distr spec="beast.math.distributions.Exponential">
+					<mean id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
 			</prior>
 
 			<operator id="proportionInvariantScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@proportionInvariant.s:$(n)"/>
@@ -240,6 +247,12 @@
 
 			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
 
+			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+				Prior on the overall clock rate of partition c:$(n)
+			</connect>
+
+			<connect srcID="branchRatesModel.Species" targetID="SpeciesTreeLoggerX" inputName="branchratemodel" if="inposterior(Tree.t:$(n))"/>
+
 			<connect srcID="Tree.t:$(n)" targetID="Reheight.t:Species" inputName="genetree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedUniform.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
@@ -256,6 +269,8 @@
 			<!-- end hacks -->
 
 			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species)"/>
+			<connect srcID="branchRateScaler.Species" targetID="mcmc" inputName="operator" if="inposterior(branchRates.Species) and branchRates.Species/estimate=true"/>
+			<connect srcID="indicatorFlipper.Species" targetID="mcmc" inputName="operator" if="inposterior(indicators.Species) and indicators.Species/estimate=true"/>
 
 			<connect srcID="SBI" targetID="mcmc" inputName="init" if="inposterior(Tree.t:Species)"/>
 			<connect srcID="Tree.t:$(n)" targetID="SBI" inputName="geneTree" if="inposterior(Tree.t:$(n))"/>
@@ -266,7 +281,6 @@
 		</partitiontemplate>
 
 		<mergepoint id="sbSubstModelTemplates"/>
-		<mergepoint id="sbClockModelTemplates"/>
 		<mergepoint id="sbTreePriorTemplates"/>
 		<mergepoint id="sbPopModelTemplates"/>
 		<mergepoint id="parametricDistributions"/>
@@ -292,6 +306,8 @@
 			<stateNode idref="Tree.t:Species"/>
 			<stateNode idref="popMean.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
+			<stateNode id="branchRates.Species" dimension="10" lower="0.0" value="1.0" estimate="true" spec="parameter.RealParameter"/>
+			<stateNode id="indicators.Species" dimension="10" value="true" estimate="true" spec="parameter.BooleanParameter"/>
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">
@@ -312,6 +328,18 @@
 				<distribution id="popMeanPrior.Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
+					<prior id="branchRatePrior.Species" name="distribution" x="@branchRates.Species">
+						<distr spec="beast.math.distributions.Gamma">
+							<parameter estimate="false" id="branchRatePriorAlpha.Species" name="alpha" lower="0.0" value="0.5"/>
+							<parameter estimate="false" id="branchRatePriorBeta.Species" name="beta" lower="0.0" value="2.0"/>
+						</distr>
+					</prior>
+					<prior id="indicatorSumPrior.Species" name="distribution">
+						<x id="indicatorSum.Species" spec="beast.core.util.Sum" arg="@indicators.Species"/>
+						<distr spec="beast.math.distributions.Poisson">
+							<lambda spec="parameter.RealParameter" estimate="false" value="0.6931471805599453"/>
+						</distr>
+					</prior>
 				<mergepoint id="aux-priors"/>
 			</distribution>
 			<distribution spec="CompoundDistribution" id="likelihood">
@@ -320,6 +348,8 @@
 		</distribution>
 
 		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+		<operator id="branchRateScaler.Species" spec="ScaleOperator" scaleFactor="0.5" parameter="@branchRates.Species" weight="9.0"/>
+		<operator id="indicatorFlipper.Species" spec="BitFlipOperator" parameter="@indicators.Species" weight="9.0"/>
 
 		<operator id="Reheight.t:Species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" tree="@Tree.t:Species" speciesTree="@speciesTree"/>
