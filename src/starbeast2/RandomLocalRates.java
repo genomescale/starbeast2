@@ -28,6 +28,7 @@ public class RandomLocalRates extends BranchRateModel.Base implements SpeciesTre
 
     @Override
     protected boolean requiresRecalculation() {
+        needsUpdate = true;
         return needsUpdate;
     }
 
