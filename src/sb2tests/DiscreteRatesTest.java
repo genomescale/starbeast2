@@ -15,7 +15,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
-import starbeast2.DiscreteRates;
+import starbeast2.UncorrelatedRates;
 
 public class DiscreteRatesTest {
     private String newickTree = "((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)";
@@ -29,7 +29,7 @@ public class DiscreteRatesTest {
     private RealParameter meanRateParameter;
     private IntegerParameter branchRatesParameter;
 
-    private DiscreteRates clockModel;
+    private UncorrelatedRates clockModel;
     private LogNormalDistributionModel branchRateDistribution;
 
     @Test
@@ -51,7 +51,7 @@ public class DiscreteRatesTest {
         branchRateDistribution = new LogNormalDistributionModel();
         branchRateDistribution.initByName("M", "1.0", "S", "1.0", "meanInRealSpace", true);
 
-        clockModel = new DiscreteRates();
+        clockModel = new UncorrelatedRates();
         clockModel.initByName("tree", testTree, "rates", branchRatesParameter, "distr", branchRateDistribution, "estimateRoot", false, "clock.rate", meanRateParameter);
 
         initializeRates();

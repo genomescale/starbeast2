@@ -1,6 +1,10 @@
 package starbeast2;
 
 import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.ExponentialDistribution;
+import org.apache.commons.math.distribution.ExponentialDistributionImpl;
+import org.apache.commons.math.distribution.NormalDistribution;
+import org.apache.commons.math.distribution.NormalDistributionImpl;
 
 import beast.core.Input;
 import beast.core.parameter.IntegerParameter;
@@ -8,15 +12,14 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TreeInterface;
 import beast.evolution.branchratemodel.BranchRateModel;
-import beast.math.distributions.LogNormalDistributionModel;
 
-public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRates {
+public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
     final public Input<Integer> nBinsInput = new Input<>("nBins", "Number of discrete branch rate bins (default is equal to the number of estimated branch rates).", -1);
     final public Input<Boolean> estimateRootInput = new Input<>("estimateRoot", "Estimate rate of the root branch.", false);
     final public Input<Boolean> noCacheInput = new Input<>("noCache", "Always recalculate branch rates.", false);
+    final public Input<RealParameter> stdevInput = new Input<>("stdev", "Standard deviation of the log-normal distribution for branch rates. If not supplied uses exponential.");
     final public Input<IntegerParameter> branchRatesInput = new Input<>("rates", "Discrete per-branch rates.", Input.Validate.REQUIRED);
-    final public Input<LogNormalDistributionModel> rateDistributionInput = new Input<>("distr", "The distribution governing the rates among branches. Must have mean of 1.", Input.Validate.REQUIRED);
 
     private int nBins;
     private double currentLogNormalStdev;
@@ -32,6 +35,7 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
     private boolean noCache;
     private boolean needsUpdate;
     private boolean binRatesNeedsUpdate;
+    private boolean useLogNormal;
 
     @Override
     public boolean requiresRecalculation() {
@@ -42,12 +46,12 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
             binRatesNeedsUpdate = false;
         } */
 
-        final double proposedLogNormalStdev = rateDistributionInput.get().SParameterInput.get().getValue();
-        if (proposedLogNormalStdev != currentLogNormalStdev) {
-            binRatesNeedsUpdate = true;
-            currentLogNormalStdev = proposedLogNormalStdev;
-        } else {
-            binRatesNeedsUpdate = false;
+        if (useLogNormal) {
+            final double proposedLogNormalStdev = stdevInput.get().getValue();
+            if (proposedLogNormalStdev != currentLogNormalStdev) {
+                binRatesNeedsUpdate = true;
+                currentLogNormalStdev = proposedLogNormalStdev;
+            }
         }
 
         needsUpdate = binRatesNeedsUpdate || branchRatesInput.isDirty() || meanRateInput.isDirty();
@@ -109,17 +113,36 @@ public class DiscreteRates extends BranchRateModel.Base implements SpeciesTreeRa
         binRates = new double[nBins];
         storedBinRates = new double[nBins];
 
-        binRatesNeedsUpdate = true;
+        if (stdevInput.get() == null) {
+            useLogNormal = false;
+
+            final ExponentialDistribution exponentialDistr = new ExponentialDistributionImpl(1.0);
+            try {
+                for (int i = 0; i < nBins; i++) {
+                    binRates[i] = exponentialDistr.inverseCumulativeProbability((i + 0.5) / nBins);
+                }
+            } catch (MathException e) {
+                throw new RuntimeException("Failed to compute inverse cumulative probability!");
+            }
+
+            binRatesNeedsUpdate = false;
+        } else {
+            useLogNormal = true;
+            binRatesNeedsUpdate = true;
+        }
+
         needsUpdate = true;
     }
 
     private void update() {
-        final LogNormalDistributionModel rateDistribution = rateDistributionInput.get();
+        if (useLogNormal && (binRatesNeedsUpdate || noCache)) {
+            // set the mean in real space to equal 1
+            final double newMean = -(0.5 * currentLogNormalStdev * currentLogNormalStdev);
+            final NormalDistribution normalDistr = new NormalDistributionImpl(newMean, currentLogNormalStdev);
 
-        if (binRatesNeedsUpdate || noCache) {
             try {
                 for (int i = 0; i < nBins; i++) {
-                    binRates[i] = rateDistribution.inverseCumulativeProbability((i + 0.5) / nBins);
+                    binRates[i] = normalDistr.inverseCumulativeProbability((i + 0.5) / nBins);
                 }
             } catch (MathException e) {
                 throw new RuntimeException("Failed to compute inverse cumulative probability!");

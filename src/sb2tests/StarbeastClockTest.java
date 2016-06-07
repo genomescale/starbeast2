@@ -18,7 +18,7 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.math.distributions.LogNormalDistributionModel;
 import beast.util.TreeParser;
-import starbeast2.DiscreteRates;
+import starbeast2.UncorrelatedRates;
 import starbeast2.GeneTree;
 import starbeast2.SpeciesTree;
 import starbeast2.StarBeastClock;
@@ -46,7 +46,7 @@ public class StarbeastClockTest {
     private IntegerParameter branchRatesParameter;
 
     private StarBeastClock geneTreeClock;
-    private DiscreteRates speciesTreeClock;
+    private UncorrelatedRates speciesTreeClock;
     private LogNormalDistributionModel speciesRateDistribution;
 
     public StarbeastClockTest() {
@@ -74,7 +74,7 @@ public class StarbeastClockTest {
         speciesRateDistribution = new LogNormalDistributionModel();
         speciesRateDistribution.initByName("M", "1.0", "S", "1.0", "meanInRealSpace", true);
 
-        speciesTreeClock = new DiscreteRates();
+        speciesTreeClock = new UncorrelatedRates();
         speciesTreeClock.initByName("tree", speciesTree, "rates", branchRatesParameter, "distr", speciesRateDistribution, "estimateRoot", true);
         initializeRates();
 
