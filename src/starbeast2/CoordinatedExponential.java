@@ -41,6 +41,8 @@ public class CoordinatedExponential extends CoordinatedOperator {
         beta = betaInput.get();
         lambda = 1.0 / beta;
         optimise = optimiseInput.get();
+        
+        super.initAndValidate();
     }
 
     /**
