@@ -19,6 +19,7 @@ import org.junit.runners.Suite.SuiteClasses;
     WideExchangeTest.class,
     MissingDataCoordinatedExchange.class,
     MissingDataConstantIO.class,
+    TreeLengthLoggerTest.class,
 })
 public class AllTests {
 
