@@ -5,7 +5,7 @@
 		<subtemplate id="ConstantPopulationIO" class="starbeast2.ConstantPopulationIO" mainid="constantPopIOModel.$(n)">
 <![CDATA[
 			<plugin id="constantPopIOModel.$(n)" spec="starbeast2.ConstantPopulationIO">
-				<parameter name="populationShape" id="popShape.$(n)" lower="1.0" value="2.0" estimate="false"/>
+				<parameter name="populationShape" id="popShape.$(n)" lower="1.0" value="3.0" estimate="false"/>
 				<parameter name="populationMean" id="popMean.$(n)" lower="0.0" value="1.0" estimate="true"/>
 			</plugin>
 
@@ -30,6 +30,8 @@
 			<connect srcID="popShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and inposterior(popShape.Species) and popShape.Species/estimate=true"/>
 			<connect srcID="popMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and inposterior(popMean.Species) and popMean.Species/estimate=true"/>
 			<connect srcID="popMean.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constantPopIOModel.Species) and inposterior(popMean.Species) and popMean.Species/estimate=true"/>
+
+			<connect srcID="popMean.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.Species) and inposterior(popMean.Species) and popMean.Species/estimate=true"/>
 		</subtemplate>
 
 		<!-- Joint estimation of per-branch effective population sizes -->
@@ -40,46 +42,58 @@
 			</plugin>
 
 			<distribution id="popSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@popSizes.$(n)">
-				<distr spec="beast.math.distributions.InverseGamma">
-					<parameter name="alpha" id="popSizesAlpha.$(n)" lower="0.0" value="2.0" estimate="false"/>
-					<parameter name="beta" id="popSizesBeta.$(n)" lower="0.0" value="1.0" estimate="true"/>
+				<distr spec="starbeast2.AltInverseGamma">
+					<parameter name="alpha" id="popSizesShape.$(n)" lower="0.0" value="3.0" estimate="false"/>
+					<parameter name="mean" id="popSizesMean.$(n)" lower="0.0" value="1.0" estimate="true"/>
 				</distr>
 			</distribution>
 
-			<distribution id="popSizesAlphaPrior.$(n)" spec="beast.math.distributions.Prior" x="@popSizesAlpha.$(n)">
+			<distribution id="popSizesShapePrior.$(n)" spec="beast.math.distributions.Prior" x="@popSizesShape.$(n)">
 				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 			</distribution>
 
-			<distribution id="popSizesBetaPrior.$(n)" spec="beast.math.distributions.Prior" x="@popSizesBeta.$(n)">
+			<distribution id="popSizesMeanPrior.$(n)" spec="beast.math.distributions.Prior" x="@popSizesMean.$(n)">
 				<distr spec="beast.math.distributions.OneOnX"/>
 			</distribution>
 
 			<operator id="popSizesSwap.$(n)" parameter="@popSizes.$(n)" spec="SwapOperator" weight="3.0"/>
 			<operator id="popSizesScale.$(n)" parameter="@popSizes.$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
-			<operator id="popSizesAlphaScale.$(n)" parameter="@popSizesAlpha.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
-			<operator id="popSizesBetaScale.$(n)" parameter="@popSizesBeta.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+			<operator id="popSizesShapeScale.$(n)" parameter="@popSizesShape.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+			<operator id="popSizesMeanScale.$(n)" parameter="@popSizesMean.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 ]]>
 
 			<connect srcID="constantPopModel.Species" targetID="speciescoalescent" inputName="populationModel" if="inposterior(Tree.t:Species)"/>
 			<connect srcID="constantPopModel.Species" targetID="SBI" inputName="populationModel" if="inposterior(constantPopModel.Species)"/>
 
 			<connect srcID="popSizes.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species) and popSizes.Species/estimate=true"/>
-			<connect srcID="popSizesAlpha.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopModel.Species) and inposterior(popSizesAlpha.Species) and popSizesAlpha.Species/estimate=true"/>
-			<connect srcID="popSizesBeta.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopModel.Species) and inposterior(popSizesBeta.Species) and popSizesBeta.Species/estimate=true"/>
+			<connect srcID="popSizesShape.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopModel.Species) and inposterior(popSizesShape.Species) and popSizesShape.Species/estimate=true"/>
+			<connect srcID="popSizesMean.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopModel.Species) and inposterior(popSizesMean.Species) and popSizesMean.Species/estimate=true"/>
 
 			<connect srcID="popSizesPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species) and popSizes.Species/estimate=true"/>
-			<connect srcID="popSizesAlphaPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopModel.Species) and inposterior(popSizesAlpha.Species) and popSizesAlpha.Species/estimate=true"/>
-			<connect srcID="popSizesBetaPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopModel.Species) and inposterior(popSizesBeta.Species) and popSizesBeta.Species/estimate=true"/>
+			<connect srcID="popSizesShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopModel.Species) and inposterior(popSizesShape.Species) and popSizesShape.Species/estimate=true"/>
+			<connect srcID="popSizesMeanPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopModel.Species) and inposterior(popSizesMean.Species) and popSizesMean.Species/estimate=true"/>
 
 			<connect srcID="popSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species) and popSizes.Species/estimate=true"/>
 			<connect srcID="popSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species) and popSizes.Species/estimate=true"/>
-			<connect srcID="popSizesAlphaScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizesAlpha.Species) and popSizesAlpha.Species/estimate=true"/>
-			<connect srcID="popSizesBetaScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizesBeta.Species) and popSizesBeta.Species/estimate=true"/>
+			<connect srcID="popSizesShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizesShape.Species) and popSizesShape.Species/estimate=true"/>
+			<connect srcID="popSizesMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopModel.Species) and inposterior(popSizesMean.Species) and popSizesMean.Species/estimate=true"/>
 
 			<connect srcID="popSizes.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species) and popSizes.Species/estimate=true"/>
-			<connect srcID="popSizesBeta.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constantPopModel.Species) and inposterior(popSizesBeta.Species) and popSizesBeta.Species/estimate=true"/>
+			<connect srcID="popSizesMean.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constantPopModel.Species) and inposterior(popSizesMean.Species) and popSizesMean.Species/estimate=true"/>
 
 			<connect srcID="constantPopModel.Species" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(constantPopModel.Species) and inposterior(popSizes.Species)"/>
+
+			<connect srcID="popSizesMean.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopModel.Species) and inposterior(popSizesMean.Species) and popSizesMean.Species/estimate=true"/>
 		</subtemplate>
+
+        <!-- Alternatively parameterized inverse gamma -->
+		<subtemplate id='AltInverseGamma' class='starbeast2.AltInverseGamma' mainid='[top]'>
+			<![CDATA[
+				<distr offset="0.0" spec="starbeast2.AltInverseGamma">
+					<parameter name='alpha' value="3.0" estimate='false'/>
+					<parameter name='mean' value="1.0" estimate='false'/>
+				</distr>
+			]]>
+        </subtemplate>
 	</mergewith>
 </beast>

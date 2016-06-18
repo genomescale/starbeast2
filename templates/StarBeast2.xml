@@ -296,7 +296,7 @@
 
 		<distribution spec="CompoundDistribution" id="posterior">
 			<distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
-				<populationModel populationShape="2.0" id="constantPopIOModel.Species" spec="starbeast2.ConstantPopulationIO">
+				<populationModel populationShape="3.0" id="constantPopIOModel.Species" spec="starbeast2.ConstantPopulationIO">
 					<parameter name="populationMean" id="popMean.Species" lower="0.0" value="1.0" estimate="true"/>
 				</populationModel>
 				<speciesTree id="speciesTree" spec="starbeast2.SpeciesTree" tree="@Tree.t:Species"/>
