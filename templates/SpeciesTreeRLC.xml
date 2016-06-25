@@ -150,7 +150,7 @@
 				<siteModel idref="SiteModel.s:$(n)"/>
 				<branchRateModel id="SpeciesTreeRelaxedClock.c:$(n)" spec="starbeast2.StarBeastClock" geneTree="@geneTree.t:$(n)">
 					<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
-					<speciesTreeRates spec="starbeast2.RandomLocalRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species" indicators="indicators.Species"/>
+					<speciesTreeRates spec="starbeast2.RandomLocalRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species" indicators="@indicators.Species"/>
 				</branchRateModel>
 			</plugin>
 
