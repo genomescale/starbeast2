@@ -1,0 +1,582 @@
+\documentclass{article}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{natbib}
+
+% BEAST book specific commands
+\newcommand{\BEASTVersion}{2.4.x}
+\newcommand{\TracerVersion}{1.6}
+\newcommand{\FigTreeVersion}{1.4.2}
+
+\newcommand{\chainLength}{{5,000,000}}
+\newcommand{\logEvery}{{5,000}}
+\newcommand{\screenEvery}{{10,000}}
+
+\newcommand{\Conv}{\mathop{\scalebox{1.5}{$\ast$}}}
+
+\setlength{\parskip}{1em}
+\renewcommand{\baselinestretch}{1.5}
+
+\begin{document}
+\title{StarBEAST2 -- Estimating Species Trees from Multilocus Data}
+
+\author{Joseph Heled, Remco Bouckaert, Walter Xie, Alexei J Drummond and Huw A Ogilvie}
+
+\maketitle
+
+\section{Introduction}
+
+In this tutorial we demonstrate the use of StarBEAST2, a fully Bayesian method
+of species tree estimation and a replacement for $\Conv$BEAST
+\citep{Heled01032010}. StarBEAST2 is approximately $3\times$ faster than $\Conv$BEAST,
+and also supports applying a relaxed clock to the species tree. This enables
+estimating the substitution rates of extant and ancestral species under a
+multispecies coalescent model.
+
+You will need to download and install the following software:
+
+\begin{itemize}
+\item \textbf{BEAST} - this package contains BEAST, BEAUti,
+TreeAnnotator, DensiTree, and other programs. This tutorial is written
+for BEAST 2 \citep{10.1371/journal.pcbi.1003537} version {\BEASTVersion}, which is available for download from
+\url{http://beast2.org/}.
+\item \textbf{Tracer} - this program is used to explore the output of BEAST (and
+other Bayesian MCMC programs). It graphically and quantitively summarizes the
+distributions of continuous parameters and provides diagnostic information. At
+the time of writing, the current version is {\TracerVersion}, which is available
+for download from \url{http://tree.bio.ed.ac.uk/software/tracer/}.
+\item \textbf{FigTree} - this is an application for displaying and printing
+molecular phylogenies, in particular those obtained using BEAST. At the time of
+writing, the current version is {\FigTreeVersion}, which is available for download
+from \url{http://tree.bio.ed.ac.uk/software/figtree/}.
+\end{itemize}
+
+\section{BEAST}
+
+This tutorial will guide you through the analysis of seven loci sampled from 26
+individuals representing eight species of pocket gophers, a data set which was
+originally gathered and analysed by
+\cite{belfiore2008multilocus}. The objective of this tutorial is to estimate the
+species tree that is most probable given the multi-individual multi-locus
+sequence data. The species tree has eight taxa, whereas each gene tree has 26
+taxa. StarBEAST2 will co-estimate seven gene trees embedded in a shared species
+tree \citep{Heled01032010}.
+
+The first step will be to convert a NEXUS file with a DATA or CHARACTERS block
+into a BEAST XML input file. This is done using the program BEAUti (Bayesian
+Evolutionary Analysis Utility). This is a user-friendly program for setting the
+evolutionary model and options for the MCMC analysis. The second step is to
+actually run BEAST using the input file that contains the data, model and
+settings. The final step is to explore the output of BEAST in order to diagnose
+problems and to summarize the results.
+
+\subsection*{BEAUti}
+
+Run BEAUti by double clicking on its icon, or by launching the BEAUTi executable
+file from the command line in Linux.
+
+\subsubsection*{Set up BEAUti for StarBEAST2}
+
+StarBEAST2 can be easily installed from within BEAUTi. First choose the
+\textbf{File/Manage Packages} menu item, which will then display the list of
+packages available for installation (Figure~\ref{fig:managePackages}). Select
+the StarBEAST2 package and then install it by clicking the
+\textbf{Install/Upgrade} button.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-install.png}
+\caption{Install StarBEAST2 from within BEAUTi.}
+\label{fig:managePackages}
+\end{figure}
+
+StarBEAST2 includes a series of templates for multispecies coalescent analyses.
+These include the \textbf{StarBeast2} template for strict clock or gene tree
+relaxed clock analyses, and various \textbf{SpeciesTree...} templates for species tree
+relaxed clock analyses. Currently three types of relaxed clocks are supported by
+StarBEAST2; the uncorrelated lognormal clock (UCLN), the uncorrelated
+exponential clock (UCED), and the random local clock (RLC) which we will use for
+this tutorial.  The first thing to do is selecting that template by choosing the
+\textbf{File/Template/SpeciesTreeRLC} menu item (Figure~\ref{fig:sb2Template}).
+When changing a template, BEAUti deletes all previously imported data and start
+with a new empty template. So, if you already loaded some data, a warning
+message pops up indicating that this data will be lost if you switch templates.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-rlc.png}
+\caption{Select a species tree template in BEAUti.}
+\label{fig:sb2Template}
+\end{figure}
+
+\clearpage
+
+\subsubsection*{Loading the NEXUS file}
+
+StarBEAST2 supports multiple individuals per-species and multiple loci (we use
+the term locus to refer to a genomic sequence, and gene when referring to the
+evolutionary tree for a given locus). The data for each locus is stored as one
+alignment in its own NEXUS file. Taxa names in each alignment have to be unique,
+but duplicates across alignments are fine.
+
+To load a NEXUS format alignment, click the button with the plus symbol ($+$) in
+the lower left corner of the main \textbf{Partitions} tab. For this tutorial,
+navigate to the \textbf{examples/nexus} subfolder inside the \textbf{beast}
+application folder, and select all of the first seven NEXUS files. They should
+be numbered 26, 29, 47, 53, 59, 64, and 72 (Figure~\ref{fig:importAlignments}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-import.png}
+\caption{Selecting NEXUS alignment files to import.}
+\label{fig:importAlignments}
+\end{figure}
+
+\clearpage
+
+Each file contains an alignment of sequences of from an independent locus. The
+file \textbf{26.nex} looks like this (sequences have been truncated):
+
+\begin{minipage}[h]{0.7\textwidth}
+\begin{verbatim}
+#NEXUS
+[TBO26oLong]
+BEGIN DATA;
+	DIMENSIONS  NTAX =26 NCHAR=614;
+	FORMAT DATATYPE = DNA GAP = - MISSING = ?;
+	MATRIX	
+  Orthogeomys_heterodus       ATTCTAGGCAAAAAG-AGCAATGC...
+  Thomomys_bottae_awahnee_a   ????????????????????ATGC...
+  Thomomys_bottae_awahnee_b   ????????????????????ATGC...
+  Thomomys_bottae_xerophilus  ????????????????????ATGC...
+...
+
+;
+END;
+\end{verbatim}
+\end{minipage}
+
+\vspace{12pt}
+
+Once loaded, the imported alignments are displayed in the \textbf{Partitions}
+panel. You can double click any alignment (partition) to show its detail. For
+multi-locus analyses, BEAST can link or unlink substitutions models across the
+loci by clicking buttons on the top of the panel. The default of StarBEAST2 is
+unlinking all models: substitution model, clock model, and tree models. Note
+that you should only unlink the tree model across data partitions that are
+actually genetically unlinked. For example, in most organisms all the
+mitochondrial genes are effectively linked due to a lack of recombination and
+they should be set up to use the same tree model in any multispecies coalescent
+analysis.
+
+\subsubsection*{Assigning the correct species to each sequence}
+
+%%JH
+Each taxon in a StarBEAST2 analysis is associated with a species or similar OTU.
+Typically the species name is already embedded inside the taxon label. The
+species name should be easy to extract; place it either at the beginning or the
+end, separated by a ``special'' character which does not appear in names. For
+example, \texttt{aria\_334259, coast\_343436} (using an underscore) or
+\texttt{10x017b.wrussia, 2x305b.eastis} (using a dot).
+%%JH
+
+We need to tell BEAUti somehow which lineages in the alignments go with taxa in
+the species tree. Select the Taxon Set panel, and a list of taxa from the
+alignments is shown together with a default guess by BEAUti. In this case, the
+guess is not very good, so we want to change this. You can manually change each
+of the entries in the table, or press the guess button and a dialog is shown
+where you can choose from several ways to try to detect the taxon from the name
+of the lineages, or have a mapping stored in a file. In this case, splitting the
+name on the underscore character ('\_') and selecting the second group will give
+us the mapping that we need (Figure~\ref{fig:taxonSets}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-guess.png}
+\caption{Selecting taxon sets in BEAUti using the guess dialog.}
+\label{fig:taxonSets}
+\end{figure}
+
+Alternatively, the mapping can be read from a trait file. A proper trait file is
+tab delimited. The first row is always \texttt{traits} followed by the keyword
+\texttt{species} in the second column and separated by tab. The rest of the rows
+map each individual taxon name to a species name: the taxon name in the first
+column and species name in the second column separated by tab. For example:
+
+\begin{minipage}[h]{0.7\textwidth}
+\begin{verbatim}
+traits	species
+taxon1	speciesA
+taxon2	speciesA
+taxon3	speciesB
+...
+\end{verbatim}
+\end{minipage}
+
+\vspace{12pt}
+
+\subsubsection*{Adjusting the ploidy of each gene}
+
+Ploidy should be based on the mode of inheritance for each gene. By convention,
+nuclear genes in diploids are given a ploidy of 2.0. Because mitochondrial and Y
+chromosome genes are haploid even in otherwise diploid organisms, and also
+inherited only through the mother or the father respectively, their effective
+population size $N_e$ is only one quarter that of nuclear genes. Therefore if
+nuclear gene ploidy is set to 2.0, mitochondrial or Y chromosome gene ploidy
+should be set to 0.5. In this analysis all genes are from nuclear loci and their
+ploidy should be left at the default value of 2.0 (Figure~\ref{fig:ploidy}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-ploidy.png}
+\caption{Default ploidy values for all genes.}
+\label{fig:ploidy}
+\end{figure}
+
+\subsubsection*{Selecting the method of population size integration}
+
+StarBEAST2, like $\Conv$BEAST before it, can estimate the effective population
+sizes for extant and ancestral species. However by default StarBEAST2 analytically
+integrates over population sizes which is faster than making explicit estimates.
+If you do need to estimate population sizes, change the population model to
+\textbf{Constant Population}. For this tutorial, keep the default setting which
+is \textbf{Constant Population IO} (Figure~\ref{fig:pop}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-pop.png}
+\caption{The choice of population models used by StarBEAST2.}
+\label{fig:pop}
+\end{figure}
+
+\subsubsection*{Setting the substitution model}
+
+The next thing to do is to click on the \textbf{Site Model} tab at the top of
+the main window. This will reveal the evolutionary model settings for BEAST.
+Exactly which options appear depend on whether the data are nucleotides, or
+amino acids, or binary data, or general data. The settings that will appear
+after loading the data set will be the default values so we need to make some
+changes.
+
+Many of the models may be familiar to you. For this analysis, we will select
+each substitution model listed on the left side in turn to make the following
+change: select ``HKY'' for substitution model (\textbf{Subst Model} in
+Figure~\ref{fig:HKY}). Make sure to repeat this step for every partition listed
+on the left side.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-subst.png}
+\caption{Setting up substitution and site models for the gopher alignments.}
+\label{fig:HKY}
+\end{figure}
+
+\subsubsection*{Setting the clock model}
+
+Click on the \textbf{Clock Model} tab at the top of the main window. In
+this panel you can configure the clock rates used for each locus. By default the
+clock rate of the first locus is set to 1.0 and not estimated, but the other
+rates are estimated, meaning the inferred per-locus clock rates are all
+relative to the first locus (Figure~\ref{fig:clock}). That is why the
+\textbf{estimate} check box is unchecked for the first clock model and checked
+for the other clock models.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-clock.png}
+\caption{The default settings for the first locus clock rate.}
+\label{fig:clock}
+\end{figure}
+
+\subsubsection*{Priors and Operators}
+
+The \textbf{Priors} panel allows priors to be specified for each parameter in
+the model. Leave the tree prior as the default \textbf{Yule Model}. The
+\textbf{Operators} panel, which is hidden by default, is used to configure
+technical settings that affect the efficiency of the MCMC program. We leave both
+panels unchanged in this analysis.
+
+\subsubsection*{Setting the MCMC options }
+
+The next tab, \textbf{MCMC}, provides more general settings to control the
+length of the MCMC and the file names.
+
+First up is the \textbf{Chain Length}. This the number of steps BEAST will
+complete before stopping an MCMC chain. The appropriate length of the chain
+depends on the size of the data set, the complexity of the model and on the
+accuracy of the answer required. The default value of 10,000,000 is entirely
+arbitrary and should be adjusted according to the size of your data set. For
+this tutorial set the chain length to 5,000,000 as this will complete in roughly
+10 minutes on a modern computer (Figure~\ref{fig:mcmc}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-mcmc.png}
+\caption{Setting up the MCMC paremeters.}
+\label{fig:mcmc}
+\end{figure}
+
+The other options specify how the parameter values in the Markov chain should be
+displayed on the screen and recorded in the log file. The screen output is
+simply for monitoring the programs progress so can be set to any value (although
+if set too small, the sheer quantity of information being displayed on the
+screen will actually slow the program down). For the log files, the value should
+be set relative to the total length of the chain. Sampling too often will result
+in very large files with little extra benefit in terms of the precision of the
+analysis. Sample too infrequently and the log file will not contain much
+information about the distributions of the parameters. You probably want to aim
+to store no more than 10,000 samples so this should be set to no less than chain
+length / 10,000. For this exercise, leave the default \textbf{Store Every} and \textbf{Log Every}
+settings in place.
+
+If you are using Windows then we suggest you add the suffix ``.txt'' to the
+tracelog, speciesTreeLog, and other treelog file names (e.g.
+``starbeast.log.txt'' and ``species.trees.txt'') so that Windows recognizes them as text files.
+
+\subsubsection*{Generating the BEAST XML file}
+
+We are now ready to create the BEAST XML file. To do this, either select the
+\textbf{File/Save} or \textbf{File/Save~As} menu options. Save the file with an
+appropriate name (we usually end the filename with ``.xml'', e.g.
+``gopher.xml''). We are now ready to run the file through BEAST.
+
+\subsection*{Running BEAST}
+
+Now run BEAST and when it asks for an input file, provide your newly created XML
+file as input by clicking \textbf{Choose~File...}, and then click \textbf{Run}.
+In Linux BEAST will immediately launch a file opening dialog box, which is to
+select the BEAST XML to run. BEAST will then run until it has finished reporting
+information to the screen. The actual results files are saved to the disk in the
+same location as your input file. The output to the screen will look something
+like this:
+
+{\scriptsize
+\begin{verbatim}
+Loading package BEAST v2.4.2
+Loading package starbeast2 v0.10.0
+
+                        BEAST v2.4.2, 2002-2016
+             Bayesian Evolutionary Analysis Sampling Trees
+                       Designed and developed by
+ Remco Bouckaert, Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
+                                    
+                     Department of Computer Science
+                         University of Auckland
+                        remco@cs.auckland.ac.nz
+                        alexei@cs.auckland.ac.nz
+                                    
+                   Institute of Evolutionary Biology
+                        University of Edinburgh
+                           a.rambaut@ed.ac.uk
+                                    
+                    David Geffen School of Medicine
+                 University of California, Los Angeles
+                           msuchard@ucla.edu
+                                    
+                      Downloads, Help & Resources:
+                           http://beast2.org/
+                                    
+  Source code distributed under the GNU Lesser General Public License:
+                   http://github.com/CompEvol/beast2
+                                    
+                           BEAST developers:
+   Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, 
+ Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, 
+Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, 
+                 Oliver Pybus, Chieh-Hsi Wu, Walter Xie
+                                    
+                               Thanks to:
+          Roald Forsberg, Beth Shapiro and Korbinian Strimmer
+...
+
+        4995000     -9127.9137       177.2        -9822.2686       -16.6704 1m43s/Msamples
+        5000000     -9135.2791       176.4        -9800.8325       -20.6150 1m43s/Msamples
+
+Operator                                                                Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
+ScaleOperator(popMeanScale.Species)                                     0.4027       1527       3184     0.0009     0.3241 
+ScaleOperator(branchRateScaler.Species)                                 0.1738      13273      29115     0.0085     0.3131 
+BitFlipOperator(indicatorFlipper.Species)                                    -       1436      40602     0.0085     0.0342 
+NodeReheight(Reheight.t:Species)                                             -      49376     305212     0.0708     0.1392 
+starbeast2.CoordinatedUniform(coordinatedUniform.t:Species)                  -      25330      45410     0.0142     0.3581 
+starbeast2.CoordinatedExponential(coordinatedExponential.t:Species)     0.0021      24091      46198     0.0142     0.3427 
+ScaleOperator(TreeScaler.t:Species)                                     0.9669       2580      11618     0.0028     0.1817 
+ScaleOperator(TreeRootScaler.t:Species)                                 0.6588       2822      11184     0.0028     0.2015 
+Uniform(UniformOperator.t:Species)                                           -       8653      62271     0.0142     0.1220 
+SubtreeSlide(SubtreeSlide.t:Species)                                    0.0013      10436      60563     0.0142     0.1470 
+Exchange(Narrow.t:Species)                                                   -       7604      62908     0.0142     0.1078 
+Exchange(Wide.t:Species)                                                     -        982      69480     0.0142     0.0139 
+WilsonBalding(WilsonBalding.t:Species)                                       -        287      70653     0.0142     0.0040 
+UpDownOperator(updown.all.Species)                                      0.5326       7760      20662     0.0057     0.2730 
+ScaleOperator(speciationRateScale.t:Species)                            0.2625       1524       3153     0.0009     0.3258 
+ScaleOperator(clockRateScaler.c:47)                                     0.5245       4488      14953     0.0039     0.2309 
+UpDownOperator(clockUpDownOperator.c:47)                                0.7940       4643      14510     0.0039     0.2424 
+ScaleOperator(TreeScaler.t:47)                                          0.8268       4917      14283     0.0039     0.2561 
+ScaleOperator(TreeRootScaler.t:47)                                      0.4747       4004      15190     0.0039     0.2086 
+Uniform(UniformOperator.t:47)                                                -      51522      45161     0.0193     0.5329 
+SubtreeSlide(SubtreeSlide.t:47)                                         0.0037      16316      80561     0.0193     0.1684 
+Exchange(Narrow.t:47)                                                        -      31887      64633     0.0193     0.3304 
+Exchange(Wide.t:47)                                                          -       1190      95280     0.0193     0.0123 
+WilsonBalding(WilsonBalding.t:47)                                            -       1547      94375     0.0193     0.0161 
+...
+
+ScaleOperator(KappaScaler.s:26)                                         0.3813       2324       4187     0.0013     0.3569 
+...
+
+DeltaExchangeOperator(FrequenciesExchanger.s:29)                        0.1071       1839       7816     0.0019     0.1905 
+...
+
+     Tuning: The value of the operator's tuning parameter, or '-' if the operator can't be optimized.
+    #accept: The total number of times a proposal by this operator has been accepted.
+    #reject: The total number of times a proposal by this operator has been rejected.
+      Pr(m): The probability this operator is chosen in a step of the MCMC (i.e. the normalized weight).
+  Pr(acc|m): The acceptance probability (#accept as a fraction of the total proposals for this operator).
+
+
+Total calculation time: 517.565 seconds
+End likelihood: -9135.279135222752
+\end{verbatim}}
+
+\subsection*{Analyzing the results}
+
+Run the program called \textbf{Tracer} to analyze the output of BEAST. When the
+main window has opened, choose \textbf{Import Trace File...} from the
+\textbf{File} menu and select the file that BEAST has created called
+``starbeast.log''. On the left hand side is a list of the different quantities
+that BEAST has logged. There are traces for the posterior (this is the log of
+the product of the tree likelihood and the prior probabilities), and the
+continuous parameters. Selecting a trace on the left brings up analyses for this
+trace on the right hand side depending on tab that is selected. Select the
+statistic named ``sum(indicators.Species)'' --- this is the total number of substitution rate
+changes along the species tree. You should now see a window like
+in Figure \ref{fig:tracer}.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/tracer.png}
+\caption{Tracer with the gopher data.}
+\label{fig:tracer}
+\end{figure}
+
+Remember that MCMC is a stochastic algorithm so the actual numbers will not be
+exactly the same. Tracer will plot a (marginalized) posterior distribution for
+the selected parameter and also give you statistics such as the mean and median.
+The ``95\% HPD interval'' stands for \textit{highest posterior density
+interval}, and represents the most compact interval on the selected parameter
+that contains 95\% of the posterior probability. It is also known as a
+\textit{credibility interval}, and can be thought of as a Bayesian analog to a
+confidence interval. Notice that the HPD for the sum of rate changes is limited
+to 0 or 1, suggesting that either no rate changes have occured, or that at most
+one rate change has occured.
+
+\subsection*{Obtaining an estimate of the phylogenetic tree}
+
+BEAST also produces a sample of plausible trees. These can be summarized using
+the program \textbf{TreeAnnotator}. This will take the set of trees and identify
+a single tree that best represents the posterior distribution. It will then
+annotate this selected tree topology with the mean ages of all the nodes as well
+as the 95\% HPD interval of divergence times for each clade in the selected
+tree. It will also calculate the posterior clade probability for each node. Run
+the \textbf{TreeAnnotator} program and set it up to look like in
+Figure~\ref{fig:treeannotator}.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/treeannotator.png}
+\caption{Using TreeAnnotator to summarise the tree set.}
+\label{fig:treeannotator}
+\end{figure}
+
+The \textbf{Burnin percentage} is the proportion of trees to remove from the
+start of the sample; for this tutorial, set a 10\% burnin as shown in
+Figure~\ref{fig:treeannotator}.
+
+The \textbf{Posterior probability limit} option specifies a limit such that if a
+node is found at less than this frequency in the sample of trees (i.e., has a
+posterior probability less than this limit), it will not be annotated.
+
+For \textbf{Target tree type} you can either choose a specific tree from a file
+or ask TreeAnnotator to find a tree in your sample. The default option,
+\textbf{Maximum clade credibility tree}, finds the tree with the highest product
+of the posterior probability of all its nodes.
+
+Keep ``Common Ancestor heights'' for \textbf{Node heights}. This sets the
+heights (ages) of each node in the tree to the mean height of the most recent
+common ancestor across the entire set of trees in the posterior.
+
+For the input file, select the trees file that BEAST created (by default this
+will be called ``species.trees'') and select a file for the output (here we
+have called it ``gopher.tree''). Now press \textbf{Run} and wait for the
+program to finish.
+
+\subsection*{Viewing the Species Tree}
+
+Finally, we can look at the tree in another program called \textbf{FigTree}. Run
+this program, and open the ``gopher.tree'' file by using the Open command
+in the File menu. The tree should appear. You can now try selecting some of the
+options in the control panel on the left. Try selecting \textbf{Node Bars} to
+get node age error bars. Turn on \textbf{Node Labels} and select
+``posterior'' to get it to display the posterior probability for each node,
+and also turn on \textbf{Branch Labels} and select ``rate\_95\%\_HPD'' to display
+the 95\% HPD of the relative substitution rate for each species tree branch.
+You should end up with something like Figure \ref{fig:figtree}.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/figtree.png}
+\caption{Figtree representation of the species tree.}
+\label{fig:figtree}
+\end{figure}
+
+Notice that the HPD interval for per-species substitution rates are all close to
+1.0, concordant with our previous observation that substitution rate changes on
+this species tree are unlikely. Alternatively, you can load the species tree set
+into DensiTree and set it up as follows:
+
+\begin{itemize}
+\item Select the \textbf{Central} geometry from the set of options in the top-right of the main screen.
+\item Under \textbf{Show}, check the ``Root Canal'' tree to guide the eye.
+\item Under \textbf{Clades}, check ``Show Clades'', display the means and 95\% HPDs using ``draw'', and display the posterior support
+using ``text''.
+\item Now, too many clades are shown, and most are not of interest. Check
+``Selected only'', then open the clade toolbar using the \textbf{Window/View clade toolbar}
+menu item. Select the clades (i.e. items with more than one species listed)
+with high posterior support (i.e. over 50\%).
+\end{itemize}
+
+The image should look something like Figure \ref{fig:densitree}. Notice that
+there is about 10\% support for \textit{heterodus} to be an outgroup, and about
+89\% for heterodus to be in a clade with \textit{bottea}, \textit{umbinus} and
+\textit{townsendii}. Can you explain where the remaining 1\% went?
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{figures/densitree.png}
+\caption{DensiTree representation of the species tree.}
+\label{fig:densitree}
+\end{figure}
+
+\subsection*{Comparing your results to the prior}
+
+Redo the same analysis from scratch, but this time under the MCMC options select
+the \textbf{Sample from prior only} option. This will allow you to visualize the
+full prior distribution, absent the evidence introduced by the sequence data.
+Load the ``starbeast.log'' log file in Tracer, and again select the sum of rate
+shifts. Notice that the HPD interval for this statistic ranges from 0 to 2
+shifts (Figure~\ref{fig:tracerPrior}). This shows us how the evidence provided
+by sequence data allowed us to rule out the possibility of 2 rate shifts.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/tracer-prior.png}
+\caption{Tracer with the prior distribution.}
+\label{fig:tracerPrior}
+\end{figure}
+
+\clearpage
+
+\bibliographystyle{natbib}
+\bibliography{StarBEAST2-tutorial}
+
+\end{document}
