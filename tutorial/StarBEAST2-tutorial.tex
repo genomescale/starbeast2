@@ -4,6 +4,8 @@
 \usepackage{fullpage}
 \usepackage{graphicx}
 \usepackage{natbib}
+\usepackage{amsmath}
+\usepackage{color}
 
 % BEAST book specific commands
 \newcommand{\BEASTVersion}{2.4.x}
@@ -30,7 +32,7 @@
 
 In this tutorial we demonstrate the use of StarBEAST2, a fully Bayesian method
 of species tree estimation and a replacement for $\Conv$BEAST
-\citep{Heled01032010}. StarBEAST2 is approximately $3\times$ faster than $\Conv$BEAST,
+\citep{Heled01032010}. StarBEAST2 is approximately $6.5\times$ faster than $\Conv$BEAST,
 and also supports applying a relaxed clock to the species tree. This enables
 estimating the substitution rates of extant and ancestral species under a
 multispecies coalescent model.
@@ -83,7 +85,8 @@ StarBEAST2 can be easily installed from within BEAUTi. First choose the
 \textbf{File/Manage Packages} menu item, which will then display the list of
 packages available for installation (Figure~\ref{fig:managePackages}). Select
 the StarBEAST2 package and then install it by clicking the
-\textbf{Install/Upgrade} button.
+\textbf{Install/Upgrade} button. \textcolor{red}{You must restart BEAUTi after installing any new
+packages for new features to become available.}
 
 \begin{figure}[htb!]
 \centering
@@ -111,8 +114,6 @@ message pops up indicating that this data will be lost if you switch templates.
 \label{fig:sb2Template}
 \end{figure}
 
-\clearpage
-
 \subsubsection*{Loading the NEXUS file}
 
 StarBEAST2 supports multiple individuals per-species and multiple loci (we use
@@ -133,8 +134,6 @@ be numbered 26, 29, 47, 53, 59, 64, and 72 (Figure~\ref{fig:importAlignments}).
 \caption{Selecting NEXUS alignment files to import.}
 \label{fig:importAlignments}
 \end{figure}
-
-\clearpage
 
 Each file contains an alignment of sequences of from an independent locus. The
 file \textbf{26.nex} looks like this (sequences have been truncated):
@@ -189,7 +188,7 @@ guess is not very good, so we want to change this. You can manually change each
 of the entries in the table, or press the guess button and a dialog is shown
 where you can choose from several ways to try to detect the taxon from the name
 of the lineages, or have a mapping stored in a file. In this case, splitting the
-name on the underscore character ('\_') and selecting the second group will give
+name on the underscore character `\_' and selecting the second group will give
 us the mapping that we need (Figure~\ref{fig:taxonSets}).
 
 \begin{figure}[htb!]
@@ -238,15 +237,19 @@ ploidy should be left at the default value of 2.0 (Figure~\ref{fig:ploidy}).
 \subsubsection*{Selecting the method of population size integration}
 
 StarBEAST2, like $\Conv$BEAST before it, can estimate the effective population
-sizes for extant and ancestral species. However by default StarBEAST2 analytically
-integrates over population sizes which is faster than making explicit estimates.
-If you do need to estimate population sizes, change the population model to
-\textbf{Constant Population}. For this tutorial, keep the default setting which
-is \textbf{Constant Population IO} (Figure~\ref{fig:pop}).
+sizes for extant and ancestral species. However by default StarBEAST2
+analytically integrates over population sizes which is faster than making
+explicit estimates. If you do need to estimate population sizes, change the
+population model to \textbf{Constant Population}. For this tutorial, keep the
+default model which is \textbf{Constant Population IO}. In order to improve
+convergence of the MCMC chain, set the population size mean to 0.003 and uncheck
+the option to estimate this value (Figure~\ref{fig:pop}). \textcolor{red}{For
+real analyses you should almost certainly estimate this value, but a fixed value
+will help us complete the tutorial in a reasonable time frame.}
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=\textwidth]{figures/beauti-pop.png}
+\includegraphics[width=\textwidth]{figures/beauti-pop-model.png}
 \caption{The choice of population models used by StarBEAST2.}
 \label{fig:pop}
 \end{figure}
@@ -280,7 +283,7 @@ this panel you can configure the clock rates used for each locus. By default the
 clock rate of the first locus is set to 1.0 and not estimated, but the other
 rates are estimated, meaning the inferred per-locus clock rates are all
 relative to the first locus (Figure~\ref{fig:clock}). That is why the
-\textbf{estimate} check box is unchecked for the first clock model and checked
+\textbf{estimate} box is unchecked for the first clock model and checked
 for the other clock models.
 
 \begin{figure}[htb!]
@@ -290,13 +293,38 @@ for the other clock models.
 \label{fig:clock}
 \end{figure}
 
-\subsubsection*{Priors and Operators}
+\clearpage
+
+\subsubsection*{Priors}
 
 The \textbf{Priors} panel allows priors to be specified for each parameter in
-the model. Leave the tree prior as the default \textbf{Yule Model}. The
-\textbf{Operators} panel, which is hidden by default, is used to configure
-technical settings that affect the efficiency of the MCMC program. We leave both
-panels unchanged in this analysis.
+the model. Click the top-leftmost arrow to expand the options available for the
+default ``Yule Model'', and set the speciation rate (called for some silly
+historical reason ``Birth Diff Rate'') to 180.0. Uncheck the
+\textbf{estimate} box to make this a fixed parameter (Figure~\ref{fig:yule}). \textcolor{red}{For real
+analyses you should almost certainly estimate this value, but a fixed value will
+help us complete the tutorial in a reasonable time frame.}
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-yule.png}
+\caption{Fixing the speciation rate.}
+\label{fig:yule}
+\end{figure}
+
+It would be biologically implausible for closely related species to have very large
+differences in substitution rates, so we should constrain the per-species branch
+rates to a reasonable range of values. Click the button next to
+``branchRates.Species'' to define this range. Change ``Lower'' to 0.1 and
+``Upper'' to 10.0, which means that the fastest branch rate can not be more than
+$100\times$ that of the slowest branch rate (Figure~\ref{fig:limits}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=\textwidth]{figures/beauti-branch-rates.png}
+\caption{The default settings for the first locus clock rate.}
+\label{fig:limits}
+\end{figure}
 
 \subsubsection*{Setting the MCMC options }
 
@@ -308,8 +336,8 @@ complete before stopping an MCMC chain. The appropriate length of the chain
 depends on the size of the data set, the complexity of the model and on the
 accuracy of the answer required. The default value of 10,000,000 is entirely
 arbitrary and should be adjusted according to the size of your data set. For
-this tutorial set the chain length to 5,000,000 as this will complete in roughly
-10 minutes on a modern computer (Figure~\ref{fig:mcmc}).
+this tutorial keep the default chain length, which should finish within 20
+to 30 minutes on a modern computer (Figure~\ref{fig:mcmc}).
 
 \begin{figure}[htb!]
 \centering
@@ -319,17 +347,17 @@ this tutorial set the chain length to 5,000,000 as this will complete in roughly
 \end{figure}
 
 The other options specify how the parameter values in the Markov chain should be
-displayed on the screen and recorded in the log file. The screen output is
+displayed on the screen and recorded in the log file. The \textbf{screenlog} output is
 simply for monitoring the programs progress so can be set to any value (although
 if set too small, the sheer quantity of information being displayed on the
-screen will actually slow the program down). For the log files, the value should
+screen will actually slow the program down). For the \textbf{tracelog} and \textbf{treelog} files, the value should
 be set relative to the total length of the chain. Sampling too often will result
 in very large files with little extra benefit in terms of the precision of the
 analysis. Sample too infrequently and the log file will not contain much
 information about the distributions of the parameters. You probably want to aim
-to store no more than 10,000 samples so this should be set to no less than chain
-length / 10,000. For this exercise, leave the default \textbf{Store Every} and \textbf{Log Every}
-settings in place.
+to store no more than $10000$ samples so this should be set to no less than
+$\text{chain length}\div10000$. For this exercise, leave the default \textbf{Store
+Every} and \textbf{Log Every} settings in place.
 
 If you are using Windows then we suggest you add the suffix ``.txt'' to the
 tracelog, speciesTreeLog, and other treelog file names (e.g.
@@ -340,7 +368,7 @@ tracelog, speciesTreeLog, and other treelog file names (e.g.
 We are now ready to create the BEAST XML file. To do this, either select the
 \textbf{File/Save} or \textbf{File/Save~As} menu options. Save the file with an
 appropriate name (we usually end the filename with ``.xml'', e.g.
-``gopher.xml''). We are now ready to run the file through BEAST.
+``pocket-gophers.xml''). We are now ready to run the file through BEAST.
 
 \subsection*{Running BEAST}
 
@@ -355,7 +383,7 @@ like this:
 {\scriptsize
 \begin{verbatim}
 Loading package BEAST v2.4.2
-Loading package starbeast2 v0.10.0
+Loading package starbeast2 v0.11.0
 
                         BEAST v2.4.2, 2002-2016
              Bayesian Evolutionary Analysis Sampling Trees
@@ -391,40 +419,43 @@ Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,
           Roald Forsberg, Beth Shapiro and Korbinian Strimmer
 ...
 
-        4995000     -9127.9137       177.2        -9822.2686       -16.6704 1m43s/Msamples
-        5000000     -9135.2791       176.4        -9800.8325       -20.6150 1m43s/Msamples
+         Sample      posterior ESS(posterior)     likelihood          prior
+              0     -9458.8906              N    -10189.1746       -45.9757 --
+           5000     -9272.6382         2.0       -10016.5325       -17.3076 --
+...
+
+        9995000     -9057.8747       638.9        -9813.9416       -10.6419 2m24s/Msamples
+       10000000     -9082.6784       639.7        -9807.2245       -18.0126 2m24s/Msamples
 
 Operator                                                                Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
-ScaleOperator(popMeanScale.Species)                                     0.4027       1527       3184     0.0009     0.3241 
-ScaleOperator(branchRateScaler.Species)                                 0.1738      13273      29115     0.0085     0.3131 
-BitFlipOperator(indicatorFlipper.Species)                                    -       1436      40602     0.0085     0.0342 
-NodeReheight(Reheight.t:Species)                                             -      49376     305212     0.0708     0.1392 
-starbeast2.CoordinatedUniform(coordinatedUniform.t:Species)                  -      25330      45410     0.0142     0.3581 
-starbeast2.CoordinatedExponential(coordinatedExponential.t:Species)     0.0021      24091      46198     0.0142     0.3427 
-ScaleOperator(TreeScaler.t:Species)                                     0.9669       2580      11618     0.0028     0.1817 
-ScaleOperator(TreeRootScaler.t:Species)                                 0.6588       2822      11184     0.0028     0.2015 
-Uniform(UniformOperator.t:Species)                                           -       8653      62271     0.0142     0.1220 
-SubtreeSlide(SubtreeSlide.t:Species)                                    0.0013      10436      60563     0.0142     0.1470 
-Exchange(Narrow.t:Species)                                                   -       7604      62908     0.0142     0.1078 
-Exchange(Wide.t:Species)                                                     -        982      69480     0.0142     0.0139 
-WilsonBalding(WilsonBalding.t:Species)                                       -        287      70653     0.0142     0.0040 
-UpDownOperator(updown.all.Species)                                      0.5326       7760      20662     0.0057     0.2730 
-ScaleOperator(speciationRateScale.t:Species)                            0.2625       1524       3153     0.0009     0.3258 
-ScaleOperator(clockRateScaler.c:47)                                     0.5245       4488      14953     0.0039     0.2309 
-UpDownOperator(clockUpDownOperator.c:47)                                0.7940       4643      14510     0.0039     0.2424 
-ScaleOperator(TreeScaler.t:47)                                          0.8268       4917      14283     0.0039     0.2561 
-ScaleOperator(TreeRootScaler.t:47)                                      0.4747       4004      15190     0.0039     0.2086 
-Uniform(UniformOperator.t:47)                                                -      51522      45161     0.0193     0.5329 
-SubtreeSlide(SubtreeSlide.t:47)                                         0.0037      16316      80561     0.0193     0.1684 
-Exchange(Narrow.t:47)                                                        -      31887      64633     0.0193     0.3304 
-Exchange(Wide.t:47)                                                          -       1190      95280     0.0193     0.0123 
-WilsonBalding(WilsonBalding.t:47)                                            -       1547      94375     0.0193     0.0161 
+ScaleOperator(branchRateScaler.Species)                                 0.1661      49106     114623     0.0164     0.2999 
+BitFlipOperator(indicatorFlipper.Species)                                    -       2724      79899     0.0082     0.0330 
+NodeReheight(Reheight.t:Species)                                             -      93901     591696     0.0685     0.1370 
+starbeast2.CoordinatedUniform(coordinatedUniform.t:Species)                  -      49132      87232     0.0137     0.3603 
+starbeast2.CoordinatedExponential(coordinatedExponential.t:Species)     0.0022      48587      88395     0.0137     0.3547 
+ScaleOperator(TreeScaler.t:Species)                                     0.9690       5556      22104     0.0027     0.2009 
+ScaleOperator(TreeRootScaler.t:Species)                                 0.7338       7435      20014     0.0027     0.2709 
+Uniform(UniformOperator.t:Species)                                           -      16614     120130     0.0137     0.1215 
+SubtreeSlide(SubtreeSlide.t:Species)                                    0.0010      25797     110507     0.0137     0.1893 
+Exchange(Narrow.t:Species)                                                   -      14324     122839     0.0137     0.1044 
+Exchange(Wide.t:Species)                                                     -       1729     135150     0.0137     0.0126 
+WilsonBalding(WilsonBalding.t:Species)                                       -        545     137032     0.0137     0.0040 
+UpDownOperator(updown.all.Species)                                      0.5783      14898      40232     0.0055     0.2702 
+ScaleOperator(clockRateScaler.c:53)                                     0.4840       7948      30574     0.0039     0.2063 
+UpDownOperator(clockUpDownOperator.c:53)                                0.8382      10674      27963     0.0039     0.2763 
+ScaleOperator(TreeScaler.t:53)                                          0.8566      11156      27808     0.0039     0.2863 
+ScaleOperator(TreeRootScaler.t:53)                                      0.5017       9063      29597     0.0039     0.2344 
+Uniform(UniformOperator.t:53)                                                -      98512      95113     0.0193     0.5088 
+SubtreeSlide(SubtreeSlide.t:53)                                         0.0035      34491     158387     0.0193     0.1788 
+Exchange(Narrow.t:53)                                                        -      46497     147237     0.0193     0.2400 
+Exchange(Wide.t:53)                                                          -       2028     190592     0.0193     0.0105 
+WilsonBalding(WilsonBalding.t:53)                                            -       2477     190490     0.0193     0.0128 
 ...
 
-ScaleOperator(KappaScaler.s:26)                                         0.3813       2324       4187     0.0013     0.3569 
+ScaleOperator(KappaScaler.s:26)                                         0.3338       3880       9113     0.0013     0.2986 
 ...
 
-DeltaExchangeOperator(FrequenciesExchanger.s:29)                        0.1071       1839       7816     0.0019     0.1905 
+DeltaExchangeOperator(FrequenciesExchanger.s:53)                        0.1048       3647      15713     0.0019     0.1884 
 ...
 
      Tuning: The value of the operator's tuning parameter, or '-' if the operator can't be optimized.
@@ -434,8 +465,8 @@ DeltaExchangeOperator(FrequenciesExchanger.s:29)                        0.1071  
   Pr(acc|m): The acceptance probability (#accept as a fraction of the total proposals for this operator).
 
 
-Total calculation time: 517.565 seconds
-End likelihood: -9135.279135222752
+Total calculation time: 1443.13 seconds
+End likelihood: -9082.678458114355
 \end{verbatim}}
 
 \subsection*{Analyzing the results}
@@ -444,17 +475,20 @@ Run the program called \textbf{Tracer} to analyze the output of BEAST. When the
 main window has opened, choose \textbf{Import Trace File...} from the
 \textbf{File} menu and select the file that BEAST has created called
 ``starbeast.log''. On the left hand side is a list of the different quantities
-that BEAST has logged. There are traces for the posterior (this is the log of
-the product of the tree likelihood and the prior probabilities), and the
-continuous parameters. Selecting a trace on the left brings up analyses for this
-trace on the right hand side depending on tab that is selected. Select the
-statistic named ``sum(indicators.Species)'' --- this is the total number of substitution rate
-changes along the species tree. You should now see a window like
-in Figure \ref{fig:tracer}.
+that BEAST has logged. There are traces for the the various probabilities and
+likelihoods as well as estimates of various discrete and continuous parameters.
+The first and most important trace --- the ``posterior'' --- is the log of the
+product of gene tree phylogenetic likelihoods, the coalescent probability of
+gene trees within the species tree, and all prior probabilities.
+Selecting a trace on the left brings up analyses for this trace on the right
+hand side depending on tab that is selected. Select the statistic named
+``sum(indicators.Species)'' --- this is the total number of substitution rate
+changes along the species tree. You should now see a window like in Figure
+\ref{fig:tracer}.
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=\textwidth]{figures/tracer.png}
+\includegraphics[width=\textwidth]{figures/tracer-posterior.png}
 \caption{Tracer with the gopher data.}
 \label{fig:tracer}
 \end{figure}
@@ -507,13 +541,13 @@ common ancestor across the entire set of trees in the posterior.
 
 For the input file, select the trees file that BEAST created (by default this
 will be called ``species.trees'') and select a file for the output (here we
-have called it ``gopher.tree''). Now press \textbf{Run} and wait for the
+have called it ``pocket-gophers.tree''). Now press \textbf{Run} and wait for the
 program to finish.
 
-\subsection*{Viewing the Species Tree}
+\subsection*{Viewing the species tree(s)}
 
 Finally, we can look at the tree in another program called \textbf{FigTree}. Run
-this program, and open the ``gopher.tree'' file by using the Open command
+this program, and open the ``pocket-gophers.tree'' file by using the Open command
 in the File menu. The tree should appear. You can now try selecting some of the
 options in the control panel on the left. Try selecting \textbf{Node Bars} to
 get node age error bars. Turn on \textbf{Node Labels} and select
@@ -529,10 +563,15 @@ You should end up with something like Figure \ref{fig:figtree}.
 \label{fig:figtree}
 \end{figure}
 
-Notice that the HPD interval for per-species substitution rates are all close to
+Notice that the HPD interval for per-species substitution rates all include
 1.0, concordant with our previous observation that substitution rate changes on
-this species tree are unlikely. Alternatively, you can load the species tree set
-into DensiTree and set it up as follows:
+this species tree are unlikely.
+
+\clearpage
+
+As a more Bayesian alternative to FigTree, you can load the entire species tree
+set into DensiTree. Open the ``species.trees'' file in DensiTree and set up the
+cloudogram as follows:
 
 \begin{itemize}
 \item Select the \textbf{Central} geometry from the set of options in the top-right of the main screen.
@@ -540,15 +579,16 @@ into DensiTree and set it up as follows:
 \item Under \textbf{Clades}, check ``Show Clades'', display the means and 95\% HPDs using ``draw'', and display the posterior support
 using ``text''.
 \item Now, too many clades are shown, and most are not of interest. Check
-``Selected only'', then open the clade toolbar using the \textbf{Window/View clade toolbar}
-menu item. Select the clades (i.e. items with more than one species listed)
-with high posterior support (i.e. over 50\%).
+``Selected only'', then open the clade toolbar using the \textbf{Window/View
+clade toolbar} menu item. Select each clade with high posterior support (i.e.
+items with more than one species listed with over 50\% support) by using the
+shift key.
 \end{itemize}
 
 The image should look something like Figure \ref{fig:densitree}. Notice that
-there is about 10\% support for \textit{heterodus} to be an outgroup, and about
-89\% for heterodus to be in a clade with \textit{bottea}, \textit{umbinus} and
-\textit{townsendii}. Can you explain where the remaining 1\% went?
+there is about 16\% support for \textit{heterodus} to be an outgroup, and about
+81\% for heterodus to be in a clade with \textit{bottea}, \textit{umbinus} and
+\textit{townsendii}. Can you explain where the remaining 3\% went?
 
 \begin{figure}
 \centering
@@ -559,7 +599,7 @@ there is about 10\% support for \textit{heterodus} to be an outgroup, and about
 
 \subsection*{Comparing your results to the prior}
 
-Redo the same analysis from scratch, but this time under the MCMC options select
+Redo the same analysis from scratch, but this time inside the MCMC panel select
 the \textbf{Sample from prior only} option. This will allow you to visualize the
 full prior distribution, absent the evidence introduced by the sequence data.
 Load the ``starbeast.log'' log file in Tracer, and again select the sum of rate

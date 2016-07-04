@@ -168,7 +168,7 @@
 				<down idref="Tree.t:$(n)"/>
 			</upDownOperator>
 
-			<operator id="branchRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" parameter="@branchRates.c:$(n)" weight="9.0"/>
+			<operator id="branchRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.75" parameter="@branchRates.c:$(n)" weight="18.0"/>
 			<operator id="indicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@indicators.c:$(n)" weight="9.0"/>
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">

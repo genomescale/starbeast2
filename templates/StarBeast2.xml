@@ -255,7 +255,7 @@
 			<connect srcID="Tree.t:Species" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=XXX"/>
 			<!-- end hacks -->
 
-			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species)"/>
+			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
 
 			<connect srcID="SBI" targetID="mcmc" inputName="init" if="inposterior(Tree.t:Species)"/>
 			<connect srcID="Tree.t:$(n)" targetID="SBI" inputName="geneTree" if="inposterior(Tree.t:$(n))"/>

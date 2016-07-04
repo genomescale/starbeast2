@@ -19,6 +19,7 @@
 				Yule speciation prior applied to the species tree
 			</connect>
 			<connect srcID="speciationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
+			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
 
 			<connect srcID="speciationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true">
 				Prior on net diversification rate (speciation - extinction) applied to the species tree
@@ -59,6 +60,7 @@
 				Birth-Death speciation prior applied to the species tree
 			</connect>
 			<connect srcID="netDiversificationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
+			<connect srcID="netDiversificationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
 			<connect srcID="ExtinctionFraction.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true"/>
 
 			<connect srcID="netDiversificationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true">

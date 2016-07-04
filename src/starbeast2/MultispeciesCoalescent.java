@@ -33,8 +33,6 @@ public class MultispeciesCoalescent extends Distribution {
     final private List<int[]> allEventCounts = new ArrayList<>();
     final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
 
-    final static SanityChecks sc = new SanityChecks();
-
     @Override
     public void initAndValidate() {
         final List<GeneTree> geneTrees = geneTreeInput.get();
@@ -63,7 +61,7 @@ public class MultispeciesCoalescent extends Distribution {
 
         final List<GeneTree> geneTrees = geneTreeInput.get();
 
-        assert sc.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
+        assert SanityChecks.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
 
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesNode = speciesTree.getNode(i);
@@ -91,7 +89,7 @@ public class MultispeciesCoalescent extends Distribution {
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTree geneTree = geneTrees.get(j);
-            assert sc.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
+            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
             if (geneTree.computeCoalescentTimes()) {
                 for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
                     final List<Double> timesView = geneTree.coalescentTimes.get(i);

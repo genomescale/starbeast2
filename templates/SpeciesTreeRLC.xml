@@ -268,7 +268,7 @@
 			<connect srcID="Tree.t:Species" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=XXX"/>
 			<!-- end hacks -->
 
-			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species)"/>
+			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
 			<connect srcID="branchRateScaler.Species" targetID="mcmc" inputName="operator" if="inposterior(branchRates.Species) and branchRates.Species/estimate=true"/>
 			<connect srcID="indicatorFlipper.Species" targetID="mcmc" inputName="operator" if="inposterior(indicators.Species) and indicators.Species/estimate=true"/>
 
@@ -348,7 +348,7 @@
 		</distribution>
 
 		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
-		<operator id="branchRateScaler.Species" spec="ScaleOperator" scaleFactor="0.5" parameter="@branchRates.Species" weight="9.0"/>
+		<operator id="branchRateScaler.Species" spec="ScaleOperator" scaleFactor="0.75" parameter="@branchRates.Species" weight="18.0"/>
 		<operator id="indicatorFlipper.Species" spec="BitFlipOperator" parameter="@indicators.Species" weight="9.0"/>
 
 		<operator id="Reheight.t:Species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>

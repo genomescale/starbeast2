@@ -268,7 +268,7 @@
 			<connect srcID="Tree.t:Species" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=XXX"/>
 			<!-- end hacks -->
 
-			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species)"/>
+			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
 			<connect srcID="branchRatesCycle.Species" targetID="mcmc" inputName="operator" if="inposterior(branchRates.Species) and branchRates.Species/estimate=true"/>
 			<connect srcID="branchRatesUniform.Species" targetID="mcmc" inputName="operator" if="inposterior(branchRates.Species) and branchRates.Species/estimate=true"/>
 
