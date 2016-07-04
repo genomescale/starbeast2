@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.math.MathException;
-
 import beast.core.BEASTInterface;
 import beast.core.Description;
 import beast.core.Function;
@@ -22,13 +20,12 @@ import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
+import beast.core.util.Log;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.alignment.distance.Distance;
 import beast.evolution.alignment.distance.JukesCantorDistance;
-import beast.evolution.speciation.CalibratedYuleModel;
-import beast.evolution.speciation.CalibrationPoint;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.RandomTree;
 import beast.evolution.tree.Tree;
@@ -67,9 +64,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     final public Input<List<Tree>> genes = new Input<>("geneTree", "Gene trees to initialize", new ArrayList<>());
 
-    final public Input<CalibratedYuleModel> calibratedYule = new Input<>("calibratedYule",
-            "The calibrated Yule prior for divergence time dating.");
-
     final public Input<RealParameter> birthRate = new Input<>("birthRate",
             "Tree prior birth rate to initialize");
 
@@ -78,14 +72,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     final public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
-    private boolean hasCalibrations;
-
-    @Override
-    public void initAndValidate() {
-        super.initAndValidate();
-        hasCalibrations = calibratedYule.get() != null;
-    }
-
     @Override
     public void initStateNodes() {
         final MultispeciesPopulationModel populationModel = populationFunctionInput.get();
@@ -93,27 +79,22 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final Set<BEASTInterface> treeOutputs = speciesTreeInput.get().getOutputs();
         final Method method = initMethod.get();
 
-        if (hasCalibrations) {
-            try {
-				initWithCalibrations();
-			} catch (MathException e) {
-				throw new IllegalArgumentException(e);
-			}
-        } else {
-            final List<MRCAPrior> calibrations = new ArrayList<>();
-            for (final Object plugin : treeOutputs ) {
-                if (plugin instanceof MRCAPrior) {
-                    calibrations.add((MRCAPrior) plugin);
-                }
+        final List<MRCAPrior> calibrations = new ArrayList<>();
+        for (final Object plugin : treeOutputs ) {
+            if (plugin instanceof MRCAPrior) {
+                calibrations.add((MRCAPrior) plugin);
             }
+        }
 
-            if (calibrations.size() > 0)  {
-                initWithMRCACalibrations(calibrations);
-            } else if (method == Method.POINT) {
-                fullInit();
-            } else if (method == Method.ALL_RANDOM) {
-                randomInit();
-            }
+        if (calibrations.size() > 0)  {
+            Log.info.println("StarBeastInitializer: using initWithMRCACalibrations to initialize trees.");
+            initWithMRCACalibrations(calibrations);
+        } else if (method == Method.POINT) {
+            Log.info.println("StarBeastInitializer: using fullInit to initialize trees.");
+            fullInit();
+        } else if (method == Method.ALL_RANDOM) {
+            Log.info.println("StarBeastInitializer: using randomInit to initialize trees.");
+            randomInit();
         }
 
         // initialize population sizes to equal average branch length
@@ -352,44 +333,13 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         randomInitGeneTrees(rootHeight);
     }
 
-    private void initWithCalibrations() throws MathException {
-        final CalibratedYuleModel cYule = calibratedYule.get();
-        final Tree spTree = (Tree) cYule.treeInput.get();
-
-        final List<CalibrationPoint> cals = cYule.calibrationsInput.get();
-
-        final CalibratedYuleModel cym = new CalibratedYuleModel();
-        
-        cym.getOutputs().addAll(cYule.getOutputs());
-
-        for( final CalibrationPoint cal : cals ) {
-          cym.setInputValue("calibrations", cal);
-        }
-        cym.setInputValue("tree", spTree);
-        cym.setInputValue("type", CalibratedYuleModel.Type.NONE);
-        cym.initAndValidate();
-
-        final Tree t = cym.compatibleInitialTree();
-        assert spTree.getLeafNodeCount() == t.getLeafNodeCount();
-
-        spTree.assignFromWithoutID(t);
-
-//        final CalibratedYuleInitialTree ct = new CalibratedYuleInitialTree();
-//        ct.initByName("initial", spTree, "calibrations", cYule.calibrationsInput.get());
-//        ct.initStateNodes();
-        final double rootHeight = spTree.getRoot().getHeight();
-        randomInitGeneTrees(rootHeight);
-
-        cYule.initAndValidate();
-    }
-
     private void initWithMRCACalibrations(List<MRCAPrior> calibrations) {
         final Tree spTree = speciesTreeInput.get();
         final RandomTree rnd = new RandomTree();
         rnd.setInputValue("taxonset", spTree.getTaxonset());
 
         for (final MRCAPrior cal : calibrations) rnd.setInputValue("constraint", cal);
-        ConstantPopulation pf = new ConstantPopulation();
+        beast.evolution.tree.coalescent.ConstantPopulation pf = new beast.evolution.tree.coalescent.ConstantPopulation();
         pf.setInputValue("popSize", new RealParameter("1.0"));
 
         rnd.setInputValue("populationModel", pf);

@@ -66,7 +66,6 @@
 			<connect srcID="CalibratedYuleModel.t:Species" targetID="tracelog" inputName="log" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true"/>
 			<connect srcID="cySpeciationRate.t:Species" targetID="tracelog" inputName="log" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(cySpeciationRate.t:Species) and cySpeciationRate.t:Species/estimate=true"/>
 
-			<connect srcID="CalibratedYuleModel.t:Species" targetID="SBI" inputName="calibratedYule" if="inposterior(CalibratedYuleModel.t:Species)"/>
 			<connect srcID="cySpeciationRate.t:Species" targetID="SBI" inputName="birthRate" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(cySpeciationRate.t:Species)"/>
 		</subtemplate>
 
