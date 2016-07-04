@@ -63,14 +63,12 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             "state or a point estimate based on alignments data (default point-estimate)",
             Method.POINT, Method.values());
 
-    final public Input<Tree> speciesTreeInput = new Input<>("speciesTree", "The species tree to initialize");
+    final public Input<Tree> speciesTreeInput = new Input<>("speciesTree", "The species tree to initialize.", Input.Validate.REQUIRED);
 
     final public Input<List<Tree>> genes = new Input<>("geneTree", "Gene trees to initialize", new ArrayList<>());
-    //,
-    //        Validate.REQUIRED);
 
     final public Input<CalibratedYuleModel> calibratedYule = new Input<>("calibratedYule",
-            "The species tree (with calibrations) to initialize", Validate.XOR, speciesTreeInput);
+            "The calibrated Yule prior for divergence time dating.");
 
     final public Input<RealParameter> birthRate = new Input<>("birthRate",
             "Tree prior birth rate to initialize");
@@ -84,59 +82,46 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     @Override
     public void initAndValidate() {
-        // what does this do and is it dangerous to call it or not to call it at the start or at the end??????
         super.initAndValidate();
         hasCalibrations = calibratedYule.get() != null;
     }
 
     @Override
     public void initStateNodes() {
-        // initialize population sizes to equal average branch length
-        // this is equivalent to 2Ne = E[1/lambda]
-        final TreeInterface speciesTree = speciesTreeInput.get();
-        final double speciesTreeLength = TreeStats.getLength(speciesTree);
-        final int nSpeciesTreeBranches = speciesTreeInput.get().getNodeCount();
-        final double averageBranchLength = speciesTreeLength / (nSpeciesTreeBranches - 1);
-
         final MultispeciesPopulationModel populationModel = populationFunctionInput.get();
-        populationModel.initPopSizes(averageBranchLength);
-
-        // Do other stuff...
+        final TreeInterface speciesTree = speciesTreeInput.get();
         final Set<BEASTInterface> treeOutputs = speciesTreeInput.get().getOutputs();
-        List<MRCAPrior> calibrations = new ArrayList<>();
-        for (final Object plugin : treeOutputs ) {
-            if( plugin instanceof MRCAPrior ) {
-                calibrations.add((MRCAPrior) plugin);
-            }
-        }
+        final Method method = initMethod.get();
 
-        if( hasCalibrations ) {
-            if( calibrations.size() > 0 ) {
-                throw new IllegalArgumentException("Not implemented: mix of calibrated yule and MRCA priors: " +
-                        "place all priors in the calibrated Yule");
-            }
+        if (hasCalibrations) {
             try {
 				initWithCalibrations();
 			} catch (MathException e) {
 				throw new IllegalArgumentException(e);
 			}
         } else {
-            if( calibrations.size() > 0 )  {
-                initWithMRCACalibrations(calibrations);
-                return;
+            final List<MRCAPrior> calibrations = new ArrayList<>();
+            for (final Object plugin : treeOutputs ) {
+                if (plugin instanceof MRCAPrior) {
+                    calibrations.add((MRCAPrior) plugin);
+                }
             }
 
-            final Method method = initMethod.get();
-
-            switch( method ) {
-                case POINT:
-                    fullInit();
-                    break;
-                case ALL_RANDOM:
-                    randomInit();
-                    break;
+            if (calibrations.size() > 0)  {
+                initWithMRCACalibrations(calibrations);
+            } else if (method == Method.POINT) {
+                fullInit();
+            } else if (method == Method.ALL_RANDOM) {
+                randomInit();
             }
         }
+
+        // initialize population sizes to equal average branch length
+        // this is equivalent to 2Ne = E[1/lambda]
+        final double speciesTreeLength = TreeStats.getLength(speciesTree);
+        final int nBranches = speciesTree.getNodeCount();
+        final double averageBranchLength = speciesTreeLength / (nBranches - 1);
+        populationModel.initPopSizes(averageBranchLength);
     }
 
     private double[] firstMeetings(final Tree gtree, final Map<String, Integer> tipName2Species, final int speciesCount) {
@@ -365,10 +350,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final double rootHeight = (1/lam) * s;
         stree.scale(rootHeight/stree.getRoot().getHeight());
         randomInitGeneTrees(rootHeight);
-//        final List<Tree> geneTrees = genes.get();
-//        for (final Tree gtree : geneTrees) {
-//            gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
-//        }
     }
 
     private void initWithCalibrations() throws MathException {
@@ -407,9 +388,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final RandomTree rnd = new RandomTree();
         rnd.setInputValue("taxonset", spTree.getTaxonset());
 
-        for( final MRCAPrior cal : calibrations ) {
-          rnd.setInputValue("constraint", cal);
-        }
+        for (final MRCAPrior cal : calibrations) rnd.setInputValue("constraint", cal);
         ConstantPopulation pf = new ConstantPopulation();
         pf.setInputValue("popSize", new RealParameter("1.0"));
 
@@ -423,18 +402,14 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     @Override
     public void getInitialisedStateNodes(final List<StateNode> stateNodes) {
-        if( hasCalibrations ) {
-            stateNodes.add((Tree) calibratedYule.get().treeInput.get());
-        } else {
-          stateNodes.add(speciesTreeInput.get());
-        }
+        stateNodes.add(speciesTreeInput.get());
 
-        for( final Tree g : genes.get() ) {
+        for (final Tree g : genes.get()) {
             stateNodes.add(g);
         }
 
         final RealParameter brate = birthRate.get();
-        if( brate != null ) {
+        if (brate != null) {
             stateNodes.add(brate) ;
         }
     }
