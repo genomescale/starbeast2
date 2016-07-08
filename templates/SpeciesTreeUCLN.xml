@@ -96,10 +96,10 @@
 			beast.core.Logger.model,
 			starbeast2.GeneTree.speciesTree,
 			starbeast2.GeneTree.tree,
-			starbeast2.DiscreteRates.tree,
-			starbeast2.DiscreteRates.rates,
-			starbeast2.StarBeastClock.geneTree,
-			starbeast2.StarBeastClock.speciesTreeRates"
+			starbeast2.UncorrelatedRates.rates,
+			starbeast2.UncorrelatedRates.noCache,
+			starbeast2.RandomLocalRates.rates,
+			starbeast2.RandomLocalRates.noCache"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
