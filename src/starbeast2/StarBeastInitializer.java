@@ -357,7 +357,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         newickParser.setInputValue("taxonset", speciesTree.getTaxonset());
         newickParser.initAndValidate();
         speciesTree.assignFromWithoutID(newickParser);
-        System.out.println(speciesTree);
     }
 
     private void randomInitGeneTrees(double speciesTreeHeight) {
