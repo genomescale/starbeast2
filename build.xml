@@ -137,15 +137,15 @@
 		<!-- Create the release directory -->
 		<mkdir dir="${Add_on_dir}" />
 		<mkdir dir="${Add_on_dir}/lib" />
-		<mkdir dir="${Add_on_dir}/examples" />
+		<!--<mkdir dir="${Add_on_dir}/examples" />-->
 		<mkdir dir="${Add_on_dir}/templates" />
 
 		<copy todir="${Add_on_dir}">
 			<fileset file="version.xml"/>
 		</copy>
-		<copy todir="${Add_on_dir}/examples">
+		<!--<copy todir="${Add_on_dir}/examples">
 			<fileset dir="examples" />
-		</copy>
+		</copy>-->
 		<copy todir="${Add_on_dir}/templates">
 			<fileset dir="templates" />
 		</copy>
