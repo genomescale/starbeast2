@@ -53,14 +53,28 @@ public class NodeSlider extends Operator {
         final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
         final double windowSize = windowSizeInput.get();
 
-        // StringBuffer sb = new StringBuffer();
-        // sb.append(speciesNetwork.toString());
-        // sb.append("\n");
+        StringBuffer sb = new StringBuffer();
+        sb.append(speciesNetwork.toString());
+        sb.append("\n");
         // check the embedding in the current species network
         int oldChoices = 0;
         for (int ig = 0; ig < geneTrees.size(); ig++) {
             IntegerParameter embedding = embeddings.get(ig);
             Tree geneTree = geneTrees.get(ig);
+
+            // print matrix for debugging
+            sb = new StringBuffer();
+            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                    sb.append(embedding.getMatrixValue(i, j));
+                    sb.append("\t");
+                }
+                sb.append("\n");
+            }
+            sb.append(geneTree.getRoot().toNewick());
+            sb.append("\n");
+            sb.append(geneTree.getRoot().toString());
+            System.out.println(sb);
 
             RebuildEmbedding rebuildOperator = new RebuildEmbedding();
             rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
@@ -106,14 +120,28 @@ public class NodeSlider extends Operator {
         // update the new node height
         snNode.setHeight(newHeight);
 
-        // sb.append(speciesNetwork.toString());
-        // sb.append("\n");
-        // System.out.println(sb);
+        sb = new StringBuffer();
+        sb.append(speciesNetwork.toString());  //sb.append("\n");
+        System.out.println(sb);
         // update the embedding in the new species network
         int newChoices = 0;
         for (int ig = 0; ig < geneTrees.size(); ig++) {
             IntegerParameter embedding = embeddings.get(ig);
             Tree geneTree = geneTrees.get(ig);
+
+            // print matrix for debugging
+            sb = new StringBuffer();
+            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
+                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
+                    sb.append(embedding.getMatrixValue(i, j));
+                    sb.append("\t");
+                }
+                sb.append("\n");
+            }
+            sb.append(geneTree.getRoot().toNewick());
+            sb.append("\n");
+            sb.append(geneTree.getRoot().toString());
+            System.out.println(sb);
 
             RebuildEmbedding rebuildOperator = new RebuildEmbedding();
             rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
@@ -124,7 +152,7 @@ public class NodeSlider extends Operator {
 
             final int nChoices = rebuildOperator.getNumberOfChoices();
             newChoices += nChoices;
-            if(newChoices < 0)
+            if(nChoices < 0)
                 throw new RuntimeException("Developer ERROR: new embedding invalid! geneTree " + ig);
         }
 
