@@ -48,27 +48,7 @@ public class RebuildEmbedding extends Operator {
         geneTree = geneTreeInput.get();
         embedding = embeddingInput.get();
         speciesNetwork = speciesNetworkInput.get();
-        final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
-        speciesLeafCount = speciesLeafNodes.size();
-
-        // generate map of species network tip names to species network tip nodes
-        final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
-        for (NetworkNode leafNode: speciesLeafNodes) {
-            final String speciesName = leafNode.getID();
-            speciesNodeMap.put(speciesName, leafNode);
-        }
-
-        // generate map of gene tree tip names to species network tip nodes
-        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
-        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
-            final String speciesName = species.getID();
-            final NetworkNode speciesNode = speciesNodeMap.get(speciesName);
-            final TaxonSet speciesTaxonSet = (TaxonSet) species;
-            for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
-                final String tipName = geneTip.getID();
-                geneTipMap.put(tipName, speciesNode);
-            }
-        }
+        speciesLeafCount = speciesNetwork.getLeafNodeCount();
     }
 
     @Override
@@ -122,6 +102,25 @@ public class RebuildEmbedding extends Operator {
     }
 
     private void getNodeHeirs() {
+        final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
+        // generate map of species network tip names to species network tip nodes
+        final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
+        for (NetworkNode leafNode: speciesLeafNodes) {
+            final String speciesName = leafNode.getID();
+            speciesNodeMap.put(speciesName, leafNode);
+        }
+        // generate map of gene tree tip names to species network tip nodes
+        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
+        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
+            final String speciesName = species.getID();
+            final NetworkNode speciesNode = speciesNodeMap.get(speciesName);
+            final TaxonSet speciesTaxonSet = (TaxonSet) species;
+            for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
+                final String tipName = geneTip.getID();
+                geneTipMap.put(tipName, speciesNode);
+            }
+        }
+
         geneNodeHeirs.clear();
         speciesNodeHeirs.clear();
         for (final Node geneLeaf: geneTree.getExternalNodes())

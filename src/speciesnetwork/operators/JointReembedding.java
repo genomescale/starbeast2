@@ -31,7 +31,7 @@ public class JointReembedding extends Operator {
     public double proposal() {
         RebuildEmbedding reembedOp = rebuildEmbeddingInput.get();
 
-        IntegerParameter embedding = reembedOp.embeddingInput.get();
+        /* IntegerParameter embedding = reembedOp.embeddingInput.get();
         Network speciesNetwork = reembedOp.speciesNetworkInput.get();
         Tree geneTree = reembedOp.geneTreeInput.get();
         // print matrix for debugging
@@ -46,7 +46,7 @@ public class JointReembedding extends Operator {
         sb.append(geneTree.getRoot().toNewick());  sb.append("\n");
         sb.append(geneTree.getRoot().toString());  sb.append("\n");
         sb.append(speciesNetwork.toString());  //sb.append("\n");
-        System.out.println(sb);
+        System.out.println(sb); */
 
         // count the number of alternative traversing choices for the current state (n0)
         final int oldChoices = reembedOp.getNumberOfChoices();
@@ -68,7 +68,7 @@ public class JointReembedding extends Operator {
             return Double.NEGATIVE_INFINITY;
 
         // print matrix for debugging
-        sb = new StringBuffer();
+        /* sb = new StringBuffer();
         for (int i = 0; i < embedding.getMinorDimension2(); i++) {
             for (int j = 0; j < embedding.getMinorDimension1(); j++) {
                 sb.append(embedding.getMatrixValue(i, j));
@@ -78,7 +78,7 @@ public class JointReembedding extends Operator {
         }
         sb.append(geneTree.getRoot().toNewick());  sb.append("\n");
         sb.append(geneTree.getRoot().toString());  sb.append("\n");
-        System.out.println(sb);
+        System.out.println(sb); */
 
         // count the number of alternative traversing choices for the new state (n1)
         final int newChoices = reembedOp.getNumberOfChoices();
