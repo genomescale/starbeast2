@@ -496,9 +496,9 @@ public class Network extends StateNode {
     public void restore() {
         nodeCount = storedNetworkNodes.length;
 
-        final NetworkNode[] tmp = storedNetworkNodes;
-        storedNetworkNodes = networkNodes;
-        networkNodes = tmp;
+        final NetworkNode[] tmp = networkNodes;
+        networkNodes = storedNetworkNodes;
+        storedNetworkNodes = tmp;
         root = networkNodes[storedRoot.getNr()];
 
         hasStartedEditing = false;
