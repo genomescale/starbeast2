@@ -33,7 +33,7 @@ public class RebuildEmbedding extends Operator {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
 
-    // map of gene tree tip names to species network tip number  // do not map to nodes directly as the ref. may change
+    // map of gene tree tip names to species network tip number  // do not map to nodes directly as the value may change
     private Map<String, Integer> geneTipMap = new HashMap<>();
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
     private Multimap<Node, Integer> geneNodeHeirs = HashMultimap.create();
