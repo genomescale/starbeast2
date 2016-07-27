@@ -33,7 +33,8 @@ public class RebuildEmbedding extends Operator {
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "The matrix to embed the gene tree within the species network.", Validate.REQUIRED);
 
-    private Map<String, NetworkNode> geneTipMap = new HashMap<>();
+    // map of gene tree tip names to species network tip number  // do not map to nodes directly as the ref. may change
+    private Map<String, Integer> geneTipMap = new HashMap<>();
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
     private Multimap<Node, Integer> geneNodeHeirs = HashMultimap.create();
     private Multimap<NetworkNode, Integer> speciesNodeHeirs = HashMultimap.create();
@@ -49,6 +50,25 @@ public class RebuildEmbedding extends Operator {
         embedding = embeddingInput.get();
         speciesNetwork = speciesNetworkInput.get();
         speciesLeafCount = speciesNetwork.getLeafNodeCount();
+
+        final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
+        // generate map of species network tip names to species network tip nodes
+        final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
+        for (NetworkNode leafNode: speciesLeafNodes) {
+            final String speciesName = leafNode.getID();
+            speciesNodeMap.put(speciesName, leafNode);
+        }
+        // generate map of gene tree tip names to species network tip numbers
+        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
+        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
+            final String speciesName = species.getID();
+            final NetworkNode speciesNode = speciesNodeMap.get(speciesName);
+            final TaxonSet speciesTaxonSet = (TaxonSet) species;
+            for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
+                final String gTipName = geneTip.getID();
+                geneTipMap.put(gTipName, speciesNode.getNr());
+            }
+        }
     }
 
     @Override
@@ -102,25 +122,6 @@ public class RebuildEmbedding extends Operator {
     }
 
     private void getNodeHeirs() {
-        final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
-        // generate map of species network tip names to species network tip nodes
-        final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
-        for (NetworkNode leafNode: speciesLeafNodes) {
-            final String speciesName = leafNode.getID();
-            speciesNodeMap.put(speciesName, leafNode);
-        }
-        // generate map of gene tree tip names to species network tip nodes
-        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
-        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
-            final String speciesName = species.getID();
-            final NetworkNode speciesNode = speciesNodeMap.get(speciesName);
-            final TaxonSet speciesTaxonSet = (TaxonSet) species;
-            for (Taxon geneTip: speciesTaxonSet.taxonsetInput.get()) {
-                final String tipName = geneTip.getID();
-                geneTipMap.put(tipName, speciesNode);
-            }
-        }
-
         geneNodeHeirs.clear();
         speciesNodeHeirs.clear();
         for (final Node geneLeaf: geneTree.getExternalNodes())
@@ -135,7 +136,7 @@ public class RebuildEmbedding extends Operator {
     // the heirs for each species leaf node is the associated gene leaf nodes
     private void setLeafNodeHeirs(final Node geneTreeNode) {
         final String tipName = geneTreeNode.getID();
-        final NetworkNode speciesNetworkNode = geneTipMap.get(tipName);
+        final NetworkNode speciesNetworkNode = speciesNetwork.getNode(geneTipMap.get(tipName));
         // System.out.println(String.format("%s - %d", speciesNetworkNode.getID(), geneTreeNode.getNr()));
         geneNodeHeirs.put(geneTreeNode, geneTreeNode.getNr());
         speciesNodeHeirs.put(speciesNetworkNode, geneTreeNode.getNr());
