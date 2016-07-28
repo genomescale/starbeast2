@@ -15,6 +15,18 @@ import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
 
 /**
+ * This proposal delete a reticulation branch from the species network. If there is no reticulation, this is aborted.
+ * The two branches at each connecting point are joined, resulting branches with length l1 and l2 respectively.
+ * The gamma prob r is removed. See also AddReticulation.
+ * The Jacobian is 1/(l1*l2).
+ *
+ * The AddReticulation and DeleteReticulation are chosen with equal prob.
+ * Let m' be the number of reticulation branches in the current network. The probability of selecting the this branch to
+ * remove is (1/m').
+ * Let k' be the number of branches in the proposed network. The probability of adding this branch is (1/k')(1/(k'-1))
+
+ * The Hastings ratio is (1/k)(1/(k-1)) / (1/m) = m / (k*(k-1)).
+ *
  * @author Chi Zhang
  */
 
