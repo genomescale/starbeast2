@@ -125,7 +125,7 @@ public class Network extends StateNode {
     public Network(final String sNewick) {
     }
 
-    protected NetworkNode newNode() {
+    public NetworkNode newNode() {
         try {
             return (NetworkNode) Class.forName(nodeTypeInput.get()).newInstance();
         } catch (Exception e) {
