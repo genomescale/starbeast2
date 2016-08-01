@@ -13,6 +13,7 @@ import beast.util.Randomizer;
 
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
+import speciesnetwork.SanityChecks;
 
 /**
  * This proposal delete a reticulation branch from the species network. If there is no reticulation, this is aborted.
@@ -45,6 +46,7 @@ public class DeleteReticulation extends Operator {
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Input.Validate.REQUIRED);
 
     private enum Direction {LEFT, RIGHT}
+    final static SanityChecks sc = new SanityChecks();
 
     // empty constructor to facilitate construction by XML + initAndValidate
     public DeleteReticulation() {
@@ -57,17 +59,20 @@ public class DeleteReticulation extends Operator {
     @Override
     public double proposal() {
         Network speciesNetwork = speciesNetworkInput.get();
+        assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
+
+        List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
+        final int numHybridNodes = speciesNetwork.getReticulationNodeCount();
+
+        //number of reticulation branches in the current network
+        final int numReticulationBranches = 2 * numHybridNodes;  // m'
 
         // pick a reticulation branch randomly
-        List<NetworkNode> hybridNodes = speciesNetwork.getReticulationNodes();
-        final NetworkNode netNode = hybridNodes.get(Randomizer.nextInt(hybridNodes.size()));
-        Direction direction;
-        NetworkNode topNode;
+        final NetworkNode netNode = hybridNodes.get(Randomizer.nextInt(numHybridNodes));
+        final NetworkNode topNode;
         if (Randomizer.nextBoolean()) {
-            direction = Direction.LEFT;
             topNode = netNode.getLeftParent();
         } else {
-            direction = Direction.RIGHT;
             topNode = netNode.getRightParent();
         }
 
@@ -83,21 +88,79 @@ public class DeleteReticulation extends Operator {
             parentNode1 = netNode.getLeftParent();
 
         // get the parent node and another child node of topNode
-        NetworkNode childNode2, parentNode2;
+        NetworkNode childNode2, parentNode2;  // parentNode2 can be null if topNode is root
         if (topNode.getLeftParent() != null)
             parentNode2 = topNode.getLeftParent();
         else
-            parentNode2 = topNode.getRightParent();  // can be null if topNode is root
+            parentNode2 = topNode.getRightParent();
         if (topNode.getLeftChild() == netNode)
             childNode2 = netNode.getRightChild();
         else
             childNode2 = netNode.getLeftChild();
 
+        final double lambda = 1;
+        final double l1, l2, l11, l21;
+        double proposalRatio = 0.0;
+
         // delete the reticulation branch, connect childNode1 and parentNode1, and connect childNode2 and parentNode2
+        if (netNode == childNode2 && topNode == parentNode1) {
+            // the two attaching points are on the same branch
+            if (topNode.isRoot()) {
+                l1 = l2 = 1;
+                l11 = netNode.getHeight() - childNode1.getHeight();
+                l21 = topNode.getHeight() - childNode1.getHeight();
+                proposalRatio += 2 * Math.log(lambda) - lambda * (l11 + l21);
+            } else {
+                l1 = l2 = parentNode2.getHeight() - childNode1.getHeight();
+            }
+
+            if (childNode1.getLeftParent() == netNode) {
+                childNode1.setLeftParent(parentNode2);
+            } else {
+                childNode1.setRightParent(parentNode2);
+            }
+
+            // TODO: need to solve direction conflict!
+        } else {
+            // the two attaching points are on different branches
+            l1 = parentNode1.getHeight() - childNode1.getHeight();
+            if (topNode.isRoot()) {
+                l2 = 1;
+                l21 = topNode.getHeight() - childNode2.getHeight();
+                proposalRatio += Math.log(lambda) - lambda * l21;
+            } else {
+                l2 = parentNode2.getHeight() - childNode2.getHeight();
+            }
+
+            if (childNode1.getLeftParent() == netNode) {
+                childNode1.setLeftParent(parentNode1);
+            } else {
+                childNode1.setRightParent(parentNode1);
+            }
+
+            if (childNode2.getLeftParent() == topNode) {
+                childNode2.setLeftParent(parentNode2);
+            } else {
+                childNode2.setRightParent(parentNode2);
+            }
 
 
+            // TODO: need to solve direction conflict!
+        }
+        proposalRatio += - Math.log(l1) - Math.log(l2);  // the Jacobian
+
+        // delete the two intermediate nodes
+        speciesNetwork.deleteSpeciationNode(topNode);
+        speciesNetwork.deleteReticulationNode(netNode);
+
+        // TODO: add the gamma prob.
 
 
-        return 0.0;
+        // number of branches in the proposed network
+        final int numBranches = speciesNetwork.getBranchCount();  // k'
+
+        proposalRatio += Math.log(numReticulationBranches) - 2 * Math.log(numBranches);
+
+        return proposalRatio;
     }
 }

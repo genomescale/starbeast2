@@ -63,8 +63,10 @@ public class AddReticulation extends Operator {
         Network speciesNetwork = speciesNetworkInput.get();
         assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
 
-        // pick two branches randomly, including the root branch
+        // number of branches in the current network
         final int numBranches = speciesNetwork.getBranchCount();  // k
+
+        // pick two branches randomly, including the root branch
         final int branchNr1 = Randomizer.nextInt(numBranches);
         final int branchNr2 = Randomizer.nextInt(numBranches);  // allow picking the same branch
 
@@ -224,6 +226,10 @@ public class AddReticulation extends Operator {
 
             }
         }
+
+        // TODO: add the gamma prob.
+        final double gamma = Randomizer.nextDouble();
+
 
         // number of reticulation branches in the proposed network
         final int numReticulationBranches = 2 * speciesNetwork.getReticulationNodeCount();  // m
