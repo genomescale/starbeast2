@@ -177,7 +177,7 @@ public class NetworkNode extends BEASTObject {
         return rightParent;
     }
 
-    void setLeftParent(final NetworkNode newLeftParent) {
+    public void setLeftParent(final NetworkNode newLeftParent) {
         startEditing();
         leftParent = newLeftParent;
         leftParent.leftChild = this;
@@ -185,7 +185,7 @@ public class NetworkNode extends BEASTObject {
         updateSizes();
     }
 
-    void setRightParent(final NetworkNode newRightParent) {
+    public void setRightParent(final NetworkNode newRightParent) {
         startEditing();
         rightParent = newRightParent;
         rightParent.rightChild = this;

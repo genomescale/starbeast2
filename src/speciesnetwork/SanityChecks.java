@@ -4,7 +4,7 @@ import java.util.List;
 
 import beast.evolution.tree.Node;
 
-final class SanityChecks {
+public final class SanityChecks {
     protected boolean checkTreeSanity(Node node) {
         final List<Node> children = node.getChildren();
         final int nChildren = children.size();
@@ -26,7 +26,7 @@ final class SanityChecks {
         return true;
     }
 
-    protected boolean checkNetworkSanity(NetworkNode node) {
+    public boolean checkNetworkSanity(NetworkNode node) {
         final List<NetworkNode> children = node.getChildren();
         final List<NetworkNode> parents = node.getParents();
 

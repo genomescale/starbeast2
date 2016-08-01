@@ -13,6 +13,7 @@ import beast.util.Randomizer;
 
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
+import speciesnetwork.SanityChecks;
 
 /**
  * This proposal adds a reticulation event by connecting two existing branches (with length l1 and l2) with a new branch.
@@ -47,6 +48,7 @@ public class AddReticulation extends Operator {
             new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Input.Validate.REQUIRED);
 
     private enum Direction {LEFT, RIGHT}
+    final static SanityChecks sc = new SanityChecks();
 
     // empty constructor to facilitate construction by XML + initAndValidate
     public AddReticulation() {
@@ -59,53 +61,45 @@ public class AddReticulation extends Operator {
     @Override
     public double proposal() {
         Network speciesNetwork = speciesNetworkInput.get();
+        assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
 
         // pick two branches randomly, including the root branch
         final int numBranches = speciesNetwork.getBranchCount();  // k
         final int branchNr1 = Randomizer.nextInt(numBranches);
         final int branchNr2 = Randomizer.nextInt(numBranches);  // allow picking the same branch
 
-        // get the node at the end of the branch, and the direction
+        // get the node at the end of the branch, and the direction to the parent
         NetworkNode netNode1 = null, netNode2 = null, parentNode1 = null, parentNode2 = null;
-        Direction direction1, direction2;
         for (NetworkNode netNode: speciesNetwork.getAllNodesAsArray()) {
             if (netNode.isReticulation()) {
                 if (netNode.getLeftBranchNumber() == branchNr1) {
                     netNode1 = netNode;
-                    direction1 = Direction.LEFT;
                     parentNode1 = netNode.getLeftParent();
                 } else if (netNode.getRightBranchNumber() == branchNr1) {
                     netNode1 = netNode;
-                    direction1 = Direction.RIGHT;
                     parentNode1 = netNode.getRightParent();
                 }
                 if (netNode.getLeftBranchNumber() == branchNr2) {
                     netNode2 = netNode;
-                    direction2 = Direction.LEFT;
                     parentNode2 = netNode.getLeftParent();
                 } else if (netNode.getRightBranchNumber() == branchNr2) {
                     netNode2 = netNode;
-                    direction2 = Direction.RIGHT;
                     parentNode2 = netNode.getRightParent();
                 }
             } else {
                 if (netNode.getBranchNumber(0) == branchNr1) {
                     netNode1 = netNode;
                     if (netNode.getLeftParent() != null) {
-                        direction1 = Direction.LEFT;
                         parentNode1 = netNode.getLeftParent();
                     } else {
-                        direction1 = Direction.RIGHT;
                         parentNode1 = netNode.getRightParent();  // can be null if netNode is root
                     }
                 }
                 if (netNode.getBranchNumber(0) == branchNr2) {
                     netNode2 = netNode;
                     if (netNode.getLeftParent() != null) {
-                        direction2 = Direction.LEFT;
                         parentNode2 = netNode.getLeftParent();
                     } else {
-                        direction2 = Direction.RIGHT;
                         parentNode2 = netNode.getRightParent();  // can be null if netNode is root
                     }
                 }
@@ -115,7 +109,6 @@ public class AddReticulation extends Operator {
             throw new RuntimeException("Developer ERROR: node not found!");
 
         // add a branch joining the two picked branches
-
         // propose the attaching position at each branch
         final double lambda = 1;
         final double l1, l2, l11, l21;
@@ -134,10 +127,10 @@ public class AddReticulation extends Operator {
             l21 = Randomizer.nextExponential(lambda);
             proposalRatio += lambda * l21 - Math.log(lambda);
         } else {
-            l2 = parentNode1.getHeight() - netNode1.getHeight();
+            l2 = parentNode2.getHeight() - netNode2.getHeight();
             l21 = l2 * Randomizer.nextDouble();
         }
-        proposalRatio += Math.log(l1) + Math.log(l2);
+        proposalRatio += Math.log(l1) + Math.log(l2);  // the Jacobian
 
         // create two new nodes
         NetworkNode middleNode1 = speciesNetwork.newNode();
@@ -146,9 +139,96 @@ public class AddReticulation extends Operator {
         middleNode2.setHeight(netNode2.getHeight() + l21);
 
         // deal with the node numbers and relationships
+        if (middleNode1.getHeight() > middleNode2.getHeight()) {
+            // middleNode1 is bifurcation and middleNode2 is reticulation
+            speciesNetwork.addSpeciationNode(middleNode1);
+            speciesNetwork.addReticulationNode(middleNode2);
 
+            if (netNode1 == netNode2 && parentNode1 == parentNode2) {
+                // the two attaching points are on the same branch
+                middleNode1.setLeftChild(middleNode2);
+                middleNode1.setRightChild(middleNode2);
+                middleNode2.setLeftParent(middleNode1);
+                middleNode2.setRightParent(middleNode1);
+                if (netNode1.getLeftParent() == parentNode1) {
+                    middleNode1.setLeftParent(parentNode1);
+                    middleNode2.setLeftChild(netNode1);
+                } else {
+                    middleNode1.setRightParent(parentNode1);
+                    middleNode2.setRightChild(netNode1);
+                }
+            } else {
+                // the two attaching points are on different branches
+                if (netNode1.getLeftParent() == parentNode1) {
+                    middleNode1.setLeftChild(netNode1);
+                    middleNode1.setLeftParent(parentNode1);
+                    middleNode1.setRightChild(middleNode2);
+                } else {
+                    middleNode1.setRightChild(netNode1);
+                    middleNode1.setRightParent(parentNode1);
+                    middleNode1.setLeftChild(middleNode2);
+                }
+                if (netNode2.getLeftParent() == parentNode2) {
+                    middleNode2.setLeftChild(netNode2);
+                    middleNode2.setLeftParent(parentNode2);
+                    middleNode2.setRightParent(middleNode1);
+                } else {
+                    middleNode2.setRightChild(netNode2);
+                    middleNode2.setRightParent(parentNode2);
+                    middleNode2.setLeftParent(middleNode1);
+                }
 
+                // TODO: need to solve direction conflict!
 
+            }
+        } else {
+            // middleNode1 is reticulation and middleNode2 is bifurcation
+            speciesNetwork.addReticulationNode(middleNode1);
+            speciesNetwork.addSpeciationNode(middleNode2);
+
+            if (netNode1 == netNode2 && parentNode1 == parentNode2) {
+                // the two attaching points are on the same branch
+                middleNode1.setLeftParent(middleNode2);
+                middleNode1.setRightParent(middleNode2);
+                middleNode2.setLeftChild(middleNode1);
+                middleNode2.setRightChild(middleNode1);
+                if (netNode1.getLeftParent() == parentNode1) {
+                    middleNode1.setLeftChild(netNode1);
+                    middleNode2.setLeftParent(parentNode1);
+                } else {
+                    middleNode1.setRightChild(netNode1);
+                    middleNode2.setRightParent(parentNode1);
+                }
+            } else {
+                // the two attaching points are on different branches
+                if (netNode1.getLeftParent() == parentNode1) {
+                    middleNode1.setLeftChild(netNode1);
+                    middleNode1.setLeftParent(parentNode1);
+                    middleNode1.setRightParent(middleNode2);
+                } else {
+                    middleNode1.setRightChild(netNode1);
+                    middleNode1.setRightParent(parentNode1);
+                    middleNode1.setLeftParent(middleNode2);
+                }
+                if (netNode2.getLeftParent() == parentNode2) {
+                    middleNode2.setLeftChild(netNode2);
+                    middleNode2.setLeftParent(parentNode2);
+                    middleNode2.setRightChild(middleNode1);
+                } else {
+                    middleNode2.setRightChild(netNode2);
+                    middleNode2.setRightParent(parentNode2);
+                    middleNode2.setLeftChild(middleNode1);
+                }
+
+                // TODO: need to solve direction conflict!
+
+            }
+        }
+
+        // number of reticulation branches in the proposed network
+        final int numReticulationBranches = 2 * speciesNetwork.getReticulationNodeCount();  // m
+
+        proposalRatio += 2 * Math.log(numBranches) - Math.log(numReticulationBranches);
 
         return proposalRatio;
     }
