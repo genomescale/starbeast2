@@ -608,4 +608,14 @@ public class Network extends StateNode {
             networkNodes[i].setNr(i);
         }
     }
+
+    public void deleteSpeciationNode(NetworkNode topNode) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void deleteReticulationNode(NetworkNode netNode) {
+        // TODO Auto-generated method stub
+        
+    }
 }
