@@ -180,7 +180,8 @@ public class NetworkNode extends BEASTObject {
     public void setLeftParent(final NetworkNode newLeftParent) {
         startEditing();
         leftParent = newLeftParent;
-        leftParent.leftChild = this;
+        if (leftParent != null)
+            leftParent.leftChild = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
     }
@@ -188,7 +189,8 @@ public class NetworkNode extends BEASTObject {
     public void setRightParent(final NetworkNode newRightParent) {
         startEditing();
         rightParent = newRightParent;
-        rightParent.rightChild = this;
+        if (rightParent != null)
+            rightParent.rightChild = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
     }
@@ -205,7 +207,8 @@ public class NetworkNode extends BEASTObject {
     public void setLeftChild(final NetworkNode newLeftChild) {
         startEditing();
         leftChild = newLeftChild;
-        leftChild.leftParent = this;
+        if (leftChild != null)
+            leftChild.leftParent = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
     }
@@ -213,7 +216,8 @@ public class NetworkNode extends BEASTObject {
     public void setRightChild(final NetworkNode newRightChild) {
         startEditing();
         rightChild = newRightChild;
-        rightChild.rightParent = this;
+        if (rightChild != null)
+            rightChild.rightParent = this;
         isDirty = Network.IS_FILTHY;
         updateSizes();
     }
