@@ -14,6 +14,7 @@ import beast.util.TreeParser;
 import speciesnetwork.NetworkParser;
 import speciesnetwork.GeneTreeInSpeciesNetwork;
 import speciesnetwork.MultispeciesCoalescent;
+import speciesnetwork.NetworkNode;
 import speciesnetwork.PopulationSizeModel;
 import speciesnetwork.operators.RebuildEmbedding;
 
@@ -66,6 +67,8 @@ abstract class PopulationTestHelper {
         speciesTree.initByName("newick", newickSpeciesNetwork, "IsLabelledNewick", true, "adjustTipHeights", false);
         speciesNetwork = new NetworkParser();
         speciesNetwork.initByName("tree", speciesTree);
+        final NetworkNode[] speciesNodes = speciesNetwork.getAllNodesAsArray();
+        for (NetworkNode n: speciesNodes) n.setGamma(gamma);
     }
 
     private void initializeStateNodes() {
