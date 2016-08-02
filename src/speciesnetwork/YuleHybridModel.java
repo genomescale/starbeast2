@@ -24,7 +24,7 @@ public class YuleHybridModel extends Distribution {
     public Input<Network> networkInput =
             new Input<>("network", "The species network.", Validate.REQUIRED);
     final public Input<RealParameter> diversificationInput =
-            new Input<>("diversificationRate", "Net diversification rate, lambda - nu.", Validate.REQUIRED);
+            new Input<>("diversificationRate", "Speciation rate, lambda.", Validate.REQUIRED);
     final public Input<RealParameter> hybridizationInput =
             new Input<>("hybridizationRate", "Hybridization rate, nu.", Validate.REQUIRED);
     final public Input<RealParameter> rhoProbInput =
