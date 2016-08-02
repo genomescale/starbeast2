@@ -545,8 +545,15 @@ public class NetworkNode extends BEASTObject {
                 if (rightSubtreeString != null) subtreeString.append(rightSubtreeString);
                 subtreeString.append(")");
             }
+
+            subtreeString.append(getID());
+            if (isReticulation()) {
+                final String gammaStr = String.format("[&gamma=%.8g]", inheritProb);
+                subtreeString.append(gammaStr);
+            }
+        } else {
+            subtreeString.append(getID());
         }
-        subtreeString.append(getID());
         if (parentHeight < Double.POSITIVE_INFINITY) {
             String branchLengthSuffix = String.format(":%.8g", parentHeight - height);
             while (branchLengthSuffix.charAt(branchLengthSuffix.length() - 1) == '0')
