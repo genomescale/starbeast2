@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.math.distribution.BetaDistributionImpl;
+
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
@@ -22,16 +24,19 @@ public class YuleHybridModel extends Distribution {
     public Input<Network> networkInput =
             new Input<>("network", "The species network.", Validate.REQUIRED);
     final public Input<RealParameter> diversificationInput =
-            new Input<>("diversificationRate", "Net diversification rate, lambda - mu.", Validate.REQUIRED);
+            new Input<>("diversificationRate", "Net diversification rate, lambda - nu.", Validate.REQUIRED);
     final public Input<RealParameter> hybridizationInput =
             new Input<>("hybridizationRate", "Hybridization rate, nu.", Validate.REQUIRED);
     final public Input<RealParameter> rhoProbInput =
             new Input<>("rho", "Sampling prob. of extant species, rho.");
+    final public Input<RealParameter> betaShapeInput =
+            new Input<>("betaShape", "Shape of the symmetric beta prior distribution on gammas.", Validate.REQUIRED);
     // final public Input<RealParameter> originHeightInput =
     //      new Input<>("originHeight", "the height of the point of origin of the process");
     // public Input<Boolean> conditionalOnRootInput =
     //      new Input<>("conditionalOnRoot", "condition on the root (otherwise: on the time of origin)", true);
 
+    private BetaDistributionImpl gammaPrior;
     @Override
     public void initAndValidate() {
         super.initAndValidate();
@@ -47,6 +52,9 @@ public class YuleHybridModel extends Distribution {
                 break;
             }
         }
+
+        final double betaShape = betaShapeInput.get().getValue();
+        gammaPrior = new BetaDistributionImpl(betaShape, betaShape);
     }
 
     @Override
@@ -63,7 +71,8 @@ public class YuleHybridModel extends Distribution {
         double logP= 0;
         // calculate probability of the network
         for (int i = 0; i < nodes.size(); i++) {
-            final double nodeHeight = nodes.get(i).getHeight();
+            final NetworkNode node = nodes.get(i);
+            final double nodeHeight = node.getHeight();
             final double nextHeight;
             if (i == 0)  // the youngest internal node
                 nextHeight = 0.0;  // the tip
@@ -76,6 +85,8 @@ public class YuleHybridModel extends Distribution {
                 logP += Math.log(nu);
             else if (i > 0)
                 logP += Math.log(lambda);
+
+            if (node.isReticulation()) logP += gammaPrior.logDensity(node.inheritProb);
         }
         return logP;
     }
