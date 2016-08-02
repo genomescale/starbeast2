@@ -96,7 +96,7 @@ abstract class PopulationTestHelper {
             }
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();
             geneTreeWrapper.initByName("geneTree", geneTree, "ploidy", ploidy, "speciesNetwork", speciesNetwork,
-                                       "embedding", embedding, "gamma", gammaParameter);
+                                       "embedding", embedding);
             geneTreeWrappers.add(geneTreeWrapper);
         }
     }

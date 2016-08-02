@@ -25,7 +25,7 @@ public class NetworkNode extends BEASTObject {
     /**
      * inheritance probability associated with the left parent branch
      */
-    protected double inheritProb;
+    protected double inheritProb = 0.5;
 
     /**
      * height of this node
@@ -493,7 +493,8 @@ public class NetworkNode extends BEASTObject {
         NetworkNode tmpParent = leftParent;
         leftParent = rightParent;
         rightParent = tmpParent;
-        
+        inheritProb = 1.0 - inheritProb;
+
         // update parent nodes to reflect changes
         // cascade changes to parent of half-siblings if they exist
         if (leftParent != null) {
@@ -585,5 +586,15 @@ public class NetworkNode extends BEASTObject {
 
     public int getRightBranchNumber() {
         return getBranchNumber(1);
+    }
+
+    public Double getGamma() {
+        return inheritProb;
+    }
+
+    public void setGamma(final Double newGamma) {
+        startEditing();
+        inheritProb = newGamma;
+        isDirty |= Network.IS_DIRTY;
     }
 }

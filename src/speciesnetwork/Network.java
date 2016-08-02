@@ -618,4 +618,11 @@ public class Network extends StateNode {
         // TODO Auto-generated method stub
         
     }
+
+    public boolean isDirty() {
+        for (NetworkNode n: networkNodes) {
+            if (n.isDirty != IS_CLEAN) return true;
+        }
+        return false;
+    }
 }

@@ -12,7 +12,6 @@ import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
@@ -29,15 +28,12 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             new Input<>("geneTree", "Gene tree embedded in the species network.", Validate.REQUIRED);
     public Input<IntegerParameter> embeddingInput =
             new Input<>("embedding", "Map of gene tree traversal within the species network.", Validate.REQUIRED);
-    public Input<RealParameter> gammaInput =
-            new Input<>("gamma", "Vector of probabilities of traversing left through reticulation nodes.", Validate.REQUIRED);
     public Input<Double> ploidyInput =
             new Input<>("ploidy", "Ploidy (copy number) for this gene (default is 2).", 2.0);
     protected double ploidy;
 
     private boolean needsUpdate;
     private IntegerParameter embedding;
-    private RealParameter gamma;
     private int speciesLeafNodeCount;
 
     // the coalescent times of this gene tree for all species branches
@@ -54,7 +50,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = gammaInput.isDirty() || embeddingInput.isDirty() ||
+        needsUpdate = embeddingInput.isDirty() ||
                       geneTreeInput.isDirty() || speciesNetworkInput.isDirty();
         return needsUpdate;
     }
@@ -110,7 +106,6 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         final Network speciesNetwork = speciesNetworkInput.get();
         final TreeInterface geneTree = geneTreeInput.get();
         embedding = embeddingInput.get();
-        gamma = gammaInput.get();
         logGammaSum = 0.0;
 
         final int geneTreeNodeCount = geneTree.getNodeCount();
@@ -146,8 +141,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
             coalescentLineageCounts.add(speciesBranchNumber);
             final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafNodeCount;
             if (speciesNetworkNode.isReticulation()) {
-                final int reticulationNumber = speciesNetworkNode.getReticulationNumber();
-                final double leftP = gamma.getValue(reticulationNumber);
+                final double leftP = speciesNetworkNode.inheritProb;
                 // determine traversal direction backward in time
                 final double traversalP = (speciesNetworkNode.getLeftBranchNumber() == speciesBranchNumber) ? leftP : 1 - leftP;
                 logGammaSum += Math.log(traversalP);
