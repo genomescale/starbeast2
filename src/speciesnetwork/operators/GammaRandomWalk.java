@@ -37,7 +37,6 @@ public class GammaRandomWalk extends Operator {
         final Double newGamma = 1.0 / (1.0 + Math.exp(-newLogOdds));
         randomNode.setGamma(newGamma);
 
-        System.out.println(String.format("Old gamma: %f, new gamma: %f, shift: %f", currentGamma, newGamma, logOddsShift));
         return 0.0;
     }
 }

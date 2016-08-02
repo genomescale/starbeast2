@@ -31,7 +31,6 @@ public class GammaUniform extends Operator {
         final Double newGamma = Randomizer.nextDouble();
         randomNode.setGamma(newGamma);
 
-        System.out.println(String.format("New gamma: %f", newGamma));
         return 0.0;
     }
 }
