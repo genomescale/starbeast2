@@ -59,7 +59,7 @@ public class Network extends StateNode {
     public void initAndValidate() {
         if (nodeCount < 0) {
             if (taxonSetInput.get() != null) {
-                makeCaterpillar(0, 1, false);
+                makeCaterpillar(0, 1);
             } else {
                 // make dummy network with a single root node
                 root = newNode();
@@ -78,7 +78,7 @@ public class Network extends StateNode {
         // needs more things here???
     }
 
-    public void makeCaterpillar(final double minInternalHeight, final double step, final boolean finalize) {
+    public void makeCaterpillar(final double minInternalHeight, final double step) {
         // make a caterpillar
         final List<String> taxa = taxonSetInput.get().asStringList();
         NetworkNode left = newNode();
@@ -103,22 +103,12 @@ public class Network extends StateNode {
         leafNodeCount = taxa.size();
         nodeCount = leafNodeCount * 2 - 1;
         speciationNodeCount = leafNodeCount - 1;
-
-        if (finalize) {
-            initArrays();
-        }
     }
 
     /**
      * constructors
      */
     public Network() {
-    }
-
-    // constructor overload
-    public Network(final NetworkNode rootNode) {
-        setRoot(rootNode);
-        initArrays();
     }
 
     // construct a network from newick string -- will not automatically adjust tips to zero
@@ -259,13 +249,13 @@ public class Network extends StateNode {
     /**
      * convert network to array representation
      */
-    void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
+    /*void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
         nodes[node.getNr()] = node;
         node.network = this;  //(JH) I don't understand this code
         for (final NetworkNode child : node.getChildren()) {
             listNodes(child, nodes);
         }
-    }
+    }*/
 
     public double getNetworkLength () {
         double length = 0;
@@ -351,12 +341,10 @@ public class Network extends StateNode {
     @Override
     public void assignTo(final StateNode other) {
         final Network network = (Network) other;
-        final NetworkNode[] nodes = new NetworkNode[nodeCount];
-        listNodes(network.root, nodes);
         network.setID(getID());
         network.index = index;
-        root.assignTo(nodes);
-        network.root = nodes[root.getNr()];
+        root.assignTo(network.networkNodes);
+        network.root = network.networkNodes[root.getNr()];
         network.nodeCount = nodeCount;
         network.speciationNodeCount = speciationNodeCount;
         network.leafNodeCount = leafNodeCount;
@@ -369,15 +357,10 @@ public class Network extends StateNode {
     @Override
     public void assignFrom(final StateNode other) {
         final Network network = (Network) other;
-        final NetworkNode[] nodes = new NetworkNode[network.getNodeCount()];
-        for (int i = 0; i < network.getNodeCount(); i++) {
-            nodes[i] = newNode();
-        }
         setID(network.getID());
         index = network.index;
-        root = nodes[network.root.getNr()];
-        root.assignFrom(nodes, network.root);
-        root.leftParent = root.rightParent = null;
+        root = network.networkNodes[network.root.getNr()];
+        root.assignFrom(network.networkNodes, network.root);
         nodeCount = network.nodeCount;
         speciationNodeCount = network.speciationNodeCount;
         leafNodeCount = network.leafNodeCount;
@@ -450,9 +433,6 @@ public class Network extends StateNode {
      */
     @Override
     public void fromXML(final org.w3c.dom.Node node) {
-        // parser???
-
-        initArrays();
     }
 
     @Override
@@ -624,5 +604,23 @@ public class Network extends StateNode {
             if (n.isDirty != IS_CLEAN) return true;
         }
         return false;
+    }
+
+    protected void resetAllTouched() {
+        for (NetworkNode n: networkNodes) {
+            n.touched = false;
+        }
+    }
+
+    protected void resetAllVisited() {
+        for (NetworkNode n: networkNodes) {
+            n.visited = false;
+        }
+    }
+
+    public void resetClones() {
+        for (NetworkNode n: networkNodes) {
+            n.clone = null;
+        }
     }
 }

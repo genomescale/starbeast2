@@ -33,16 +33,18 @@ public class NetworkNode extends BEASTObject {
     protected double height = Double.MAX_VALUE;
 
     /**
-     * children of this node
+     * children and branch numbers of the children of this node
      */
-    NetworkNode leftChild;
-    NetworkNode rightChild;
+    Set<NetworkNode> children;
+    int leftChildBranchNumber = -1;
+    int rightChildBranchNumber = -1;
 
     /**
-     * parents of this node
+     * branch numbers of the parents of this node
      */
-    NetworkNode leftParent;
-    NetworkNode rightParent;
+    Set<NetworkNode> parents;
+    int gammaParentBranchNumber = -1;
+    int otherParentBranchNumber = -1;
 
     protected int nParents;
     protected int nChildren;
@@ -50,20 +52,18 @@ public class NetworkNode extends BEASTObject {
     // a set of labels
     Set<String> labels = new TreeSet<>();
 
-    private NetworkNode clone;
+    protected NetworkNode clone;
 
     /**
      * status of this node after an operation is performed on the state
      */
     int isDirty = Network.IS_CLEAN;
 
-    protected void updateSizes() {
-        nParents = 0;
-        nChildren = 0;
-        if (leftParent  != null) nParents++;
-        if (rightParent != null) nParents++;
-        if (leftChild   != null) nChildren++;
-        if (rightChild  != null) nChildren++;
+    protected void updateRelationships() {
+        parents = getParents();
+        children = getChildren();
+        nParents = parents.size();
+        nChildren = children.size();
     }
 
     /**
@@ -121,7 +121,7 @@ public class NetworkNode extends BEASTObject {
     }
     
     public int getReticulationNumber() {
-        if (leftParent == null || rightParent == null) // not a reticulation node
+        if (nParents < 2) // not a reticulation node
             throw new RuntimeException();
         final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
         return labelNr - reticulationNodeOffset;
@@ -135,10 +135,9 @@ public class NetworkNode extends BEASTObject {
         startEditing();
         this.height = height;
         isDirty |= Network.IS_DIRTY;
-        if (getLeftChild() != null)
-            getLeftChild().isDirty |= Network.IS_DIRTY;
-        if (getRightChild() != null)
-            getRightChild().isDirty |= Network.IS_DIRTY;
+        for (NetworkNode c: children) {
+            c.isDirty |= Network.IS_DIRTY;
+        }
     }
 
     /**
@@ -168,75 +167,66 @@ public class NetworkNode extends BEASTObject {
         return nChildren;
     }
 
-    /* parents */
-    public NetworkNode getLeftParent() {
-        return leftParent;
+    public Set<NetworkNode> getParents() {
+        final Set<NetworkNode> parents = new HashSet<>();
+
+        if (gammaParentBranchNumber >= 0) {
+            final NetworkNode gammaParent = network.getNode(gammaParentBranchNumber / 2);
+            parents.add(gammaParent);
+        }
+
+        if (otherParentBranchNumber >= 0) {
+            final NetworkNode otherParent = network.getNode(otherParentBranchNumber / 2);
+            parents.add(otherParent);
+        }
+
+        return parents;
     }
 
-    public NetworkNode getRightParent() {
-        return rightParent;
-    }
+    public Set<NetworkNode> getChildren() {
+        final Set<NetworkNode> children = new HashSet<>();
 
-    public void setLeftParent(final NetworkNode newLeftParent) {
-        startEditing();
-        leftParent = newLeftParent;
-        if (leftParent != null)
-            leftParent.leftChild = this;
-        isDirty = Network.IS_FILTHY;
-        updateSizes();
-    }
+        if (leftChildBranchNumber >= 0) {
+            final NetworkNode leftChild = network.getNode(leftChildBranchNumber / 2);
+            children.add(leftChild);
+        }
 
-    public void setRightParent(final NetworkNode newRightParent) {
-        startEditing();
-        rightParent = newRightParent;
-        if (rightParent != null)
-            rightParent.rightChild = this;
-        isDirty = Network.IS_FILTHY;
-        updateSizes();
-    }
+        if (rightChildBranchNumber >= 0) {
+            final NetworkNode rightChild = network.getNode(rightChildBranchNumber / 2);
+            children.add(rightChild);
+        }
 
-    /* children */
-    public NetworkNode getLeftChild() {
-        return leftChild;
-    }
-
-    public NetworkNode getRightChild() {
-        return rightChild;
-    }
-
-    public void setLeftChild(final NetworkNode newLeftChild) {
-        startEditing();
-        leftChild = newLeftChild;
-        if (leftChild != null)
-            leftChild.leftParent = this;
-        isDirty = Network.IS_FILTHY;
-        updateSizes();
-    }
-
-    public void setRightChild(final NetworkNode newRightChild) {
-        startEditing();
-        rightChild = newRightChild;
-        if (rightChild != null)
-            rightChild.rightParent = this;
-        isDirty = Network.IS_FILTHY;
-        updateSizes();
-    }
-
-    /**
-     * @return unmodifiable list of children of this node
-     */
-    public List<NetworkNode> getChildren() {
-        List<NetworkNode> children = new ArrayList<>();
-        if (leftChild != null) children.add(leftChild);
-        if (rightChild != null) children.add(rightChild);
         return children;
     }
 
-    public List<NetworkNode> getParents() {
-        List<NetworkNode> parents = new ArrayList<>();
-        if (leftParent != null) parents.add(leftParent);
-        if (rightParent != null) parents.add(rightParent);
-        return parents;
+    public void removeParent(final NetworkNode pNode) {
+        final int pNodeNumber = pNode.labelNr;
+
+        if ((gammaParentBranchNumber / 2) == pNodeNumber) {
+            gammaParentBranchNumber = -1;
+        } else if ((otherParentBranchNumber / 2) == pNodeNumber) {
+            otherParentBranchNumber = -1;
+        } else {
+            throw new RuntimeException("Node is not a parent that can be removed.");
+        }
+
+        isDirty = Network.IS_FILTHY;
+        updateRelationships();
+    }
+
+    public void addParent(final NetworkNode pNode) {
+        final int pNodeNumber = pNode.labelNr;
+
+        if (gammaParentBranchNumber == -1) {
+            gammaParentBranchNumber = pNodeNumber * 2;
+        } else if (otherParentBranchNumber == -1) {
+            otherParentBranchNumber = pNodeNumber * 2;
+        } else {
+            throw new RuntimeException("This node already has two parents.");
+        }
+
+        isDirty = Network.IS_FILTHY;
+        updateRelationships();
     }
 
     /**
@@ -260,9 +250,9 @@ public class NetworkNode extends BEASTObject {
     }
 
     // whether the node has been visited, say by a recursive method
-    private boolean visited = false; // this should be used in a public method
+    protected boolean visited = false; // this should be used in a public method
 
-    private boolean touched = false; // this is only used inside this class
+    protected boolean touched = false; // this is only used inside this class
 
     /* get and (re)set the visited indicator */
     public boolean isVisited() {
@@ -274,38 +264,30 @@ public class NetworkNode extends BEASTObject {
     public void resetVisited() {
         visited = false;
     }
-    public void resetAllVisited() {
-        visited = false;
-        if (leftChild != null) leftChild.resetAllVisited();
-        if (rightChild != null) rightChild.resetAllVisited();
-    }
-
-    private void resetAllTouched() {
-        touched = false;
-        if (leftChild != null) leftChild.resetAllTouched();
-        if (rightChild != null) rightChild.resetAllTouched();
-    }
 
     // returns total node count (leaf, internal including root) of subtree defined by this node
     public int getNodeCount() {
-        resetAllTouched();
+        network.resetAllTouched();
         return recurseNodeCount();
     }
+
     private int recurseNodeCount() {
         if (touched) return 0;
 
         int nodeCount = 1;
-        if (leftChild != null) nodeCount += leftChild.recurseNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseNodeCount();
+        for (NetworkNode c: children) {
+            nodeCount += c.recurseNodeCount();
+        }
 
         touched = true;
         return nodeCount;
     }
 
     public int getLeafNodeCount() {
-        resetAllTouched();
+        network.resetAllTouched();
         return recurseLeafNodeCount();
     }
+
     private int recurseLeafNodeCount() {
         if (touched)
             return 0;
@@ -313,40 +295,45 @@ public class NetworkNode extends BEASTObject {
             return 1;
 
         int nodeCount = 0;
-        if (leftChild != null) nodeCount += leftChild.recurseLeafNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseLeafNodeCount();
+        for (NetworkNode c: children) {
+            nodeCount += c.recurseLeafNodeCount();
+        }
 
         touched = true;
         return nodeCount;
     }
 
     public int getSpeciationNodeCount() {
-        resetAllTouched();
+        network.resetAllTouched();
         return recurseSpeciationNodeCount();
     }
+
     private int recurseSpeciationNodeCount() {
         if (touched) return 0;
 
         // don't count reticulation nodes
-        int nodeCount = (leftChild != null && rightChild != null) ? 1 : 0;
-        if (leftChild != null) nodeCount += leftChild.recurseSpeciationNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseSpeciationNodeCount();
+        int nodeCount = (nChildren == 2) ? 1 : 0;
+        for (NetworkNode c: children) {
+            nodeCount += c.recurseSpeciationNodeCount();
+        }
 
         touched = true;
         return nodeCount;
     }
 
     public int getReticulationNodeCount() {
-        resetAllTouched();
+        network.resetAllTouched();
         return recurseReticulationNodeCount();
     }
+
     private int recurseReticulationNodeCount() {
         if (touched) return 0;
 
         // only count reticulation nodes
-        int nodeCount = (leftParent != null && rightParent != null) ? 1 : 0;
-        if (leftChild != null) nodeCount += leftChild.recurseReticulationNodeCount();
-        if (rightChild != null) nodeCount += rightChild.recurseReticulationNodeCount();
+        int nodeCount = (nParents == 2) ? 1 : 0;
+        for (NetworkNode c: children) {
+            nodeCount += c.recurseReticulationNodeCount();
+        }
 
         touched = true;
         return nodeCount;
@@ -357,8 +344,8 @@ public class NetworkNode extends BEASTObject {
      */
     public List<NetworkNode> getAllChildNodes() {
         final List<NetworkNode> childNodes = new ArrayList<>();
-        resetAllTouched();
-        if (!this.isLeaf()) getAllChildNodes(childNodes);
+        network.resetAllTouched();
+        getAllChildNodes(childNodes);
         return childNodes;
     }
     // recursive
@@ -366,103 +353,11 @@ public class NetworkNode extends BEASTObject {
         if (touched) return;
 
         childNodes.add(this);
+        for (NetworkNode c: children) {
+            c.getAllChildNodes();
+        }
+
         touched = true;
-        if (leftChild != null) leftChild.getAllChildNodes(childNodes);
-        if (rightChild != null) rightChild.getAllChildNodes(childNodes);
-    }
-
-    /**
-     * @return length of branch between this node and its parent
-     */
-    public final double getLeftLength() {
-        if (isRoot() || getLeftParent() == null) return 0;
-        else return getLeftParent().height - height;
-    }
-
-    public final double getRightLength() {
-        if (isRoot() || getRightParent() == null) return 0;
-        else return getRightParent().height - height;
-    }
-
-    /**
-     * @return (deep) copy of node
-     */
-    public NetworkNode copy() {
-        recursiveResetClones();
-        return recursiveCopy();
-    }
-    private void recursiveResetClones() {
-        clone = null;
-        if (leftChild != null) leftChild.recursiveResetClones();
-        if (rightChild != null) rightChild.recursiveResetClones();
-    }
-    private NetworkNode recursiveCopy() {
-        if (clone == null) {
-            clone = new NetworkNode();
-            clone.height = height;
-            clone.labelNr = labelNr;
-            clone.metaDataString = metaDataString;
-            clone.metaData = new TreeMap<>(metaData);
-            clone.setID(getID());
-            if (leftChild != null) clone.setLeftChild(getLeftChild().recursiveCopy());
-            if (rightChild != null) clone.setRightChild(getRightChild().recursiveCopy());
-            clone.nChildren = nChildren;
-            clone.nParents = nParents;
-        }
-        return clone;
-    }
-
-    /**
-     * assign values to a network in array representation
-     */
-    public void assignTo (final NetworkNode[] nodes) {
-        resetAllTouched();
-        recursiveAssignTo(nodes);
-    }
-    private void recursiveAssignTo(final NetworkNode[] nodes) {
-        if (touched) return;
-
-        final NetworkNode node = nodes[getNr()];
-        node.height = height;
-        node.labelNr = labelNr;
-        node.metaDataString = metaDataString;
-        node.metaData = new TreeMap<>(metaData);
-        node.setID(getID());
-        touched = true;
-        if (leftChild != null) {
-            node.setLeftChild(nodes[getLeftChild().getNr()]);
-            getLeftChild().recursiveAssignTo(nodes);
-        }
-        if (rightChild != null) {
-            node.setRightChild(nodes[getRightChild().getNr()]);
-            getRightChild().recursiveAssignTo(nodes);
-        }
-    }
-
-    /**
-     * assign values from a network in array representation
-     */
-    public void assignFrom (final NetworkNode[] nodes, final NetworkNode node) {
-        resetAllTouched();
-        recursiveAssignFrom(nodes, node);
-    }
-    private void recursiveAssignFrom(final NetworkNode[] nodes, final NetworkNode node) {
-        if (touched) return;
-
-        height = node.height;
-        labelNr = node.labelNr;
-        metaDataString = node.metaDataString;
-        metaData = new TreeMap<>(node.metaData);
-        setID(node.getID());
-        touched = true;
-        if (node.getLeftChild() != null) {
-            setLeftChild(nodes[node.getLeftChild().getNr()]);
-            getLeftChild().recursiveAssignFrom(nodes, node.getLeftChild());
-        }
-        if (node.getRightChild() != null) {
-            setRightChild(nodes[node.getRightChild().getNr()]);
-            getRightChild().recursiveAssignFrom(nodes, node.getRightChild());
-        }
     }
 
     /**
@@ -470,46 +365,18 @@ public class NetworkNode extends BEASTObject {
      * @param scale scale factor
      */
     public void scale (final double scale) {
-        resetAllTouched();
+        network.resetAllTouched();
         recursiveScale(scale);
     }
+
     private void recursiveScale(final double scale) {
+        if (touched) return;
+
         startEditing();
+        height *= scale;
         isDirty |= Network.IS_DIRTY;
-        if (!isLeaf() && !touched) {
-            height *= scale;
-            touched = true;
-            if (getLeftChild() != null)
-                getLeftChild().recursiveScale(scale);
-            if (getRightChild() != null)
-                getRightChild().recursiveScale(scale);
-            // if (height < getLeftChild().height || height < getRightChild().height);
-        }
-    }
-
-    // swap the orientation of parents (so the left parent becomes the right parent and vice versa)
-    public void reorientParents() {
-        // swap parents
-        NetworkNode tmpParent = leftParent;
-        leftParent = rightParent;
-        rightParent = tmpParent;
-        inheritProb = 1.0 - inheritProb;
-
-        // update parent nodes to reflect changes
-        // cascade changes to parent of half-siblings if they exist
-        if (leftParent != null) {
-            NetworkNode halfSibling = leftParent.leftChild;
-            leftParent.rightChild = null;
-            if (halfSibling != null) halfSibling.reorientParents();
-            leftParent.leftChild = this;
-        }
-
-        if (rightParent != null) {
-            NetworkNode halfSibling = rightParent.rightChild;
-            rightParent.leftChild = null;
-            if (halfSibling != null) halfSibling.reorientParents();
-            rightParent.rightChild = this;
-        }
+        for (NetworkNode c: children) c.recursiveScale(scale);
+        touched = true;
     }
 
     public void addLabel(String label) {
@@ -526,17 +393,24 @@ public class NetworkNode extends BEASTObject {
 
     @Override
     public String toString() {
-        // System.out.println(getID());
-        return buildNewick(Double.POSITIVE_INFINITY, true);
+        return buildNewick(Double.POSITIVE_INFINITY, -1);
     }
 
-    public String buildNewick(Double parentHeight, boolean isLeft) {
+    public String buildNewick(Double parentHeight, int parentBranchNumber) {
         StringBuilder subtreeString = new StringBuilder();
-        if (leftParent == null || rightParent == null || isLeft) { // only add children to left-attached reticulation nodes
+        // only add children to the gamma parent attached hybrid node
+        // this is an arbitrary choice
+        if (nParents != 2 || parentBranchNumber == gammaParentBranchNumber) {
             String leftSubtreeString = null;
             String rightSubtreeString = null;
-            if (leftChild != null) leftSubtreeString = leftChild.buildNewick(height, true);
-            if (rightChild != null) rightSubtreeString = rightChild.buildNewick(height, false);
+            if (leftChildBranchNumber >= 0) {
+                final NetworkNode leftChild = network.networkNodes[leftChildBranchNumber / 2];
+                leftSubtreeString = leftChild.buildNewick(height, leftChildBranchNumber);
+            }
+            if (rightChildBranchNumber >= 0) {
+                final NetworkNode rightChild = network.networkNodes[rightChildBranchNumber / 2];
+                rightSubtreeString = rightChild.buildNewick(height, rightChildBranchNumber);
+            }
 
             if (leftSubtreeString != null || rightSubtreeString != null) {
                 subtreeString.append("(");
@@ -547,13 +421,22 @@ public class NetworkNode extends BEASTObject {
             }
 
             subtreeString.append(getID());
-            if (isReticulation()) {
+        } else if (nParents == 2) {
+            subtreeString.append(getID());
+
+            if (parentBranchNumber == gammaParentBranchNumber) {
                 final String gammaStr = String.format("[&gamma=%.8g]", inheritProb);
                 subtreeString.append(gammaStr);
+            } else if (parentBranchNumber == otherParentBranchNumber) {
+                final String gammaStr = String.format("[&gamma=%.8g]", 1.0 - inheritProb);
+                subtreeString.append(gammaStr);
+            } else {
+                throw new RuntimeException("blah");
             }
         } else {
             subtreeString.append(getID());
         }
+
         if (parentHeight < Double.POSITIVE_INFINITY) {
             String branchLengthSuffix = String.format(":%.8g", parentHeight - height);
             while (branchLengthSuffix.charAt(branchLengthSuffix.length() - 1) == '0')
@@ -561,38 +444,6 @@ public class NetworkNode extends BEASTObject {
             subtreeString.append(branchLengthSuffix);
         }
         return subtreeString.toString();
-    }
-
-    /**
-     * number the network leafs as 0, 1, ..., leafNodeCount-1
-     * number the speciation nodes (except root) as leafNodeCount, ..., leafNodeCount+speciationNodeCount-1
-     * number the reticulation nodes as leafNodeCount+speciationNodeCount, ..., nodeCount-2
-     * number the root as nodeCount-1
-     * @param traversalDirection 0 -> left, 1 -> right
-     * @return branch number
-     */
-    public int getBranchNumber(final int traversalDirection) {
-        // if this is a reticulation node
-        if (leftParent != null && rightParent != null) {
-            // this is the index of the first reticulation node
-            final int reticulationNodeOffset = network.getNodeCount() - network.getReticulationNodeCount() - 1;
-            final int reticulationNumber = labelNr - reticulationNodeOffset;  // 0, 1, 2, ...
-            return reticulationNodeOffset + (reticulationNumber * 2) + traversalDirection;
-        } else if (leftParent == null && rightParent == null) {
-            // this is a root node
-            return network.getBranchCount() - 1;
-        } else {
-            // leaf and non-root speciation nodes have equivalent branch and node numbers
-            return labelNr;
-        }
-    }
-
-    public int getLeftBranchNumber() {
-        return getBranchNumber(0);
-    }
-
-    public int getRightBranchNumber() {
-        return getBranchNumber(1);
     }
 
     public Double getGamma() {

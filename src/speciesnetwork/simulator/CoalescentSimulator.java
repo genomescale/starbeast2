@@ -394,8 +394,7 @@ public class CoalescentSimulator extends Runnable {
 
         if (snNode.isReticulation()) {
             // assign lineages at the bottom to the left and right populations
-            final int reticulationNumber = snNode.getReticulationNumber();
-            final double leftP = gammaP.getValue(reticulationNumber);
+            final double leftP = snNode.getGamma();
             final Collection<Node> lineagesAtLeft = new HashSet<>();
             final Collection<Node> lineagesAtRight = new HashSet<>();
             for (Node lineage : lineagesAtBottom) {
