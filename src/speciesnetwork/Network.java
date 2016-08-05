@@ -63,7 +63,6 @@ public class Network extends StateNode {
             } else {
                 // make dummy network with a single root node
                 root = newNode();
-                root.labelNr = 0;
                 root.height = 0;
                 root.network = this;
                 nodeCount = 1;
@@ -105,35 +104,8 @@ public class Network extends StateNode {
         speciationNodeCount = leafNodeCount - 1;
     }
 
-    /**
-     * constructors
-     */
-    public Network() {
-    }
-
-    // construct a network from newick string -- will not automatically adjust tips to zero
-    public Network(final String sNewick) {
-    }
-
-    public NetworkNode newNode() {
-        try {
-            return (NetworkNode) Class.forName(nodeTypeInput.get()).newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot create node of type " + nodeTypeInput.get() + ": " + e.getMessage());
-        }
-    }
-
-    protected void initArrays() {
-        // initialise network-as-array representation + its stored variant
-        networkNodes = new NetworkNode[nodeCount];
-        listNodes(root, networkNodes);
-        storedNetworkNodes = new NetworkNode[nodeCount];
-        final NetworkNode copy = root.copy();
-        listNodes(copy, storedNetworkNodes);
-    }
-
     public NetworkNode getRoot() {
-        return root;
+        return networkNodes[net];
     }
 
     public void setRoot(final NetworkNode root) {
