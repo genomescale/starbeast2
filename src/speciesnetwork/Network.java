@@ -2,13 +2,16 @@ package speciesnetwork;
 
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.evolution.alignment.TaxonSet;
+import beast.util.TreeParser;
 
 /**
  * Network class to replace Tree class
@@ -36,12 +39,11 @@ public class Network extends StateNode {
 
     // number of nodes
     protected int nodeCount = -1;
+    protected int storedNodeCount = -1;
     protected int speciationNodeCount = -1;
+    protected int storedSpeciationNodeCount = -1;
     protected int leafNodeCount = -1;
-    protected int reticulationNodeCount = -1;
-
-    protected NetworkNode root;
-    protected NetworkNode storedRoot;
+    protected int storedLeafNodeCount = -1;
 
     /**
      * array of all nodes in the network
@@ -49,108 +51,99 @@ public class Network extends StateNode {
     protected NetworkNode[] networkNodes = null;
     protected NetworkNode[] storedNetworkNodes = null;
 
-    /**
-     * array of taxa names for the nodes in the network
-     * such that taxaNames[node.getNr()] == node.getID()
-     */
-    String[] taxaNames = null;
-
     @Override
     public void initAndValidate() {
         if (nodeCount < 0) {
             if (taxonSetInput.get() != null) {
                 makeCaterpillar(0, 1);
+                updateRelationships();
             } else {
                 // make dummy network with a single root node
-                root = newNode();
-                root.height = 0;
-                root.network = this;
-                nodeCount = 1;
-                speciationNodeCount = reticulationNodeCount = 0;
-                leafNodeCount = 1;
+                networkNodes = new NetworkNode[1];
+                networkNodes[1] = new NetworkNode(this);
+                nodeCount = leafNodeCount = 1;
+                speciationNodeCount = 0;
             }
         }
-
-        initArrays();
-
-        // ensure all nodes have their taxon names set up
-        // needs more things here???
     }
 
-    public void makeCaterpillar(final double minInternalHeight, final double step) {
+    public void updateRelationships() {
+        for (NetworkNode n: networkNodes) {
+            n.updateRelationships();
+        }
+    }
+
+    private void makeCaterpillar(final double minInternalHeight, final double step) {
         // make a caterpillar
         final List<String> taxa = taxonSetInput.get().asStringList();
-        NetworkNode left = newNode();
-        left.labelNr = 0;
-        left.height = 0;
-        left.setID(taxa.get(0));
-        for (int i = 1; i < taxa.size(); i++) {
-            final NetworkNode right = newNode();
-            right.labelNr = i;
-            right.height = 0;
-            right.setID(taxa.get(i));
-            final NetworkNode parent = newNode();
-            parent.labelNr = taxa.size() + i - 1;
-            parent.height = minInternalHeight + i * step;
-            // left.parent = parent;
-            parent.setLeftChild(left);
-            // right.parent = parent;
-            parent.setRightChild(right);
-            left = parent;
-        }
-        root = left;
         leafNodeCount = taxa.size();
-        nodeCount = leafNodeCount * 2 - 1;
         speciationNodeCount = leafNodeCount - 1;
+        nodeCount = leafNodeCount + speciationNodeCount;
+        networkNodes = new NetworkNode[nodeCount];
+
+        int leftNr = 0;
+        networkNodes[leftNr] = new NetworkNode(this);
+        NetworkNode left = networkNodes[leftNr];
+        left.label = taxa.get(leftNr);
+        for (int rightNr = 1; rightNr < leafNodeCount; rightNr++) {
+            networkNodes[rightNr] = new NetworkNode(this);
+            final NetworkNode right = networkNodes[rightNr];
+            right.height = 0.0;
+            right.label = taxa.get(rightNr);
+            final int parentNr = leafNodeCount + (rightNr - 1);
+            networkNodes[parentNr] = new NetworkNode(this);
+            final NetworkNode parent = networkNodes[parentNr];
+            parent.height = minInternalHeight + rightNr * step;
+            parent.childBranchNumbers.add(rightNr * 2);
+            parent.childBranchNumbers.add(leftNr * 2);
+            left = parent;
+            leftNr = parentNr;
+        }
     }
 
     public NetworkNode getRoot() {
-        return networkNodes[net];
+        return networkNodes[nodeCount - 1];
     }
 
-    public void setRoot(final NetworkNode root) {
-        this.root = root;
-        nodeCount = this.root.getNodeCount();
-        // ensure root is the last node in networkNodes
-        if (networkNodes != null && root.labelNr != networkNodes.length - 1) {
-            final int rootPos = networkNodes.length - 1;
-            NetworkNode tmp = networkNodes[rootPos];
-            networkNodes[rootPos] = root;
-            networkNodes[root.labelNr] = tmp;
-            tmp.labelNr = root.labelNr;
-            networkNodes[rootPos].labelNr = rootPos;
-        }
+    public void swapRoot(final int replacementNodeNumber) {
+        final int rootNodeNumber = nodeCount -1;
+        swapNodes(replacementNodeNumber, rootNodeNumber);
+    }
+
+    public void swapNodes(final int nodeI, final int nodeJ) {
+        final NetworkNode tmp = networkNodes[nodeI];
+        networkNodes[nodeI] = networkNodes[nodeJ];
+        networkNodes[nodeJ] = tmp;
     }
 
     /**
      * @return the number of nodes
      */
     public int getNodeCount() {
-        nodeCount = root.getNodeCount();
         return nodeCount;
     }
 
     public int getSpeciationNodeCount() {
-        speciationNodeCount = root.getSpeciationNodeCount();
         return speciationNodeCount;
     }
 
     public int getLeafNodeCount() {
-        if (leafNodeCount < 0)  // assuming no change after set
-            leafNodeCount = root.getLeafNodeCount();
         return leafNodeCount;
     }
 
     public int getReticulationNodeCount() {
-        reticulationNodeCount = root.getReticulationNodeCount();
-        return reticulationNodeCount;
+        return nodeCount - (leafNodeCount + speciationNodeCount);
     }
 
     /**
      * @return the number of branches in the network, including the root branch
      */
     public int getBranchCount() {
-        return getNodeCount() + getReticulationNodeCount();
+        return nodeCount + (nodeCount - (leafNodeCount + speciationNodeCount));
+    }
+
+    public int getReticulationNodeOffset() {
+        return leafNodeCount + speciationNodeCount - 1;
     }
 
     /**
@@ -164,16 +157,16 @@ public class Network extends StateNode {
                 else nB++;
             }
         }
-        return  nB;
+        return nB;
     }
 
     /**
      * @return a list of leaf nodes contained in this network
      */
-    public List<NetworkNode> getLeafNodes() {
-        final List<NetworkNode> lNodes = new ArrayList<>();
-        for (final NetworkNode node : networkNodes) {
-            if (node.isLeaf()) lNodes.add(node);
+    public Set<NetworkNode> getLeafNodes() {
+        final Set<NetworkNode> lNodes = new HashSet<>();
+        for (int i = 0; i < leafNodeCount; i++) {
+            lNodes.add(networkNodes[i]);
         }
         return lNodes;
     }
@@ -181,10 +174,10 @@ public class Network extends StateNode {
     /**
      * @return a list of internal nodes contained in this network
      */
-    public List<NetworkNode> getInternalNodes() {
-        final List<NetworkNode> iNodes = new ArrayList<>();
-        for (final NetworkNode node : networkNodes) {
-            if (!node.isLeaf()) iNodes.add(node);
+    public Set<NetworkNode> getInternalNodes() {
+        final Set<NetworkNode> iNodes = new HashSet<>();
+        for (int i = leafNodeCount; i < nodeCount; i++) {
+            iNodes.add(networkNodes[i]);
         }
         return iNodes;
     }
@@ -192,21 +185,22 @@ public class Network extends StateNode {
     /**
      * @return a list of reticulation nodes contained in this network
      */
-    public List<NetworkNode> getReticulationNodes() {
-        final List<NetworkNode> iNodes = new ArrayList<>();
-        for (final NetworkNode node : networkNodes) {
-            if (node.isReticulation()) iNodes.add(node);
+    public Set<NetworkNode> getReticulationNodes() {
+        final Set<NetworkNode> rNodes = new HashSet<>();
+        for (int i = 0; i < nodeCount; i++) {
+            final int reticulationNodeNumber = getReticulationNodeOffset() + i;
+            rNodes.add(networkNodes[reticulationNodeNumber]);
         }
-        return iNodes;
+        return rNodes;
     }
 
-    public NetworkNode getNode(final int nr) {
-        return networkNodes[nr];
+    public NetworkNode getNode(final int nodeI) {
+        return networkNodes[nodeI];
     }
 
-    public NetworkNode getNode(final String label) {
-        for (NetworkNode netNode: networkNodes) {
-            if (netNode.getID().equals(label)) return netNode;
+    public NetworkNode getNode(final String query) {
+        for (NetworkNode n: networkNodes) {
+            if (n.label.equals(query)) return n;
         }
         return null;
     }
@@ -215,26 +209,19 @@ public class Network extends StateNode {
      * @return an array of all the nodes in this network
      */
     public NetworkNode[] getAllNodesAsArray() {
-        return networkNodes;
+        final NetworkNode[] nodesCopy = new NetworkNode[nodeCount];
+        System.arraycopy(networkNodes, 0, nodesCopy, 0, nodeCount);
+        return nodesCopy;
     }
 
-    /**
-     * convert network to array representation
-     */
-    /*void listNodes(final NetworkNode node, final NetworkNode[] nodes) {
-        nodes[node.getNr()] = node;
-        node.network = this;  //(JH) I don't understand this code
-        for (final NetworkNode child : node.getChildren()) {
-            listNodes(child, nodes);
+    public double getNetworkLength() {
+        double length = 0.0;
+        for (NetworkNode n: networkNodes) {
+            for (NetworkNode c: n.children) {
+                length += n.height - c.height;
+            }
         }
-    }*/
 
-    public double getNetworkLength () {
-        double length = 0;
-        for (final NetworkNode node : root.getAllChildNodes()) {
-            if(node.getLeftParent() != null) length += node.getLeftLength();
-            if(node.getRightParent()!= null) length += node.getRightLength();
-        }
         return length;
     }
 
@@ -242,39 +229,16 @@ public class Network extends StateNode {
      * @return an array of taxon names in order of their node numbers
      */
     public String[] getTaxaNames() {
-        if (taxaNames == null || taxaNames.length == 0) {
-            final TaxonSet taxonSet = taxonSetInput.get();
-            if (taxonSet != null) {
-                String[] array = new String[taxonSet.asStringList().size()];
-                taxaNames = taxonSet.asStringList().toArray(array);
-            } else {
-                taxaNames = new String[getNodeCount()];
-                collectTaxaNames(getRoot());
-            }
+        final String[] taxaNames = new String[leafNodeCount];
+        for (int i = 0; i < leafNodeCount; i++) {
+            taxaNames[i] = networkNodes[i].label;
         }
 
-        // sanity check
-        if (taxaNames.length == 1 && taxaNames[0] == null) {
-        }
         return taxaNames;
-    }
-    private void collectTaxaNames(final NetworkNode node) {
-        if (node.getID() != null) {
-            taxaNames[node.getNr()] = node.getID();
-        }
-        if (node.isLeaf()) {
-            if (node.getID() == null) {
-                node.setID("node" + node.getNr());
-            }
-        } else {
-            for (NetworkNode child : node.getChildren()) {
-                collectTaxaNames(child);
-            }
-        }
     }
 
     public String toString() {
-        return root.toString();
+        return getRoot().toString();
     }
 
     @Override
@@ -296,31 +260,19 @@ public class Network extends StateNode {
      */
     @Override
     public Network copy() {
-        Network network = new Network();
-        network.setID(getID());
-        network.index = index;
-        network.root = root.copy();
-        network.nodeCount = nodeCount;
-        network.speciationNodeCount = speciationNodeCount;
-        network.leafNodeCount = leafNodeCount;
-        network.reticulationNodeCount = reticulationNodeCount;
-        return network;
+        Network copy = new Network();
+        copy.index = index;
+        copyNetwork(this, copy);
+        return copy;
     }
-
+    
     /**
      * copy of all values into existing network
      */
     @Override
     public void assignTo(final StateNode other) {
-        final Network network = (Network) other;
-        network.setID(getID());
-        network.index = index;
-        root.assignTo(network.networkNodes);
-        network.root = network.networkNodes[root.getNr()];
-        network.nodeCount = nodeCount;
-        network.speciationNodeCount = speciationNodeCount;
-        network.leafNodeCount = leafNodeCount;
-        network.reticulationNodeCount = reticulationNodeCount;
+        final Network dst = (Network) other;
+        copyNetwork(this, dst);
     }
 
     /**
@@ -328,17 +280,27 @@ public class Network extends StateNode {
      */
     @Override
     public void assignFrom(final StateNode other) {
-        final Network network = (Network) other;
-        setID(network.getID());
-        index = network.index;
-        root = network.networkNodes[network.root.getNr()];
-        root.assignFrom(network.networkNodes, network.root);
-        nodeCount = network.nodeCount;
-        speciationNodeCount = network.speciationNodeCount;
-        leafNodeCount = network.leafNodeCount;
-        reticulationNodeCount = network.reticulationNodeCount;
+        final Network src = (Network) other;
+        copyNetwork(src, this);
+    }
 
-        initArrays();
+    protected static void copyNetwork(Network src, Network dst) {
+        final int copyNodeCount = src.nodeCount;
+
+        dst.setID(src.getID());
+        dst.nodeCount = copyNodeCount;
+        dst.speciationNodeCount = src.speciationNodeCount;
+        dst.leafNodeCount = src.leafNodeCount;
+
+        dst.networkNodes = new NetworkNode[copyNodeCount];
+        for (int i = 0; i < copyNodeCount; i++) {
+            dst.networkNodes[i] = new NetworkNode();
+            dst.networkNodes[i].copyFrom(src.networkNodes[i]);
+        }
+
+        for (int i = 0; i < copyNodeCount; i++) {
+            dst.networkNodes[i].updateRelationships();
+        }
     }
 
     /**
@@ -346,57 +308,15 @@ public class Network extends StateNode {
      */
     @Override
     public void assignFromFragile(final StateNode other) {
-        final Network network = (Network) other;
-        if (networkNodes == null) {
-            initArrays();
-        }
-        root = networkNodes[network.root.getNr()];
-        final NetworkNode[] otherNodes = network.networkNodes;
-        final int rootNr = root.getNr();
-        assignFrom(0, rootNr, otherNodes);
-        root.height = otherNodes[rootNr].height;
-        root.leftParent = root.rightParent = null;
-        if (otherNodes[rootNr].getLeftChild() != null) {
-            root.setLeftChild(networkNodes[otherNodes[rootNr].getLeftChild().getNr()]);
-        } else {
-            root.setLeftChild(null);
-        }
-        if (otherNodes[rootNr].getRightChild() != null) {
-            root.setRightChild(networkNodes[otherNodes[rootNr].getRightChild().getNr()]);
-        } else {
-            root.setRightChild(null);
-        }
-        assignFrom(rootNr + 1, nodeCount, otherNodes);
-    }
-    /**
-     * helper to assignFromFragile *
-     */
-    private void assignFrom(final int start, final int end, final NetworkNode[] otherNodes) {
-        for (int i = start; i < end; i++) {
-            NetworkNode sink = networkNodes[i];
-            NetworkNode src = otherNodes[i];
-            sink.height = src.height;
-            if (src.getLeftParent() != null) {
-                sink.setLeftParent(networkNodes[src.getLeftParent().getNr()]);
-                if (src.getRightParent() != null)
-                    sink.setRightParent(networkNodes[src.getRightParent().getNr()]);
-                else
-                    sink.setRightParent(null);
-            }
-            if (src.getLeftChild() != null) {
-                sink.setLeftChild(networkNodes[src.getLeftChild().getNr()]);
-                if (src.getRightChild() != null) {
-                    sink.setRightChild(networkNodes[src.getRightChild().getNr()]);
-                } else {
-                    sink.setRightChild(null);
-                }
-            }
+        final Network src = (Network) other;
+        for (int i = 0; i < nodeCount; i++) {
+            networkNodes[i].copyFrom(src.networkNodes[i]);
         }
     }
 
     @Override
     public int scale(final double scale) {
-        root.scale(scale);
+        getRoot().scale(scale);
         return getSpeciationNodeCount() + getReticulationNodeCount();
     }
 
@@ -405,68 +325,100 @@ public class Network extends StateNode {
      */
     @Override
     public void fromXML(final org.w3c.dom.Node node) {
+        final String newick = node.getTextContent();
+        final TreeParser parser = new TreeParser();
+        try {
+            parser.thresholdInput.setValue(1e-10, parser);
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+        try {
+            parser.offsetInput.setValue(0, parser);
+            parser.parseNewick(newick); // TODO covert to network
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void store() {
-        storeNodes(0, nodeCount);
-        storedRoot = storedNetworkNodes[root.getNr()];
-    }
+        storedNodeCount = nodeCount;
+        storedSpeciationNodeCount = speciationNodeCount;
+        storedLeafNodeCount = leafNodeCount;
 
-    /**
-     * Stores nodes with index i, for start <= i < end
-     * (i.e. including start but not including end)
-     *
-     * @param start the first index to be stored
-     * @param end   nodes are stored up to but not including this index
-     */
-    private void storeNodes(final int start, final int end) {
-        for (int i = start; i < end; i++) {
-            final NetworkNode sink = storedNetworkNodes[i];
-            final NetworkNode src = networkNodes[i];
-            sink.height = src.height;
-            if (src.leftParent != null)
-                sink.leftParent = storedNetworkNodes[src.leftParent.getNr()];
-            else
-                sink.leftParent = null;
-            if (src.rightParent != null)
-                sink.rightParent = storedNetworkNodes[src.rightParent.getNr()];
-            else
-                sink.rightParent = null;
-            if (src.leftChild != null)
-                sink.leftChild = storedNetworkNodes[src.leftChild.getNr()];
-            else
-                sink.leftChild = null;
-            if (src.rightChild != null)
-                sink.rightChild = storedNetworkNodes[src.rightChild.getNr()];
-            else
-                sink.rightChild = null;
+        if (storedNodeCount != nodeCount) { // rebuild array
+            storedNetworkNodes = new NetworkNode[nodeCount];
+            for (int i = 0; i < nodeCount; i++) {
+                storedNetworkNodes[i] = new NetworkNode();
+                storedNetworkNodes[i].copyFrom(networkNodes[i]);
+            }
+        } else {
+            for (int i = 0; i < nodeCount; i++) {
+                storedNetworkNodes[i].copyFrom(networkNodes[i]);
+            }
         }
     }
 
     @Override
     public void restore() {
-        nodeCount = storedNetworkNodes.length;
+        int tmpNodeCount = nodeCount;
+        nodeCount = storedNodeCount;
+        storedNodeCount = tmpNodeCount;
 
-        final NetworkNode[] tmp = networkNodes;
+        int tmpSpeciationNodeCount = speciationNodeCount;
+        speciationNodeCount = storedSpeciationNodeCount;
+        storedSpeciationNodeCount = tmpSpeciationNodeCount;
+
+        int tmpLeafNodeCount = leafNodeCount;
+        leafNodeCount = storedLeafNodeCount;
+        storedLeafNodeCount = tmpLeafNodeCount;
+
+        NetworkNode[] tmpNetworkNodes = networkNodes;
         networkNodes = storedNetworkNodes;
-        storedNetworkNodes = tmp;
-        root = networkNodes[storedRoot.getNr()];
+        storedNetworkNodes = tmpNetworkNodes;
 
-        hasStartedEditing = false;
-
-        for(NetworkNode n : networkNodes) {
-            n.isDirty = Network.IS_CLEAN;
+        for (int i = 0; i < nodeCount; i++) {
+            networkNodes[i].updateRelationships();
         }
-        // postCache = null;
     }
 
-    public static void printTranslate(NetworkNode node, PrintStream out, int nodeCount) {
+    /** Loggable interface implementation follows **/
+
+    /**
+     * print translate block for NEXUS beast.tree file
+     */
+    public static void printTranslate(final NetworkNode node, final PrintStream out, final int nodeCount) {
+        final List<String> translateLines = new ArrayList<>();
+        printTranslate(node, translateLines, nodeCount);
+        Collections.sort(translateLines);
+        for (final String line : translateLines) {
+            out.println(line);
+        }
+    }
+
+    static public int taxaTranslationOffset = 1;
+
+    /**
+     * need this helper so that we can sort list of entries *
+     */
+    static void printTranslate(NetworkNode node, List<String> translateLines, int nodeCount) {
+        if (node.isLeaf()) {
+            final String nr = (node.getNr() + taxaTranslationOffset) + "";
+            String line = "\t\t" + "    ".substring(nr.length()) + nr + " " + node.label;
+            if (node.getNr() < nodeCount) {
+                line += ",";
+            }
+            translateLines.add(line);
+        } else {
+            for (NetworkNode c: node.children) {
+                printTranslate(c, translateLines, nodeCount);
+            }
+        }
     }
 
     public static void printTaxa(final NetworkNode node, final PrintStream out, final int nodeCount) {
         final List<String> translateLines = new ArrayList<>();
-        printTranslate(node, out, nodeCount);
+        printTranslate(node, translateLines, nodeCount);
         Collections.sort(translateLines);
         for (String line : translateLines) {
             line = line.split("\\s+")[2];
@@ -485,7 +437,7 @@ public class Network extends StateNode {
         out.println("\t\t\t;");
         out.println("End;");
 
-        out.println("Begin networks;");
+        out.println("Begin trees;");
         out.println("\tTranslate");
         printTranslate(node, out, getNodeCount() / 2);
         out.print(";");
@@ -493,15 +445,18 @@ public class Network extends StateNode {
 
     @Override
     public void log(int sample, PrintStream out) {
-        // Network network = (Network) getCurrent();
-        out.print("network STATE_" + sample + " = ");
+        Network network = (Network) getCurrent();
+        out.print("tree STATE_" + sample + " = ");
         // Don't sort, this can confuse CalculationNodes relying on the tree
-        // final int[] dummy = new int[1];
-        //??? final String newick = network.getRoot().toSortedNewick(dummy);
-        // out.print(newick);
+        //tree.getRoot().sort();
+        final String newick = network.getRoot().toNewick();
+        out.print(newick);
         out.print(";");
     }
 
+    /**
+     * @see beast.core.Loggable *
+     */
     @Override
     public void close(PrintStream out) {
         out.print("End;");
@@ -509,66 +464,25 @@ public class Network extends StateNode {
 
     @Override
     public int getDimension() {
-        return getNodeCount();
+        return nodeCount;
     }
 
     @Override
     public double getArrayValue() {
-        return root.height;
+        return getRoot().height;
     }
 
     @Override
-    public double getArrayValue(int nr) {
-        return networkNodes[nr].height;
+    public double getArrayValue(final int nodeI) {
+        return networkNodes[nodeI].height;
     }
 
-    public void addLeafNode(final NetworkNode newNode) {
-        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        System.arraycopy(networkNodes, 0, tmp, 1, nodeCount);
-        networkNodes = tmp;
-        networkNodes[0] = newNode;
-        newNode.network = this;
-        leafNodeCount++;
-        resetNodeNumbers();
+    public void addReticulationNode(final int nodeI) {
+        // TODO
     }
 
-    public void addSpeciationNode(final NetworkNode newNode) {
-        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        System.arraycopy(networkNodes, 0, tmp, 0, leafNodeCount);
-        System.arraycopy(networkNodes, leafNodeCount, tmp, leafNodeCount + 1, speciationNodeCount + reticulationNodeCount);
-        networkNodes = tmp;
-        networkNodes[leafNodeCount] = newNode;
-        newNode.network = this;
-        speciationNodeCount++;
-        resetNodeNumbers();
-    }
-
-    public void addReticulationNode(final NetworkNode newNode) {
-        final NetworkNode[] tmp = new NetworkNode[nodeCount + 1];
-        System.arraycopy(networkNodes, 0, tmp, 0, nodeCount - 1);
-        tmp[nodeCount] = networkNodes[nodeCount - 1];
-        networkNodes = tmp;
-        networkNodes[nodeCount - 1] = newNode;
-        newNode.network = this;
-        reticulationNodeCount++;
-        resetNodeNumbers();
-    }
-
-    private void resetNodeNumbers() {
-        nodeCount = networkNodes.length;
-        for (int i = 0; i < nodeCount; i++) {
-            networkNodes[i].setNr(i);
-        }
-    }
-
-    public void deleteSpeciationNode(NetworkNode topNode) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    public void deleteReticulationNode(NetworkNode netNode) {
-        // TODO Auto-generated method stub
-        
+    public void removeReticulationNode(final int nodeI) {
+        // TODO
     }
 
     public boolean isDirty() {
@@ -587,12 +501,6 @@ public class Network extends StateNode {
     protected void resetAllVisited() {
         for (NetworkNode n: networkNodes) {
             n.visited = false;
-        }
-    }
-
-    public void resetClones() {
-        for (NetworkNode n: networkNodes) {
-            n.clone = null;
         }
     }
 }

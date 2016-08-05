@@ -69,7 +69,16 @@ public class NetworkNode {
     protected Network network;
 
     public NetworkNode() {
-        label = "";
+        initProps();
+    }
+
+    public NetworkNode(Network n) {
+        initProps();
+        network = n;
+    }
+
+    private void initProps() {
+        label = null;
         inheritProb = 0.5;
         height = 0.0;
         childBranchNumbers = new HashSet<>();
@@ -91,34 +100,25 @@ public class NetworkNode {
         }
     }
     
-    public void copyTo(NetworkNode dst) {
-        dst.label = label;
-        dst.inheritProb = inheritProb;
-        dst.height = height;
-        dst.childBranchNumbers.clear();
-        dst.childBranchNumbers.addAll(childBranchNumbers);
-        dst.children.clear();
-        dst.children.addAll(children);
-        dst.parents.clear();
-        dst.parents.addAll(parents);
-        dst.nParents = nParents;
-        dst.nChildren = nChildren;
-        dst.isDirty = isDirty;
+    protected void copyTo(NetworkNode dst) {
+        copyNode(this, dst);
     }
 
-    public void copyFrom(NetworkNode src) {
-        label = src.label;
-        inheritProb = src.inheritProb;
-        height = src.height;
-        childBranchNumbers.clear();
-        childBranchNumbers.addAll(src.childBranchNumbers);
-        children.clear();
-        children.addAll(src.children);
-        parents.clear();
-        parents.addAll(src.parents);
-        nParents = src.nParents;
-        nChildren = src.nChildren;
-        isDirty = src.isDirty;
+    protected void copyFrom(NetworkNode src) {
+        copyNode(src, this);
+    }
+
+    protected static void copyNode(NetworkNode src, NetworkNode dst) {
+        dst.label = src.label;
+        dst.inheritProb = src.inheritProb;
+        dst.height = src.height;
+        dst.childBranchNumbers.clear();
+        dst.childBranchNumbers.addAll(src.childBranchNumbers);
+        dst.children.clear();
+        dst.parents.clear();
+        dst.nParents = src.nParents;
+        dst.nChildren = src.nChildren;
+        dst.isDirty = src.isDirty;
     }
 
     public Network getNetwork() {
@@ -331,7 +331,7 @@ public class NetworkNode {
      * scale height of this node and all its descendants
      * @param scale scale factor
      */
-    public void scale (final double scale) {
+    public void scale(final double scale) {
         network.resetAllTouched();
         recursiveScale(scale);
     }
@@ -348,10 +348,14 @@ public class NetworkNode {
 
     @Override
     public String toString() {
-        return buildNewick(Double.POSITIVE_INFINITY, -1);
+        return buildNewick(Double.POSITIVE_INFINITY, -1, true);
     }
 
-    public String buildNewick(Double parentHeight, Integer parentBranchNumber) {
+    public String toNewick() {
+        return buildNewick(Double.POSITIVE_INFINITY, -1, false);
+    }
+
+    private String buildNewick(Double parentHeight, Integer parentBranchNumber, boolean printLabels) {
         final StringBuilder subtreeString = new StringBuilder();
         // only add children to the gamma parent attached reticulation node
         if ((nChildren > 0 && nParents < 2) || parentBranchNumber % 2 == 0) {
@@ -360,13 +364,16 @@ public class NetworkNode {
             for (Integer childBranchNumber: childBranchNumbers) {
                 if (i > 0) subtreeString.append(",");
                 NetworkNode childNode = network.networkNodes[childBranchNumber / 2];
-                subtreeString.append(childNode.buildNewick(height, childBranchNumber));
+                subtreeString.append(childNode.buildNewick(height, childBranchNumber, printLabels));
                 i++;
             }
             subtreeString.append(")");
         }
 
-        subtreeString.append(label);
+        if (label != null) {
+            if (printLabels) subtreeString.append(label);
+            else subtreeString.append(getNr());
+        }
 
         // add inheritance probabilities to reticulation nodes
         if (nParents == 2) {

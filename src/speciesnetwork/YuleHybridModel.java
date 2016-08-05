@@ -87,6 +87,7 @@ public class YuleHybridModel extends Distribution {
                 logP += Math.log(lambda);
 
             if (node.isReticulation()) logP += gammaPrior.logDensity(node.inheritProb);
+            if (!(logP > -Double.MAX_VALUE && logP < Double.MAX_VALUE)) System.out.println("???");
         }
         return logP;
     }
@@ -100,7 +101,8 @@ public class YuleHybridModel extends Distribution {
 
     @Override
     protected boolean requiresRecalculation() {
-        return super.requiresRecalculation() || diversificationInput.get().somethingIsDirty() || networkInput.get().isDirty();
+        //return super.requiresRecalculation() || diversificationInput.get().somethingIsDirty() || networkInput.get().isDirty();
+        return true;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package speciesnetwork;
 
 import java.util.List;
+import java.util.Set;
 
 import beast.evolution.tree.Node;
 
@@ -27,17 +28,13 @@ public final class SanityChecks {
     }
 
     public boolean checkNetworkSanity(NetworkNode node) {
-        final List<NetworkNode> children = node.getChildren();
-        final List<NetworkNode> parents = node.getParents();
+        final Set<NetworkNode> children = node.getChildren();
+        final Set<NetworkNode> parents = node.getParents();
 
         final int nChildren = children.size();
         final int nParents = parents.size();
 
         for (NetworkNode child: children) {
-            if (node.getLeftChild() == child)
-                assert child.getLeftParent() == node;
-            if (node.getRightChild() == child)
-                assert child.getRightParent() == node;
             assert child.getHeight() <= node.getHeight();
             if (!node.isLeaf()) {
                 checkNetworkSanity(child);
