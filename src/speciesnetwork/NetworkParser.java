@@ -34,11 +34,11 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         int hybridNodeCount = 0;
 
         for (Node n: tree.getNodesAsArray()) {
-            if (n.isLeaf()) {
-                leafNodeCount++;
+            if (n.getID() != null && n.getID().startsWith("#H")) {
+                hybridNodeCount++;
             } else {
-                if (n.getID() != null && n.getID().startsWith("#")) {
-                    hybridNodeCount++;
+                if (n.isLeaf()) {
+                    leafNodeCount++;
                 } else {
                     speciationNodeCount++;
                 }
@@ -48,6 +48,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         assert hybridNodeCount % 2 == 0;
         final int reticulationNodeCount = hybridNodeCount / 2;
         nodeCount = leafNodeCount + speciationNodeCount + reticulationNodeCount;
+        System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
         networkNodes = new NetworkNode[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
             networkNodes[i] = new NetworkNode(); 

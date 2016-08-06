@@ -1,5 +1,6 @@
 package speciesnetwork;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 import beast.core.Description;
@@ -46,6 +47,8 @@ public class NetworkNode {
      */
     int isDirty;
 
+    private DecimalFormat df;
+
     protected void updateRelationships() {
         parents = getParents();
         children = getChildren();
@@ -87,6 +90,7 @@ public class NetworkNode {
         nParents = 0;
         nChildren = 0;
         isDirty = Network.IS_DIRTY;
+        df = new DecimalFormat("0.########");
     }
 
     // instantiate a new network node with the same height, labels and metadata as a tree node
@@ -190,7 +194,8 @@ public class NetworkNode {
         final Set<NetworkNode> children = new HashSet<>();
 
         for (Integer i: childBranchNumbers) {
-            final NetworkNode childNode = network.networkNodes[i];
+            final int childNodeNumber = i / 2;
+            final NetworkNode childNode = network.networkNodes[childNodeNumber];
             children.add(childNode);
         }
 
@@ -359,7 +364,7 @@ public class NetworkNode {
     private String buildNewick(Double parentHeight, Integer parentBranchNumber, boolean printLabels) {
         final StringBuilder subtreeString = new StringBuilder();
         // only add children to the gamma parent attached reticulation node
-        if ((nChildren > 0 && nParents < 2) || parentBranchNumber % 2 == 0) {
+        if (nChildren > 0 && (nParents < 2 || parentBranchNumber % 2 == 0)) {
             subtreeString.append("(");
             int i = 0;
             for (Integer childBranchNumber: childBranchNumbers) {
@@ -380,8 +385,8 @@ public class NetworkNode {
         if (nParents == 2) {
             subtreeString.append("[&gamma=");
 
-            if (parentBranchNumber % 2 == 0) subtreeString.append(inheritProb);
-            else subtreeString.append(1.0 - inheritProb);
+            if (parentBranchNumber % 2 == 0) subtreeString.append(df.format(inheritProb));
+            else subtreeString.append(df.format(1.0 - inheritProb));
 
             subtreeString.append("]");
         }
@@ -389,7 +394,7 @@ public class NetworkNode {
         if (parentHeight < Double.POSITIVE_INFINITY) {
             final double branchLength = parentHeight - height;
             subtreeString.append(":");
-            subtreeString.append(branchLength);
+            subtreeString.append(df.format(branchLength));
         }
 
         return subtreeString.toString();
