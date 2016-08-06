@@ -1,6 +1,6 @@
 package speciesnetwork;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -36,6 +36,8 @@ public class YuleHybridModel extends Distribution {
     // public Input<Boolean> conditionalOnRootInput =
     //      new Input<>("conditionalOnRoot", "condition on the root (otherwise: on the time of origin)", true);
 
+    final private static Comparator<NetworkNode> hc = new NodeHeightComparator();
+
     private BetaDistributionImpl gammaPrior;
     @Override
     public void initAndValidate() {
@@ -44,10 +46,10 @@ public class YuleHybridModel extends Distribution {
         // make sure that all tips are at the same height,
         // otherwise this Yule Model is not appropriate
         final Network network = networkInput.get();
-        List<NetworkNode> leafs = network.getLeafNodes();
-        double height = leafs.get(0).getHeight();
-        for (NetworkNode leaf : leafs) {
-            if (Math.abs(leaf.getHeight() - height) > 1e-8) {
+        final double firstHeight = network.networkNodes[0].height;
+        for (int i = 1; i < network.leafNodeCount; i++) {
+            final double height = network.networkNodes[i].height;
+            if (Math.abs(firstHeight - height) > 1e-8) {
                 System.err.println("WARNING: Yule Model cannot handle dated tips.");
                 break;
             }
@@ -65,8 +67,9 @@ public class YuleHybridModel extends Distribution {
         // final double rho = rhoProbInput.get() == null ? 1.0 : rhoProbInput.get().getValue();
 
         // sort the internal nodes according to their heights
-        List<NetworkNode> nodes = network.getInternalNodes();
-        Collections.sort(nodes, new heightComparator());
+        List<NetworkNode> nodes = new ArrayList<>();
+        nodes.addAll(network.getInternalNodes());
+        nodes.sort(hc);
 
         double logP= 0;
         // calculate probability of the network
@@ -90,13 +93,6 @@ public class YuleHybridModel extends Distribution {
             if (!(logP > -Double.MAX_VALUE && logP < Double.MAX_VALUE)) System.out.println("???");
         }
         return logP;
-    }
-    /* customized comparator */
-    private class heightComparator implements Comparator<NetworkNode> {
-        @Override
-        public int compare(NetworkNode n1, NetworkNode n2) {
-            return Double.compare(n1.getHeight(), n2.getHeight());
-        }
     }
 
     @Override
