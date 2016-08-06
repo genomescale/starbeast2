@@ -29,6 +29,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         final Tree tree = treeInput.get();
         final Node treeRoot = tree.getRoot();
 
+        // Step (1) is to initialize the node counts and array
         leafNodeCount = 0;
         speciationNodeCount = 0;
         int hybridNodeCount = 0;
@@ -57,7 +58,11 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         nextLeafNr = 0;
         nextSpeciationNr = leafNodeCount;
         nextReticulationNr = (leafNodeCount + speciationNodeCount) - 1;
+
+        // Step (2) is to recursively copy the tree to the network
         rebuildNetwork(treeRoot);
+
+        // Update the cached parents and children for each node
         updateRelationships();
 
         super.initAndValidate();

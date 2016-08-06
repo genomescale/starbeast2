@@ -42,6 +42,7 @@ public class NetworkNode {
     /**
      * counts of children and parents of this node
      */
+    protected int nodeNr;
     protected int nParents;
     protected int nChildren;
 
@@ -53,6 +54,18 @@ public class NetworkNode {
     private DecimalFormat df;
 
     protected void updateRelationships() {
+        nodeNr = -1;
+        for (int i = 0; i < network.networkNodes.length; i++) {
+            if (network.networkNodes[i] == this) {
+                nodeNr = i;
+                break;
+            }
+        }
+
+        if (nodeNr < 0) {
+            throw new RuntimeException("Node is not attached to the network!");
+        }
+
         parents = getParents();
         children = getChildren();
         nParents = parents.size();
@@ -90,6 +103,7 @@ public class NetworkNode {
         childBranchNumbers = new HashSet<>();
         children = HashMultiset.create();
         parents = HashMultiset.create();
+        nodeNr = -1;
         nParents = 0;
         nChildren = 0;
         isDirty = Network.IS_DIRTY;
@@ -107,7 +121,7 @@ public class NetworkNode {
             metaData.put(metaDataKey, metaDataValue);
         }
     }
-    
+
     protected void copyTo(NetworkNode dst) {
         copyNode(this, dst);
     }
@@ -134,11 +148,7 @@ public class NetworkNode {
     }
 
     public int getNr() {
-        for (int i = 0; i < network.networkNodes.length; i++) {
-            if (network.networkNodes[i] == this) return i; 
-        }
-
-        throw new RuntimeException("Node is not attached to the network!");
+        return nodeNr;
     }
 
     public double getHeight() {
@@ -386,7 +396,7 @@ public class NetworkNode {
 
         if (label != null) {
             if (printLabels) subtreeString.append(label);
-            else subtreeString.append(getNr());
+            else subtreeString.append(nodeNr);
             // System.out.println(String.format("%s-%d: %d/%d", label, getNr(), nParents, nChildren));
         }
 
