@@ -93,6 +93,7 @@ public class NetworkNode {
     // this does not copy the parents or children
     public NetworkNode(Node treeNode) {
         height = treeNode.getHeight();
+        label = treeNode.getID();
         metaDataString = treeNode.metaDataString;
         for (String metaDataKey: treeNode.getMetaDataNames()) {
             Object metaDataValue = treeNode.getMetaData(metaDataKey);

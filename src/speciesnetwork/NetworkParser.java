@@ -7,7 +7,7 @@ import beast.core.Input;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import beast.evolution.tree.Tree;
 import beast.core.Input.Validate;
 
 /**
@@ -17,55 +17,91 @@ import beast.core.Input.Validate;
 
 @Description("Parse the network of extended Newick format.")
 public class NetworkParser extends Network implements StateNodeInitialiser {
-    public final Input<TreeInterface> treeInput = new Input<>("tree", "Tree initialized from extended newick string", Validate.REQUIRED);
+    final public Input<Network> networkInput = new Input<>("initial", "Network to initialize.");
+    final public Input<Tree> treeInput = new Input<>("tree", "Tree initialized from extended newick string", Validate.REQUIRED);
+
+    private int nextLeafNr;
+    private int nextSpeciationNr;
+    private int nextReticulationNr;
 
     @Override
     public void initAndValidate() {
-        Node treeRoot = treeInput.get().getRoot();
-        NetworkNode newRoot = new NetworkNode(treeRoot);
-        setRoot(newRoot);
-        speciationNodeCount = 1;
-        leafNodeCount = reticulationNodeCount = 0;
-        super.initAndValidate();
+        final Tree tree = treeInput.get();
+        final Node treeRoot = tree.getRoot();
 
-        // System.out.println(String.format("Root labels = %s -> %s <- %s", treeRoot.getLeft().getID(), treeRoot.getID(), treeRoot.getRight().getID()));
-        // System.out.println(String.format("Root numbers = %d -> %d <- %d", treeRoot.getLeft().getNr(), treeRoot.getNr(), treeRoot.getRight().getNr()));
-        rebuildNetwork(treeRoot.getLeft(), root, true);
-        rebuildNetwork(treeRoot.getRight(), root, false);
-        root.updateSizes();
-        super.initAndValidate();  // necessary to update storedNetworkNodes
-    }
+        leafNodeCount = 0;
+        speciationNodeCount = 0;
+        int hybridNodeCount = 0;
 
-    private void rebuildNetwork(final Node treeNode, final NetworkNode parentNode, final boolean isLeft) {
-        // System.out.println(String.format("Current branch: %s - %s a.k.a. %d - %d", parentNode.getID(), treeNode.getID(), parentNode.getNr(), treeNode.getNr()));
-        final Node leftChild = treeNode.getLeft();
-        final Node rightChild = treeNode.getRight();
-        final String nodeLabel = treeNode.getID();
-        final int hStart = (nodeLabel == null) ? 0 : nodeLabel.indexOf('#') + 1;
-        boolean reticulation = false;
-        NetworkNode networkNode = null;
-        reticulation = (hStart > 0) && (nodeLabel.length() > hStart) && (nodeLabel.charAt(hStart) == 'H');
-        if (reticulation) networkNode = getNode(nodeLabel);
-
-        if (networkNode == null) {
-            networkNode = new NetworkNode(treeNode);
-            if (reticulation) addReticulationNode(networkNode);
-            else if (treeNode.isLeaf()) addLeafNode(networkNode);
-            else addSpeciationNode(networkNode);
+        for (Node n: tree.getNodesAsArray()) {
+            if (n.isLeaf()) {
+                leafNodeCount++;
+            } else {
+                if (n.getID() != null && n.getID().startsWith("#")) {
+                    hybridNodeCount++;
+                } else {
+                    speciationNodeCount++;
+                }
+            }
         }
 
-        // partial reticulation nodes are always right-attached
-        if (reticulation && leftChild == null && rightChild == null) networkNode.setRightParent(parentNode);
-        // complete reticulation nodes are always left-attached
-        else if (reticulation) networkNode.setLeftParent(parentNode);
-        else if (isLeft) networkNode.setLeftParent(parentNode);
-        else networkNode.setRightParent(parentNode);
+        assert hybridNodeCount % 2 == 0;
+        final int reticulationNodeCount = hybridNodeCount / 2;
+        nodeCount = leafNodeCount + speciationNodeCount + reticulationNodeCount;
+        networkNodes = new NetworkNode[nodeCount];
+        for (int i = 0; i < nodeCount; i++) {
+            networkNodes[i] = new NetworkNode(); 
+        }
 
-        // System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
-        if (leftChild != null) rebuildNetwork(leftChild, networkNode, true);
-        if (rightChild != null) rebuildNetwork(rightChild, networkNode, false);
+        nextLeafNr = 0;
+        nextSpeciationNr = leafNodeCount;
+        nextReticulationNr = (leafNodeCount + speciationNodeCount) - 1;
+        rebuildNetwork(treeRoot);
+        updateRelationships();
 
-        networkNode.updateSizes();
+        super.initAndValidate();
+    }
+
+    private Integer rebuildNetwork(final Node treeNode) {
+        int branchNumber;
+        int nodeNumber;
+        NetworkNode newNode;
+
+        final String nodeLabel = treeNode.getID();
+        final double nodeHeight = treeNode.getHeight();
+
+        final int matchingNodeNr = getNodeNr(nodeLabel);
+        if (matchingNodeNr < 0) {
+            if (treeNode.isRoot()) {
+                nodeNumber = nodeCount -1;
+            } else if (nodeLabel.startsWith("#H")) {
+                nodeNumber = nextReticulationNr;
+                nextReticulationNr++;
+            } else if (treeNode.isLeaf()) {
+                nodeNumber = nextLeafNr;
+                nextLeafNr++;
+            } else {
+                nodeNumber = nextSpeciationNr;
+                nextSpeciationNr++;
+            }
+
+            networkNodes[nodeNumber] = new NetworkNode(this);
+            branchNumber = nodeNumber * 2;
+        } else {
+            nodeNumber = matchingNodeNr;
+            branchNumber = (matchingNodeNr * 2) + 1;
+        }
+
+        newNode = networkNodes[nodeNumber];
+        newNode.label = nodeLabel;
+        newNode.height = nodeHeight;
+
+        for (Node c: treeNode.getChildren()) {
+            final int childBranchNumber = rebuildNetwork(c);
+            newNode.childBranchNumbers.add(childBranchNumber);
+        }
+
+        return branchNumber;
     }
 
     @Override

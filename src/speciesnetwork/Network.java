@@ -22,8 +22,6 @@ import beast.util.TreeParser;
 
 @Description("Network representing reticulate evolution of species")
 public class Network extends StateNode {
-    final public Input<Network> networkInput =
-            new Input<>("initial", "Network to start with.");
     final public Input<String> nodeTypeInput =
             new Input<>("nodetype", "Type of the node in the network.", NetworkNode.class.getName());
     final public Input<TaxonSet> taxonSetInput =
@@ -198,11 +196,15 @@ public class Network extends StateNode {
         return networkNodes[nodeI];
     }
 
-    public NetworkNode getNode(final String query) {
-        for (NetworkNode n: networkNodes) {
-            if (n.label.equals(query)) return n;
+    public int getNodeNr(final String query) {
+        int matchingNodeNr = -1;
+        for (int i = 0; i < nodeCount; i++) {
+            final NetworkNode n = networkNodes[i];
+            if (n != null && n.label != null) {
+                if (n.label.equals(query)) return i;
+            }
         }
-        return null;
+        return matchingNodeNr;
     }
 
     /**
@@ -346,7 +348,7 @@ public class Network extends StateNode {
         storedSpeciationNodeCount = speciationNodeCount;
         storedLeafNodeCount = leafNodeCount;
 
-        if (storedNodeCount != nodeCount) { // rebuild array
+        if (storedNetworkNodes == null || storedNodeCount != nodeCount) { // rebuild array
             storedNetworkNodes = new NetworkNode[nodeCount];
             for (int i = 0; i < nodeCount; i++) {
                 storedNetworkNodes[i] = new NetworkNode();
