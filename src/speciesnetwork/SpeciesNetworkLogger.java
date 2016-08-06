@@ -13,10 +13,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Loggable;
 import beast.core.StateNode;
-import beast.core.parameter.Parameter;
 import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 
 @Description("Based on the TreeWithMetaDataLogger class, but with support for population sizes")
 public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
@@ -81,8 +78,8 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
                 metadata.set(i, ((StateNode) metadata.get(i)).getCurrent());
             }
         }
-        BranchRateModel branchRateModel = clockModelInput.get();
-        PopulationSizeModel populationModel = populationModelInput.get();
+        // BranchRateModel branchRateModel = clockModelInput.get();
+        // PopulationSizeModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
         // ??? network.getRoot().sort();
@@ -100,13 +97,13 @@ public class SpeciesNetworkLogger extends BEASTObject implements Loggable {
      * @param buf
      * @param d
      */
-    private void appendDouble(StringBuffer buf, double d) {
+    /* private void appendDouble(StringBuffer buf, double d) {
         if (df == null) {
             buf.append(d);
         } else {
             buf.append(df.format(d));
         }
-    }
+    } */
 
     /* temp disabled for code to compile
     String toNewick(NetworkNode node, List<Function> metadataList, BranchRateModel branchRateModel, PopulationSizeModel populationModel) {

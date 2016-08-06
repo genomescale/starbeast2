@@ -428,4 +428,11 @@ public class NetworkNode {
         inheritProb = newGamma;
         isDirty |= Network.IS_DIRTY;
     }
+
+    public NetworkNode getChild(int childBranchNr) {
+        if (childBranchNumbers.contains(childBranchNr)) {
+            return network.networkNodes[childBranchNr / 2];
+        }
+        return null;
+    }
 }

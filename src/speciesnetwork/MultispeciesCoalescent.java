@@ -52,41 +52,33 @@ public class MultispeciesCoalescent extends Distribution {
         populationModel.initPopSizes(speciesBranchCount);
     }
 
+    private void buildTimes(NetworkNode node, int branchNumber, double parentHeight, double[] startTimes, double[] endTimes) {
+        final double nodeHeight = node.height;
+        endTimes[branchNumber] = nodeHeight;
+        startTimes[branchNumber] = nodeHeight;
+        for (int childBranchNr: node.childBranchNumbers) {
+            final NetworkNode childNode = node.getChild(childBranchNr);
+            buildTimes(childNode, childBranchNr, nodeHeight, startTimes, endTimes);
+        }
+    }
+
     @Override
     public double calculateLogP() {
         final Network speciesNetwork = speciesNetworkInput.get();
-        assert sc.checkNetworkSanity(speciesNetwork.getRoot()); // species network should not be insane
-        final int speciesBranchCount = speciesNetwork.getBranchCount();
+        final NetworkNode speciesRoot = speciesNetwork.getRoot();
+        assert sc.checkNetworkSanity(speciesRoot); // species network should not be insane
         final int speciesNodeCount = speciesNetwork.getNodeCount();
+        final int rootBranchNr = (speciesNodeCount - 1) * 2;
 
-        double[] speciesStartTimes = new double[speciesBranchCount]; // the earlier date (rootward end)
-        double[] speciesEndTimes = new double[speciesBranchCount]; // the later date (tipward end)
+        double[] speciesStartTimes = new double[rootBranchNr + 1]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[rootBranchNr + 1]; // the later date (tipward end)
 
-        for (int i = 0; i < speciesNodeCount; i++) {
-            final NetworkNode speciesNetworkNode = speciesNetwork.getNode(i);
-            final NetworkNode leftParent = speciesNetworkNode.getLeftParent();
-            final NetworkNode rightParent = speciesNetworkNode.getRightParent();
-
-            final int speciesBranchNumber = speciesNetworkNode.getLeftBranchNumber();
-            speciesEndTimes[speciesBranchNumber] = speciesNetworkNode.getHeight();
-
-            if (leftParent != null && rightParent != null) { // this is a reticulation node
-                speciesEndTimes[speciesBranchNumber + 1] = speciesNetworkNode.getHeight();
-                speciesStartTimes[speciesBranchNumber] = leftParent.getHeight();
-                speciesStartTimes[speciesBranchNumber + 1] = rightParent.getHeight();
-            } else if (leftParent != null) {
-                speciesStartTimes[speciesBranchNumber] = leftParent.getHeight();
-            } else if (rightParent != null) {
-                speciesStartTimes[speciesBranchNumber] = rightParent.getHeight();
-            } else { // this is the root node
-                speciesStartTimes[speciesBranchNumber] = Double.POSITIVE_INFINITY;
-            }
-        }
+        buildTimes(speciesRoot, rootBranchNr, Double.POSITIVE_INFINITY, speciesStartTimes, speciesEndTimes);
 
         allLineageCounts.clear();
         allEventCounts.clear();
         allCoalescentTimes.clear();
-        for (int i = 0; i < speciesBranchCount; i++) {
+        for (int i = 0; i <= rootBranchNr; i++) {
             allLineageCounts.add(new int[nGeneTrees]);
             allEventCounts.add(new int[nGeneTrees]);
             allCoalescentTimes.add(new ArrayList<>());
@@ -99,7 +91,7 @@ public class MultispeciesCoalescent extends Distribution {
             final GeneTreeInSpeciesNetwork geneTree = geneTrees.get(j);
             geneTree.computeCoalescentTimes();
             logP += geneTree.logGammaSum;
-            for (int i = 0; i < speciesBranchCount; i++) { // for each species network branch "i"
+            for (int i = 0; i <= rootBranchNr; i++) { // for each species network branch "i"
                 final List<Double> timesView = geneTree.coalescentTimes.get(i);
                 final int geneBranchEventCount = timesView.size();
                 final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
@@ -120,7 +112,7 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         final PopulationSizeModel populationModel = populationModelInput.get();
-        for (int i = 0; i < speciesBranchCount; i++) {
+        for (int i = 0; i <= rootBranchNr; i++) {
             final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
             final int[] branchLineageCounts = allLineageCounts.get(i);
             final int[] branchEventCounts = allEventCounts.get(i);

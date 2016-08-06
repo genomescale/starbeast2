@@ -1,6 +1,5 @@
 package speciesnetwork;
 
-import static java.lang.Math.*;
 import java.util.*;
 
 import beast.core.Description;
@@ -10,14 +9,7 @@ import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.alignment.distance.Distance;
-import beast.evolution.alignment.distance.JukesCantorDistance;
-import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.util.ClusterTree;
 import speciesnetwork.operators.RebuildEmbedding;
 
 /**
@@ -98,10 +90,10 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final Network sNetwork = speciesNetworkInput.get();
 
         // initialize population sizes to equal average branch length
-        final double speciesNetworkLength = sNetwork.getNetworkLength();
-        final int nSpeciesBranches = sNetwork.getBranchCount();
-        final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
-        final PopulationSizeModel populationModel = populationModelInput.get();
+        // final double speciesNetworkLength = sNetwork.getNetworkLength();
+        // final int nSpeciesBranches = sNetwork.getBranchCount();
+        // final double averageBranchLength = speciesNetworkLength / (nSpeciesBranches - 1);
+        // final PopulationSizeModel populationModel = populationModelInput.get();
         // populationModel.initPopSizes(averageBranchLength);
 
         // do not scale the species network at the moment!

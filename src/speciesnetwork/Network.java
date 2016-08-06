@@ -133,15 +133,15 @@ public class Network extends StateNode {
         return nodeCount - (leafNodeCount + speciationNodeCount);
     }
 
-    /**
-     * @return the number of branches in the network, including the root branch
-     */
-    public int getBranchCount() {
-        return nodeCount + (nodeCount - (leafNodeCount + speciationNodeCount));
-    }
-
     public int getReticulationNodeOffset() {
         return leafNodeCount + speciationNodeCount - 1;
+    }
+
+    /**
+     * @return get the total number of branches in the tree
+     */
+    public int getBranchCount() {
+        return (nodeCount * 2) - (leafNodeCount + speciationNodeCount);
     }
 
     /**
