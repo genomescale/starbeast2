@@ -429,7 +429,7 @@ public class NetworkNode {
         isDirty |= Network.IS_DIRTY;
     }
 
-    public NetworkNode getChild(int childBranchNr) {
+    public NetworkNode getChildByBranch(int childBranchNr) {
         if (childBranchNumbers.contains(childBranchNr)) {
             return network.networkNodes[childBranchNr / 2];
         }

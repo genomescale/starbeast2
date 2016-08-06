@@ -133,6 +133,7 @@ public class Network extends StateNode {
         return nodeCount - (leafNodeCount + speciationNodeCount);
     }
 
+    // the index of the first reticulation node
     public int getReticulationNodeOffset() {
         return leafNodeCount + speciationNodeCount - 1;
     }

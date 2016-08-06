@@ -7,10 +7,6 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.StateNode;
-import beast.core.parameter.IntegerParameter;
-import beast.evolution.tree.Tree;
-
-import speciesnetwork.Network;
 
 /**
  * @author Chi Zhang

@@ -57,7 +57,7 @@ public class MultispeciesCoalescent extends Distribution {
         endTimes[branchNumber] = nodeHeight;
         startTimes[branchNumber] = nodeHeight;
         for (int childBranchNr: node.childBranchNumbers) {
-            final NetworkNode childNode = node.getChild(childBranchNr);
+            final NetworkNode childNode = node.getChildByBranch(childBranchNr);
             buildTimes(childNode, childBranchNr, nodeHeight, startTimes, endTimes);
         }
     }
