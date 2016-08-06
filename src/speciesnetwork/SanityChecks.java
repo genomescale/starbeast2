@@ -1,7 +1,8 @@
 package speciesnetwork;
 
 import java.util.List;
-import java.util.Set;
+
+import com.google.common.collect.Multiset;
 
 import beast.evolution.tree.Node;
 
@@ -28,8 +29,8 @@ public final class SanityChecks {
     }
 
     public boolean checkNetworkSanity(NetworkNode node) {
-        final Set<NetworkNode> children = node.getChildren();
-        final Set<NetworkNode> parents = node.getParents();
+        final Multiset<NetworkNode> children = node.getChildren();
+        final Multiset<NetworkNode> parents = node.getParents();
 
         final int nChildren = children.size();
         final int nParents = parents.size();

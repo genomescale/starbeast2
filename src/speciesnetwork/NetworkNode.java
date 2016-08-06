@@ -3,6 +3,9 @@ package speciesnetwork;
 import java.text.DecimalFormat;
 import java.util.*;
 
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
+
 import beast.core.Description;
 import beast.evolution.tree.Node;
 
@@ -33,8 +36,8 @@ public class NetworkNode {
      * children and parents of this node
      */
     protected Set<Integer> childBranchNumbers;
-    protected Set<NetworkNode> children;
-    protected Set<NetworkNode> parents;
+    protected Multiset<NetworkNode> children;
+    protected Multiset<NetworkNode> parents;
 
     /**
      * counts of children and parents of this node
@@ -85,8 +88,8 @@ public class NetworkNode {
         inheritProb = 0.5;
         height = 0.0;
         childBranchNumbers = new HashSet<>();
-        children = new HashSet<>();
-        parents = new HashSet<>();
+        children = HashMultiset.create();
+        parents = HashMultiset.create();
         nParents = 0;
         nChildren = 0;
         isDirty = Network.IS_DIRTY;
@@ -178,20 +181,22 @@ public class NetworkNode {
         return nChildren;
     }
 
-    public Set<NetworkNode> getParents() {
-        final Set<NetworkNode> parents = new HashSet<>();
+    public Multiset<NetworkNode> getParents() {
+        final Multiset<NetworkNode> parents = HashMultiset.create();
 
         for (NetworkNode n: network.networkNodes) {
-            if (n.children.contains(this)) {
-                parents.add(n);
+            for (Integer i: n.childBranchNumbers) {
+                final int childNodeNumber = i / 2;
+                final NetworkNode childNode = network.networkNodes[childNodeNumber];
+                if (childNode == this) parents.add(childNode);
             }
         }
 
         return parents;
     }
 
-    public Set<NetworkNode> getChildren() {
-        final Set<NetworkNode> children = new HashSet<>();
+    public Multiset<NetworkNode> getChildren() {
+        final Multiset<NetworkNode> children = HashMultiset.create();
 
         for (Integer i: childBranchNumbers) {
             final int childNodeNumber = i / 2;
@@ -354,17 +359,20 @@ public class NetworkNode {
 
     @Override
     public String toString() {
+        network.resetAllVisited();
         return buildNewick(Double.POSITIVE_INFINITY, -1, true);
     }
 
     public String toNewick() {
+        network.resetAllVisited();
         return buildNewick(Double.POSITIVE_INFINITY, -1, false);
     }
 
     private String buildNewick(Double parentHeight, Integer parentBranchNumber, boolean printLabels) {
         final StringBuilder subtreeString = new StringBuilder();
-        // only add children to the gamma parent attached reticulation node
-        if (nChildren > 0 && (nParents < 2 || parentBranchNumber % 2 == 0)) {
+        // only add children to a reticulation node once
+        if (nChildren > 0 && !(visited)) {
+            visited = true;
             subtreeString.append("(");
             int i = 0;
             for (Integer childBranchNumber: childBranchNumbers) {
@@ -379,6 +387,7 @@ public class NetworkNode {
         if (label != null) {
             if (printLabels) subtreeString.append(label);
             else subtreeString.append(getNr());
+            // System.out.println(String.format("%s-%d: %d/%d", label, getNr(), nParents, nChildren));
         }
 
         // add inheritance probabilities to reticulation nodes
