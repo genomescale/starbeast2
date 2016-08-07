@@ -117,7 +117,7 @@ public class CoalescentSimulator extends Runnable {
             // generate map of tip names to tip nodes
             final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
             for (NetworkNode leafNode : speciesNetwork.getLeafNodes()) {
-                final String speciesName = leafNode.getID();
+                final String speciesName = leafNode.getLabel();
                 speciesNodeMap.put(speciesName, leafNode);
             }
             final Map<String, Node> geneNodeMap = new HashMap<>();
@@ -138,7 +138,7 @@ public class CoalescentSimulator extends Runnable {
 
             // reset visited indicator
             NetworkNode networkRoot = speciesNetwork.getRoot();
-            networkRoot.resetAllVisited();
+            speciesNetwork.resetAllVisited();
 
             // simulate the gene tree
             nodeIndex = 0;
@@ -379,20 +379,16 @@ public class CoalescentSimulator extends Runnable {
     private void simulateGeneTree(NetworkNode snNode, Tree geneTree, IntegerParameter embedding, double ploidy) {
         if (snNode.isVisited())
             return;
-        if (snNode.getLeftChild() != null) {
-            simulateGeneTree(snNode.getLeftChild(), geneTree, embedding, ploidy);
-        }
-        if (snNode.getRightChild() != null) {
-            simulateGeneTree(snNode.getRightChild(), geneTree, embedding, ploidy);
+        for (NetworkNode c: snNode.getChildren()) {
+            simulateGeneTree(c, geneTree, embedding, ploidy);
         }
 
         snNode.setVisited();  // set visited indicator
 
         final Collection<Node> lineagesAtBottom = networkNodeGeneLineagesMap.get(snNode);
-        final NetworkNode leftParent = snNode.getLeftParent();
-        final NetworkNode rightParent = snNode.getRightParent();
 
-        if (snNode.isReticulation()) {
+        // TODO get this compiling at least
+        /*if (snNode.isReticulation()) {
             // assign lineages at the bottom to the left and right populations
             final double leftP = snNode.getGamma();
             final Collection<Node> lineagesAtLeft = new HashSet<>();
@@ -455,7 +451,7 @@ public class CoalescentSimulator extends Runnable {
             } else {
                 geneTree.setRoot(lineagesAtTop.get(0));  // bad idea? no
             }
-        }
+        }*/
     }
 
     private List<Node> simulateCoalescentEvents(Collection<Node> lineages, double bottomHeight,
