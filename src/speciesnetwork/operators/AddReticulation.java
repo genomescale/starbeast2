@@ -72,7 +72,7 @@ public class AddReticulation extends Operator {
 
         // get the node at the end of the branch, and the direction to the parent
         NetworkNode netNode1 = null, netNode2 = null, parentNode1 = null, parentNode2 = null;
-        for (NetworkNode netNode: speciesNetwork.getAllNodesAsArray()) {
+        for (NetworkNode netNode: speciesNetwork.getNodes()) {
             if (netNode.isReticulation()) {
                 if (netNode.getLeftBranchNumber() == branchNr1) {
                     netNode1 = netNode;

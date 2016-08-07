@@ -47,12 +47,11 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         }
 
         assert hybridNodeCount % 2 == 0;
-        final int reticulationNodeCount = hybridNodeCount / 2;
+        reticulationNodeCount = hybridNodeCount / 2;
         nodeCount = leafNodeCount + speciationNodeCount + reticulationNodeCount;
-        // System.out.println(String.format("%d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
-        networkNodes = new NetworkNode[nodeCount];
+        nodes = new NetworkNode[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            networkNodes[i] = new NetworkNode(); 
+            nodes[i] = new NetworkNode(); 
         }
 
         nextLeafNr = 0;
@@ -76,7 +75,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         final String nodeLabel = treeNode.getID();
         final double nodeHeight = treeNode.getHeight();
 
-        final int matchingNodeNr = getNodeNr(nodeLabel);
+        final int matchingNodeNr = getNodeNumber(nodeLabel);
         if (matchingNodeNr < 0) {
             if (treeNode.isRoot()) {
                 nodeNumber = nodeCount -1;
@@ -91,14 +90,14 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
                 nextSpeciationNr++;
             }
 
-            networkNodes[nodeNumber] = new NetworkNode(this);
-            branchNumber = nodeNumber * 2;
+            nodes[nodeNumber] = new NetworkNode(this);
+            branchNumber = getBranchNumber(nodeNumber);
         } else {
             nodeNumber = matchingNodeNr;
-            branchNumber = (matchingNodeNr * 2) + 1;
+            branchNumber = getBranchNumber(nodeNumber) + 1;
         }
 
-        newNode = networkNodes[nodeNumber];
+        newNode = nodes[nodeNumber];
         newNode.label = nodeLabel;
         newNode.height = nodeHeight;
 

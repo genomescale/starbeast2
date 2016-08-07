@@ -22,7 +22,7 @@ public class GammaUniform extends Operator {
         final Network speciesNetwork = speciesNetworkInput.get();
 
         final int nReticulations = speciesNetwork.getReticulationNodeCount();
-        final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationNodeOffset();
+        final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationOffset();
         final NetworkNode randomNode = speciesNetwork.getNode(randomNodeIndex);
 
         final Double newGamma = Randomizer.nextDouble();

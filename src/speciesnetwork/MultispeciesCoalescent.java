@@ -67,11 +67,11 @@ public class MultispeciesCoalescent extends Distribution {
         final Network speciesNetwork = speciesNetworkInput.get();
         final NetworkNode speciesRoot = speciesNetwork.getRoot();
         assert sc.checkNetworkSanity(speciesRoot); // species network should not be insane
-        final int speciesNodeCount = speciesNetwork.getNodeCount();
-        final int rootBranchNr = (speciesNodeCount - 1) * 2;
+        final int speciesBranchCount = speciesNetwork.getBranchCount();
+        final int rootBranchNr = speciesBranchCount - 1;
 
-        double[] speciesStartTimes = new double[rootBranchNr + 1]; // the earlier date (rootward end)
-        double[] speciesEndTimes = new double[rootBranchNr + 1]; // the later date (tipward end)
+        double[] speciesStartTimes = new double[speciesBranchCount]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[speciesBranchCount]; // the later date (tipward end)
 
         buildTimes(speciesRoot, rootBranchNr, Double.POSITIVE_INFINITY, speciesStartTimes, speciesEndTimes);
 

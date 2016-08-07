@@ -55,8 +55,8 @@ public class NetworkNode {
 
     protected void updateRelationships() {
         nodeNr = -1;
-        for (int i = 0; i < network.networkNodes.length; i++) {
-            if (network.networkNodes[i] == this) {
+        for (int i = 0; i < network.nodes.length; i++) {
+            if (network.nodes[i] == this) {
                 nodeNr = i;
                 break;
             }
@@ -194,10 +194,10 @@ public class NetworkNode {
     public Multiset<NetworkNode> getParents() {
         final Multiset<NetworkNode> parents = HashMultiset.create();
 
-        for (NetworkNode n: network.networkNodes) {
+        for (NetworkNode n: network.nodes) {
             for (Integer i: n.childBranchNumbers) {
-                final int childNodeNumber = i / 2;
-                final NetworkNode childNode = network.networkNodes[childNodeNumber];
+                final int childNodeNumber = network.getNodeNumber(i);
+                final NetworkNode childNode = network.nodes[childNodeNumber];
                 if (childNode == this) parents.add(childNode);
             }
         }
@@ -209,8 +209,8 @@ public class NetworkNode {
         final Multiset<NetworkNode> children = HashMultiset.create();
 
         for (Integer i: childBranchNumbers) {
-            final int childNodeNumber = i / 2;
-            final NetworkNode childNode = network.networkNodes[childNodeNumber];
+            final int childNodeNumber = network.getNodeNumber(i);
+            final NetworkNode childNode = network.nodes[childNodeNumber];
             children.add(childNode);
         }
 
@@ -348,34 +348,10 @@ public class NetworkNode {
         touched = true;
     }
 
-    /**
-     * scale height of this node and all its descendants
-     * @param scale scale factor
-     */
-    public void scale(final double scale) {
-        network.resetAllTouched();
-        recursiveScale(scale);
-    }
-
-    private void recursiveScale(final double scale) {
-        if (touched) return;
-
-        startEditing();
-        height *= scale;
-        isDirty |= Network.IS_DIRTY;
-        for (NetworkNode c: children) c.recursiveScale(scale);
-        touched = true;
-    }
-
     @Override
     public String toString() {
         network.resetAllVisited();
         return buildNewick(Double.POSITIVE_INFINITY, -1, true);
-    }
-
-    public String toNewick() {
-        network.resetAllVisited();
-        return buildNewick(Double.POSITIVE_INFINITY, -1, false);
     }
 
     private String buildNewick(Double parentHeight, Integer parentBranchNumber, boolean printLabels) {
@@ -387,7 +363,8 @@ public class NetworkNode {
             int i = 0;
             for (Integer childBranchNumber: childBranchNumbers) {
                 if (i > 0) subtreeString.append(",");
-                NetworkNode childNode = network.networkNodes[childBranchNumber / 2];
+                final int childNodeNumber = network.getNodeNumber(childBranchNumber);
+                NetworkNode childNode = network.nodes[childNodeNumber];
                 subtreeString.append(childNode.buildNewick(height, childBranchNumber, printLabels));
                 i++;
             }
@@ -397,7 +374,6 @@ public class NetworkNode {
         if (label != null) {
             if (printLabels) subtreeString.append(label);
             else subtreeString.append(nodeNr);
-            // System.out.println(String.format("%s-%d: %d/%d", label, getNr(), nParents, nChildren));
         }
 
         // add inheritance probabilities to reticulation nodes
@@ -431,8 +407,37 @@ public class NetworkNode {
 
     public NetworkNode getChildByBranch(int childBranchNr) {
         if (childBranchNumbers.contains(childBranchNr)) {
-            return network.networkNodes[childBranchNr / 2];
+            final int childNodeNumber = network.getNodeNumber(childBranchNr);
+            return network.nodes[childNodeNumber];
         }
         return null;
+    }
+
+    public double getSubnetworkLength() {
+        return recurseSubtreeLength(height);
+    }
+
+    public double recurseSubtreeLength(final double parentHeight) {
+        double subtreeLength = parentHeight - height;
+
+        for (NetworkNode c: children) {
+            subtreeLength += c.recurseSubtreeLength(height);
+        }
+
+        return subtreeLength;
+    }
+
+    public void printDeets() {
+        System.out.println(String.format("%s: %s", "label", label));
+        System.out.println(String.format("%s: %f", "inheritProb", inheritProb));
+        System.out.println(String.format("%s: %f", "height", height));
+        System.out.println(String.format("%s: %d", "nodeNr", nodeNr));
+        System.out.println(String.format("%s: %d", "branchNr", network.getBranchNumber(nodeNr)));
+        System.out.println(String.format("%s: %d", "nParents", nParents));
+        System.out.println(String.format("%s: %d", "nChildren", nChildren));
+        for (Integer i: childBranchNumbers) {
+            System.out.println(String.format("%s: %d", "childBranchNumber", i));
+        }
+        System.out.println();
     }
 }

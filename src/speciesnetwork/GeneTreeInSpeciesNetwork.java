@@ -109,7 +109,7 @@ public class GeneTreeInSpeciesNetwork extends CalculationNode {
         logGammaSum = 0.0;
 
         final int geneTreeNodeCount = geneTree.getNodeCount();
-        final int speciesBranchCount = (speciesNetwork.getNodeCount() * 2) - 1;
+        final int speciesBranchCount = speciesNetwork.getBranchCount();
         speciesOccupancy = new double[geneTreeNodeCount][speciesBranchCount];
         speciesLeafNodeCount = speciesNetwork.getLeafNodeCount();
 

@@ -24,7 +24,7 @@ public class GammaRandomWalk extends Operator {
         final Double windowSize = windowSizeInput.get();
 
         final int nReticulations = speciesNetwork.getReticulationNodeCount();
-        final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationNodeOffset();
+        final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationOffset();
         final NetworkNode randomNode = speciesNetwork.getNode(randomNodeIndex);
 
         final Double logOddsShift = (Randomizer.nextDouble() * windowSize * 2) - windowSize;

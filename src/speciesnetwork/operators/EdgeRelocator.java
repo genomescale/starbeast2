@@ -75,7 +75,7 @@ public class EdgeRelocator extends Operator {
 
             // look for all the candidate branches to attach to
             List<NetworkNode> candidates = new ArrayList<>();
-            for (NetworkNode node : speciesNetwork.getAllNodesAsArray()) {
+            for (NetworkNode node : speciesNetwork.getNodes()) {
                 if (node != snNode) {
                     NetworkNode lParent = node.getLeftParent();
                     NetworkNode rParent = node.getRightParent();
@@ -147,7 +147,7 @@ public class EdgeRelocator extends Operator {
 
             // look for all the candidate branches to attach to
             List<NetworkNode> candidates = new ArrayList<>();
-            for (NetworkNode node : speciesNetwork.getAllNodesAsArray()) {
+            for (NetworkNode node : speciesNetwork.getNodes()) {
                 if (node != snNode) {
                     NetworkNode lParent = node.getLeftParent();
                     NetworkNode rParent = node.getRightParent();

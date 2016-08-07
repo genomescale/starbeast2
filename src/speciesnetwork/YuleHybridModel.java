@@ -46,9 +46,9 @@ public class YuleHybridModel extends Distribution {
         // make sure that all tips are at the same height,
         // otherwise this Yule Model is not appropriate
         final Network network = networkInput.get();
-        final double firstHeight = network.networkNodes[0].height;
+        final double firstHeight = network.nodes[0].height;
         for (int i = 1; i < network.leafNodeCount; i++) {
-            final double height = network.networkNodes[i].height;
+            final double height = network.nodes[i].height;
             if (Math.abs(firstHeight - height) > 1e-8) {
                 System.err.println("WARNING: Yule Model cannot handle dated tips.");
                 break;
