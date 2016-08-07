@@ -11,7 +11,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-
+import beast.util.Randomizer;
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
 
@@ -180,16 +180,19 @@ public class RebuildEmbedding extends Operator {
                 }
             }
 
-            Integer nextBranchNumber = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             if (compatibleBranches.size() == 0) {
                 return -1; // for a valid embedding, should never go here
             } else if (compatibleBranches.size() > 1) {
                 nChoices++;
             }
 
+            Integer nextBranchNumber;
             if (rebuild) {
-                nextBranchNumber = compatibleBranches.get(compatibleBranches.size());
+                final int nextBranchIndex = Randomizer.nextInt(compatibleBranches.size());
+                nextBranchNumber = compatibleBranches.get(nextBranchIndex);
                 embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, nextBranchNumber);
+            } else {
+                nextBranchNumber = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
             }
 
             final NetworkNode nextSpecies = speciesNetworkNode.getChildByBranch(nextBranchNumber);
