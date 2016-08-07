@@ -35,7 +35,7 @@ public class NetworkNode {
     /**
      * children and parents of this node
      */
-    protected Set<Integer> childBranchNumbers;
+    public Set<Integer> childBranchNumbers;
     protected Multiset<NetworkNode> children;
     protected Multiset<NetworkNode> parents;
 
@@ -327,27 +327,6 @@ public class NetworkNode {
         return nodeCount;
     }
 
-    /**
-     * get all child node under this node, if this node is leaf then list.size() = 0.
-     */
-    public List<NetworkNode> getAllChildNodes() {
-        final List<NetworkNode> childNodes = new ArrayList<>();
-        network.resetAllTouched();
-        getAllChildNodes(childNodes);
-        return childNodes;
-    }
-    // recursive
-    private void getAllChildNodes(final List<NetworkNode> childNodes) {
-        if (touched) return;
-
-        childNodes.add(this);
-        for (NetworkNode c: children) {
-            c.getAllChildNodes();
-        }
-
-        touched = true;
-    }
-
     @Override
     public String toString() {
         network.resetAllVisited();
@@ -439,5 +418,9 @@ public class NetworkNode {
             System.out.println(String.format("%s: %d", "childBranchNumber", i));
         }
         System.out.println();
+    }
+
+    public String getLabel() {
+        return label;
     }
 }

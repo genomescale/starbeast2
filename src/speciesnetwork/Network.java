@@ -2,8 +2,6 @@ package speciesnetwork;
 
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 
 import beast.core.Description;
 import beast.core.Input;
@@ -172,37 +170,41 @@ public class Network extends StateNode {
     }
 
     /**
+     * @return an array of all the nodes in this network
+     */
+    public NetworkNode[] getNodes() {
+        final NetworkNode[] nodesCopy = new NetworkNode[nodeCount];
+        System.arraycopy(nodes, 0, nodesCopy, 0, nodeCount);
+        return nodesCopy;
+    }
+
+    /**
      * @return a list of leaf nodes contained in this network
      */
-    public Set<NetworkNode> getLeafNodes() {
-        final Set<NetworkNode> lNodes = new HashSet<>();
-        for (int i = 0; i < leafNodeCount; i++) {
-            lNodes.add(nodes[i]);
-        }
-        return lNodes;
+    public NetworkNode[] getLeafNodes() {
+        final NetworkNode[] leafNodes = new NetworkNode[leafNodeCount];
+        System.arraycopy(nodes, 0, leafNodes, 0, leafNodeCount);
+        return leafNodes;
     }
 
     /**
      * @return a list of internal nodes contained in this network
      */
-    public Set<NetworkNode> getInternalNodes() {
-        final Set<NetworkNode> iNodes = new HashSet<>();
-        for (int i = leafNodeCount; i < nodeCount; i++) {
-            iNodes.add(nodes[i]);
-        }
-        return iNodes;
+    public NetworkNode[] getInternalNodes() {
+        final int internalNodeCount = speciationNodeCount + reticulationNodeCount;
+        final NetworkNode[] internalNodes = new NetworkNode[internalNodeCount];
+        System.arraycopy(nodes, leafNodeCount, internalNodes, 0, internalNodeCount);
+        return internalNodes;
     }
 
     /**
      * @return a list of reticulation nodes contained in this network
      */
-    public Set<NetworkNode> getReticulationNodes() {
+    public NetworkNode[] getReticulationNodes() {
         final int reticulationOffset = getReticulationOffset();
-        final Set<NetworkNode> rNodes = new HashSet<>();
-        for (int i = 0; i < reticulationNodeCount; i++) {
-            rNodes.add(nodes[i + reticulationOffset]);
-        }
-        return rNodes;
+        final NetworkNode[] reticulationNodes = new NetworkNode[reticulationNodeCount];
+        System.arraycopy(nodes, reticulationOffset, reticulationNodes, 0, reticulationNodeCount);
+        return reticulationNodes;
     }
 
     public NetworkNode getNode(final int nodeI) {
@@ -218,15 +220,6 @@ public class Network extends StateNode {
         }
 
         return -1; // no match
-    }
-
-    /**
-     * @return an array of all the nodes in this network
-     */
-    public NetworkNode[] getNodes() {
-        final NetworkNode[] nodesCopy = new NetworkNode[nodeCount];
-        System.arraycopy(nodes, 0, nodesCopy, 0, nodeCount);
-        return nodesCopy;
     }
 
     public double getNetworkLength() {

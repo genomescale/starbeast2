@@ -11,7 +11,6 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
 
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
@@ -51,11 +50,11 @@ public class RebuildEmbedding extends Operator {
         speciesNetwork = speciesNetworkInput.get();
         speciesLeafCount = speciesNetwork.getLeafNodeCount();
 
-        final List<NetworkNode> speciesLeafNodes = speciesNetwork.getLeafNodes();
+        final NetworkNode[] speciesLeafNodes = speciesNetwork.getLeafNodes();
         // generate map of species network tip names to species network tip nodes
         final Map<String, NetworkNode> speciesNodeMap = new HashMap<>();
         for (NetworkNode leafNode: speciesLeafNodes) {
-            final String speciesName = leafNode.getID();
+            final String speciesName = leafNode.getLabel();
             speciesNodeMap.put(speciesName, leafNode);
         }
         // generate map of gene tree tip names to species network tip numbers
@@ -74,35 +73,32 @@ public class RebuildEmbedding extends Operator {
     @Override
     public double proposal() {
         // count the number of alternative traversing choices for the current state (n0)
-        final int oldChoices = getNumberOfChoices();
+        getNodeHeirs();
+        final int oldChoices = recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot(), false);
         if (oldChoices < 0)
             throw new RuntimeException("Developer ERROR: current embedding invalid!");
 
-        // rebuild the embedding
-        resetEmbedding();
-        if (!recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot()))
-            return Double.NEGATIVE_INFINITY;
-
+        // rebuild the embedding AND
         // count the number of alternative traversing choices for the new state (n1)
-        final int newChoices = getNumberOfChoices();
+        resetEmbedding();
+        final int newChoices = recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot(), true);
         if (newChoices < 0)
-            throw new RuntimeException("Developer ERROR: new embedding invalid!");
+            return Double.NEGATIVE_INFINITY;
 
         // the proposal ratio is (2^n1)/(2^n0)
         return (newChoices - oldChoices) * Math.log(2);
     }
 
-    public boolean initializeEmbedding() {
+    public int initializeEmbedding() {
         getNodeHeirs();
         // rebuild the embedding
         resetEmbedding();
-        return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot());
+        return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot(), true);
     }
 
-    protected int getNumberOfChoices () {
+    protected int getNumberOfChoices() {
         getNodeHeirs();
-        int[] nChoices = new int[1];
-        return recurseNumberOfChoices(geneTree.getRoot(), speciesNetwork.getRoot(), nChoices) ? nChoices[0] : -1;
+        return recurseRebuild(geneTree.getRoot(), speciesNetwork.getRoot(), false);
     }
 
     private void resetEmbedding() {
@@ -155,117 +151,63 @@ public class RebuildEmbedding extends Operator {
     }
 
     private void recurseSpeciesHeirs(final NetworkNode speciesNetworkNode) {
-        if (!speciesNetworkNode.isLeaf()) {
-            final NetworkNode leftChild = speciesNetworkNode.getLeftChild();
-            final NetworkNode rightChild = speciesNetworkNode.getRightChild();
-            if (leftChild != null) speciesNodeHeirs.putAll(speciesNetworkNode, speciesNodeHeirs.get(leftChild));
-            if (rightChild != null) speciesNodeHeirs.putAll(speciesNetworkNode, speciesNodeHeirs.get(rightChild));
+        for (NetworkNode c: speciesNetworkNode.getChildren()) {
+            speciesNodeHeirs.putAll(speciesNetworkNode, speciesNodeHeirs.get(c));
         }
 
-        final NetworkNode leftParent = speciesNetworkNode.getLeftParent();
-        final NetworkNode rightParent = speciesNetworkNode.getRightParent();
-
-        if (leftParent != null) recurseSpeciesHeirs(leftParent);
-        if (rightParent != null) recurseSpeciesHeirs(rightParent);
+        for (NetworkNode p: speciesNetworkNode.getParents()) {
+            recurseSpeciesHeirs(p);
+        }
     }
 
-    private boolean recurseRebuild(final Node geneTreeNode, final NetworkNode speciesNetworkNode) {
+    private int recurseRebuild(final Node geneTreeNode, final NetworkNode speciesNetworkNode, boolean rebuild) {
         final double geneTreeNodeHeight = geneTreeNode.getHeight();
         final double speciesNetworkNodeHeight = speciesNetworkNode.getHeight();
+        int nChoices = 0;
+
         // this coalescence node must be embedded in a descendant species network branch
         if (geneTreeNodeHeight < speciesNetworkNodeHeight) {
             final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafCount;
             final int geneTreeNodeNumber = geneTreeNode.getNr();
-
             final Collection<Integer> requiredHeirs = geneNodeHeirs.get(geneTreeNode);
+            final List<Integer> compatibleBranches = new ArrayList<>();
 
-            final NetworkNode leftSpecies = speciesNetworkNode.getLeftChild();
-            final NetworkNode rightSpecies = speciesNetworkNode.getRightChild();
-
-            if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
-                if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
-                    // both species children are compatible with the gene tree, in which case the embedding becomes stochastic
-                    if (Randomizer.nextBoolean()) {
-                        embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, 0);
-                        return recurseRebuild(geneTreeNode, leftSpecies);
-                    } else {
-                        embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, 1);
-                        return recurseRebuild(geneTreeNode, rightSpecies);
-                    }
-                } else {
-                    // only the left branch is compatible with the gene tree
-                    embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, 0);
-                    return recurseRebuild(geneTreeNode, leftSpecies);
+            final Set<Integer> childBranchNumbers = speciesNetworkNode.childBranchNumbers;
+            for (Integer branchNumber: childBranchNumbers) {
+                final NetworkNode childNode = speciesNetworkNode.getChildByBranch(branchNumber);
+                if (speciesNodeHeirs.get(childNode).containsAll(requiredHeirs)) {
+                    compatibleBranches.add(branchNumber);
                 }
-            } else if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
-                // only the right branch is compatible with the gene tree
-                embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, 1);
-                return recurseRebuild(geneTreeNode, rightSpecies);
-            } else {
-                // neither child branch is compatible with the gene tree
-                return false;
             }
+
+            Integer nextBranchNumber = embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber);
+            if (compatibleBranches.size() == 0) {
+                return -1; // for a valid embedding, should never go here
+            } else if (compatibleBranches.size() > 1) {
+                nChoices++;
+            }
+
+            if (rebuild) {
+                nextBranchNumber = compatibleBranches.get(compatibleBranches.size());
+                embedding.setMatrixValue(traversalNodeNumber, geneTreeNodeNumber, nextBranchNumber);
+            }
+
+            final NetworkNode nextSpecies = speciesNetworkNode.getChildByBranch(nextBranchNumber);
+            final int moreChoices = recurseRebuild(geneTreeNode, nextSpecies, rebuild);
+            if (moreChoices < 0) return -1;
+
+            return nChoices + moreChoices;
         } else if (geneTreeNode.isLeaf()) {
-            return true;
+            return 0;
         } else {
             // embed both gene tree children
-            return recurseRebuild(geneTreeNode.getLeft(), speciesNetworkNode) &&
-                   recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode);
-        }
-    }
+            final int leftChoices = recurseRebuild(geneTreeNode.getLeft(), speciesNetworkNode, rebuild);
+            if (leftChoices < 0) return -1;
 
-    private boolean recurseNumberOfChoices(final Node geneTreeNode, final NetworkNode speciesNetworkNode, int[] nChoices) {
-        final double geneTreeNodeHeight = geneTreeNode.getHeight();
-        final double speciesNetworkNodeHeight = speciesNetworkNode.getHeight();
+            final int rightChoices = recurseRebuild(geneTreeNode.getRight(), speciesNetworkNode, rebuild);
+            if (rightChoices < 0) return -1;
 
-        if (geneTreeNodeHeight < speciesNetworkNodeHeight) {
-            final int traversalNodeNumber = speciesNetworkNode.getNr() - speciesLeafCount;
-            final int geneTreeNodeNumber = geneTreeNode.getNr();
-            final Collection<Integer> requiredHeirs = geneNodeHeirs.get(geneTreeNode);
-            final NetworkNode leftSpecies = speciesNetworkNode.getLeftChild();
-            final NetworkNode rightSpecies = speciesNetworkNode.getRightChild();
-
-            /* StringBuffer sb = new StringBuffer();
-            for (Integer i: requiredHeirs) {
-                sb.append(i);
-                sb.append(" ");
-            }
-            sb.append("- ");
-            for (Integer i: speciesNodeHeirs.get(leftSpecies)) {
-                sb.append(i);
-                sb.append(" ");
-            }
-            sb.append("- ");
-            for (Integer i: speciesNodeHeirs.get(rightSpecies)) {
-                sb.append(i);
-                sb.append(" ");
-            }
-            System.out.println(sb.toString()); */
-
-            if (leftSpecies != null && speciesNodeHeirs.get(leftSpecies).containsAll(requiredHeirs)) {
-                if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
-                    // both species children are compatible with the gene tree
-                    nChoices[0]++;
-                    if (embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 0)
-                        return recurseNumberOfChoices(geneTreeNode, leftSpecies, nChoices);
-                    else if (embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 1)
-                        return recurseNumberOfChoices(geneTreeNode, rightSpecies, nChoices);
-                    else return false;
-                } else {
-                    return embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 0 &&
-                           recurseNumberOfChoices(geneTreeNode, leftSpecies, nChoices);
-                }
-            } else if (rightSpecies != null && speciesNodeHeirs.get(rightSpecies).containsAll(requiredHeirs)) {
-                return embedding.getMatrixValue(traversalNodeNumber, geneTreeNodeNumber) == 1 &&
-                       recurseNumberOfChoices(geneTreeNode, rightSpecies, nChoices);
-            } else {
-                return false;  // for a valid embedding, should never go here
-            }
-        } else if (geneTreeNode.isLeaf()) {
-            return true;
-        } else {
-            return recurseNumberOfChoices(geneTreeNode.getLeft(), speciesNetworkNode, nChoices) &&
-                   recurseNumberOfChoices(geneTreeNode.getRight(), speciesNetworkNode, nChoices);
+            return nChoices + leftChoices + rightChoices;
         }
     }
 }

@@ -77,7 +77,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
         // initialize embedding for all gene trees
         for (RebuildEmbedding operator: rebuildEmbeddingInput.get()) {
-            if (!operator.initializeEmbedding())
+            if (operator.initializeEmbedding() < 0)
                 throw new RuntimeException("Failed to build gene tree embedding!");
         }
     }

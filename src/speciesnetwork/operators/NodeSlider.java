@@ -86,26 +86,19 @@ public class NodeSlider extends Operator {
         }
 
         // pick an internal node randomly
-        List<NetworkNode> intNodes = speciesNetwork.getInternalNodes();
-        NetworkNode snNode = intNodes.get(Randomizer.nextInt(intNodes.size()));
+        NetworkNode[] intNodes = speciesNetwork.getInternalNodes();
+        NetworkNode snNode = intNodes[Randomizer.nextInt(intNodes.length)];
 
         // determine the lower and upper bounds
-        NetworkNode leftParent = snNode.getLeftParent();
-        NetworkNode rightParent = snNode.getRightParent();
         double upper = Double.MAX_VALUE;
-        if (leftParent != null)
-            upper = leftParent.getHeight();
-        if (rightParent != null && upper > rightParent.getHeight())
-            upper = rightParent.getHeight();
-        NetworkNode leftChild = snNode.getLeftChild();
-        NetworkNode rightChild = snNode.getRightChild();
-        double lower = Double.MIN_NORMAL;
-        if (leftChild != null)
-            lower = leftChild.getHeight();
-        if (rightChild != null && lower < rightChild.getHeight())
-            lower = rightChild.getHeight();
-        if (lower >= upper)
-            throw new RuntimeException("Developer ERROR: upper bound must be larger than lower bound!");
+        for (NetworkNode p: snNode.getParents()) {
+            upper = Math.min(upper, p.getHeight());
+        }
+
+        double lower = 0.0;
+        for (NetworkNode c: snNode.getChildren()) {
+            lower = Math.max(lower, c.getHeight());
+        }
 
         // propose a new height, reflect it back if it's outside the boundary
         final double oldHeight = snNode.getHeight();
@@ -147,10 +140,9 @@ public class NodeSlider extends Operator {
             rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
                     "geneTree", geneTree, "embedding", embedding);
             // rebuild the embedding
-            if (!rebuildOperator.initializeEmbedding())
-                return Double.NEGATIVE_INFINITY;
+            final int nChoices = rebuildOperator.initializeEmbedding();
+            if (nChoices < 0) return Double.NEGATIVE_INFINITY;
 
-            final int nChoices = rebuildOperator.getNumberOfChoices();
             newChoices += nChoices;
             if(nChoices < 0)
                 throw new RuntimeException("Developer ERROR: new embedding invalid! geneTree " + ig);

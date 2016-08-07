@@ -110,7 +110,7 @@ public class FlipLoopTest {
                 RebuildEmbedding rebuildOperator = new RebuildEmbedding();
                 rebuildOperator.initByName("geneTree", geneTree, "speciesNetwork", speciesNetwork,
                                            "taxonSuperset", speciesSuperset, "embedding", embedding);
-                assertTrue(rebuildOperator.initializeEmbedding());
+                assertTrue(rebuildOperator.initializeEmbedding() >= 0);
             }
             /*
             GeneTreeInSpeciesNetwork geneTreeWrapper = new GeneTreeInSpeciesNetwork();

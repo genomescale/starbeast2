@@ -60,8 +60,8 @@ public class JointReembedding extends Operator {
             treeOp.listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
 
         // then rebuild the embedding
-        if (!reembedOp.initializeEmbedding())
-            return Double.NEGATIVE_INFINITY;
+        final int newChoices = reembedOp.initializeEmbedding();
+        if (newChoices < 0) return Double.NEGATIVE_INFINITY;
 
         // print matrix for debugging
         /* sb = new StringBuffer();
@@ -75,11 +75,6 @@ public class JointReembedding extends Operator {
         sb.append(geneTree.getRoot().toNewick());  sb.append("\n");
         sb.append(geneTree.getRoot().toString());  sb.append("\n");
         System.out.println(sb); */
-
-        // count the number of alternative traversing choices for the new state (n1)
-        final int newChoices = reembedOp.getNumberOfChoices();
-        if (newChoices < 0)
-            throw new RuntimeException("Developer ERROR: new embedding invalid!");
 
         return logHR + (newChoices - oldChoices) * Math.log(2);
     }
