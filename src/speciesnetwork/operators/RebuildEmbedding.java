@@ -120,34 +120,27 @@ public class RebuildEmbedding extends Operator {
     private void getNodeHeirs() {
         geneNodeHeirs.clear();
         speciesNodeHeirs.clear();
-        for (final Node geneLeaf: geneTree.getExternalNodes())
-            setLeafNodeHeirs(geneLeaf);
-        for (final Node geneLeaf: geneTree.getExternalNodes())
-            recurseGeneHeirs(geneLeaf);
-        for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes())
+
+        for (final Node geneLeaf: geneTree.getExternalNodes()) {
+            final int leafNodeNumber = geneLeaf.getNr();
+            final String tipName = geneLeaf.getID();
+            final NetworkNode speciesNetworkNode = speciesNetwork.getNode(geneTipMap.get(tipName));
+            speciesNodeHeirs.put(speciesNetworkNode, leafNodeNumber);
+            recurseGeneHeirs(geneLeaf, leafNodeNumber);
+        }
+
+        for (final NetworkNode speciesLeaf: speciesNetwork.getLeafNodes()) {
             recurseSpeciesHeirs(speciesLeaf);
+        }
     }
 
     // the heir for each gene leaf node is itself
     // the heirs for each species leaf node is the associated gene leaf nodes
-    private void setLeafNodeHeirs(final Node geneTreeNode) {
-        final String tipName = geneTreeNode.getID();
-        final NetworkNode speciesNetworkNode = speciesNetwork.getNode(geneTipMap.get(tipName));
-        // System.out.println(String.format("%s - %d", speciesNetworkNode.getID(), geneTreeNode.getNr()));
-        geneNodeHeirs.put(geneTreeNode, geneTreeNode.getNr());
-        speciesNodeHeirs.put(speciesNetworkNode, geneTreeNode.getNr());
-    }
-
-    private void recurseGeneHeirs(final Node geneTreeNode) {
-        if (!geneTreeNode.isLeaf()) {
-            final Node leftChild = geneTreeNode.getLeft();
-            final Node rightChild = geneTreeNode.getRight();
-            geneNodeHeirs.putAll(geneTreeNode, geneNodeHeirs.get(leftChild));
-            geneNodeHeirs.putAll(geneTreeNode, geneNodeHeirs.get(rightChild));
-        }
+    private void recurseGeneHeirs(final Node geneTreeNode, final int leafNodeNumber) {
+        geneNodeHeirs.put(geneTreeNode, leafNodeNumber);
 
         final Node parentNode = geneTreeNode.getParent();
-        if (parentNode != null) recurseGeneHeirs(parentNode);
+        if (parentNode != null) recurseGeneHeirs(parentNode, leafNodeNumber);
     }
 
     private void recurseSpeciesHeirs(final NetworkNode speciesNetworkNode) {
@@ -156,6 +149,7 @@ public class RebuildEmbedding extends Operator {
         }
 
         for (NetworkNode p: speciesNetworkNode.getParents()) {
+            // System.out.println(String.format("%s -> %s", speciesNetworkNode.getLabel(), p.getLabel()));
             recurseSpeciesHeirs(p);
         }
     }

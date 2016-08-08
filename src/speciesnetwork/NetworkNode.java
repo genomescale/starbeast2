@@ -200,7 +200,7 @@ public class NetworkNode {
             for (Integer i: n.childBranchNumbers) {
                 final int childNodeNumber = network.getNodeNumber(i);
                 final NetworkNode childNode = network.nodes[childNodeNumber];
-                if (childNode == this) parents.add(childNode);
+                if (childNode == this) parents.add(n);
             }
         }
 
