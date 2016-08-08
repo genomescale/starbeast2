@@ -158,7 +158,6 @@ public class NetworkNode {
     }
 
     public void setHeight(final double height) {
-        startEditing();
         this.height = height;
         isDirty |= Network.IS_DIRTY;
         for (NetworkNode c: children) {
@@ -177,12 +176,6 @@ public class NetworkNode {
 
     public void makeDirty(final int nDirty) {
         isDirty |= nDirty;
-    }
-
-    protected void startEditing() {
-        if (network != null && network.getState() != null) {
-            network.startEditing(null);
-        }
     }
 
     public int getParentCount() {
@@ -381,7 +374,6 @@ public class NetworkNode {
     }
 
     public void setGamma(final Double newGamma) {
-        startEditing();
         inheritProb = newGamma;
         isDirty |= Network.IS_DIRTY;
     }

@@ -63,18 +63,9 @@ public class JointReembedding extends Operator {
         final int newChoices = reembedOp.initializeEmbedding();
         if (newChoices < 0) return Double.NEGATIVE_INFINITY;
 
-        // print matrix for debugging
-        /* sb = new StringBuffer();
-        for (int i = 0; i < embedding.getMinorDimension2(); i++) {
-            for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                sb.append(embedding.getMatrixValue(i, j));
-                sb.append("\t");
-            }
-            sb.append("\n");
-        }
-        sb.append(geneTree.getRoot().toNewick());  sb.append("\n");
-        sb.append(geneTree.getRoot().toString());  sb.append("\n");
-        System.out.println(sb); */
+        // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
+        if (!reembedOp.listStateNodes().isEmpty()) // copied from JointOperator
+            reembedOp.listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
 
         return logHR + (newChoices - oldChoices) * Math.log(2);
     }

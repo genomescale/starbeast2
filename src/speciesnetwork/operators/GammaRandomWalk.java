@@ -23,6 +23,8 @@ public class GammaRandomWalk extends Operator {
         final Network speciesNetwork = speciesNetworkInput.get();
         final Double windowSize = windowSizeInput.get();
 
+        speciesNetwork.startEditing(this);
+
         final int nReticulations = speciesNetwork.getReticulationNodeCount();
         final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationOffset();
         final NetworkNode randomNode = speciesNetwork.getNode(randomNodeIndex);

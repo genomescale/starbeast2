@@ -20,6 +20,7 @@ public class GammaUniform extends Operator {
     @Override
     public double proposal() {
         final Network speciesNetwork = speciesNetworkInput.get();
+        speciesNetwork.startEditing(this);
 
         final int nReticulations = speciesNetwork.getReticulationNodeCount();
         final int randomNodeIndex = Randomizer.nextInt(nReticulations) + speciesNetwork.getReticulationOffset();

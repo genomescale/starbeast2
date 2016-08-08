@@ -42,9 +42,13 @@ public class NodeSlider extends Operator {
                 throw new RuntimeException("Developer ERROR: current embedding invalid! geneTree " + i);
         }
 
+        speciesNetwork.startEditing(this);
+
         // pick an internal node randomly
-        NetworkNode[] intNodes = speciesNetwork.getInternalNodes();
-        NetworkNode snNode = intNodes[Randomizer.nextInt(intNodes.length)];
+        final int leafNodeCount = speciesNetwork.getLeafNodeCount();
+        final int traversalNodeCount = speciesNetwork.getNodeCount() - leafNodeCount;
+        final int randomNodeNumber = leafNodeCount + Randomizer.nextInt(traversalNodeCount);
+        NetworkNode snNode = speciesNetwork.getNode(randomNodeNumber);
 
         // determine the lower and upper bounds
         double upper = Double.MAX_VALUE;
@@ -71,11 +75,6 @@ public class NodeSlider extends Operator {
         snNode.setHeight(newHeight);
 
         // update the embedding in the new species network
-
-        // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
-        if (!listStateNodes().isEmpty())  // copied from JointOperator
-            listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
-
         int newChoices = 0;
         for (int i = 0; i < reembedOps.size(); i++) {
             final int nChoices = reembedOps.get(i).getNumberOfChoices();
@@ -83,7 +82,9 @@ public class NodeSlider extends Operator {
             if (nChoices < 0) return Double.NEGATIVE_INFINITY;
         }
 
-        return (newChoices - oldChoices) * Math.log(2);
+        final double logHr = (newChoices - oldChoices) * Math.log(2);
+        System.out.println(String.format("%d: %f -> %f, %g", randomNodeNumber, oldHeight, snNode.getHeight(), logHr));
+        return logHr;
     }
 
     @Override
