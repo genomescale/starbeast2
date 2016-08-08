@@ -26,6 +26,7 @@ public class JointReembedding extends Operator {
     @Override
     public double proposal() {
         RebuildEmbedding reembedOp = rebuildEmbeddingInput.get();
+        Operator treeOp = treeOperatorInput.get();
 
         /* IntegerParameter embedding = reembedOp.embeddingInput.get();
         Network speciesNetwork = reembedOp.speciesNetworkInput.get();
@@ -50,7 +51,6 @@ public class JointReembedding extends Operator {
             throw new RuntimeException("Developer ERROR: current embedding invalid!");
 
         // first make the operation
-        Operator treeOp = treeOperatorInput.get();
         double logHR = treeOp.proposal();
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;
@@ -61,11 +61,11 @@ public class JointReembedding extends Operator {
 
         // then rebuild the embedding
         final int newChoices = reembedOp.initializeEmbedding();
-        if (newChoices < 0) return Double.NEGATIVE_INFINITY;
-
         // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
         if (!reembedOp.listStateNodes().isEmpty()) // copied from JointOperator
             reembedOp.listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
+
+        if (newChoices < 0) return Double.NEGATIVE_INFINITY;
 
         return logHR + (newChoices - oldChoices) * Math.log(2);
     }

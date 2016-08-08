@@ -7,6 +7,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.evolution.alignment.TaxonSet;
+import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
 
 /**
@@ -18,8 +19,6 @@ import beast.util.TreeParser;
 
 @Description("Network representing reticulate evolution of species")
 public class Network extends StateNode {
-    final public Input<String> nodeTypeInput =
-            new Input<>("nodetype", "Type of the node in the network.", NetworkNode.class.getName());
     final public Input<TaxonSet> taxonSetInput =
             new Input<>("taxonset", "Set of taxa at the leafs of the network.");
 
@@ -33,19 +32,19 @@ public class Network extends StateNode {
 
     // number of nodes
     protected int nodeCount = -1;
-    protected int storedNodeCount = -1;
+    private int storedNodeCount = -1;
     protected int speciationNodeCount = -1;
-    protected int storedSpeciationNodeCount = -1;
+    private int storedSpeciationNodeCount = -1;
     protected int leafNodeCount = -1;
-    protected int storedLeafNodeCount = -1;
+    private int storedLeafNodeCount = -1;
     protected int reticulationNodeCount = -1;
-    protected int storedReticulationNodeCount = -1;
+    private int storedReticulationNodeCount = -1;
 
     /**
      * array of all nodes in the network
      */
     protected NetworkNode[] nodes = null;
-    protected NetworkNode[] storedNodes = null;
+    private NetworkNode[] storedNodes = null;
 
     @Override
     public void initAndValidate() {
@@ -328,23 +327,22 @@ public class Network extends StateNode {
 
     @Override
     protected void store() {
+        // System.out.println(String.format("Storing network state... %d = %d + %d + %d", nodeCount, leafNodeCount, speciationNodeCount, reticulationNodeCount));
         storedNodeCount = nodeCount;
         storedSpeciationNodeCount = speciationNodeCount;
         storedLeafNodeCount = leafNodeCount;
         storedReticulationNodeCount = reticulationNodeCount;
-        storedNodes = nodes;
+        storedNodes = new NetworkNode[nodeCount];
 
-        nodes = new NetworkNode[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            nodes[i] = new NetworkNode(this);
-            nodes[i].copyFrom(storedNodes[i]);
+            storedNodes[i] = new NetworkNode(this);
+            storedNodes[i].copyFrom(nodes[i]);
         }
-
-        updateRelationships();
     }
 
     @Override
     public void restore() {
+        // System.out.println("Restoring network state...");
         int tmpNodeCount = nodeCount;
         nodeCount = storedNodeCount;
         storedNodeCount = tmpNodeCount;
@@ -364,6 +362,13 @@ public class Network extends StateNode {
         NetworkNode[] tmpNodes = nodes;
         nodes = storedNodes;
         storedNodes = tmpNodes;
+
+        hasStartedEditing = false;
+
+        for(NetworkNode n: nodes) {
+            n.updateRelationships();
+            n.isDirty = Tree.IS_CLEAN;
+        }
     }
 
     /** Loggable interface implementation follows **/

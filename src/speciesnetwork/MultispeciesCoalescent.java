@@ -33,8 +33,6 @@ public class MultispeciesCoalescent extends Distribution {
     final private List<int[]> allEventCounts = new ArrayList<>();
     final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
 
-    final static SanityChecks sc = new SanityChecks();
-
     @Override
     public void initAndValidate() {
         final List<GeneTreeInSpeciesNetwork> geneTrees = geneTreeWrapperInput.get();
@@ -66,7 +64,7 @@ public class MultispeciesCoalescent extends Distribution {
     public double calculateLogP() {
         final Network speciesNetwork = speciesNetworkInput.get();
         final NetworkNode speciesRoot = speciesNetwork.getRoot();
-        assert sc.checkNetworkSanity(speciesRoot); // species network should not be insane
+        SanityChecks.checkNetworkSanity(speciesRoot); // species network should not be insane
         final int speciesBranchCount = speciesNetwork.getBranchCount();
         final int rootBranchNr = speciesBranchCount - 1;
 
