@@ -7,7 +7,7 @@ import beast.util.Randomizer;
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
 
-@Description("Changes the value of gamma by applying a random walk to the logit of gamma.")
+@Description("Changes the value of gamma by uniformly selecting a value in its range.")
 public class GammaUniform extends Operator {
     public Input<Network> speciesNetworkInput = new Input<>("speciesNetwork", "The species network.", Input.Validate.REQUIRED);
 

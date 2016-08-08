@@ -73,7 +73,7 @@ public class YuleHybridModel extends Distribution {
         }
         nodes.sort(hc);
 
-        double logP= 0;
+        logP = 0.0;
         // calculate probability of the network
         for (int i = 0; i < nodes.size(); i++) {
             final NetworkNode node = nodes.get(i);
@@ -99,8 +99,7 @@ public class YuleHybridModel extends Distribution {
 
     @Override
     protected boolean requiresRecalculation() {
-        //return super.requiresRecalculation() || diversificationInput.get().somethingIsDirty() || networkInput.get().isDirty();
-        return true;
+        return diversificationInput.get().somethingIsDirty() || networkInput.get().isDirty() || hybridizationInput.get().somethingIsDirty();
     }
 
     @Override
