@@ -37,7 +37,7 @@ public class RebuildEmbedding extends Operator {
     // heirs are the gene tree leaf tip numbers below each gene tree node or species network node
     private Multimap<Node, Integer> geneNodeHeirs = HashMultimap.create();
     private Multimap<NetworkNode, Integer> speciesNodeHeirs = HashMultimap.create();
-    
+
     private int speciesLeafCount;
     private Tree geneTree;
     private Network speciesNetwork;

@@ -69,7 +69,6 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
 
     private Integer rebuildNetwork(final Node treeNode) {
         int branchNumber;
-        int nodeNumber;
         NetworkNode newNode;
 
         final String nodeLabel = treeNode.getID();
@@ -77,30 +76,35 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
 
         final int matchingNodeNr = getNodeNumber(nodeLabel);
         if (matchingNodeNr < 0) {
+            int newNodeNumber;
+            double inheritProb = 0.5;
+
             if (treeNode.isRoot()) {
-                nodeNumber = nodeCount -1;
+                newNodeNumber = nodeCount - 1;
             } else if (nodeLabel.startsWith("#H")) {
-                nodeNumber = nextReticulationNr;
+                inheritProb = (Double) treeNode.getMetaData("gamma");
+                newNodeNumber = nextReticulationNr;
                 nextReticulationNr++;
             } else if (treeNode.isLeaf()) {
-                nodeNumber = nextLeafNr;
+                newNodeNumber = nextLeafNr;
                 nextLeafNr++;
             } else {
-                nodeNumber = nextSpeciationNr;
+                newNodeNumber = nextSpeciationNr;
                 nextSpeciationNr++;
             }
 
-            nodes[nodeNumber] = new NetworkNode(this);
-            branchNumber = getBranchNumber(nodeNumber);
+            newNode = new NetworkNode(this);
+            newNode.label = nodeLabel;
+            newNode.height = nodeHeight;
+            newNode.inheritProb = inheritProb;
+
+            nodes[newNodeNumber] = newNode;
+            branchNumber = getBranchNumber(newNodeNumber);
         } else {
-            nodeNumber = matchingNodeNr;
-            branchNumber = getBranchNumber(nodeNumber) + 1;
+            newNode = nodes[matchingNodeNr];
+            branchNumber = getBranchNumber(matchingNodeNr) + 1;
         }
-
-        newNode = nodes[nodeNumber];
-        newNode.label = nodeLabel;
-        newNode.height = nodeHeight;
-
+        System.out.println(String.format("%s: %d", newNode.label, branchNumber));
         for (Node c: treeNode.getChildren()) {
             final int childBranchNumber = rebuildNetwork(c);
             newNode.childBranchNumbers.add(childBranchNumber);

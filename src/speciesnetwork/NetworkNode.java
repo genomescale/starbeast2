@@ -42,7 +42,8 @@ public class NetworkNode {
     /**
      * counts of children and parents of this node
      */
-    protected int nodeNr;
+    protected int nodeNumber;
+    protected int gammaBranchNumber;
     protected int nParents;
     protected int nChildren;
 
@@ -54,18 +55,19 @@ public class NetworkNode {
     private DecimalFormat df;
 
     protected void updateRelationships() {
-        nodeNr = -1;
+        nodeNumber = -1;
         for (int i = 0; i < network.nodes.length; i++) {
             if (network.nodes[i] == this) {
-                nodeNr = i;
+                nodeNumber = i;
                 break;
             }
         }
 
-        if (nodeNr < 0) {
+        if (nodeNumber < 0) {
             throw new RuntimeException("Node is not attached to the network!");
         }
 
+        gammaBranchNumber = network.getBranchNumber(nodeNumber);
         parents = getParents();
         children = getChildren();
         nParents = parents.size();
@@ -103,7 +105,7 @@ public class NetworkNode {
         childBranchNumbers = new HashSet<>();
         children = HashMultiset.create();
         parents = HashMultiset.create();
-        nodeNr = -1;
+        nodeNumber = -1;
         nParents = 0;
         nChildren = 0;
         isDirty = Network.IS_DIRTY;
@@ -148,7 +150,7 @@ public class NetworkNode {
     }
 
     public int getNr() {
-        return nodeNr;
+        return nodeNumber;
     }
 
     public double getHeight() {
@@ -352,14 +354,14 @@ public class NetworkNode {
 
         if (label != null) {
             if (printLabels) subtreeString.append(label);
-            else subtreeString.append(nodeNr);
+            else subtreeString.append(nodeNumber);
         }
 
         // add inheritance probabilities to reticulation nodes
         if (nParents == 2) {
             subtreeString.append("[&gamma=");
 
-            if (parentBranchNumber % 2 == 0) subtreeString.append(df.format(inheritProb));
+            if (parentBranchNumber == gammaBranchNumber) subtreeString.append(df.format(inheritProb));
             else subtreeString.append(df.format(1.0 - inheritProb));
 
             subtreeString.append("]");
@@ -410,8 +412,8 @@ public class NetworkNode {
         System.out.println(String.format("%s: %s", "label", label));
         System.out.println(String.format("%s: %f", "inheritProb", inheritProb));
         System.out.println(String.format("%s: %f", "height", height));
-        System.out.println(String.format("%s: %d", "nodeNr", nodeNr));
-        System.out.println(String.format("%s: %d", "branchNr", network.getBranchNumber(nodeNr)));
+        System.out.println(String.format("%s: %d", "nodeNr", nodeNumber));
+        System.out.println(String.format("%s: %d", "branchNr", gammaBranchNumber));
         System.out.println(String.format("%s: %d", "nParents", nParents));
         System.out.println(String.format("%s: %d", "nChildren", nChildren));
         for (Integer i: childBranchNumbers) {
