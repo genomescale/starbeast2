@@ -51,7 +51,7 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
         nodeCount = leafNodeCount + speciationNodeCount + reticulationNodeCount;
         nodes = new NetworkNode[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            nodes[i] = new NetworkNode(); 
+            nodes[i] = new NetworkNode(this); 
         }
 
         nextLeafNr = 0;
@@ -82,7 +82,8 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
             if (treeNode.isRoot()) {
                 newNodeNumber = nodeCount - 1;
             } else if (nodeLabel.startsWith("#H")) {
-                inheritProb = (Double) treeNode.getMetaData("gamma");
+                if (treeNode.getMetaDataNames().contains("gamma"))
+                    inheritProb = (Double) treeNode.getMetaData("gamma");
                 newNodeNumber = nextReticulationNr;
                 nextReticulationNr++;
             } else if (treeNode.isLeaf()) {
@@ -93,18 +94,17 @@ public class NetworkParser extends Network implements StateNodeInitialiser {
                 nextSpeciationNr++;
             }
 
-            newNode = new NetworkNode(this);
+            newNode = nodes[newNodeNumber];
             newNode.label = nodeLabel;
             newNode.height = nodeHeight;
             newNode.inheritProb = inheritProb;
 
-            nodes[newNodeNumber] = newNode;
             branchNumber = getBranchNumber(newNodeNumber);
         } else {
             newNode = nodes[matchingNodeNr];
             branchNumber = getBranchNumber(matchingNodeNr) + 1;
         }
-        System.out.println(String.format("%s: %d", newNode.label, branchNumber));
+
         for (Node c: treeNode.getChildren()) {
             final int childBranchNumber = rebuildNetwork(c);
             newNode.childBranchNumbers.add(childBranchNumber);

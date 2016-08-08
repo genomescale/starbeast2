@@ -284,7 +284,7 @@ public class Network extends StateNode {
 
         dst.nodes = new NetworkNode[copyNodeCount];
         for (int i = 0; i < copyNodeCount; i++) {
-            dst.nodes[i] = new NetworkNode();
+            dst.nodes[i] = new NetworkNode(dst);
             dst.nodes[i].copyFrom(src.nodes[i]);
         }
 
@@ -336,7 +336,7 @@ public class Network extends StateNode {
 
         nodes = new NetworkNode[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
-            nodes[i] = new NetworkNode();
+            nodes[i] = new NetworkNode(this);
             nodes[i].copyFrom(storedNodes[i]);
         }
 
