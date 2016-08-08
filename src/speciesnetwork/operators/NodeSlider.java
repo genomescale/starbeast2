@@ -77,7 +77,7 @@ public class NodeSlider extends Operator {
         // update the embedding in the new species network
         int newChoices = 0;
         for (int i = 0; i < reembedOps.size(); i++) {
-            final int nChoices = reembedOps.get(i).getNumberOfChoices();
+            final int nChoices = reembedOps.get(i).initializeEmbedding();
             newChoices += nChoices;
             if (nChoices < 0) return Double.NEGATIVE_INFINITY;
         }
