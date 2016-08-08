@@ -1,88 +1,45 @@
 package speciesnetwork.operators;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import beast.core.Description;
 import beast.core.Input;
-import beast.core.Operator;
-import beast.core.parameter.IntegerParameter;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-
 import speciesnetwork.Network;
 import speciesnetwork.NetworkNode;
+import beast.core.Operator;
+import beast.core.StateNode;
 
 /**
  * @author Chi Zhang
  */
 
-@Description("Randomly selects an internal network node and move its height using an uniform sliding window.")
+@Description("Combine a gene tree operator with RebuildEmbedding.")
 public class NodeSlider extends Operator {
+    public Input<List<RebuildEmbedding>> rebuildEmbeddingInput = new Input<>("rebuildEmbedding",
+            "Operator which rebuilds embedding of gene tree within species network.", new ArrayList<>());
     public Input<Network> speciesNetworkInput =
             new Input<>("speciesNetwork", "The species network.", Input.Validate.REQUIRED);
-    public Input<List<Tree>> geneTreesInput =
-            new Input<>("geneTree", "list of gene trees embedded in species network", new ArrayList<>());
-    public Input<List<IntegerParameter>> embeddingsInput =
-            new Input<>("embedding", "The matrices to embed the gene trees in the species network.", new ArrayList<>());
-    public Input<TaxonSet> taxonSuperSetInput =
-            new Input<>("taxonSuperset", "Super-set of taxon sets mapping lineages to species.", Input.Validate.REQUIRED);
     public Input<Double> windowSizeInput =
             new Input<>("windowSize", "The size of the sliding window, default 0.01.", 0.01);
-
-    // empty constructor to facilitate construction by XML + initAndValidate
-    public NodeSlider() {
-    }
 
     @Override
     public void initAndValidate() {
     }
 
-    /**
-     * Propose a new network-node height from a uniform distribution.
-     * If the new value is outside the boundary, the excess is reflected back into the interval.
-     * The proposal ratio of this slider move is 1.0.
-     * Then rebuild the embedding of the gene trees.
-     */
     @Override
     public double proposal() {
-        Network speciesNetwork = speciesNetworkInput.get();
-        List<Tree> geneTrees = geneTreesInput.get();
-        List<IntegerParameter> embeddings = embeddingsInput.get();
-        final TaxonSet taxonSuperSet = taxonSuperSetInput.get();
+        final Network speciesNetwork = speciesNetworkInput.get();
+        final List<RebuildEmbedding> reembedOps = rebuildEmbeddingInput.get();
         final double windowSize = windowSizeInput.get();
 
-        // StringBuffer sb = new StringBuffer();
-        // sb.append(speciesNetwork.toString());
-        // sb.append("\n");
-        // check the embedding in the current species network
+        // count the number of alternative traversing choices for the current state (n0)
         int oldChoices = 0;
-        for (int ig = 0; ig < geneTrees.size(); ig++) {
-            IntegerParameter embedding = embeddings.get(ig);
-            Tree geneTree = geneTrees.get(ig);
-
-            // print matrix for debugging
-            /* sb = new StringBuffer();
-            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
-                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                    sb.append(embedding.getMatrixValue(i, j));
-                    sb.append("\t");
-                }
-                sb.append("\n");
-            }
-            sb.append(geneTree.getRoot().toNewick());
-            sb.append("\n");
-            sb.append(geneTree.getRoot().toString());
-            System.out.println(sb); */
-
-            RebuildEmbedding rebuildOperator = new RebuildEmbedding();
-            rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
-                    "geneTree", geneTree, "embedding", embedding);
-            final int nChoices = rebuildOperator.getNumberOfChoices();
+        for (int i = 0; i < reembedOps.size(); i++) {
+            final int nChoices = reembedOps.get(i).getNumberOfChoices();
             oldChoices += nChoices;
-            if(nChoices < 0)
-                throw new RuntimeException("Developer ERROR: current embedding invalid! geneTree " + ig);
+            if (nChoices < 0)
+                throw new RuntimeException("Developer ERROR: current embedding invalid! geneTree " + i);
         }
 
         // pick an internal node randomly
@@ -113,41 +70,32 @@ public class NodeSlider extends Operator {
         // update the new node height
         snNode.setHeight(newHeight);
 
-        // sb = new StringBuffer();
-        // sb.append(speciesNetwork.toString());  //sb.append("\n");
-        // System.out.println(sb);
         // update the embedding in the new species network
+
+        // Update calculation nodes as subsequent operators may depend on state nodes made dirty by this operation.
+        if (!listStateNodes().isEmpty())  // copied from JointOperator
+            listStateNodes().get(0).getState().checkCalculationNodesDirtiness();
+
         int newChoices = 0;
-        for (int ig = 0; ig < geneTrees.size(); ig++) {
-            IntegerParameter embedding = embeddings.get(ig);
-            Tree geneTree = geneTrees.get(ig);
-
-            // print matrix for debugging
-            /* sb = new StringBuffer();
-            for (int i = 0; i < embedding.getMinorDimension2(); i++) {
-                for (int j = 0; j < embedding.getMinorDimension1(); j++) {
-                    sb.append(embedding.getMatrixValue(i, j));
-                    sb.append("\t");
-                }
-                sb.append("\n");
-            }
-            sb.append(geneTree.getRoot().toNewick());
-            sb.append("\n");
-            sb.append(geneTree.getRoot().toString());
-            System.out.println(sb); */
-
-            RebuildEmbedding rebuildOperator = new RebuildEmbedding();
-            rebuildOperator.initByName("speciesNetwork", speciesNetwork, "taxonSuperset", taxonSuperSet,
-                    "geneTree", geneTree, "embedding", embedding);
-            // rebuild the embedding
-            final int nChoices = rebuildOperator.initializeEmbedding();
-            if (nChoices < 0) return Double.NEGATIVE_INFINITY;
-
+        for (int i = 0; i < reembedOps.size(); i++) {
+            final int nChoices = reembedOps.get(i).getNumberOfChoices();
             newChoices += nChoices;
-            if(nChoices < 0)
-                throw new RuntimeException("Developer ERROR: new embedding invalid! geneTree " + ig);
+            if (nChoices < 0) return Double.NEGATIVE_INFINITY;
         }
 
         return (newChoices - oldChoices) * Math.log(2);
+    }
+
+    @Override
+    public List<StateNode> listStateNodes() {
+        final List<RebuildEmbedding> reembedOps = rebuildEmbeddingInput.get();
+        List<StateNode> stateNodeList = new ArrayList<>();
+
+        stateNodeList.addAll(super.listStateNodes());
+        for (int i = 0; i < reembedOps.size(); i++) {
+            stateNodeList.addAll(reembedOps.get(i).listStateNodes());
+        }
+
+        return stateNodeList;
     }
 }

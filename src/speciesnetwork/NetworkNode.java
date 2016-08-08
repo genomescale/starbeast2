@@ -425,4 +425,8 @@ public class NetworkNode {
     public String getLabel() {
         return label;
     }
+
+    public int getTraversalNumber() {
+        return nodeNumber - network.leafNodeCount;
+    }
 }
