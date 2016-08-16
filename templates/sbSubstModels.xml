@@ -12,7 +12,7 @@
 			</plugin>
 
 				<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)"><distr spec="OneOnX"/></prior>
-			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)"><distr spec="beast.math.distributions.Exponential" mean="1"/></prior>
+			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)"><distr spec="beast.math.distributions.Exponential" mean="0.1"/></prior>
 			<prior id="PropInvariantPrior.s:$(n)" x="@proportionInvariant.s:$(n)"><distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/></prior>
 
 			<operator id="proportionInvariantScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@proportionInvariant.s:$(n)"/>
