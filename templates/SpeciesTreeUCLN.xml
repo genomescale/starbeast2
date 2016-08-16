@@ -99,7 +99,9 @@
 			starbeast2.UncorrelatedRates.rates,
 			starbeast2.UncorrelatedRates.noCache,
 			starbeast2.RandomLocalRates.rates,
-			starbeast2.RandomLocalRates.noCache"
+			starbeast2.RandomLocalRates.noCache,
+			starbeast2.StarBeastClock.speciesTreeRates,
+			starbeast2.StarBeastClock.geneTree"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
@@ -175,8 +177,9 @@
 			</prior>
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
-				<distr spec="beast.math.distributions.Exponential">
-					<mean id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
 

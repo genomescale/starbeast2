@@ -22,7 +22,6 @@ public class ConstantIOTest extends PopulationTestHelper {
     private RealParameter meanParameter;
 
     public ConstantIOTest() throws Exception {
-        popSize = 0.3;
         ploidy = 2.0;
         nSpecies = 4;
         expectedLogP = -14.5233984762; // this should be the right answer (calculated by hand)
