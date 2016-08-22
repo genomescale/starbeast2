@@ -92,13 +92,15 @@ public class MultispeciesCoalescent extends Distribution {
             assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
             if (geneTree.computeCoalescentTimes()) {
                 for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-                    final List<Double> timesView = geneTree.coalescentTimes.get(i);
-                    final int geneBranchEventCount = timesView.size();
-                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
-                    timesView.toArray(geneBranchCoalescentTimes);
-                    Arrays.sort(geneBranchCoalescentTimes);
+//                    final List<Double> timesView = geneTree.getCoalescentTimes(i);
+//                    final int geneBranchEventCount = timesView.size();
+//                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
+//                    timesView.toArray(geneBranchCoalescentTimes);
+//                    Arrays.sort(geneBranchCoalescentTimes);
+                    final double [] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(i);
+                    final int geneBranchEventCount = geneBranchCoalescentTimes.length;
 
-                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts.count(i);
+                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
 
                     final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
                     coalescentTimesIJ[0] = speciesEndTimes[i];
