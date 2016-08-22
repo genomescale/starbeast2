@@ -1,7 +1,6 @@
 package starbeast2;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -29,9 +28,9 @@ public class MultispeciesCoalescent extends Distribution {
     private int speciesTreeNodeCount;
     private double[] perGenePloidy;
 
-    final private List<int[]> allLineageCounts = new ArrayList<>();
-    final private List<int[]> allEventCounts = new ArrayList<>();
-    final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
+    private int[] allLineageCounts;// = new ArrayList<>();
+    private int[] allEventCounts;// = new ArrayList<>();
+    private double[][][] allCoalescentTimes;// = new ArrayList<>();
 
     @Override
     public void initAndValidate() {
@@ -49,9 +48,14 @@ public class MultispeciesCoalescent extends Distribution {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         speciesTreeNodeCount = speciesTree.getNodeCount();
         populationModel.initPopSizes(speciesTreeNodeCount);
+
+        allLineageCounts = new int[speciesTreeNodeCount*nGeneTrees];
+        allEventCounts = new int[speciesTreeNodeCount*nGeneTrees];
+        allCoalescentTimes  = new double[speciesTreeNodeCount][nGeneTrees][];
     }
 
-    public double calculateLogP() {
+    @SuppressWarnings("unchecked")
+	public double calculateLogP() {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 
@@ -75,17 +79,8 @@ public class MultispeciesCoalescent extends Distribution {
                 speciesStartTimes[i] = parentNode.getHeight();
             }
         }
-
-        allLineageCounts.clear();
-        allEventCounts.clear();
-        allCoalescentTimes.clear();
-
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            allLineageCounts.add(new int[nGeneTrees]);
-            allEventCounts.add(new int[nGeneTrees]);
-            allCoalescentTimes.add(new ArrayList<>());
-        }
-
+        
+        
         // transpose gene-branch list of lists to branch-gene list of lists
         for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
             final GeneTree geneTree = geneTrees.get(j);
@@ -102,16 +97,20 @@ public class MultispeciesCoalescent extends Distribution {
 
                     final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
 
-                    final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
+                    final double[] coalescentTimesIJ = new double[geneBranchEventCount + 2];
                     coalescentTimesIJ[0] = speciesEndTimes[i];
-                    for (int k = 0; k < geneBranchEventCount; k++) {
-                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
+                    if (geneBranchEventCount > 0) {
+                    	System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
                     }
+//                    for (int k = 0; k < geneBranchEventCount; k++) {
+//                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
+//                    }
                     coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
 
-                    allLineageCounts.get(i)[j] = geneBranchLineageCount;
-                    allEventCounts.get(i)[j] = geneBranchEventCount;
-                    allCoalescentTimes.get(i).add(coalescentTimesIJ);
+                    final int k = i * nGeneTrees + j;
+                    allLineageCounts[k] = geneBranchLineageCount;
+                    allEventCounts[k] = geneBranchEventCount;
+                    allCoalescentTimes[i][j]=coalescentTimesIJ;
                 }
             } else { // this gene tree IS NOT compatible with the species tree
                 logP = Double.NEGATIVE_INFINITY;
@@ -120,11 +119,14 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         logP = 0.0;
+        int[] branchLineageCounts = new int[nGeneTrees];
+        int[] branchEventCounts = new int[nGeneTrees];
         for (int i = 0; i < speciesTreeNodeCount; i++) {
             final Node speciesTreeNode = speciesTree.getNode(i); 
-            final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
-            final int[] branchLineageCounts = allLineageCounts.get(i);
-            final int[] branchEventCounts = allEventCounts.get(i);
+            final double[][] branchCoalescentTimes = allCoalescentTimes[i];
+            final int k = i * nGeneTrees;
+            System.arraycopy(allLineageCounts, k, branchLineageCounts, 0, nGeneTrees);
+            System.arraycopy(allEventCounts, k, branchEventCounts, 0, nGeneTrees);
             final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
             logP += branchLogP;
 

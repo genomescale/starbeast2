@@ -22,7 +22,7 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int nGenes = perGenePloidy.length;
@@ -42,10 +42,10 @@ public class LinearPopulation extends MultispeciesPopulationModel {
         double tallestGeneTreeHeight = 0.0;
         if (speciesTreeNode.isRoot()) {
             for (int j = 0; j < nGenes; j++) {
-                tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes.get(j)[branchEventCounts[j]]);
+                tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes[j][branchEventCounts[j]]);
             }
             for (int j = 0; j < nGenes; j++) {
-                branchCoalescentTimes.get(j)[branchEventCounts[j] + 1] = tallestGeneTreeHeight;
+                branchCoalescentTimes[j][branchEventCounts[j] + 1] = tallestGeneTreeHeight;
             }
         }
 

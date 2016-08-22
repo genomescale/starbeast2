@@ -15,7 +15,7 @@ import beast.evolution.tree.Node;
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")
 public abstract class MultispeciesPopulationModel extends CalculationNode {
-    public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
+    public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
     // Sets the appropriate dimension size of each population size state node
     // To successfully resume from a saved state, this must be called via an initAndValidate method
@@ -32,7 +32,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
     }
 
-    protected static double constantLogP(double popSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    protected static double constantLogP(double popSize, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
         int branchQ = 0;
@@ -41,7 +41,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
 
         for (int j = 0; j < nGenes; j++) {
             final int geneN = branchLineageCounts[j];
-            final Double[] geneCoalescentTimes = branchCoalescentTimes.get(j);
+            final double[] geneCoalescentTimes = branchCoalescentTimes[j];
             final int geneK = branchEventCounts[j];
             final double genePloidy = perGenePloidy[j]; 
             branchLogR -= geneK * Math.log(genePloidy);
@@ -64,14 +64,14 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     }
 
     // copied from *BEAST v2.3, with small modifications to work with starbeast2
-    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
         double logP = 0.0;
         for (int j = 0; j < nGenes; j++) {
             final double fPopSizeTop = topPopSize * perGenePloidy[j];
             final double fPopSizeBottom = tipPopSize * perGenePloidy[j];
-            final Double[] fTimes = branchCoalescentTimes.get(j);
+            final double[] fTimes = branchCoalescentTimes[j];
             final int k = branchEventCounts[j];
             final int nLineagesBottom = branchLineageCounts[j];
 
