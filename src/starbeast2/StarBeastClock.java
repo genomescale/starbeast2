@@ -44,7 +44,7 @@ public class StarBeastClock extends BranchRateModel.Base {
     private void update() {
         final double geneTreeRate = meanRateInput.get().getValue();
         final double[] speciesTreeRates = speciesTreeRatesInput.get().getRatesArray();
-        final double[][] speciesOccupancy = geneTreeInput.get().getSpeciesOccupancy();
+        final double[] speciesOccupancy = geneTreeInput.get().getSpeciesOccupancy();
 
         final int speciesNodeCount = speciesTreeRates.length;
         for (int i = 0; i < geneNodeCount - 1; i++) {
@@ -52,8 +52,8 @@ public class StarBeastClock extends BranchRateModel.Base {
             double branchLength = 0.0;
             for (int j = 0; j < speciesNodeCount; j++) {
                 // System.out.println(String.format("%d, %d: %f, %f", i, j, speciesTreeRates[j], speciesOccupancy[i][j]));
-                weightedSum += speciesTreeRates[j] * speciesOccupancy[i][j];
-                branchLength += speciesOccupancy[i][j];
+                weightedSum += speciesTreeRates[j] * speciesOccupancy[i * speciesNodeCount + j];
+                branchLength += speciesOccupancy[i * speciesNodeCount + j];
             }
 
             branchRates[i] = geneTreeRate * weightedSum / branchLength;

@@ -19,6 +19,7 @@ public class GeneTree extends TreeWrapper {
 
     private int geneTreeLeafNodeCount;
     private int geneTreeNodeCount;
+    private int speciesTreeNodeCount;
     private boolean needsUpdate;
 
     protected double[] coalescentTimes; // the coalescent event times for this gene tree for all species tree branches
@@ -32,8 +33,8 @@ public class GeneTree extends TreeWrapper {
 
     protected int[] geneNodeSpeciesAssignment;
     protected int[] storedGeneNodeSpeciesAssignment;
-    protected double[][] speciesOccupancy;
-    protected double[][] storedSpeciesOccupancy;
+    protected double[] speciesOccupancy;
+    protected double[] storedSpeciesOccupancy;
     protected boolean geneTreeCompatible;
     protected boolean storedGeneTreeCompatible;
 
@@ -49,7 +50,7 @@ public class GeneTree extends TreeWrapper {
         System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimes.length);
         System.arraycopy(coalescentLineageCounts, 0, storedCoalescentLineageCounts, 0, coalescentLineageCounts.length);
 
-        storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
+        //storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
         System.arraycopy(geneNodeSpeciesAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeSpeciesAssignment.length);
         System.arraycopy(speciesOccupancy, 0, storedSpeciesOccupancy, 0, speciesOccupancy.length);
 
@@ -64,7 +65,7 @@ public class GeneTree extends TreeWrapper {
         int [] tmpCoalescentCounts = coalescentCounts;
         int[] tmpCoalescentLineageCounts = coalescentLineageCounts;
         int[] tmpGeneNodeSpeciesAssignment = geneNodeSpeciesAssignment;
-        double[][] tmpSpeciesOccupancy = speciesOccupancy;
+        double[] tmpSpeciesOccupancy = speciesOccupancy;
         boolean tmpGeneTreeCompatible = geneTreeCompatible;
 
         coalescentTimes = storedCoalescentTimes;
@@ -109,7 +110,7 @@ public class GeneTree extends TreeWrapper {
         storedGeneTreeCompatible = false;
 
         needsUpdate = true;
-        int speciesTreeNodeCount = speciesTree.treeInput.get().getNodeCount();
+        speciesTreeNodeCount = speciesTree.treeInput.get().getNodeCount();
         coalescentLineageCounts = new int[speciesTreeNodeCount];
         storedCoalescentLineageCounts = new int[speciesTreeNodeCount];
         
@@ -117,6 +118,9 @@ public class GeneTree extends TreeWrapper {
         storedCoalescentCounts = new int[speciesTreeNodeCount];
         coalescentTimes = new double[speciesTreeNodeCount * blocksize];
         storedCoalescentTimes = new double[speciesTreeNodeCount * blocksize];
+
+        speciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
+        storedSpeciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
     }
 
     protected boolean computeCoalescentTimes() {
@@ -139,9 +143,9 @@ public class GeneTree extends TreeWrapper {
         final TreeInterface speciesTree = speciesTreeWrapper.getTree();
         final Map<String, Integer> tipNumberMap = speciesTreeWrapper.getTipNumberMap();
 
-        final int speciesTreeNodeCount = speciesTree.getNodeCount();
-        speciesOccupancy = new double[geneTreeNodeCount][speciesTreeNodeCount];
-
+//        final int speciesTreeNodeCount = speciesTree.getNodeCount();
+        Arrays.fill(speciesOccupancy, 0);
+        
         // reset arrays as these values need to be recomputed after any changes to the species or gene tree
         Arrays.fill(geneNodeSpeciesAssignment, -1); // -1 means no species assignment for that gene tree node has been made yet
 
@@ -179,7 +183,7 @@ public class GeneTree extends TreeWrapper {
             final Node speciesTreeParentNode = speciesTreeNode.getParent();
             final double speciesTreeParentHeight = speciesTreeParentNode.getHeight();
             if (geneTreeNodeHeight >= speciesTreeParentHeight) {
-                speciesOccupancy[lastGeneTreeNodeNumber][speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
+                speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
                 final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
                 coalescentLineageCounts[speciesTreeParentNodeNumber]++;
 
@@ -188,7 +192,7 @@ public class GeneTree extends TreeWrapper {
         }
 
         // this code executes if the next coalescence event occurs within the current branch
-        speciesOccupancy[lastGeneTreeNodeNumber][speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
+        speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
         final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
         if (existingSpeciesAssignment == -1) {
             geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
@@ -225,7 +229,7 @@ public class GeneTree extends TreeWrapper {
         }
     }
 
-    public double[][] getSpeciesOccupancy() {
+    public double[] getSpeciesOccupancy() {
         if (needsUpdate) {
             update();
         }
