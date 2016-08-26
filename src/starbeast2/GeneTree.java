@@ -27,6 +27,7 @@ public class GeneTree extends TreeWrapper {
 
     protected double[] coalescentTimes; // the coalescent event times for this gene tree for all species tree branches
     protected double[] storedCoalescentTimes; // the coalescent event times for this gene tree for all species tree branches
+    int coalescentTimesLength; // lenght of coalescentTimes array
     protected int [] coalescentCounts; // the number of coalescent events in each branch
     protected int [] storedCoalescentCounts; // stored version of coalescentCounts
     final static int DELTA_BLOCK_SIZE = 4;
@@ -48,12 +49,12 @@ public class GeneTree extends TreeWrapper {
     private boolean [] speciesBranchIsDirty;
     //private boolean [] storedSpeciesBranchIsDirty;
 
-    Tree spTree;
-    //List<Node> dirtyList = new ArrayList<>();
+    Tree spTree, geneTree;
+    List<Node> dirtyList = new ArrayList<>();
     
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = treeInput.isDirty() || speciesTreeInput.isDirty();
+        needsUpdate = spTree.somethingIsDirty() || geneTree.somethingIsDirty();
         return needsUpdate;
     }
 
@@ -63,7 +64,7 @@ public class GeneTree extends TreeWrapper {
 
     private void doStore() {
         System.arraycopy(coalescentCounts, 0, storedCoalescentCounts, 0, coalescentCounts.length);
-        System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimes.length);
+        System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimesLength);
         System.arraycopy(coalescentLineageCounts, 0, storedCoalescentLineageCounts, 0, coalescentLineageCounts.length);
 
         //storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
@@ -113,7 +114,8 @@ public class GeneTree extends TreeWrapper {
     public void initAndValidate() {
         ploidy = ploidyInput.get();
 
-        geneTreeNodeCount = treeInput.get().getNodeCount();
+        geneTree = treeInput.get();
+        geneTreeNodeCount = geneTree.getNodeCount();
         geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
         storedGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
 
@@ -152,8 +154,9 @@ public class GeneTree extends TreeWrapper {
         
         coalescentCounts = new int[speciesTreeNodeCount];
         storedCoalescentCounts = new int[speciesTreeNodeCount];
-        coalescentTimes = new double[speciesTreeNodeCount * blocksize];
-        storedCoalescentTimes = new double[speciesTreeNodeCount * blocksize];
+        coalescentTimesLength = speciesTreeNodeCount * blocksize;
+        coalescentTimes = new double[coalescentTimesLength + geneTreeNodeCount];
+        storedCoalescentTimes = new double[coalescentTimesLength + geneTreeNodeCount];
 
         speciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
         storedSpeciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
@@ -182,7 +185,7 @@ public class GeneTree extends TreeWrapper {
 			if (needsUpdate) {
 	    	doStore();
 	        final SpeciesTree speciesTreeWrapper = speciesTreeInput.get();
-	        final TreeInterface speciesTree = speciesTreeWrapper.getTree();
+	        //spTree = speciesTreeWrapper.getTree();
 	        //final Map<String, Integer> tipNumberMap = speciesTreeWrapper.getTipNumberMap();
 	
 	//        final int speciesTreeNodeCount = speciesTree.getNodeCount();
@@ -195,7 +198,7 @@ public class GeneTree extends TreeWrapper {
 	        Arrays.fill(coalescentCounts, 0);
 	        
         	Arrays.fill(speciesBranchIsDirty, false);
-	        if (speciesTreeInput.isDirty()) {
+	        if (spTree.somethingIsDirty()) {
 		        for (int i = 0; i < speciesTreeNodeCount; i++) {
 		        	final Node node = spTree.getNode(i);
 		        	if (node.isDirty() != Tree.IS_CLEAN) {
@@ -206,14 +209,14 @@ public class GeneTree extends TreeWrapper {
 		        	}
 		        }
 	        }
-	        //dirtyList.clear();
+	        dirtyList.clear();
 	
 	        final TreeInterface geneTree = treeInput.get();
 	        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
 	            final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
 	            // final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
 	            final int speciesTreeLeafNumber = localTipNumberMap[geneTreeLeafNode.getNr()];
-	            final Node speciesTreeLeafNode = speciesTree.getNode(speciesTreeLeafNumber);
+	            final Node speciesTreeLeafNode = spTree.getNode(speciesTreeLeafNumber);
 	            coalescentLineageCounts[speciesTreeLeafNumber]++;
 	            
 	            geneNodeSpeciesAssignment[geneTreeLeafNumber] = speciesTreeLeafNumber;
@@ -230,12 +233,59 @@ public class GeneTree extends TreeWrapper {
 	            }
 	        }
 	
+	        int max = 0;
+	        for (int j : coalescentCounts) {
+	        	if (j > max) {max = j;}
+	        }
+            if (max > blocksize) {
+            	// grow memory reservation for coalescent times
+            	int speciesTreeNodeCount = coalescentTimes.length / blocksize;
+            	int DELTA_BLOCK_SIZE = 4*(max/4) - blocksize;
+            	coalescentTimesLength = speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE);
+            	double [] tmp = new double[coalescentTimesLength + geneTreeNodeCount];
+            	double [] stmp = new double[coalescentTimesLength + geneTreeNodeCount];
+            	for (int i = 0; i < speciesTreeNodeCount; i++) {
+            		System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
+            		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
+            	}
+            	coalescentTimes = tmp;
+            	storedCoalescentTimes = stmp;
+            	blocksize += DELTA_BLOCK_SIZE;
+            	System.err.print("blocksize = " + blocksize + " ");
+            	
+            	// do calculation again, this time with properly sized array
+    	        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
+    	            final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
+    	            // final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
+    	            final int speciesTreeLeafNumber = localTipNumberMap[geneTreeLeafNode.getNr()];
+    	            final Node speciesTreeLeafNode = spTree.getNode(speciesTreeLeafNumber);
+    	            coalescentLineageCounts[speciesTreeLeafNumber]++;
+    	            
+    	            geneNodeSpeciesAssignment[geneTreeLeafNumber] = speciesTreeLeafNumber;
+    	
+    	            final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
+    	            final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
+    	            final double lastHeight = 0.0;
+    	
+    	            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, firstCoalescenceNode, firstCoalescenceNumber, speciesTreeLeafNode, speciesTreeLeafNumber)) {
+    	                // this gene tree IS NOT compatible with the species tree
+    	                geneTreeCompatible = false;
+    	                needsUpdate = false;
+    	                return;
+    	            }
+    	        }
+            }
+
+	        
+	        
+	        
+	        
 	        for (int i = 0; i < speciesTreeNodeCount; i++) {
 	        	if (coalescentLineageCounts[i] != storedCoalescentCounts[i]) {
 	        		speciesBranchIsDirty[i] = true;
 	        	}
 	        }
-//        	for (Node geneTreeNode : dirtyList) {
+        	for (Node geneTreeNode : dirtyList) {
 //            	// deal with parent node
 //            	Node node = spTree.getNode(geneNodeSpeciesAssignment[geneTreeNode.getNr()]);
 //            	if (!geneTreeNode.isRoot()) {
@@ -246,16 +296,16 @@ public class GeneTree extends TreeWrapper {
 //	            	}
 //            	}
 //
-//            	// deal with child nodes
-////            	for (Node child : geneTreeNode.getChildren()) {
-////            		double h = child.getHeight();
-////            		node = spTree.getNode(geneNodeSpeciesAssignment[child.getNr()]);
-////	            	while (node != null && h > node.getHeight()) {
-////		            	speciesBranchIsDirty[node.getNr()] = true;
-////		            	node = node.getParent();
-////	            	}
-////	            }
-//            }
+            	// deal with child nodes
+            	for (Node child : geneTreeNode.getChildren()) {
+            		double h = child.getHeight();
+            		Node node = spTree.getNode(geneNodeSpeciesAssignment[child.getNr()]);
+	            	while (node != null && h > node.getHeight()) {
+		            	speciesBranchIsDirty[node.getNr()] = true;
+		            	node = node.getParent();
+	            	}
+	            }
+            }
 
 	        geneTreeCompatible = true;
 	        needsUpdate = false;
@@ -284,20 +334,6 @@ public class GeneTree extends TreeWrapper {
         if (existingSpeciesAssignment == -1) {
             geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
             
-            if (coalescentCounts[speciesTreeNodeNumber] == blocksize) {
-            	// grow memory reservation for coalescent times
-            	int speciesTreeNodeCount = coalescentTimes.length / blocksize;
-            	double [] tmp = new double[speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE)];
-            	double [] stmp = new double[speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE)];
-            	for (int i = 0; i < speciesTreeNodeCount; i++) {
-            		System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
-            		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
-            	}
-            	coalescentTimes = tmp;
-            	storedCoalescentTimes = stmp;
-            	blocksize += DELTA_BLOCK_SIZE;
-            	System.err.print("blocksize = " + blocksize + " ");
-            }
             coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
             
             final Node nextGeneTreeNode = geneTreeNode.getParent();
@@ -358,7 +394,7 @@ public class GeneTree extends TreeWrapper {
 	            
 	            if (geneTreeNode.isDirty() != Tree.IS_CLEAN) {
 	            	speciesBranchIsDirty[speciesTreeNodeNumber] = true;
-//	            	dirtyList.add(geneTreeNode);
+	            	dirtyList.add(geneTreeNode);
 	            	
 	            	// deal with parent node
 	            	Node node = speciesTreeNode;

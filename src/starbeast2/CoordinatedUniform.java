@@ -25,6 +25,14 @@ public class CoordinatedUniform extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
+    TreeInterface speciesTree;
+
+    @Override
+    public void initAndValidate() {
+        speciesTree = speciesTreeInput.get().getTree();
+    	super.initAndValidate();
+    }
+
     /**
      * override this for proposals,
      *

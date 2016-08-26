@@ -36,12 +36,16 @@ public class CoordinatedExponential extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
+    TreeInterface speciesTree;
+
     @Override
     public void initAndValidate() {
         beta = betaInput.get();
         lambda = 1.0 / beta;
         optimise = optimiseInput.get();
         
+        speciesTree = speciesTreeInput.get().getTree();
+
         super.initAndValidate();
     }
 
