@@ -184,7 +184,7 @@ public class MultispeciesCoalescent extends Distribution {
     List<GeneTree> geneTrees;
 
     
-	public double calculateLogP() {
+	public double calculateLogP0() {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 
@@ -300,6 +300,7 @@ public class MultispeciesCoalescent extends Distribution {
 	        			int h = 3;
 	        			h++;
 	        		}
+	        		logPBranchContribution[i] = branchLogP;
 	        		logP += logPBranchContribution[i];
 	        	}
 
@@ -319,7 +320,7 @@ public class MultispeciesCoalescent extends Distribution {
     
     
     //@Override
-	public double calculateLogP0() {
+	public double calculateLogP() {
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 
         speciesTreeNodeCount = speciesTree.getNodeCount();

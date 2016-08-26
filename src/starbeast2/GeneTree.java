@@ -64,7 +64,8 @@ public class GeneTree extends TreeWrapper {
 
     private void doStore() {
         System.arraycopy(coalescentCounts, 0, storedCoalescentCounts, 0, coalescentCounts.length);
-        System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimesLength);
+        //System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimesLength);
+        System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimes.length);
         System.arraycopy(coalescentLineageCounts, 0, storedCoalescentLineageCounts, 0, coalescentLineageCounts.length);
 
         //storedSpeciesOccupancy = new double[speciesOccupancy.length][speciesOccupancy[0].length];
@@ -239,13 +240,12 @@ public class GeneTree extends TreeWrapper {
 	        }
             if (max > blocksize) {
             	// grow memory reservation for coalescent times
-            	int speciesTreeNodeCount = coalescentTimes.length / blocksize;
-            	int DELTA_BLOCK_SIZE = 4*(max/4) - blocksize;
+            	int DELTA_BLOCK_SIZE = 4*((max+3)/4) - blocksize;
             	coalescentTimesLength = speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE);
             	double [] tmp = new double[coalescentTimesLength + geneTreeNodeCount];
             	double [] stmp = new double[coalescentTimesLength + geneTreeNodeCount];
             	for (int i = 0; i < speciesTreeNodeCount; i++) {
-            		System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
+            		//System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
             		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
             	}
             	coalescentTimes = tmp;
@@ -254,6 +254,7 @@ public class GeneTree extends TreeWrapper {
             	System.err.print("blocksize = " + blocksize + " ");
             	
             	// do calculation again, this time with properly sized array
+            	// we only get here very occasionally (only when blocksize is updated)
     	        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
     	            final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
     	            // final int speciesTreeLeafNumber = tipNumberMap.get(geneTreeLeafNode.getID());
@@ -334,8 +335,24 @@ public class GeneTree extends TreeWrapper {
         if (existingSpeciesAssignment == -1) {
             geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
             
-            coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
+//            if (coalescentCounts[speciesTreeNodeNumber] == blocksize) {
+//	            	// grow memory reservation for coalescent times
+//	            	int speciesTreeNodeCount = spTree.getNodeCount();
+//	            	double [] tmp = new double[speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE)];
+//	            	double [] stmp = new double[speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE)];
+//	            	for (int i = 0; i < speciesTreeNodeCount; i++) {
+//	            		System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
+//	            		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
+//	            	}
+//	            	coalescentTimes = tmp;
+//	            	storedCoalescentTimes = stmp;
+//	            	blocksize += DELTA_BLOCK_SIZE;
+//	            	coalescentTimesLength = speciesTreeNodeCount * blocksize;
+//	            	System.err.print("blocksize = " + blocksize + " ");
+//	        }
             
+            coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
+        
             final Node nextGeneTreeNode = geneTreeNode.getParent();
             if (nextGeneTreeNode == null) {
                 // this is the root of the gene tree and no incompatibilities were detected
@@ -390,6 +407,7 @@ public class GeneTree extends TreeWrapper {
 	            	blocksize += DELTA_BLOCK_SIZE;
 	            	System.err.print("blocksize = " + blocksize + " ");
 	            }
+
 	            coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
 	            
 	            if (geneTreeNode.isDirty() != Tree.IS_CLEAN) {
