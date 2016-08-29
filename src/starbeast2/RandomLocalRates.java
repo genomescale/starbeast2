@@ -130,8 +130,8 @@ public class RandomLocalRates extends BranchRateModel.Base implements SpeciesTre
 
     @Override
     public double[] getRatesArray() {
-        synchronized (this) {
-        	if (needsUpdate || noCache) {
+        if (needsUpdate || noCache) {
+            synchronized (this) {
                 update();
                 needsUpdate = false;
             }
@@ -142,8 +142,8 @@ public class RandomLocalRates extends BranchRateModel.Base implements SpeciesTre
 
     @Override
     public double getRateForBranch(Node node) {
-        synchronized (this) {
-        	if (needsUpdate || noCache) {
+        if (needsUpdate || noCache) {
+            synchronized (this) {
                 update();
                 needsUpdate = false;
             }

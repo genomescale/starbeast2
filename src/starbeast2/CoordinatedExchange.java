@@ -49,7 +49,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
     private int nInternalNodes; // excludes the root node
     private int nSpeciesNodes;
     private int czBranchCount;
-    TreeInterface speciesTree;
 
     private List<List<SortedMap<Node, Node>>> movedNodes;
     private List<SetMultimap<Integer, Node>> graftNodes;
@@ -59,12 +58,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
     // reversed because nodes must be grafted oldest to youngest
     private final static Comparator<Node> nhc = new NodeHeightComparator().reversed();
 
-    @Override
-    public void initAndValidate() {
-        speciesTree = speciesTreeInput.get().getTree();
-    	super.initAndValidate();
-    }
-    
     /**
      * override this for proposals,
      *
@@ -73,6 +66,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
     @Override
     public double proposal() {
         testing = isTestInput.get();
+        TreeInterface speciesTree = speciesTreeInput.get().getTree();
         speciesTreeNodes = speciesTree.getNodesAsArray();
         nLeafNodes = speciesTree.getLeafNodeCount();
         nInternalNodes = speciesTree.getInternalNodeCount();

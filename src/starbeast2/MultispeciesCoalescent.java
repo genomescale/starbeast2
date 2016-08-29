@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import beast.core.Description;
 import beast.core.Distribution;
@@ -32,42 +29,14 @@ public class MultispeciesCoalescent extends Distribution {
     private int speciesTreeNodeCount;
     private double[] perGenePloidy;
 
-    private int[] allLineageCounts;// = new ArrayList<>();
-    private int[] allEventCounts;// = new ArrayList<>();
-    private double[][][] allCoalescentTimes;// = new ArrayList<>();
-    
-    public static ExecutorService pool;
-    private final List<Callable<Double>> likelihoodCallers = new ArrayList<Callable<Double>>();
-    int threadCount = 1;
-    double [] threadResult;
-    TreeInterface speciesTree;
-    
-    double [] logPBranchContribution;
-    double [] storedLogPBranchContribution;
-    
-    @Override
-    public void store() {
-    	System.arraycopy(logPBranchContribution, 0, storedLogPBranchContribution, 0, logPBranchContribution.length);
-    	
-    	super.store();
-    }
-    
-    @Override
-    public void restore() {
-    	double [] tmp = logPBranchContribution;
-    	logPBranchContribution = storedLogPBranchContribution;
-    	storedLogPBranchContribution = tmp;
-    	
-    	super.restore();
-    }
-    
+    final private List<int[]> allLineageCounts = new ArrayList<>();
+    final private List<int[]> allEventCounts = new ArrayList<>();
+    final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
+
     @Override
     public void initAndValidate() {
         final List<GeneTree> geneTrees = geneTreeInput.get();
         nGeneTrees = geneTrees.size();
-        if (nGeneTrees > 1) {
-        	throw new IllegalArgumentException("Expected only 1 gene tree");
-        }
 
         // initialize gene trees and store ploidy
         perGenePloidy = new double[nGeneTrees];
@@ -77,122 +46,20 @@ public class MultispeciesCoalescent extends Distribution {
         }
 
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
-        speciesTree = speciesTreeInput.get().getTree();
+        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         speciesTreeNodeCount = speciesTree.getNodeCount();
         populationModel.initPopSizes(speciesTreeNodeCount);
-
-        allLineageCounts = new int[speciesTreeNodeCount*nGeneTrees];
-        allEventCounts = new int[speciesTreeNodeCount*nGeneTrees];
-        allCoalescentTimes  = new double[speciesTreeNodeCount][nGeneTrees][];
-        
-        if (threadCount> 1) {
-	        pool = Executors.newFixedThreadPool(threadCount);
-        }
-        int d = geneTrees.size();
-        for (int i = 0; i < threadCount; i++) {
-        	likelihoodCallers.add(new LikelihoodCaller(i, i * d / threadCount, (i+1) * d / threadCount));
-        }
-        threadResult = new double[threadCount];
-        
-        logPBranchContribution = new double[speciesTreeNodeCount];
-        storedLogPBranchContribution = new double[speciesTreeNodeCount];
-
-    }
-    
-    
-    class LikelihoodCaller implements Callable<Double> {
-        private final int start;
-        private final int end;
-        private final int thread;
-
-        public LikelihoodCaller(int thread, int start, int end) {
-        	this.thread = thread;
-            this.start = start;
-            this.end = end;
-        }
-
-        public Double call() {
-  		  	try {
-  		        for (int j = start; j < end; j++) { // for each gene "j"
-  		            final GeneTree geneTree = geneTrees.get(j);
-  		            if (geneTree.treeInput.isDirty()) {
-	  		            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-	  		            if (geneTree.computeCoalescentTimes()) {
-	  		                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-	  		                    final double [] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(i);
-	  		                    final int geneBranchEventCount = geneBranchCoalescentTimes.length;
-	  		                    final double [] coalescentTimesIJ = new double[geneBranchEventCount + 2];
-	  		                    coalescentTimesIJ[0] = speciesEndTimes[i];
-	  		                    if (geneBranchEventCount > 0) {
-	  		                    	System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
-	  		                    }
-	  		                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
-	
-	  		                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
-	  		                    final int k = i * nGeneTrees + j;
-	  		                    allLineageCounts[k] = geneBranchLineageCount;
-	  		                    allEventCounts[k] = geneBranchEventCount;
-	  		                    allCoalescentTimes[i][j] = coalescentTimesIJ;
-	  		                }
-	  		            } else { // this gene tree IS NOT compatible with the species tree
-	  		            	threadResult[thread] = Double.NEGATIVE_INFINITY;
-	  		                return Double.NEGATIVE_INFINITY;
-	  		            }
-  		            }
-  		        }
-  		        for (int j = start; j < end; j++) { // for each gene "j"
-  		            final GeneTree geneTree = geneTrees.get(j);
-  		            if (!geneTree.treeInput.isDirty()) {
-	  		            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-	  		            if (geneTree.computeCoalescentTimes()) {
-	  		                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-	  		                    final double [] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(i);
-	  		                    final int geneBranchEventCount = geneBranchCoalescentTimes.length;
-	  		                    final double [] coalescentTimesIJ = new double[geneBranchEventCount + 2];
-	  		                    coalescentTimesIJ[0] = speciesEndTimes[i];
-	  		                    if (geneBranchEventCount > 0) {
-	  		                    	System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
-	  		                    }
-	  		                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
-	
-	  		                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
-	  		                    final int k = i * nGeneTrees + j;
-	  		                    allLineageCounts[k] = geneBranchLineageCount;
-	  		                    allEventCounts[k] = geneBranchEventCount;
-	  		                    allCoalescentTimes[i][j] = coalescentTimesIJ;
-	  		                }
-	  		            } else { // this gene tree IS NOT compatible with the species tree
-	  		            	threadResult[thread] = Double.NEGATIVE_INFINITY;
-	  		                return Double.NEGATIVE_INFINITY;
-	  		            }
-  		            }
-  		        }
-  		  	} catch (Exception e) {
-  		  		System.err.println("Something went wrong in thread " + start + " " + end);
-				e.printStackTrace();
-				System.exit(0);
-			}
-  		  	threadResult[thread] = 0.0;
-            return 0.0;
-        }
-
     }
 
-
-    double[] speciesStartTimes;
-    double[] speciesEndTimes;
-    List<GeneTree> geneTrees;
-
-    
-	public double calculateLogP0() {
+    public double calculateLogP() {
         final TreeInterface speciesTree = speciesTreeInput.get().getTree();
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
 
         speciesTreeNodeCount = speciesTree.getNodeCount();
-        speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
+        double[] speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
+        double[] speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
 
-        geneTrees = geneTreeInput.get();
+        final List<GeneTree> geneTrees = geneTreeInput.get();
 
         assert SanityChecks.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
 
@@ -208,101 +75,56 @@ public class MultispeciesCoalescent extends Distribution {
                 speciesStartTimes[i] = parentNode.getHeight();
             }
         }
-        
-        
-		if (threadCount > 1) {
-            try {
-				pool.invokeAll(likelihoodCallers);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 
-		} else {
-				try {
-					likelihoodCallers.get(0).call();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-		}
+        allLineageCounts.clear();
+        allEventCounts.clear();
+        allCoalescentTimes.clear();
 
-    	for (double f : threadResult) {
-    		if (Double.isInfinite(f)) {
-    			logP = Double.NEGATIVE_INFINITY;
-    			return logP;
-    		}
-    	}
-        
-//        // transpose gene-branch list of lists to branch-gene list of lists
-//        for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
-//            final GeneTree geneTree = geneTrees.get(j);
-//            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-//            if (geneTree.computeCoalescentTimes()) {
-//                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-////                    final List<Double> timesView = geneTree.getCoalescentTimes(i);
-////                    final int geneBranchEventCount = timesView.size();
-////                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
-////                    timesView.toArray(geneBranchCoalescentTimes);
-////                    Arrays.sort(geneBranchCoalescentTimes);
-//                    final double [] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(i);
-//                    final int geneBranchEventCount = geneBranchCoalescentTimes.length;
-//
-//                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
-//
-//                    final double[] coalescentTimesIJ = new double[geneBranchEventCount + 2];
-//                    coalescentTimesIJ[0] = speciesEndTimes[i];
-//                    if (geneBranchEventCount > 0) {
-//                    	System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
-//                    }
-////                    for (int k = 0; k < geneBranchEventCount; k++) {
-////                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
-////                    }
-//                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
-//
-//                    final int k = i * nGeneTrees + j;
-//                    allLineageCounts[k] = geneBranchLineageCount;
-//                    allEventCounts[k] = geneBranchEventCount;
-//                    allCoalescentTimes[i][j]=coalescentTimesIJ;
-//                }
-//            } else { // this gene tree IS NOT compatible with the species tree
-//                logP = Double.NEGATIVE_INFINITY;
-//                return logP;
-//            }
-//        }
-//
-//		}
-		
-        logP = 0.0;
-        int[] branchLineageCounts = new int[nGeneTrees];
-        int[] branchEventCounts = new int[nGeneTrees];
-        
-        
-        
-        final GeneTree geneTree = geneTrees.get(0);
         for (int i = 0; i < speciesTreeNodeCount; i++) {
-	            final Node speciesTreeNode = speciesTree.getNode(i); 
-	            final double[][] branchCoalescentTimes = allCoalescentTimes[i];
-	            final int k = i * nGeneTrees;
-	            System.arraycopy(allLineageCounts, k, branchLineageCounts, 0, nGeneTrees);
-	            System.arraycopy(allEventCounts, k, branchEventCounts, 0, nGeneTrees);
-	            final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
-	            if (getID().equals("speciescoalescent12") && i == 0) {
-//	            	System.err.println("\n" + Arrays.toString(allCoalescentTimes[i][0]) + " " + 
-//	            			Arrays.toString(branchLineageCounts) + " " + 
-//	            					Arrays.toString(branchEventCounts));
-	            }
-	        	if (geneTree.isDirtyBranch(i) || populationModel.isDirtyCalculation()) {
-	        		logPBranchContribution[i] = branchLogP;
-		            logP += branchLogP;
-	        	} else {
-	        		if (logPBranchContribution[i] != branchLogP ) {
-	        			int h = 3;
-	        			h++;
-	        		}
-	        		logPBranchContribution[i] = branchLogP;
-	        		logP += logPBranchContribution[i];
-	        	}
+            allLineageCounts.add(new int[nGeneTrees]);
+            allEventCounts.add(new int[nGeneTrees]);
+            allCoalescentTimes.add(new ArrayList<>());
+        }
+
+        // transpose gene-branch list of lists to branch-gene list of lists
+        for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
+            final GeneTree geneTree = geneTrees.get(j);
+            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
+            if (geneTree.computeCoalescentTimes()) {
+                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
+                    final List<Double> timesView = geneTree.coalescentTimes.get(i);
+                    final int geneBranchEventCount = timesView.size();
+                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
+                    timesView.toArray(geneBranchCoalescentTimes);
+                    Arrays.sort(geneBranchCoalescentTimes);
+
+                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts.count(i);
+
+                    final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
+                    coalescentTimesIJ[0] = speciesEndTimes[i];
+                    for (int k = 0; k < geneBranchEventCount; k++) {
+                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
+                    }
+                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
+
+                    allLineageCounts.get(i)[j] = geneBranchLineageCount;
+                    allEventCounts.get(i)[j] = geneBranchEventCount;
+                    allCoalescentTimes.get(i).add(coalescentTimesIJ);
+                }
+            } else { // this gene tree IS NOT compatible with the species tree
+                logP = Double.NEGATIVE_INFINITY;
+                return logP;
+            }
+        }
+
+        logP = 0.0;
+        for (int i = 0; i < speciesTreeNodeCount; i++) {
+            final Node speciesTreeNode = speciesTree.getNode(i); 
+            final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
+            final int[] branchLineageCounts = allLineageCounts.get(i);
+            final int[] branchEventCounts = allEventCounts.get(i);
+            final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+            logP += branchLogP;
 
             /* for (int j = 0; j < branchCoalescentTimes.size(); j++) {
                 Double[] geneTimes = branchCoalescentTimes.get(j);
@@ -314,75 +136,6 @@ public class MultispeciesCoalescent extends Distribution {
             System.out.println(String.format("%d: %f", i, branchLogP)); */
         }
 
-        return logP;
-    }
-
-    
-    
-    //@Override
-	public double calculateLogP() {
-        final MultispeciesPopulationModel populationModel = populationModelInput.get();
-
-        speciesTreeNodeCount = speciesTree.getNodeCount();
-        speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
-
-        geneTrees = geneTreeInput.get();
-
-        assert SanityChecks.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
-
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            final Node speciesNode = speciesTree.getNode(i);
-            final Node parentNode = speciesNode.getParent();
-
-            speciesEndTimes[i] = speciesNode.getHeight();
-            
-            if (parentNode == null) {
-                speciesStartTimes[i] = Double.POSITIVE_INFINITY;
-            } else {
-                speciesStartTimes[i] = parentNode.getHeight();
-            }
-        }
-        
-        
-        final GeneTree geneTree = geneTrees.get(0);
-        assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-        logP = 0.0;
-        int[] branchLineageCounts = new int[nGeneTrees];
-        int[] branchEventCounts = new int[nGeneTrees];
-        boolean needsUpdate = populationModel.isDirtyCalculation();
-        if (geneTree.computeCoalescentTimes()) {
-            for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-            	if (needsUpdate || geneTree.isDirtyBranch(i)) {
-	                final double [] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(i);
-	                final int geneBranchEventCount = geneBranchCoalescentTimes.length;
-	                final double [] coalescentTimesIJ = new double[geneBranchEventCount + 2];
-	                coalescentTimesIJ[0] = speciesEndTimes[i];
-	                if (geneBranchEventCount > 0) {
-	                	System.arraycopy(geneBranchCoalescentTimes, 0, coalescentTimesIJ, 1, geneBranchEventCount);
-	                }
-	                coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
-	
-	                final int geneBranchLineageCount = geneTree.coalescentLineageCounts[i];
-	                final int k = i * nGeneTrees;
-	                allLineageCounts[k] = geneBranchLineageCount;
-	                allEventCounts[k] = geneBranchEventCount;
-	                allCoalescentTimes[i][0] = coalescentTimesIJ;
-
-		            final Node speciesTreeNode = speciesTree.getNode(i); 
-		            final double[][] branchCoalescentTimes = allCoalescentTimes[i];
-		            branchLineageCounts[0] = allLineageCounts[i];
-		            branchEventCounts[0] = allEventCounts[i];
-		            final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
-	        		logPBranchContribution[i] = branchLogP;
-		            logP += branchLogP;            	
-            	} else {
-            		logP += logPBranchContribution[i];
-            	}
-            }
-        } else { // this gene tree IS NOT compatible with the species tree
-            logP = Double.NEGATIVE_INFINITY;
-        }
         return logP;
     }
 

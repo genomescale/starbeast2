@@ -20,7 +20,7 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter invgammaShape = populationShapeInput.get();
         final RealParameter invgammaMean = populationMeanInput.get();
         final double alpha = invgammaShape.getValue();
@@ -34,7 +34,7 @@ public class ConstantPopulationIO extends MultispeciesPopulationModel {
 
         for (int j = 0; j < nGenes; j++) {
             final int geneN = branchLineageCounts[j];
-            final double[] geneCoalescentTimes = branchCoalescentTimes[j];
+            final Double[] geneCoalescentTimes = branchCoalescentTimes.get(j);
             final int geneK = branchEventCounts[j];
             final double genePloidy = perGenePloidy[j]; 
             branchLogR -= geneK * Math.log(genePloidy);
