@@ -481,7 +481,7 @@ name="alignment">
                 </LogNormal>
             </prior>
         </distribution>
-        <distribution id="likelihood" spec="startbeast2.CompoundDistribution" useThreads="true">
+        <distribution id="likelihood" spec="starbeast2.CompoundDistribution" useThreads="true">
             <distribution id="treeLikelihood.26" spec="TreeLikelihood" data="@26" tree="@Tree.t:26">
                 <siteModel id="SiteModel.s:26" spec="SiteModel">
                     <parameter id="mutationRate.s:26" estimate="false" name="mutationRate">1.0</parameter>
