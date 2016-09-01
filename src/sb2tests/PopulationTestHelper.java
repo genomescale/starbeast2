@@ -10,7 +10,7 @@ import org.junit.Test;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.GeneTree;
-import starbeast2.MultispeciesCoalescent;
+import starbeast2.MultispeciesCoalescentSingle;
 import starbeast2.MultispeciesPopulationModel;
 import starbeast2.SpeciesTree;
 
@@ -23,8 +23,6 @@ abstract class PopulationTestHelper {
     
     SpeciesTree speciesTreeWrapper;
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
-
-    MultispeciesCoalescent msc;
 
     double ploidy;
     double popSize;
@@ -47,10 +45,13 @@ abstract class PopulationTestHelper {
         populationModel.initPopSizes(nBranches);
         populationModel.initPopSizes(popSize);
 
-        msc = new MultispeciesCoalescent();
-        msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
+        double calculatedLogP = 0.0;
+        for (GeneTree gt: geneTreeWrappers) {
+            MultispeciesCoalescentSingle msc = new MultispeciesCoalescentSingle();
+            msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", gt, "populationModel", populationModel);
+            calculatedLogP += msc.calculateLogP();
+        }
 
-        double calculatedLogP = msc.calculateLogP();
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
