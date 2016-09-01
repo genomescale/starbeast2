@@ -22,7 +22,49 @@ public class LinearPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, List<Double[]> branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    public double branchLogP(int geneTreeNode, int speciesTreeNodeNumber, Node speciesTreeNode, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
+        final RealParameter topPopSizes = topPopSizesInput.get();
+        final RealParameter tipPopSizes = tipPopSizesInput.get();
+
+        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+
+        double branchTipPopSize;
+        if (speciesTreeNode.isLeaf()) {
+            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+        } else {
+            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
+            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
+            branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
+        }
+
+        // set the root branch heights for each gene tree (to equal the highest gene tree root node)
+//        double tallestGeneTreeHeight = 0.0;
+//        if (speciesTreeNode.isRoot()) {
+//            for (int j = 0; j < nGenes; j++) {
+//                tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes[j][branchEventCounts[j]]);
+//            }
+//            for (int j = 0; j < nGenes; j++) {
+//                branchCoalescentTimes[j][branchEventCounts[j] + 1] = tallestGeneTreeHeight;
+//            }
+//        }
+
+        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+
+        // for debugging
+        /*if (speciesTreeNode.isRoot()) {
+            System.out.println(String.format("Tallest gene tree height = %f", tallestGeneTreeHeight));
+            System.out.println(String.format("Root node %d logP = %f", speciesTreeNodeNumber, logP));
+        } else if (speciesTreeNode.isLeaf()) {
+            System.out.println(String.format("Leaf node %d logP = %f", speciesTreeNodeNumber, logP));
+        } else { 
+            System.out.println(String.format("Internal node %d logP = %f", speciesTreeNodeNumber, logP));
+        }*/
+
+        return logP;
+    }
+    
+    @Override
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int nGenes = perGenePloidy.length;
@@ -42,10 +84,10 @@ public class LinearPopulation extends MultispeciesPopulationModel {
         double tallestGeneTreeHeight = 0.0;
         if (speciesTreeNode.isRoot()) {
             for (int j = 0; j < nGenes; j++) {
-                tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes.get(j)[branchEventCounts[j]]);
+                tallestGeneTreeHeight = Math.max(tallestGeneTreeHeight, branchCoalescentTimes[j][branchEventCounts[j]]);
             }
             for (int j = 0; j < nGenes; j++) {
-                branchCoalescentTimes.get(j)[branchEventCounts[j] + 1] = tallestGeneTreeHeight;
+                branchCoalescentTimes[j][branchEventCounts[j] + 1] = tallestGeneTreeHeight;
             }
         }
 

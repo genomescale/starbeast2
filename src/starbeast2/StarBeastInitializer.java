@@ -6,8 +6,8 @@ import static java.lang.Math.min;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,7 +123,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         @SuppressWarnings("unchecked")
 		final Set<Integer>[] tipsSpecies = new Set[nodes.length];
         for(int k = 0; k < tipsSpecies.length; ++k) {
-            tipsSpecies[k] = new HashSet<>();
+            tipsSpecies[k] = new LinkedHashSet<>();
         }
         // d[i,j] = minimum height of node which has tips belonging to species i and j
         // d is is upper triangular
@@ -139,7 +139,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 				final Set<Integer>[] sps = new Set[2];
                 sps[0] = tipsSpecies[n.getChild(0).getNr()];
                 sps[1] = tipsSpecies[n.getChild(1).getNr()];
-                final Set<Integer> u = new HashSet<>(sps[0]);
+                final Set<Integer> u = new LinkedHashSet<>(sps[0]);
                 u.retainAll(sps[1]);
                 sps[0].removeAll(u);
                 sps[1].removeAll(u);
@@ -190,7 +190,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
             maxNsites = max(maxNsites, alignment.getSiteCount());
         }
-        final Map<String, Integer> geneTips2Species = new HashMap<>();
+        final Map<String, Integer> geneTips2Species = new LinkedHashMap<>();
         final List<Taxon> taxonSets = species.taxonsetInput.get();
 
         for(int k = 0; k < speciesNames.size(); ++k) {
@@ -255,7 +255,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         };
         ctree.initByName("initial", speciesTree, "taxonset", species,"clusterType", "upgma", "distance", distance);
 
-        final Map<String, Integer> sptips2SpeciesIndex = new HashMap<>();
+        final Map<String, Integer> sptips2SpeciesIndex = new LinkedHashMap<>();
         for(int i = 0; i < speciesNames.size(); ++i) {
             sptips2SpeciesIndex.put(speciesNames.get(i), i);
         }
@@ -277,7 +277,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 final List<String> taxaNames = alignment.getTaxaNames();
                 final int taxonCount =  taxaNames.size();
                 // speedup
-                final Map<Integer,Integer> g2s = new HashMap<>();
+                final Map<Integer,Integer> g2s = new LinkedHashMap<>();
                 for(int i = 0; i < taxonCount; ++i) {
                     g2s.put(i, geneTips2Species.get(taxaNames.get(i)));
                 }

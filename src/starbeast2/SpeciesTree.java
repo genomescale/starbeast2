@@ -1,7 +1,7 @@
 package starbeast2;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,13 +18,13 @@ import beast.evolution.tree.TreeInterface;
  */
 
 public class SpeciesTree extends TreeWrapper {
-    final private Map<String, Integer> tipNumberMap = new HashMap<>();
+    final private Map<String, Integer> tipNumberMap = new LinkedHashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 
     public void initAndValidate() {
         // generate map of species tree tip node names to node numbers
         final TreeInterface speciesTree = treeInput.get();
-        final HashMap<String, Integer> speciesNumberMap = new HashMap<>();
+        final Map<String, Integer> speciesNumberMap = new LinkedHashMap<>();
 
         Node speciesTreeRoot = speciesTree.getRoot();
         for (Node leafNode: speciesTreeRoot.getAllLeafNodes()) {
@@ -36,7 +36,7 @@ public class SpeciesTree extends TreeWrapper {
 
         // generate map of gene tree tip node names to species tree tip node numbers
         final TaxonSet taxonSuperSet = treeInput.get().getTaxonset();
-        final Set<Taxon> speciesSet = new HashSet<>(taxonSuperSet.taxonsetInput.get());
+        final Set<Taxon> speciesSet = new LinkedHashSet<>(taxonSuperSet.taxonsetInput.get());
 
         for (Taxon species: speciesSet) {
             final String speciesName = species.getID();
@@ -45,7 +45,7 @@ public class SpeciesTree extends TreeWrapper {
                 speciesNumber = speciesNumberMap.get(speciesName);
             }
             final TaxonSet speciesTaxonSet = (TaxonSet) species;
-            final Set<Taxon> tipSet = new HashSet<>(speciesTaxonSet.taxonsetInput.get());
+            final Set<Taxon> tipSet = new LinkedHashSet<>(speciesTaxonSet.taxonsetInput.get());
 
             for (Taxon tip: tipSet) {
                 final String tipName = tip.getID();
