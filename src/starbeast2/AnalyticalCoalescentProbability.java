@@ -113,6 +113,7 @@ public class AnalyticalCoalescentProbability extends Distribution {
         allLineageCounts = new int[speciesNodeCount*nGeneTrees];
         allEventCounts = new int[speciesNodeCount*nGeneTrees];
         allCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
+        perBranchLogP = new double[speciesNodeCount];
 
         perGenePloidy = new double[nGeneTrees];
         for (int geneI = 0; geneI < nGeneTrees; geneI++) {
@@ -142,11 +143,11 @@ public class AnalyticalCoalescentProbability extends Distribution {
         invGammaMean = populationMeanInput.get();
 
         boolean updatedPrior = false;
-        if (invGammaShape.isDirty(0)) {
+        if (invGammaShape.isDirty(0) || alpha == 0.0) {
             alpha = invGammaShape.getValue();
             updatedPrior = true;
         }
-        if (invGammaMean.isDirty(0)) {
+        if (invGammaMean.isDirty(0) || beta == 0.0) {
             beta = invGammaMean.getValue() * (alpha - 1.0);
             updatedPrior = true;
         }

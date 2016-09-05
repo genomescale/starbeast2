@@ -34,14 +34,14 @@ public class GeneTree extends Distribution {
     protected double[] coalescentTimes; // the coalescent event times for this gene tree for all species tree branches
     protected double[] storedCoalescentTimes; // the coalescent event times for this gene tree for all species tree branches
     int coalescentTimesLength; // lenght of coalescentTimes array
-    protected int [] coalescentCounts; // the number of coalescent events in each branch
-    protected int [] storedCoalescentCounts; // stored version of coalescentCounts
+    protected int[] coalescentCounts; // the number of coalescent events in each branch
+    protected int[] storedCoalescentCounts; // stored version of coalescentCounts
     final static int DELTA_BLOCK_SIZE = 4;
     private int blocksize = DELTA_BLOCK_SIZE; // size of blocks for storing coalescentTimes, may grow (and shrink) throughout the MCMC
     int maxCoalescentCounts, storedMaxCoalescentCounts; // maximum number of coalescent events in a branch -- blocksize must always be at least as large
 
-    protected int [] coalescentLineageCounts; // the number of lineages at the tipward end of each branch
-    protected int [] storedCoalescentLineageCounts; // the number of lineages at the tipward end of each branch
+    protected int[] coalescentLineageCounts; // the number of lineages at the tipward end of each branch
+    protected int[] storedCoalescentLineageCounts; // the number of lineages at the tipward end of each branch
 
     protected int[] geneNodeSpeciesAssignment;
     protected int[] storedGeneNodeSpeciesAssignment;
@@ -51,8 +51,8 @@ public class GeneTree extends Distribution {
     protected boolean storedGeneTreeCompatible;
 
     // pre-calculated lineage counts and node assignments for gene tree leaf nodes
-    int [] leafCoalescentLineageCounts;
-    int [] leafGeneNodeSpeciesAssignment;
+    int[] leafCoalescentLineageCounts;
+    int[] leafGeneNodeSpeciesAssignment;
 
     int updateCount = 0;
     boolean stopPopping = false;
@@ -63,7 +63,8 @@ public class GeneTree extends Distribution {
     private boolean [] speciesBranchIsDirty;
     //private boolean [] storedSpeciesBranchIsDirty;
 
-    Tree spTree, geneTree;
+    SpeciesTree spTree;
+    Tree geneTree;
     //List<Node> dirtyList = new ArrayList<>();
     
     @Override
@@ -133,8 +134,8 @@ public class GeneTree extends Distribution {
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
 
         // generate map of species tree tip node names to node numbers
-        final SpeciesTree speciesTree = speciesTreeInput.get();
-        final Map<String, Integer> tipNumberMap = speciesTree.getTipNumberMap();
+        spTree = speciesTreeInput.get();
+        final Map<String, Integer> tipNumberMap = spTree.getTipNumberMap();
         TreeInterface geneTree = treeInput.get();
         localTipNumberMap = new int[geneTree.getLeafNodeCount()];
         for (int i = 0; i < geneTree.getLeafNodeCount(); i++) {
@@ -146,7 +147,7 @@ public class GeneTree extends Distribution {
         storedGeneTreeCompatible = false;
 
         needsUpdate = true;
-        speciesTreeNodeCount = speciesTree.getNodeCount();
+        speciesTreeNodeCount = spTree.getNodeCount();
         coalescentLineageCounts = new int[speciesTreeNodeCount];
         storedCoalescentLineageCounts = new int[speciesTreeNodeCount];
         
@@ -226,7 +227,6 @@ public class GeneTree extends Distribution {
 	        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
 	            final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
 	            final int speciesTreeLeafNumber = localTipNumberMap[geneTreeLeafNode.getNr()];
-	            System.out.println(speciesTreeLeafNumber);
 	            final Node speciesTreeLeafNode = spTree.getNode(speciesTreeLeafNumber);	
 	            final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
 	            final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
