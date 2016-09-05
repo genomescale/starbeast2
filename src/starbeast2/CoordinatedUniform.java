@@ -29,7 +29,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
 
     @Override
     public void initAndValidate() {
-        speciesTree = speciesTreeInput.get().getTree();
+        speciesTree = speciesTreeInput.get();
     	super.initAndValidate();
     }
 

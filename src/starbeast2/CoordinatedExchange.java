@@ -2,7 +2,6 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
 
     @Override
     public void initAndValidate() {
-        speciesTree = speciesTreeInput.get().getTree();
+        speciesTree = speciesTreeInput.get();
     	super.initAndValidate();
     }
     

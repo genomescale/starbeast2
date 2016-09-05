@@ -61,7 +61,7 @@ public class MultispeciesCoalescentSingle extends Distribution {
         perGenePloidy = geneTrees.ploidy;
 
         final MultispeciesPopulationModel populationModel = populationModelInput.get();
-        speciesTree = speciesTreeInput.get().getTree();
+        speciesTree = speciesTreeInput.get();
         speciesTreeNodeCount = speciesTree.getNodeCount();
         populationModel.initPopSizes(speciesTreeNodeCount);
 

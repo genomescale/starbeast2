@@ -61,7 +61,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get().getTree();
+        Tree speciesTree = speciesTreeInput.get();
         speciesTree.init(out);
     }
 
@@ -69,7 +69,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
     public void log(int nSample, PrintStream out) {
         // make sure we get the current version of the inputs
         SpeciesTree speciesTree = speciesTreeInput.get();
-        Tree tree = speciesTree.getCurrentTree();
+        Tree tree = (Tree) speciesTree.getCurrent();
         List<Function> metadata = parameterInput.get();
         for (int i = 0; i < metadata.size(); i++) {
             if (metadata.get(i) instanceof StateNode) {
@@ -180,10 +180,10 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     // uses the height of the tallest species or gene tree
     private double getTreeHeight() {
-        double speciesTreeHeight = speciesTreeInput.get().getTreeHeight();
+        double speciesTreeHeight = speciesTreeInput.get().getRoot().getHeight();
 
         for (GeneTree gt: geneTreeInput.get()) {
-            speciesTreeHeight = Double.max(speciesTreeHeight, gt.getTreeHeight());
+            speciesTreeHeight = Double.max(speciesTreeHeight, gt.getRoot().getHeight());
         }
 
         return speciesTreeHeight;
@@ -191,7 +191,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void close(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get().getTree();
+        Tree speciesTree = speciesTreeInput.get();
         speciesTree.close(out);
     }
 

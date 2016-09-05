@@ -2,7 +2,6 @@ package starbeast2;
 
 
 import java.text.DecimalFormat;
-import java.util.List;
 
 import beast.core.Input;
 import beast.core.Input.Validate;

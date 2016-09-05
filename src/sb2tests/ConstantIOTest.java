@@ -1,25 +1,43 @@
 package sb2tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
 import beast.core.State;
+import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import starbeast2.ConstantPopulationIO;
-import starbeast2.MultispeciesPopulationModel;
+import beast.util.TreeParser;
+import starbeast2.AnalyticalCoalescentProbability;
+import starbeast2.GeneTree;
+import starbeast2.SpeciesTree;
 
-public class ConstantIOTest extends PopulationTestHelper {
+public class ConstantIOTest {
+    private String newickSpeciesTree;
+    private List<String> newickGeneTrees = new ArrayList<>();
+
+    private SpeciesTree speciesTree;
+    private List<TreeParser> geneTrees = new ArrayList<>();
+    private List<GeneTree> geneTreeWrappers = new ArrayList<>();
+
+    private AnalyticalCoalescentProbability populationModel;
+    private RealParameter alphaParameter;
+    private RealParameter meanParameter;
+
+    private double ploidy;
+    private double expectedLogP;
+    private int nSpecies;
+
+    private final double allowedError = 10e-6;
     private final double alpha = 1.5;
     private final double beta = 2.5;
     private final double mean = beta / (alpha - 1.0);
     private final int individualsPerSpecies = 2;
-
-    private RealParameter alphaParameter;
-    private RealParameter meanParameter;
 
     public ConstantIOTest() throws Exception {
         ploidy = 2.0;
@@ -31,7 +49,7 @@ public class ConstantIOTest extends PopulationTestHelper {
 
         alphaParameter.initByName("value", String.valueOf(alpha));
         meanParameter.initByName("value", String.valueOf(mean));
-        
+
         newickSpeciesTree = "((s0:0.32057156677143211,s3:0.32057156677143211):1.2653250035015629,(s1:0.56540722294658641,s2:0.56540722294658641):1.0204893473264085)";
         newickGeneTrees.add("((((s0_tip1:0.3416660303037105,s3_tip0:0.3416660303037105):0.024561190897159135,s0_tip0:0.36622722120086965):0.0643095990846464,s3_tip1:0.43053682028551604):1.4201019862262891,((s1_tip0:0.14473698225381706,s1_tip1:0.14473698225381706):0.5135479407233198,(s2_tip0:0.19897724687831703,s2_tip1:0.19897724687831703):0.4593076760988198):1.1923538835346683)");
         newickGeneTrees.add("(((s0_tip0:0.04173231934154758,s0_tip1:0.04173231934154758):0.7845256741090114,(s3_tip0:0.09482581277282173,s3_tip1:0.09482581277282173):0.7314321806777372):0.8703651781500925,((s1_tip0:0.33170960882423645,s1_tip1:0.33170960882423645):0.29497523293318856,(s2_tip0:0.2908611340994834,s2_tip1:0.2908611340994834):0.3358237076579416):1.0699383298432266)");
@@ -39,11 +57,17 @@ public class ConstantIOTest extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
-        super.testLogP();
+        TaxonSet speciesSuperset = generateSuperset();
+        initializeSpeciesTree(speciesSuperset);
+        initializeGeneTrees();
+        initializePopulationModel();
+
+        final double calculatedLogP = populationModel.calculateLogP();
+
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    @Override
-    public TaxonSet generateSuperset() throws Exception {
+    private TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
         for (int i = 0; i < nSpecies; i++) {
             final String speciesName = String.format("s%d", i);
@@ -56,20 +80,37 @@ public class ConstantIOTest extends PopulationTestHelper {
         }
 
         TaxonSet speciesSuperset = new TaxonSet(superSetList);
-        
+
         return speciesSuperset;
     }
 
-    @Override
-    public MultispeciesPopulationModel generatePopulationModel() throws Exception {
+    private void initializeSpeciesTree(TaxonSet speciesSuperset) throws Exception {
+        speciesTree = new SpeciesTree();
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
+    }
+
+    private void initializeGeneTrees() throws Exception {
+        for (String geneTreeNewick: newickGeneTrees) {
+            TreeParser geneTree = new TreeParser();
+            geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
+            geneTrees.add(geneTree);
+
+            GeneTree geneTreeWrapper = new GeneTree();
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree);
+            geneTreeWrappers.add(geneTreeWrapper);
+        }
+    }
+
+    private void initializePopulationModel() throws Exception {
         State state = new State();
         state.initByName("stateNode", alphaParameter);
         state.initByName("stateNode", meanParameter);
         state.initialise();
 
-        MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
-        populationModel.initByName("populationShape", alphaParameter, "populationMean", meanParameter);
-        
-        return populationModel;
+        final BooleanParameter disableParameter = new BooleanParameter();
+        disableParameter.initByName("value", "false");
+
+        populationModel = new AnalyticalCoalescentProbability();
+        populationModel.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "disable", disableParameter, "speciesTree", speciesTree, "geneTree", geneTreeWrappers);
     }
 }

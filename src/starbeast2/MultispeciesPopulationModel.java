@@ -2,13 +2,9 @@ package starbeast2;
 
 
 import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Random;
 
 import beast.core.CalculationNode;
 import beast.core.Description;
-import beast.core.Distribution;
-import beast.core.State;
 import beast.evolution.tree.Node;
 
 /**
@@ -21,9 +17,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
 
     public abstract double branchLogP(int geneTreeNumber, int speciesTreeNodeNumber, Node speciesTreeNode, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts);
-    
-    
-    
+
     /* return unique gene tree number, to be used as argument to branchLogP */
     int geneTreeCount = 0;
     int speciesNodeCount = 0;

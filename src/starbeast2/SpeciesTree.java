@@ -11,22 +11,24 @@ import com.google.common.collect.Multimap;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import beast.evolution.tree.Tree;
+import beast.util.TreeParser;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class SpeciesTree extends TreeWrapper {
+public class SpeciesTree extends TreeParser {
     final private Map<String, Integer> tipNumberMap = new LinkedHashMap<>();
     final private Multimap<Integer, String> numberTipMap = HashMultimap.create();
 
     public void initAndValidate() {
+        super.initAndValidate();
+
         // generate map of species tree tip node names to node numbers
-        final TreeInterface speciesTree = treeInput.get();
         final Map<String, Integer> speciesNumberMap = new LinkedHashMap<>();
 
-        Node speciesTreeRoot = speciesTree.getRoot();
+        Node speciesTreeRoot = getRoot();
         for (Node leafNode: speciesTreeRoot.getAllLeafNodes()) {
             final String speciesName = leafNode.getID();
             final int speciesNumber = leafNode.getNr();
@@ -35,7 +37,7 @@ public class SpeciesTree extends TreeWrapper {
         }
 
         // generate map of gene tree tip node names to species tree tip node numbers
-        final TaxonSet taxonSuperSet = treeInput.get().getTaxonset();
+        final TaxonSet taxonSuperSet = getTaxonset();
         final Set<Taxon> speciesSet = new LinkedHashSet<>(taxonSuperSet.taxonsetInput.get());
 
         for (Taxon species: speciesSet) {
@@ -63,4 +65,3 @@ public class SpeciesTree extends TreeWrapper {
         return tipNumberMap;
     }
 }
-

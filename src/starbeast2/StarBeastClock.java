@@ -24,7 +24,7 @@ public class StarBeastClock extends BranchRateModel.Base {
         speciesTreeRatesX = speciesTreeRatesInput.get();
         geneTree = geneTreeInput.get();
     
-        geneNodeCount = geneTree.getTree().getNodeCount();
+        geneNodeCount = geneTree.getNodeCount();
         branchRates = new double[geneNodeCount];
         storedBranchRates = new double[geneNodeCount];
         needsUpdate = true;

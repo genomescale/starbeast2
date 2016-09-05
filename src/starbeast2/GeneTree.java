@@ -1,20 +1,26 @@
 package starbeast2;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+import beast.core.Distribution;
 import beast.core.Input;
+import beast.core.Input.Validate;
+import beast.core.State;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
 
 /**
+* @author Remco Bouckaert
 * @author Huw Ogilvie
  */
 
-public class GeneTree extends TreeWrapper {
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.");
+public class GeneTree extends Distribution {
+    public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
+    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
     protected double ploidy;
 
@@ -33,8 +39,7 @@ public class GeneTree extends TreeWrapper {
     final static int DELTA_BLOCK_SIZE = 4;
     private int blocksize = DELTA_BLOCK_SIZE; // size of blocks for storing coalescentTimes, may grow (and shrink) throughout the MCMC
     int maxCoalescentCounts, storedMaxCoalescentCounts; // maximum number of coalescent events in a branch -- blocksize must always be at least as large
-    
-    
+
     protected int [] coalescentLineageCounts; // the number of lineages at the tipward end of each branch
     protected int [] storedCoalescentLineageCounts; // the number of lineages at the tipward end of each branch
 
@@ -49,7 +54,6 @@ public class GeneTree extends TreeWrapper {
     int [] leafCoalescentLineageCounts;
     int [] leafGeneNodeSpeciesAssignment;
 
-    
     int updateCount = 0;
     boolean stopPopping = false;
    
@@ -130,11 +134,7 @@ public class GeneTree extends TreeWrapper {
 
         // generate map of species tree tip node names to node numbers
         final SpeciesTree speciesTree = speciesTreeInput.get();
-        spTree = speciesTree.treeInput.get();
-
-        
-        final SpeciesTree speciesTreeWrapper = speciesTreeInput.get();
-        final Map<String, Integer> tipNumberMap = speciesTreeWrapper.getTipNumberMap();
+        final Map<String, Integer> tipNumberMap = speciesTree.getTipNumberMap();
         TreeInterface geneTree = treeInput.get();
         localTipNumberMap = new int[geneTree.getLeafNodeCount()];
         for (int i = 0; i < geneTree.getLeafNodeCount(); i++) {
@@ -146,7 +146,7 @@ public class GeneTree extends TreeWrapper {
         storedGeneTreeCompatible = false;
 
         needsUpdate = true;
-        speciesTreeNodeCount = speciesTree.treeInput.get().getNodeCount();
+        speciesTreeNodeCount = speciesTree.getNodeCount();
         coalescentLineageCounts = new int[speciesTreeNodeCount];
         storedCoalescentLineageCounts = new int[speciesTreeNodeCount];
         
@@ -226,6 +226,7 @@ public class GeneTree extends TreeWrapper {
 	        for (int geneTreeLeafNumber = 0; geneTreeLeafNumber < geneTreeLeafNodeCount; geneTreeLeafNumber++) {
 	            final Node geneTreeLeafNode = geneTree.getNode(geneTreeLeafNumber);
 	            final int speciesTreeLeafNumber = localTipNumberMap[geneTreeLeafNode.getNr()];
+	            System.out.println(speciesTreeLeafNumber);
 	            final Node speciesTreeLeafNode = spTree.getNode(speciesTreeLeafNumber);	
 	            final Node firstCoalescenceNode = geneTreeLeafNode.getParent();
 	            final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
@@ -309,7 +310,7 @@ public class GeneTree extends TreeWrapper {
     private boolean recurseCoalescenceEvents(int lastGeneTreeNodeNumber, double lastHeight, Node geneTreeNode, int geneTreeNodeNumber, Node speciesTreeNode, int speciesTreeNodeNumber) {
         while (true) {
 	    	final double geneTreeNodeHeight = geneTreeNode.getHeight();
-	
+
 	        // check if the next coalescence event occurs in an ancestral branch
 	    	while (!speciesTreeNode.isRoot() && geneTreeNodeHeight >= speciesTreeNode.getParent().getHeight()) {
 //	            if (geneTreeNode.isDirty() != Tree.IS_CLEAN ) {
@@ -322,15 +323,15 @@ public class GeneTree extends TreeWrapper {
                 speciesTreeNode = speciesTreeParentNode;
                 speciesTreeNodeNumber = speciesTreeParentNodeNumber;
            }
-	
+
 	        // this code executes if the next coalescence event occurs within the current branch
 	        speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
 	        final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
 	        if (existingSpeciesAssignment == -1) {
 	            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
-	            
+
 	            coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
-	            
+
 	            final Node nextGeneTreeNode = geneTreeNode.getParent();
 	            if (nextGeneTreeNode == null) {
 	                // this is the root of the gene tree and no incompatibilities were detected
@@ -350,7 +351,6 @@ public class GeneTree extends TreeWrapper {
 	        }
 	    }
     }
-    
 
     public double[] getSpeciesOccupancy() {
         if (needsUpdate) {
@@ -374,13 +374,30 @@ public class GeneTree extends TreeWrapper {
 	int [] getTipNumberMap() {
 		return localTipNumberMap;
 	}
-	
-    /* public double[] getOccupancy(Node node) {
-        if (needsUpdate) {
-            update();
-        }
 
-        final int geneTreeNodeNumber = node.getNr();
-        return speciesOccupancy[geneTreeNodeNumber];
-    } */
+    @Override
+    public List<String> getArguments() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<String> getConditions() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void sample(State state, Random random) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public int getNodeCount() {
+        return geneTreeNodeCount;
+    }
+
+    public Node getRoot() {
+        return treeInput.get().getRoot();
+    }
 }
