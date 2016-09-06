@@ -58,18 +58,16 @@ public class GeneTree extends Distribution {
     boolean stopPopping = false;
    
     // maps gene tree tip numbers to species tree tip number
-    private int [] localTipNumberMap;
+    private int[] localTipNumberMap;
 
-    private boolean [] speciesBranchIsDirty;
-    //private boolean [] storedSpeciesBranchIsDirty;
+    private boolean[] speciesBranchIsDirty;
 
     SpeciesTree spTree;
     Tree geneTree;
-    //List<Node> dirtyList = new ArrayList<>();
-    
+
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = spTree.somethingIsDirty() || geneTree.somethingIsDirty();
+        needsUpdate = true;
         return needsUpdate;
     }
 
@@ -122,7 +120,6 @@ public class GeneTree extends Distribution {
         super.restore();
     }
 
-    
     public void initAndValidate() {
         ploidy = ploidyInput.get();
 
@@ -146,7 +143,6 @@ public class GeneTree extends Distribution {
         geneTreeCompatible = false;
         storedGeneTreeCompatible = false;
 
-        needsUpdate = true;
         speciesTreeNodeCount = spTree.getNodeCount();
         coalescentLineageCounts = new int[speciesTreeNodeCount];
         storedCoalescentLineageCounts = new int[speciesTreeNodeCount];
@@ -161,8 +157,7 @@ public class GeneTree extends Distribution {
         storedSpeciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
         
         speciesBranchIsDirty = new boolean[speciesTreeNodeCount];
-        
-        
+
         leafCoalescentLineageCounts = new int[speciesTreeNodeCount];
         leafGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
         Arrays.fill(leafGeneNodeSpeciesAssignment, -1);
@@ -173,6 +168,15 @@ public class GeneTree extends Distribution {
             leafCoalescentLineageCounts[speciesTreeLeafNumber]++;            
             leafGeneNodeSpeciesAssignment[geneTreeLeafNumber] = speciesTreeLeafNumber;
         }
+
+        needsUpdate = true;
+        logP = 0.0;
+    }
+
+    @Override
+    public double calculateLogP() {
+        logP = (computeCoalescentTimes()) ? 0.0 : Double.NEGATIVE_INFINITY;
+        return logP;
     }
 
     protected boolean computeCoalescentTimes() {

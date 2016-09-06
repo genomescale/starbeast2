@@ -8,12 +8,11 @@ import java.util.List;
 import org.junit.Test;
 
 import beast.core.State;
-import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import starbeast2.AnalyticalCoalescentProbability;
+import starbeast2.MultispeciesCoalescent;
 import starbeast2.GeneTree;
 import starbeast2.SpeciesTree;
 
@@ -25,7 +24,9 @@ public class ConstantIOTest {
     private List<TreeParser> geneTrees = new ArrayList<>();
     private List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
-    private AnalyticalCoalescentProbability populationModel;
+    private MultispeciesCoalescent msc;
+
+    private State state;
     private RealParameter alphaParameter;
     private RealParameter meanParameter;
 
@@ -44,6 +45,7 @@ public class ConstantIOTest {
         nSpecies = 4;
         expectedLogP = -14.5233984762; // this should be the right answer (calculated by hand)
 
+        state = new State();
         alphaParameter = new RealParameter();
         meanParameter = new RealParameter();
 
@@ -58,12 +60,10 @@ public class ConstantIOTest {
     @Test
     public void testLogP() throws Exception {
         TaxonSet speciesSuperset = generateSuperset();
-        initializeSpeciesTree(speciesSuperset);
-        initializeGeneTrees();
-        initializePopulationModel();
+        initialize(speciesSuperset);
 
-        final double calculatedLogP = populationModel.calculateLogP();
-
+        final double calculatedLogP = msc.calculateLogP();
+        // System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
@@ -84,12 +84,10 @@ public class ConstantIOTest {
         return speciesSuperset;
     }
 
-    private void initializeSpeciesTree(TaxonSet speciesSuperset) throws Exception {
+    private void initialize(TaxonSet speciesSuperset) throws Exception {
         speciesTree = new SpeciesTree();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
-    }
 
-    private void initializeGeneTrees() throws Exception {
         for (String geneTreeNewick: newickGeneTrees) {
             TreeParser geneTree = new TreeParser();
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
@@ -99,18 +97,13 @@ public class ConstantIOTest {
             geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree);
             geneTreeWrappers.add(geneTreeWrapper);
         }
-    }
 
-    private void initializePopulationModel() throws Exception {
-        State state = new State();
         state.initByName("stateNode", alphaParameter);
         state.initByName("stateNode", meanParameter);
-        state.initialise();
 
-        final BooleanParameter disableParameter = new BooleanParameter();
-        disableParameter.initByName("value", "false");
+        msc = new MultispeciesCoalescent();
+        msc.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "speciesTree", speciesTree, "distribution", geneTreeWrappers);
 
-        populationModel = new AnalyticalCoalescentProbability();
-        populationModel.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "disable", disableParameter, "speciesTree", speciesTree, "geneTree", geneTreeWrappers);
+        for (GeneTree gt: geneTreeWrappers) gt.calculateLogP();
     }
 }

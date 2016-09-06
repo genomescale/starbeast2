@@ -15,7 +15,7 @@ import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
-import starbeast2.AnalyticalCoalescentProbability;
+import starbeast2.MultispeciesCoalescent;
 import starbeast2.MultispeciesPopulationModel;
 import starbeast2.SpeciesTree;
 
@@ -31,7 +31,7 @@ abstract class ExchangeTestHelper {
 
     RealParameter popSizesParameter;
     MultispeciesPopulationModel populationModel;
-    AnalyticalCoalescentProbability msc;
+    MultispeciesCoalescent msc;
 
     double ploidy;
     double popSize;
@@ -62,7 +62,7 @@ abstract class ExchangeTestHelper {
         populationModel = new ConstantPopulation();
         populationModel.initByName("populationSizes", popSizesParameter);
 
-        msc = new AnalyticalCoalescentProbability();
+        msc = new MultispeciesCoalescent();
         msc.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTreeWrappers, "populationModel", populationModel);
         
         int nBranches = speciesTree.getNodeCount();

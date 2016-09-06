@@ -1,6 +1,5 @@
 package starbeast2;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -8,7 +7,6 @@ import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.core.State;
 import beast.evolution.tree.Node;
@@ -20,15 +18,12 @@ import beast.evolution.tree.Node;
  */
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
-public class AnalyticalCoalescentProbability extends Distribution {
-    final public Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
+public class MultispeciesCoalescent extends CompoundDistribution {
     final public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
-    final public Input<RealParameter> populationShapeInput = new Input<>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
-    final public Input<RealParameter> populationMeanInput = new Input<>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.", Validate.REQUIRED);
-    final public Input<BooleanParameter> disableInput = new Input<>("disable", "Disable calculating analytical probability.", Validate.REQUIRED);
+    final public Input<RealParameter> populationShapeInput = new Input<>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.");
+    final public Input<RealParameter> populationMeanInput = new Input<>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.");
 
     private SpeciesTree speciesTree;
-    private List<GeneTree> geneTrees;
     private RealParameter invGammaShape;
     private RealParameter invGammaMean;
 
@@ -101,56 +96,62 @@ public class AnalyticalCoalescentProbability extends Distribution {
 
     @Override
     public void initAndValidate() {
-        dontCalculate = disableInput.get().getValue();
-        if (dontCalculate) return;
+        super.initAndValidate();
+
+        if (populationShapeInput.get() == null ^ populationMeanInput.get() == null) {
+            throw new IllegalArgumentException("Either specify both population size prior parameters for analytical integration,"
+                    + "or neither for MCMC integration of population sizes.");
+        } else if (populationShapeInput.get() == null) {
+            dontCalculate = true;
+            return;
+        }
+
+        dontCalculate = false;
+        checkHyperparameters(true);
 
         speciesTree = speciesTreeInput.get();
         speciesNodeCount = speciesTree.getNodeCount();
 
-        geneTrees = geneTreesInput.get();
+        final List<Distribution> geneTrees = pDistributions.get();
         nGeneTrees = geneTrees.size();
+        perGenePloidy = new double[nGeneTrees];
+
+        for (int geneI = 0; geneI < nGeneTrees; geneI++) {
+            final Distribution pDist = geneTrees.get(geneI);
+            if (pDist instanceof GeneTree) {
+                final GeneTree geneTreeI = (GeneTree) pDist;
+                perGenePloidy[geneI] = geneTreeI.ploidy;
+            } else { // check that all input distributions are gene trees
+                throw new IllegalArgumentException("Input distributions must all be of class GeneTree.");
+            }
+        }
 
         allLineageCounts = new int[speciesNodeCount*nGeneTrees];
         allEventCounts = new int[speciesNodeCount*nGeneTrees];
         allCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
         perBranchLogP = new double[speciesNodeCount];
+    }
 
-        perGenePloidy = new double[nGeneTrees];
-        for (int geneI = 0; geneI < nGeneTrees; geneI++) {
-            final GeneTree geneTreeI = geneTrees.get(geneI);
-            perGenePloidy[geneI] = geneTreeI.ploidy;
+    private boolean checkHyperparameters(final boolean force) {
+        invGammaShape = populationShapeInput.get();
+        invGammaMean = populationMeanInput.get();
+
+        if (invGammaShape.isDirty(0) || invGammaMean.isDirty(0) || force) {
+            alpha = invGammaShape.getValue();
+            beta = invGammaMean.getValue() * (alpha - 1.0);
+            return true;
         }
+
+        return false;
     }
 
     @Override
 	public double calculateLogP() {
-        logP = 0.0;
-        if (dontCalculate) return logP;
-
-        // recompute coalescent counts and times
-        geneTrees = geneTreesInput.get();
-        for (int geneI = 0; geneI < nGeneTrees; geneI++) {
-            final GeneTree geneTree = geneTrees.get(geneI);
-            if (!geneTree.computeCoalescentTimes()) {
-                assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane
-                logP = Double.NEGATIVE_INFINITY;
-                return logP;
-            }
-        }
+        logP = super.calculateLogP();
+        if (logP == Double.NEGATIVE_INFINITY || dontCalculate) return logP;
 
         // need to recompute all branches if the parameters of the prior distribution have changed
-        invGammaShape = populationShapeInput.get();
-        invGammaMean = populationMeanInput.get();
-
-        boolean updatedPrior = false;
-        if (invGammaShape.isDirty(0) || alpha == 0.0) {
-            alpha = invGammaShape.getValue();
-            updatedPrior = true;
-        }
-        if (invGammaMean.isDirty(0) || beta == 0.0) {
-            beta = invGammaMean.getValue() * (alpha - 1.0);
-            updatedPrior = true;
-        }
+        final boolean updatedPrior = checkHyperparameters(false);
 
         final int[] branchLineageCounts = new int[nGeneTrees];
         final int[] branchEventCounts = new int[nGeneTrees];
@@ -158,6 +159,7 @@ public class AnalyticalCoalescentProbability extends Distribution {
 
         // rebuild species start and end times (if necessary)
         final Node[] speciesTreeNodes = speciesTree.getNodesAsArray();
+        final List<Distribution> geneTrees = pDistributions.get();
         int nodeGeneI = 0;
         for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
             final Node speciesNode = speciesTreeNodes[nodeI];
@@ -168,7 +170,7 @@ public class AnalyticalCoalescentProbability extends Distribution {
 
             boolean dirtyBranch = false;
             for (int geneI = 0; geneI < nGeneTrees; geneI++) {
-                final GeneTree geneTree = geneTrees.get(geneI);
+                final GeneTree geneTree = (GeneTree) geneTrees.get(geneI);
 
                 if (geneTree.isDirtyBranch(geneI)) {
                     dirtyBranch = true;
@@ -195,7 +197,7 @@ public class AnalyticalCoalescentProbability extends Distribution {
             }
 
             if (updatedPrior || dirtyBranch)
-                perBranchLogP[nodeI] = branchLogP(alpha, beta, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+                perBranchLogP[nodeI] = analyticalLogP(alpha, beta, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
 
             logP += perBranchLogP[nodeI];
         }
@@ -203,7 +205,7 @@ public class AnalyticalCoalescentProbability extends Distribution {
         return logP;
     }
 
-    static private double branchLogP(double alpha, double beta, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+    static private double analyticalLogP(double alpha, double beta, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
         final int nGenes = perGenePloidy.length;
 
         int branchQ = 0;
