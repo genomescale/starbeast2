@@ -40,14 +40,6 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
     }
 
-	public void doStore() {
-		// override if something needs to be stored for commonContributionLogP()
-	}
-
-	public void doRetore() {
-		// override if something needs to be stored for commonContributionLogP()
-	}
-
     protected static double constantLogP(double popSize, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
         int branchQ = 0;
         double branchLogR = 0.0;
