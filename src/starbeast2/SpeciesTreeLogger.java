@@ -28,7 +28,6 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
     final public Input<Boolean> substitutionsInput = new Input<>("substitutions", "report branch lengths as substitutions (branch length times clock rate for the branch)", false);
     final public Input<Integer> decimalPlacesInput = new Input<>("dp", "the number of decimal places to use writing branch lengths and rates, use -1 for full precision (default = full precision)", -1);
 
-
     boolean someMetaDataNeedsLogging;
     boolean substitutions = false;
 
