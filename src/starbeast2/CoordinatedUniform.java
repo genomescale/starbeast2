@@ -25,7 +25,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
-    TreeInterface speciesTree;
+    SpeciesTreeInterface speciesTree;
 
     @Override
     public void initAndValidate() {
