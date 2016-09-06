@@ -8,6 +8,7 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
+import beast.core.util.CompoundDistribution;
 import beast.core.State;
 import beast.evolution.tree.Node;
 
