@@ -19,7 +19,7 @@ import beast.evolution.tree.TreeInterface;
 
 @Description("Calculates probability of a single gene tree conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescentSingle extends Distribution {
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
     public Input<GeneTree> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", Validate.REQUIRED);
     public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
@@ -70,7 +70,7 @@ public class MultispeciesCoalescentSingle extends Distribution {
 
         geneTreeNumber = populationModel.getGeneTreeNumber(speciesTreeNodeCount);
     }
-    
+
     @Override
 	public double calculateLogP() {
         final MultispeciesPopulationModel populationModel = populationModelInput.get();

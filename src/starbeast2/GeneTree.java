@@ -20,7 +20,7 @@ import beast.evolution.tree.TreeInterface;
 
 public class GeneTree extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.", Validate.REQUIRED);
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
     protected double ploidy;
 
@@ -62,7 +62,7 @@ public class GeneTree extends Distribution {
 
     private boolean[] speciesBranchIsDirty;
 
-    SpeciesTree spTree;
+    SpeciesTreeInterface spTree;
     Tree geneTree;
 
     @Override

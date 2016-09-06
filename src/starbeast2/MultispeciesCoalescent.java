@@ -19,11 +19,11 @@ import beast.evolution.tree.Node;
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends CompoundDistribution {
-    final public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
+    final public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
     final public Input<RealParameter> populationShapeInput = new Input<>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.");
     final public Input<RealParameter> populationMeanInput = new Input<>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.");
 
-    private SpeciesTree speciesTree;
+    private SpeciesTreeInterface speciesTree;
     private RealParameter invGammaShape;
     private RealParameter invGammaMean;
 

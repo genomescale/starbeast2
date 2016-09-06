@@ -16,11 +16,10 @@ import beast.core.StateNode;
 import beast.core.parameter.Parameter;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 
 @Description("Based on the TreeWithMetaDataLogger class, but with support for population sizes")
 public class SpeciesTreeLogger extends BEASTObject implements Loggable {
-    final public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree to be logged.", Validate.REQUIRED);
+    final public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree to be logged.", Validate.REQUIRED);
     final public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
     final public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree", Validate.OPTIONAL);
     // TODO: make this input a list of valuables
@@ -61,15 +60,15 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         speciesTree.init(out);
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
         // make sure we get the current version of the inputs
-        SpeciesTree speciesTree = speciesTreeInput.get();
-        Tree tree = (Tree) speciesTree.getCurrent();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
+        SpeciesTreeInterface tree = (SpeciesTreeInterface) speciesTree.getCurrent();
         List<Function> metadata = parameterInput.get();
         for (int i = 0; i < metadata.size(); i++) {
             if (metadata.get(i) instanceof StateNode) {
@@ -191,7 +190,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void close(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         speciesTree.close(out);
     }
 

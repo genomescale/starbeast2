@@ -14,13 +14,13 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.MultispeciesCoalescent;
 import starbeast2.GeneTree;
-import starbeast2.SpeciesTree;
+import starbeast2.SpeciesTreeParser;
 
 public class ConstantIOTest {
     private String newickSpeciesTree;
     private List<String> newickGeneTrees = new ArrayList<>();
 
-    private SpeciesTree speciesTree;
+    private SpeciesTreeParser speciesTree;
     private List<TreeParser> geneTrees = new ArrayList<>();
     private List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
@@ -85,7 +85,7 @@ public class ConstantIOTest {
     }
 
     private void initialize(TaxonSet speciesSuperset) throws Exception {
-        speciesTree = new SpeciesTree();
+        speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
 
         for (String geneTreeNewick: newickGeneTrees) {
