@@ -9,13 +9,10 @@ import beast.evolution.tree.Node;
 
 /**
 * @author Huw Ogilvie
-* @author Joseph Heled
  */
 
 @Description("Calculates probability of coalescence events within a branch based on a demographic function.")
 public abstract class MultispeciesPopulationModel extends CalculationNode {
-    public abstract double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts);
-
     public abstract double branchLogP(int geneTreeNumber, int speciesTreeNodeNumber, Node speciesTreeNode, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts);
 
     /* return unique gene tree number, to be used as argument to branchLogP */
@@ -27,13 +24,7 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     	geneTreeCount++;
     	return geneTreeCount - 1;
     }
-    
-    /* return contribution to logP that uses shared information among gene trees */
-    public double commonContributionLogP() {
-    	return 0.0;
-    }
-    
-    
+
     // Sets the appropriate dimension size of each population size state node
     // To successfully resume from a saved state, this must be called via an initAndValidate method
     public void initPopSizes(final int nSpeciesBranches) {
@@ -49,39 +40,15 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
     public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
     }
 
-    protected static double constantLogP(double popSize, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
-        final int nGenes = perGenePloidy.length;
+	public void doStore() {
+		// override if something needs to be stored for commonContributionLogP()
+	}
 
-        int branchQ = 0;
-        double branchLogR = 0.0;
-        double branchGamma = 0.0;
-
-        for (int j = 0; j < nGenes; j++) {
-            final int geneN = branchLineageCounts[j];
-            final double[] geneCoalescentTimes = branchCoalescentTimes[j];
-            final int geneK = branchEventCounts[j];
-            final double genePloidy = perGenePloidy[j]; 
-            branchLogR -= geneK * Math.log(genePloidy);
-            branchQ += geneK;
-
-            double partialGamma = 0.0;
-            for (int i = 0; i < geneK; i++) {
-                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i]) * (geneN - i) * (geneN - (i + 1.0)) / 2.0;
-            }
-            
-            if (geneN - geneK > 1) {
-                partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK]) * (geneN - geneK) * (geneN - (geneK + 1.0)) / 2.0;
-            }
-
-            branchGamma += partialGamma / genePloidy;
-        }
-
-        final double logP = branchLogR - (branchQ * Math.log(popSize)) - (branchGamma / popSize);
-        return logP;
-    }
+	public void doRetore() {
+		// override if something needs to be stored for commonContributionLogP()
+	}
 
     protected static double constantLogP(double popSize, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
-
         int branchQ = 0;
         double branchLogR = 0.0;
         double branchGamma = 0.0;
@@ -107,106 +74,4 @@ public abstract class MultispeciesPopulationModel extends CalculationNode {
         final double logP = branchLogR - (branchQ * Math.log(popSize)) - (branchGamma / popSize);
         return logP;
     }
-
-    // copied from *BEAST v2.3, with small modifications to work with starbeast2
-    protected static double linearLogP(double topPopSize, double tipPopSize, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
-        final int nGenes = perGenePloidy.length;
-
-        double logP = 0.0;
-        for (int j = 0; j < nGenes; j++) {
-            final double fPopSizeTop = topPopSize * perGenePloidy[j];
-            final double fPopSizeBottom = tipPopSize * perGenePloidy[j];
-            final double[] fTimes = branchCoalescentTimes[j];
-            final int k = branchEventCounts[j];
-            final int nLineagesBottom = branchLineageCounts[j];
-
-            final double d5 = fPopSizeTop - fPopSizeBottom;
-            final double fTime0 = fTimes[0];
-            final double a = d5 / (fTimes[k + 1] - fTime0);
-            final double b = fPopSizeBottom;
-
-            if (Math.abs(d5) < 1e-10) {
-                // use approximation for small values to bypass numerical instability
-                for (int i = 0; i <= k; i++) {
-                    final double fTimeip1 = fTimes[i + 1];
-                    final double fPopSize = a * (fTimeip1 - fTime0) + b;
-                    if( i < k ) {
-                        logP += -Math.log(fPopSize);
-                    }
-                    // slope = 0, so population function is constant
-
-                    final int i1 = nLineagesBottom - i;
-                    logP -= (i1 * (i1 - 1.0) / 2.0) * (fTimeip1 - fTimes[i]) / fPopSize;
-                }
-            } else {
-                final double vv = b - a * fTime0;
-                for (int i = 0; i <= k; i++) {
-                    final double fPopSize = a * fTimes[i + 1] + vv;
-                    if( i < k ) {
-                        logP += -Math.log(fPopSize);
-                    }
-                    final double f = fPopSize / (a * fTimes[i] + vv);
-    
-                    final int i1 = nLineagesBottom - i;
-                    logP += -(i1 * (i1 - 1.0) / 2.0) * Math.log(f) / a;
-                }
-            }
-        }
-
-        return logP;
-    }
-
-    static double linearLogP(double topPopSize, double tipPopSize, double perGenePloidy,
-			double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
-
-        double logP = 0.0;
-        final double fPopSizeTop = topPopSize * perGenePloidy;
-        final double fPopSizeBottom = tipPopSize * perGenePloidy;
-        final double[] fTimes = branchCoalescentTimes;
-        final int k = branchEventCounts;
-        final int nLineagesBottom = branchLineageCounts;
-
-        final double d5 = fPopSizeTop - fPopSizeBottom;
-        final double fTime0 = fTimes[0];
-        final double a = d5 / (fTimes[k + 1] - fTime0);
-        final double b = fPopSizeBottom;
-
-        if (Math.abs(d5) < 1e-10) {
-            // use approximation for small values to bypass numerical instability
-            for (int i = 0; i <= k; i++) {
-                final double fTimeip1 = fTimes[i + 1];
-                final double fPopSize = a * (fTimeip1 - fTime0) + b;
-                if( i < k ) {
-                    logP += -Math.log(fPopSize);
-                }
-                // slope = 0, so population function is constant
-
-                final int i1 = nLineagesBottom - i;
-                logP -= (i1 * (i1 - 1.0) / 2.0) * (fTimeip1 - fTimes[i]) / fPopSize;
-            }
-        } else {
-            final double vv = b - a * fTime0;
-            for (int i = 0; i <= k; i++) {
-                final double fPopSize = a * fTimes[i + 1] + vv;
-                if( i < k ) {
-                    logP += -Math.log(fPopSize);
-                }
-                final double f = fPopSize / (a * fTimes[i] + vv);
-
-                final int i1 = nLineagesBottom - i;
-                logP += -(i1 * (i1 - 1.0) / 2.0) * Math.log(f) / a;
-            }
-        }
-
-        return logP;
-	}
-
-	public void doStore() {
-		// override if something needs to be stored for commonContributionLogP()
-	}
-
-	public void doRetore() {
-		// override if something needs to be stored for commonContributionLogP()
-	}
-
 }

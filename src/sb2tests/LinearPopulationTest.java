@@ -9,7 +9,7 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import starbeast2.LinearPopulation;
+import starbeast2.LinearWithConstantRoot;
 import starbeast2.MultispeciesPopulationModel;
 
 public class LinearPopulationTest extends PopulationTestHelper {
@@ -65,7 +65,7 @@ public class LinearPopulationTest extends PopulationTestHelper {
         state.initByName("stateNode", tipPopSizesParameter);
         state.initialise();
 
-        MultispeciesPopulationModel populationModel = new LinearPopulation();
+        MultispeciesPopulationModel populationModel = new LinearWithConstantRoot();
         populationModel.initByName("topPopSizes", topPopSizesParameter, "tipPopSizes", tipPopSizesParameter);
         
         return populationModel;
