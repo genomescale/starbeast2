@@ -20,14 +20,14 @@ public class ConstantPopulation extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int geneTreeNode, int speciesTreeNodeNumber, Node speciesTreeNode, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double ploidy, double[] branchCoalescentTimes, int branchLineageCount, int branchEventCount) {
         final RealParameter popSizes = popSizesInput.get();
         final double popSize = popSizes.getValue(speciesTreeNodeNumber);
-        double logP = constantLogP(popSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+        double logP = constantLogP(popSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
 
         return logP;
     }
-        
+
     @Override
     public void initPopSizes(int nBranches) {
         final RealParameter popSizes = popSizesInput.get();

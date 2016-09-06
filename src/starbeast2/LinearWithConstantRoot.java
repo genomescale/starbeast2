@@ -22,7 +22,7 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
     }
 
     @Override
-    public double branchLogP(int geneTreeNode, int speciesTreeNodeNumber, Node speciesTreeNode, double perGenePloidy, double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
+    public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double ploidy, double[] branchCoalescentTimes, int branchLineageCount, int branchEventCount) {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
 
@@ -37,7 +37,7 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
-        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
 
         return logP;
     }
@@ -97,14 +97,11 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
     }
 
     static double linearLogP(double topPopSize, double tipPopSize, double perGenePloidy,
-            double[] branchCoalescentTimes, int branchLineageCounts, int branchEventCounts) {
+            double[] fTimes, int nLineagesBottom, int k) {
 
         double logP = 0.0;
         final double fPopSizeTop = topPopSize * perGenePloidy;
         final double fPopSizeBottom = tipPopSize * perGenePloidy;
-        final double[] fTimes = branchCoalescentTimes;
-        final int k = branchEventCounts;
-        final int nLineagesBottom = branchLineageCounts;
 
         final double d5 = fPopSizeTop - fPopSizeBottom;
         final double fTime0 = fTimes[0];

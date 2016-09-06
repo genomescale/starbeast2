@@ -1,5 +1,7 @@
 package sb2tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,24 +11,41 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import starbeast2.ConstantPopulationIO;
-import starbeast2.MultispeciesPopulationModel;
+import beast.util.TreeParser;
+import starbeast2.MultispeciesCoalescent;
+import starbeast2.GeneTree;
+import starbeast2.SpeciesTreeParser;
 
-public class MissingDataConstantIO extends PopulationTestHelper {
+public class MissingDataConstantIO {
+    private String newickSpeciesTree;
+    private List<String> newickGeneTrees = new ArrayList<>();
+
+    private SpeciesTreeParser speciesTree;
+    private List<TreeParser> geneTrees = new ArrayList<>();
+    private List<GeneTree> geneTreeWrappers = new ArrayList<>();
+
+    private MultispeciesCoalescent msc;
+
+    private State state;
+    private RealParameter alphaParameter;
+    private RealParameter meanParameter;
+
+    private double ploidy;
+    private double expectedLogP;
+    private int nSpecies;
+
+    private final double allowedError = 10e-6;
     private final double alpha = 1.5;
     private final double beta = 2.5;
     private final double mean = beta / (alpha - 1.0);
     private final int individualsPerSpecies = 2;
 
-    private RealParameter alphaParameter;
-    private RealParameter meanParameter;
-
     public MissingDataConstantIO() throws Exception {
-        popSize = 0.3;
         ploidy = 2.0;
         nSpecies = 4;
         expectedLogP = -10.956285249389675; // haven't checked this is the right answer
 
+        state = new State();
         alphaParameter = new RealParameter();
         meanParameter = new RealParameter();
 
@@ -40,24 +59,15 @@ public class MissingDataConstantIO extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
-        super.testLogP();
+        TaxonSet speciesSuperset = generateSuperset();
+        initialize(speciesSuperset);
+
+        final double calculatedLogP = msc.calculateLogP();
+        // System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    @Override
-    public MultispeciesPopulationModel generatePopulationModel() throws Exception {
-        State state = new State();
-        state.initByName("stateNode", alphaParameter);
-        state.initByName("stateNode", meanParameter);
-        state.initialise();
-
-        MultispeciesPopulationModel populationModel = new ConstantPopulationIO();
-        populationModel.initByName("populationShape", alphaParameter, "populationMean", meanParameter);
-        
-        return populationModel;
-    }
-
-    @Override
-    public TaxonSet generateSuperset() throws Exception {
+    public TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
         for (int i = 0; i < nSpecies; i++) {
             final String speciesName = String.format("s%d", i);
@@ -72,5 +82,28 @@ public class MissingDataConstantIO extends PopulationTestHelper {
         TaxonSet speciesSuperset = new TaxonSet(superSetList);
         
         return speciesSuperset;
+    }
+
+    private void initialize(TaxonSet speciesSuperset) throws Exception {
+        speciesTree = new SpeciesTreeParser();
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
+
+        for (String geneTreeNewick: newickGeneTrees) {
+            TreeParser geneTree = new TreeParser();
+            geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
+            geneTrees.add(geneTree);
+
+            GeneTree geneTreeWrapper = new GeneTree();
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree);
+            geneTreeWrappers.add(geneTreeWrapper);
+        }
+
+        state.initByName("stateNode", alphaParameter);
+        state.initByName("stateNode", meanParameter);
+
+        msc = new MultispeciesCoalescent();
+        msc.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "speciesTree", speciesTree, "distribution", geneTreeWrappers);
+
+        for (GeneTree gt: geneTreeWrappers) gt.calculateLogP();
     }
 }
