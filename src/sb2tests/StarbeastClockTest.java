@@ -19,19 +19,17 @@ import beast.evolution.tree.Node;
 import beast.util.TreeParser;
 import starbeast2.UncorrelatedRates;
 import starbeast2.GeneTree;
-import starbeast2.SpeciesTree;
+import starbeast2.SpeciesTreeParser;
 import starbeast2.StarBeastClock;
 
 public class StarbeastClockTest {
     private String newickSpeciesTree;
     private String newickGeneTree;
 
-    private TreeParser speciesTree = new TreeParser();
+    private SpeciesTreeParser speciesTree = new SpeciesTreeParser();
     private TreeParser geneTree = new TreeParser();
     
-    private SpeciesTree speciesTreeWrapper = new SpeciesTree();
     private GeneTree geneTreeWrapper = new GeneTree();
-
 
     private final int nSpecies = 3;
     private final int individualsPerSpecies = 2;
@@ -201,15 +199,13 @@ public class StarbeastClockTest {
     }
 
     public void initializeTrees(TaxonSet speciesSuperSet) throws Exception {
-        speciesTree = new TreeParser();
+        speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperSet);
-        speciesTreeWrapper = new SpeciesTree();
-        speciesTreeWrapper.initByName("tree", speciesTree);
 
         geneTree = new TreeParser();
         geneTree.initByName("newick", newickGeneTree, "IsLabelledNewick", true);
 
         geneTreeWrapper = new GeneTree();
-        geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTreeWrapper);
+        geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree);
     }
 }
