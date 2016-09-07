@@ -15,12 +15,15 @@ import beast.evolution.tree.Node;
 @Description("Calculates probability of coalescence events within a branch for a single gene based on a demographic function.")
 public class PopulationModel extends CalculationNode {
     public Input<PopulationModel> childModelInput = new Input<>("childModel", "Pass calculations onwards to another model");
+    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
 
     PopulationModel childModel;
+    SpeciesTree speciesTree;
 
     @Override
     public void initAndValidate() {
         childModel = childModelInput.get();
+        speciesTree = speciesTreeInput.get();
     }
 
     // Calculate the truncated coalescent probability for a single species tree branch and gene
@@ -44,5 +47,10 @@ public class PopulationModel extends CalculationNode {
     // Per-branch population size information which will be added to a Newick string.
     public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
         if (childModel != null) childModel.serialize(speciesTreeNode, buf, df);
+    }
+
+    public boolean isDirtyBranch(Node speciesTreeNode) {
+        if (childModel != null) return childModel.isDirtyBranch(speciesTreeNode);
+        else return false;
     }
 }

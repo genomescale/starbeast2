@@ -99,8 +99,8 @@ public class GeneTree extends Distribution {
     public void restore() {
     	if (needsUpdate) return;
 
-        double [] tmpCoalescentTimes = coalescentTimes;
-        int [] tmpCoalescentCounts = coalescentCounts;
+        double[] tmpCoalescentTimes = coalescentTimes;
+        int[] tmpCoalescentCounts = coalescentCounts;
         int[] tmpCoalescentLineageCounts = coalescentLineageCounts;
         int[] tmpGeneNodeSpeciesAssignment = geneNodeSpeciesAssignment;
         double[] tmpSpeciesOccupancy = speciesOccupancy;
@@ -203,24 +203,13 @@ public class GeneTree extends Distribution {
             return logP;
         }
 
-        final Node[] speciesTreeNodes = speciesTreeInput.get().getNodesAsArray();
+        final Node[] speciesTreeNodes = spTree.getNodesAsArray();
         for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
-            final Node speciesNode = speciesTreeNodes[nodeI];
-            final Node parentNode = speciesNode.getParent();
-
-            final double speciesEndTime = speciesNode.getHeight();
-            final double speciesStartTime = (parentNode == null) ? Double.POSITIVE_INFINITY : parentNode.getHeight();
-
-            if (isDirtyBranch(nodeI)) {
-                final double [] tmpCoalescentTimes = getCoalescentTimes(nodeI);
-                final int branchEventCount = tmpCoalescentTimes.length;
-                final double [] branchCoalescentTimes = new double[branchEventCount + 2];
-                branchCoalescentTimes[0] = speciesEndTime;
-                if (branchEventCount > 0)
-                    System.arraycopy(tmpCoalescentTimes, 0, branchCoalescentTimes, 1, branchEventCount);
-                branchCoalescentTimes[branchEventCount + 1] = speciesStartTime;
-
+            Node speciesNode = speciesTreeNodes[nodeI];
+            if (isDirtyBranch(nodeI) || popModel.isDirtyBranch(speciesNode)) {
                 final int branchLineageCount = coalescentLineageCounts[nodeI];
+                final int branchEventCount = coalescentCounts[nodeI];
+                final double[] branchCoalescentTimes = getCoalescentTimes(nodeI);
                 perBranchLogP[nodeI] = popModel.branchLogP(nodeI, speciesNode, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
             }
 
@@ -314,7 +303,7 @@ public class GeneTree extends Distribution {
 	        
             // determine which species tree branch is dirty for this gene tree
 	        for (int i = 0; i < speciesNodeCount; i++) {
-	        	if (coalescentLineageCounts[i] != storedCoalescentCounts[i] ||
+	        	if (coalescentLineageCounts[i] != storedCoalescentLineageCounts[i] ||
 	        		coalescentCounts[i] != storedCoalescentCounts[i]) {
 	        		speciesBranchIsDirty[i] = true;
 	        	} else {
@@ -402,13 +391,24 @@ public class GeneTree extends Distribution {
         return speciesOccupancy;
     }
 
-	public double[] getCoalescentTimes(int i) {
+	public double[] getCoalescentTimes(int nodeI) {
         if (needsUpdate) update();
 
-		double[] geneBranchCoalescentTimes = new double[coalescentCounts[i]];
-		System.arraycopy(coalescentTimes, i * blocksize, geneBranchCoalescentTimes, 0, geneBranchCoalescentTimes.length);
-		Arrays.sort(geneBranchCoalescentTimes);
-		return geneBranchCoalescentTimes;
+        final Node speciesNode = spTree.getNode(nodeI);
+        final Node parentNode = speciesNode.getParent();
+
+        final double speciesEndTime = speciesNode.getHeight();
+        final double speciesStartTime = (parentNode == null) ? Double.POSITIVE_INFINITY : parentNode.getHeight();
+        final int branchEventCount = coalescentCounts[nodeI];
+
+		final double[] branchCoalescentTimes = new double[branchEventCount + 2];
+		branchCoalescentTimes[0] = speciesEndTime;
+        branchCoalescentTimes[branchEventCount + 1] = speciesStartTime;
+
+		System.arraycopy(coalescentTimes, nodeI * blocksize, branchCoalescentTimes, 1, branchEventCount);
+		Arrays.sort(branchCoalescentTimes);
+
+		return branchCoalescentTimes;
 	}
 
 	protected boolean isDirtyBranch(int nodeNr) {

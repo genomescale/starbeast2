@@ -102,7 +102,7 @@ public class MissingDataConstantIO {
         state.initByName("stateNode", meanParameter);
 
         msc = new MultispeciesCoalescent();
-        msc.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "speciesTree", speciesTree, "distribution", geneTreeWrappers);
+        msc.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "distribution", geneTreeWrappers);
 
         for (GeneTree gt: geneTreeWrappers) gt.calculateLogP();
     }

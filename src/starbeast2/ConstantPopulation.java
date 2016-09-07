@@ -58,6 +58,12 @@ public class ConstantPopulation extends PopulationModel {
         buf.append("}");
     }
 
+    @Override
+    public boolean isDirtyBranch(Node speciesNode) {
+        final RealParameter popSizes = popSizesInput.get();
+        return popSizes.isDirty(speciesNode.getNr());
+    }
+
     protected static double constantLogP(double popSize, double genePloidy, double[] geneCoalescentTimes, int geneN, int geneK) {
         double partialGamma = 0.0;
         for (int i = 0; i < geneK; i++) {

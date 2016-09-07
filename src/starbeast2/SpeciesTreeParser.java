@@ -12,6 +12,8 @@ import beast.util.TreeParser;
 * @author Huw Ogilvie
  */
 
+// mainly for debugging... users who wish to use starting trees can more easily
+// set the "newick" attribute of the StarBeastInitializer
 public class SpeciesTreeParser extends TreeParser implements SpeciesTreeInterface {
     Map<String, Integer> tipNumberMap;
     Multimap<Integer, String> numberTipMap;

@@ -6,11 +6,9 @@ import java.util.Random;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
-import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.core.util.CompoundDistribution;
 import beast.core.State;
-import beast.evolution.tree.Node;
 
 /**
 * @author Remco Bouckaert
@@ -20,11 +18,9 @@ import beast.evolution.tree.Node;
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
 public class MultispeciesCoalescent extends CompoundDistribution {
-    final public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
     final public Input<RealParameter> populationShapeInput = new Input<>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.");
     final public Input<RealParameter> populationMeanInput = new Input<>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.");
 
-    private SpeciesTreeInterface speciesTree;
     private RealParameter invGammaShape;
     private RealParameter invGammaMean;
 
@@ -107,21 +103,20 @@ public class MultispeciesCoalescent extends CompoundDistribution {
             return;
         }
 
+        final List<Distribution> geneTrees = pDistributions.get();
+
         dontCalculate = false;
         checkHyperparameters(true);
-
-        speciesTree = speciesTreeInput.get();
-        speciesNodeCount = speciesTree.getNodeCount();
-
-        final List<Distribution> geneTrees = pDistributions.get();
         nGeneTrees = geneTrees.size();
         perGenePloidy = new double[nGeneTrees];
-
+        speciesNodeCount = -1;
         for (int geneI = 0; geneI < nGeneTrees; geneI++) {
             final Distribution pDist = geneTrees.get(geneI);
             if (pDist instanceof GeneTree) {
-                final GeneTree geneTreeI = (GeneTree) pDist;
-                perGenePloidy[geneI] = geneTreeI.getPloidy();
+                final GeneTree gt = (GeneTree) pDist;
+                perGenePloidy[geneI] = gt.getPloidy();
+                if (speciesNodeCount == -1)
+                    speciesNodeCount = gt.speciesTreeInput.get().getNodeCount();
             } else { // check that all input distributions are gene trees
                 throw new IllegalArgumentException("Input distributions must all be of class GeneTree.");
             }
@@ -158,33 +153,23 @@ public class MultispeciesCoalescent extends CompoundDistribution {
         final int[] branchEventCounts = new int[nGeneTrees];
         final double[][] branchCoalescentTimes = new double[nGeneTrees][];
 
-        // rebuild species start and end times (if necessary)
-        final Node[] speciesTreeNodes = speciesTree.getNodesAsArray();
-        final List<Distribution> geneTrees = pDistributions.get();
+        final List<Distribution> pDists = pDistributions.get();
+        final GeneTree[] geneTrees = new GeneTree[pDists.size()];
+
         int nodeGeneI = 0;
         for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
-            final Node speciesNode = speciesTreeNodes[nodeI];
-            final Node parentNode = speciesNode.getParent();
-
-            final double speciesEndTime = speciesNode.getHeight();
-            final double speciesStartTime = (parentNode == null) ? Double.POSITIVE_INFINITY : parentNode.getHeight();
-
             boolean dirtyBranch = false;
             for (int geneI = 0; geneI < nGeneTrees; geneI++) {
-                final GeneTree geneTree = (GeneTree) geneTrees.get(geneI);
+                if (nodeI == 0) geneTrees[geneI] = (GeneTree) pDists.get(geneI);
+                final GeneTree geneTree = geneTrees[geneI];
 
                 if (geneTree.isDirtyBranch(nodeI)) {
                     dirtyBranch = true;
 
-                    final double [] tmpCoalescentTimes = geneTree.getCoalescentTimes(nodeI);
-                    final int geneBranchEventCount = tmpCoalescentTimes.length;
-                    final double [] geneBranchCoalescentTimes = new double[geneBranchEventCount + 2];
-                    geneBranchCoalescentTimes[0] = speciesEndTime;
-                    if (geneBranchEventCount > 0)
-                        System.arraycopy(tmpCoalescentTimes, 0, geneBranchCoalescentTimes, 1, geneBranchEventCount);
-                    geneBranchCoalescentTimes[geneBranchEventCount + 1] = speciesStartTime;
-
+                    final double[] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(nodeI);
                     final int geneBranchLineageCount = geneTree.coalescentLineageCounts[nodeI];
+                    final int geneBranchEventCount = geneTree.coalescentCounts[nodeI];
+
                     allLineageCounts[nodeGeneI] = geneBranchLineageCount;
                     allEventCounts[nodeGeneI] = geneBranchEventCount;
                     allCoalescentTimes[nodeGeneI] = geneBranchCoalescentTimes;
