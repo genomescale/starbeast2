@@ -60,7 +60,7 @@ public class StarBeastClock extends BranchRateModel.Base {
             double weightedSum = 0.0;
             double branchLength = 0.0;
             for (int j = 0; j < speciesNodeCount; j++) {
-                // System.out.println(String.format("%d, %d: %f, %f", i, j, speciesTreeRates[j], speciesOccupancy[i][j]));
+                // System.out.println(String.format("%d, %d: %f, %f", i, j, speciesTreeRates[j], speciesOccupancy[i * speciesNodeCount + j]));
                 weightedSum += speciesTreeRates[j] * speciesOccupancy[i * speciesNodeCount + j];
                 branchLength += speciesOccupancy[i * speciesNodeCount + j];
             }

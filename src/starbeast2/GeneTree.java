@@ -313,47 +313,51 @@ public class GeneTree extends Distribution {
     // non-recursive version of recurseCoalescenceEventsOrg
     private boolean recurseCoalescenceEvents(int lastGeneTreeNodeNumber, double lastHeight, Node geneTreeNode, int geneTreeNodeNumber, Node speciesTreeNode, int speciesTreeNodeNumber) {
         while (true) {
-	    	final double geneTreeNodeHeight = geneTreeNode.getHeight();
+            final double geneTreeNodeHeight = geneTreeNode.getHeight();
 
-	        // check if the next coalescence event occurs in an ancestral branch
-	    	while (!speciesTreeNode.isRoot() && geneTreeNodeHeight >= speciesTreeNode.getParent().getHeight()) {
-//	            if (geneTreeNode.isDirty() != Tree.IS_CLEAN ) {
-//	            	speciesBranchIsDirty[speciesTreeNodeNumber] = true;
-//	            }
-    			final Node speciesTreeParentNode = speciesTreeNode.getParent();
-                speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = speciesTreeParentNode.getHeight() - lastHeight;
+            // check if the next coalescence event occurs in an ancestral branch
+            while (!speciesTreeNode.isRoot() && geneTreeNodeHeight >= speciesTreeNode.getParent().getHeight()) {
+                /* if (geneTreeNode.isDirty() != Tree.IS_CLEAN )
+                    speciesBranchIsDirty[speciesTreeNodeNumber] = true;
+                */
+                final Node speciesTreeParentNode = speciesTreeNode.getParent();
+                final double speciesTreeParentHeight = speciesTreeParentNode.getHeight();
                 final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
+
+                speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
                 coalescentLineageCounts[speciesTreeParentNodeNumber]++;
+
                 speciesTreeNode = speciesTreeParentNode;
                 speciesTreeNodeNumber = speciesTreeParentNodeNumber;
-           }
+                lastHeight = speciesTreeParentHeight;
+            }
 
-	        // this code executes if the next coalescence event occurs within the current branch
-	        speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
-	        final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
-	        if (existingSpeciesAssignment == -1) {
-	            geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
+            // this code executes if the next coalescence event occurs within the current branch
+            speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
+            final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
+            if (existingSpeciesAssignment == -1) {
+                geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
 
-	            coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
+                coalescentTimes[speciesTreeNodeNumber * blocksize + coalescentCounts[speciesTreeNodeNumber]++] = geneTreeNodeHeight;
 
-	            final Node nextGeneTreeNode = geneTreeNode.getParent();
-	            if (nextGeneTreeNode == null) {
-	                // this is the root of the gene tree and no incompatibilities were detected
-	                return true;
-	            } else {
-	                // if this is not the root of the gene tree, check the subsequent (back in time) coalescence event
-	                lastGeneTreeNodeNumber = geneTreeNodeNumber;
-	                lastHeight = geneTreeNodeHeight;
-	                geneTreeNode = nextGeneTreeNode;
-	                geneTreeNodeNumber = nextGeneTreeNode.getNr();
-	                //return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
-	            }
-	        } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
-	            return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
-	        } else {
-	            return false; // this gene tree IS NOT compatible with the species tree
-	        }
-	    }
+                final Node nextGeneTreeNode = geneTreeNode.getParent();
+                if (nextGeneTreeNode == null) {
+                    // this is the root of the gene tree and no incompatibilities were detected
+                    return true;
+                } else {
+                    // if this is not the root of the gene tree, check the subsequent (back in time) coalescence event
+                    lastGeneTreeNodeNumber = geneTreeNodeNumber;
+                    lastHeight = geneTreeNodeHeight;
+                    geneTreeNode = nextGeneTreeNode;
+                    geneTreeNodeNumber = nextGeneTreeNode.getNr();
+                    //return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
+                }
+            } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
+                return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed
+            } else {
+                return false; // this gene tree IS NOT compatible with the species tree
+            }
+        }
     }
 
     public double[] getSpeciesOccupancy() {
