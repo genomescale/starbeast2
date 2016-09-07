@@ -103,7 +103,5 @@ public class ConstantIOTest {
 
         msc = new MultispeciesCoalescent();
         msc.initByName("populationShape", alphaParameter, "populationMean", meanParameter, "speciesTree", speciesTree, "distribution", geneTreeWrappers);
-
-        for (GeneTree gt: geneTreeWrappers) gt.calculateLogP();
     }
 }

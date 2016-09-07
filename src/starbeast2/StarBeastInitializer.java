@@ -71,11 +71,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<Function> muInput = new Input<>("baseRate",
             "Main clock rate used to scale trees (default 1).");
 
-    final public Input<MultispeciesPopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
+    final public Input<PopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
 
     @Override
     public void initStateNodes() {
-        final MultispeciesPopulationModel populationModel = populationFunctionInput.get();
+        final PopulationModel populationModel = populationFunctionInput.get();
         final Tree speciesTree = speciesTreeInput.get();
         final Set<BEASTInterface> treeOutputs = speciesTreeInput.get().getOutputs();
         final Method method = initMethod.get();

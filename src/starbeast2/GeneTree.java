@@ -22,11 +22,12 @@ public class GeneTree extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
-    protected double ploidy;
+    public Input<PopulationModel> popModelInput = new Input<>("popModel", "Population model used to infer the multispecies coalescent probability for this gene");
 
+    private double ploidy;
     private int geneTreeLeafNodeCount;
     private int geneTreeNodeCount;
-    private int speciesTreeNodeCount;
+    private int speciesNodeCount;
     private boolean needsUpdate;
 
     // the following are matrices associated with each branch of the species tree
@@ -56,14 +57,18 @@ public class GeneTree extends Distribution {
 
     int updateCount = 0;
     boolean stopPopping = false;
-   
+
     // maps gene tree tip numbers to species tree tip number
     private int[] localTipNumberMap;
 
     private boolean[] speciesBranchIsDirty;
 
-    SpeciesTreeInterface spTree;
-    Tree geneTree;
+    private SpeciesTreeInterface spTree;
+    private Tree geneTree;
+    private PopulationModel popModel;
+
+    private double[] perBranchLogP;
+    private double[] storedPerBranchLogP;
 
     @Override
     public boolean requiresRecalculation() {
@@ -82,23 +87,24 @@ public class GeneTree extends Distribution {
 
         System.arraycopy(geneNodeSpeciesAssignment, 0, storedGeneNodeSpeciesAssignment, 0, geneNodeSpeciesAssignment.length);
         System.arraycopy(speciesOccupancy, 0, storedSpeciesOccupancy, 0, speciesOccupancy.length);
-        
+        System.arraycopy(perBranchLogP, 0, storedPerBranchLogP, 0, perBranchLogP.length);
+
         storedGeneTreeCompatible = geneTreeCompatible;
         storedMaxCoalescentCounts = maxCoalescentCounts;
-        
+
         super.store();
     }
 
     @Override
     public void restore() {
-    	if (needsUpdate) {
-    		return;
-    	}
+    	if (needsUpdate) return;
+
         double [] tmpCoalescentTimes = coalescentTimes;
         int [] tmpCoalescentCounts = coalescentCounts;
         int[] tmpCoalescentLineageCounts = coalescentLineageCounts;
         int[] tmpGeneNodeSpeciesAssignment = geneNodeSpeciesAssignment;
         double[] tmpSpeciesOccupancy = speciesOccupancy;
+        double[] tmpPerBranchLogP = perBranchLogP;
         boolean tmpGeneTreeCompatible = geneTreeCompatible;
 
         coalescentTimes = storedCoalescentTimes;
@@ -106,6 +112,7 @@ public class GeneTree extends Distribution {
         coalescentLineageCounts = storedCoalescentLineageCounts;
         speciesOccupancy = storedSpeciesOccupancy;
         geneNodeSpeciesAssignment = storedGeneNodeSpeciesAssignment;
+        perBranchLogP = storedPerBranchLogP;
         geneTreeCompatible = storedGeneTreeCompatible;
 
         storedCoalescentTimes = tmpCoalescentTimes;
@@ -113,6 +120,7 @@ public class GeneTree extends Distribution {
         storedCoalescentLineageCounts = tmpCoalescentLineageCounts;
         storedSpeciesOccupancy = tmpSpeciesOccupancy;
         storedGeneNodeSpeciesAssignment = tmpGeneNodeSpeciesAssignment;
+        storedPerBranchLogP = tmpPerBranchLogP;
         storedGeneTreeCompatible = tmpGeneTreeCompatible;
 
         maxCoalescentCounts = storedMaxCoalescentCounts;
@@ -122,6 +130,7 @@ public class GeneTree extends Distribution {
 
     public void initAndValidate() {
         ploidy = ploidyInput.get();
+        popModel = popModelInput.get();
 
         geneTree = treeInput.get();
         geneTreeNodeCount = geneTree.getNodeCount();
@@ -143,22 +152,26 @@ public class GeneTree extends Distribution {
         geneTreeCompatible = false;
         storedGeneTreeCompatible = false;
 
-        speciesTreeNodeCount = spTree.getNodeCount();
-        coalescentLineageCounts = new int[speciesTreeNodeCount];
-        storedCoalescentLineageCounts = new int[speciesTreeNodeCount];
+        speciesNodeCount = spTree.getNodeCount();
+        coalescentLineageCounts = new int[speciesNodeCount];
+        storedCoalescentLineageCounts = new int[speciesNodeCount];
         
-        coalescentCounts = new int[speciesTreeNodeCount];
-        storedCoalescentCounts = new int[speciesTreeNodeCount];
-        coalescentTimesLength = speciesTreeNodeCount * blocksize;
+        coalescentCounts = new int[speciesNodeCount];
+        storedCoalescentCounts = new int[speciesNodeCount];
+        coalescentTimesLength = speciesNodeCount * blocksize;
         coalescentTimes = new double[coalescentTimesLength + geneTreeNodeCount];
         storedCoalescentTimes = new double[coalescentTimesLength + geneTreeNodeCount];
 
-        speciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
-        storedSpeciesOccupancy = new double[geneTreeNodeCount * speciesTreeNodeCount];
-        
-        speciesBranchIsDirty = new boolean[speciesTreeNodeCount];
+        speciesOccupancy = new double[geneTreeNodeCount * speciesNodeCount];
+        storedSpeciesOccupancy = new double[geneTreeNodeCount * speciesNodeCount];
 
-        leafCoalescentLineageCounts = new int[speciesTreeNodeCount];
+        perBranchLogP = new double[speciesNodeCount];
+        storedPerBranchLogP = new double[speciesNodeCount];
+
+        speciesBranchIsDirty = new boolean[speciesNodeCount];
+        Arrays.fill(speciesBranchIsDirty, true);
+
+        leafCoalescentLineageCounts = new int[speciesNodeCount];
         leafGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
         Arrays.fill(leafGeneNodeSpeciesAssignment, -1);
         
@@ -175,23 +188,46 @@ public class GeneTree extends Distribution {
 
     @Override
     public double calculateLogP() {
-        logP = (computeCoalescentTimes()) ? 0.0 : Double.NEGATIVE_INFINITY;
-        return logP;
-    }
-
-    protected boolean computeCoalescentTimes() {
         if (needsUpdate) {
             update();
         }
 
-        // the number of coalescent times should equal the number of internal gene tree nodes (each a coalescent event)
-        if (geneTreeCompatible) {
-            //assert coalescentTimes.size() == geneTreeNodeCount - geneTreeLeafNodeCount;
-            // this gene tree IS compatible with the species tree
-            return true;
-        } else {
-            return false;
+        if (!geneTreeCompatible) {
+            logP = Double.NEGATIVE_INFINITY;
+            return logP;
         }
+
+        // if using analytical integration no need to specify a population model
+        if (popModel == null) {
+            logP = 0.0;
+            return logP;
+        }
+
+        final Node[] speciesTreeNodes = speciesTreeInput.get().getNodesAsArray();
+        for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
+            final Node speciesNode = speciesTreeNodes[nodeI];
+            final Node parentNode = speciesNode.getParent();
+
+            final double speciesEndTime = speciesNode.getHeight();
+            final double speciesStartTime = (parentNode == null) ? Double.POSITIVE_INFINITY : parentNode.getHeight();
+
+            if (isDirtyBranch(nodeI)) {
+                final double [] tmpCoalescentTimes = getCoalescentTimes(nodeI);
+                final int branchEventCount = tmpCoalescentTimes.length;
+                final double [] branchCoalescentTimes = new double[branchEventCount + 2];
+                branchCoalescentTimes[0] = speciesEndTime;
+                if (branchEventCount > 0)
+                    System.arraycopy(tmpCoalescentTimes, 0, branchCoalescentTimes, 1, branchEventCount);
+                branchCoalescentTimes[branchEventCount + 1] = speciesStartTime;
+
+                final int branchLineageCount = coalescentLineageCounts[nodeI];
+                perBranchLogP[nodeI] = popModel.branchLogP(nodeI, speciesNode, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+            }
+
+            logP += perBranchLogP[nodeI];
+        }
+
+        return logP;
     }
 
     void update() {
@@ -202,14 +238,14 @@ public class GeneTree extends Distribution {
 				// shrink memory reservation for coalescent times?
 				if (! stopPopping &&  (updateCount & 0x7fff) == 0 && maxCoalescentCounts < blocksize - 4) {
 					// ensure stored coalescent times are valid, so that a restore gives proper times
-	            	double [] stmp = new double[speciesTreeNodeCount * (blocksize - 4) + geneTreeNodeCount];
-	            	for (int i = 0; i < speciesTreeNodeCount; i++) {
+	            	double [] stmp = new double[speciesNodeCount * (blocksize - 4) + geneTreeNodeCount];
+	            	for (int i = 0; i < speciesNodeCount; i++) {
 	            		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize - 4), blocksize - 4);
 	            	}
-            		System.arraycopy(stmp, 0, storedCoalescentTimes, 0, speciesTreeNodeCount * (blocksize - 4));
+            		System.arraycopy(stmp, 0, storedCoalescentTimes, 0, speciesNodeCount * (blocksize - 4));
 	            	
 					blocksize -= 4;
-	            	coalescentTimesLength = speciesTreeNodeCount * blocksize;
+	            	coalescentTimesLength = speciesNodeCount * blocksize;
 	            	System.err.print("pop");
 				}
 	    	doStore();
@@ -222,7 +258,7 @@ public class GeneTree extends Distribution {
 	
 	        
 	        // Arrays.fill(coalescentLineageCounts, 0);
-	        System.arraycopy(leafCoalescentLineageCounts, 0, coalescentLineageCounts, 0, speciesTreeNodeCount);
+	        System.arraycopy(leafCoalescentLineageCounts, 0, coalescentLineageCounts, 0, speciesNodeCount);
 	        Arrays.fill(coalescentCounts, 0);
 	        
         	Arrays.fill(speciesBranchIsDirty, false);
@@ -253,10 +289,10 @@ public class GeneTree extends Distribution {
             if (maxCoalescentCounts > blocksize) {
             	// grow memory reservation for coalescent times
             	int DELTA_BLOCK_SIZE = 4*((maxCoalescentCounts+3)/4) - blocksize;
-            	coalescentTimesLength = speciesTreeNodeCount * (blocksize + DELTA_BLOCK_SIZE);
+            	coalescentTimesLength = speciesNodeCount * (blocksize + DELTA_BLOCK_SIZE);
             	double [] tmp = new double[coalescentTimesLength + geneTreeNodeCount];
             	double [] stmp = new double[coalescentTimesLength + geneTreeNodeCount];
-            	for (int i = 0; i < speciesTreeNodeCount; i++) {
+            	for (int i = 0; i < speciesNodeCount; i++) {
             		//System.arraycopy(coalescentTimes, i * blocksize, tmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
             		System.arraycopy(storedCoalescentTimes, i * blocksize, stmp, i * (blocksize + DELTA_BLOCK_SIZE), blocksize);
             	}
@@ -277,7 +313,7 @@ public class GeneTree extends Distribution {
 
 	        
             // determine which species tree branch is dirty for this gene tree
-	        for (int i = 0; i < speciesTreeNodeCount; i++) {
+	        for (int i = 0; i < speciesNodeCount; i++) {
 	        	if (coalescentLineageCounts[i] != storedCoalescentCounts[i] ||
 	        		coalescentCounts[i] != storedCoalescentCounts[i]) {
 	        		speciesBranchIsDirty[i] = true;
@@ -310,7 +346,7 @@ public class GeneTree extends Distribution {
 		return false;
 	}
 
-    // non-recursive version of recurseCoalescenceEventsOrg
+    // non-recursive version of recurseCoalescenceEvents
     private boolean recurseCoalescenceEvents(int lastGeneTreeNodeNumber, double lastHeight, Node geneTreeNode, int geneTreeNodeNumber, Node speciesTreeNode, int speciesTreeNodeNumber) {
         while (true) {
             final double geneTreeNodeHeight = geneTreeNode.getHeight();
@@ -324,7 +360,7 @@ public class GeneTree extends Distribution {
                 final double speciesTreeParentHeight = speciesTreeParentNode.getHeight();
                 final int speciesTreeParentNodeNumber = speciesTreeParentNode.getNr();
 
-                speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
+                speciesOccupancy[lastGeneTreeNodeNumber * speciesNodeCount + speciesTreeNodeNumber] = speciesTreeParentHeight - lastHeight;
                 coalescentLineageCounts[speciesTreeParentNodeNumber]++;
 
                 speciesTreeNode = speciesTreeParentNode;
@@ -333,7 +369,7 @@ public class GeneTree extends Distribution {
             }
 
             // this code executes if the next coalescence event occurs within the current branch
-            speciesOccupancy[lastGeneTreeNodeNumber * speciesTreeNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
+            speciesOccupancy[lastGeneTreeNodeNumber * speciesNodeCount + speciesTreeNodeNumber] = geneTreeNodeHeight - lastHeight;
             final int existingSpeciesAssignment = geneNodeSpeciesAssignment[geneTreeNodeNumber];
             if (existingSpeciesAssignment == -1) {
                 geneNodeSpeciesAssignment[geneTreeNodeNumber] = speciesTreeNodeNumber;
@@ -361,15 +397,15 @@ public class GeneTree extends Distribution {
     }
 
     public double[] getSpeciesOccupancy() {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         return speciesOccupancy;
     }
 
 	public double[] getCoalescentTimes(int i) {
-		double [] geneBranchCoalescentTimes = new double[coalescentCounts[i]];
+        if (needsUpdate) update();
+
+		double[] geneBranchCoalescentTimes = new double[coalescentCounts[i]];
 		System.arraycopy(coalescentTimes, i * blocksize, geneBranchCoalescentTimes, 0, geneBranchCoalescentTimes.length);
 		Arrays.sort(geneBranchCoalescentTimes);
 		return geneBranchCoalescentTimes;
@@ -407,5 +443,9 @@ public class GeneTree extends Distribution {
 
     public Node getRoot() {
         return treeInput.get().getRoot();
+    }
+
+    public double getPloidy() {
+        return ploidy;
     }
 }

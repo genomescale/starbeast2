@@ -13,7 +13,7 @@ import beast.evolution.tree.Node;
 * @author Joseph Heled
  */
 
-public class LinearWithConstantRoot extends MultispeciesPopulationModel {
+public class LinearWithConstantRoot extends PopulationModel {
     public Input<RealParameter> topPopSizesInput = new Input<>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput = new Input<>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
@@ -26,8 +26,6 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
-
         double branchTipPopSize;
         if (speciesTreeNode.isLeaf()) {
             branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
@@ -37,8 +35,14 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
-        final double logP = linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
-
+        double logP;
+        if (speciesTreeNode.isRoot()) {
+            logP = ConstantPopulation.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+        } else {
+            final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+            logP = linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+        }
+        
         return logP;
     }
 
@@ -96,18 +100,16 @@ public class LinearWithConstantRoot extends MultispeciesPopulationModel {
         buf.append("}");
     }
 
-    static double linearLogP(double topPopSize, double tipPopSize, double perGenePloidy,
-            double[] fTimes, int nLineagesBottom, int k) {
-
-        double logP = 0.0;
-        final double fPopSizeTop = topPopSize * perGenePloidy;
-        final double fPopSizeBottom = tipPopSize * perGenePloidy;
+    static double linearLogP(double topPopSize, double tipPopSize, double ploidy, double[] fTimes, int nLineagesBottom, int k) {
+        final double fPopSizeTop = topPopSize * ploidy;
+        final double fPopSizeBottom = tipPopSize * ploidy;
 
         final double d5 = fPopSizeTop - fPopSizeBottom;
         final double fTime0 = fTimes[0];
         final double a = d5 / (fTimes[k + 1] - fTime0);
         final double b = fPopSizeBottom;
 
+        double logP = 0.0;
         if (Math.abs(d5) < 1e-10) {
             // use approximation for small values to bypass numerical instability
             for (int i = 0; i <= k; i++) {

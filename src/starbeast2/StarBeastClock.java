@@ -69,7 +69,7 @@ public class StarBeastClock extends BranchRateModel.Base {
         }
         // set the rate for the root branch of this gene to equal the input mean rate
         branchRates[geneNodeCount - 1] = geneTreeRate;
-        
+
         needsUpdate = false;
     }
 

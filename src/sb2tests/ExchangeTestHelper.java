@@ -16,7 +16,7 @@ import starbeast2.ConstantPopulation;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
-import starbeast2.MultispeciesPopulationModel;
+import starbeast2.PopulationModel;
 import starbeast2.SpeciesTreeParser;
 
 abstract class ExchangeTestHelper {
@@ -29,7 +29,7 @@ abstract class ExchangeTestHelper {
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
     RealParameter popSizesParameter;
-    MultispeciesPopulationModel populationModel;
+    PopulationModel populationModel;
     MultispeciesCoalescent msc;
 
     double ploidy;

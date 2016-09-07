@@ -121,7 +121,7 @@ public class MultispeciesCoalescent extends CompoundDistribution {
             final Distribution pDist = geneTrees.get(geneI);
             if (pDist instanceof GeneTree) {
                 final GeneTree geneTreeI = (GeneTree) pDist;
-                perGenePloidy[geneI] = geneTreeI.ploidy;
+                perGenePloidy[geneI] = geneTreeI.getPloidy();
             } else { // check that all input distributions are gene trees
                 throw new IllegalArgumentException("Input distributions must all be of class GeneTree.");
             }
@@ -173,7 +173,7 @@ public class MultispeciesCoalescent extends CompoundDistribution {
             for (int geneI = 0; geneI < nGeneTrees; geneI++) {
                 final GeneTree geneTree = (GeneTree) geneTrees.get(geneI);
 
-                if (geneTree.isDirtyBranch(geneI)) {
+                if (geneTree.isDirtyBranch(nodeI)) {
                     dirtyBranch = true;
 
                     final double [] tmpCoalescentTimes = geneTree.getCoalescentTimes(nodeI);
