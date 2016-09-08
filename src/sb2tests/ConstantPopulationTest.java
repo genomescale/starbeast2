@@ -71,7 +71,7 @@ public class ConstantPopulationTest {
             geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
 
             GeneTree geneTreeWrapper = new GeneTree();
-            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree, "popModel", popModel);
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree, "populationModel", popModel);
             calculatedLogP += geneTreeWrapper.calculateLogP();
         }
 
