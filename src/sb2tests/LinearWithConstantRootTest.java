@@ -41,7 +41,7 @@ public class LinearWithConstantRootTest {
         popSize = 0.3;
         ploidy = 2.0;
         nSpecies = 4;
-        expectedLogP = 3.6484899411510012; // I have no idea if this is the right answer
+        expectedLogP = -2.0667829111882234; // I have no idea if this is the right answer
 
         state = new State();
         tipPopSizesParameter = new RealParameter();

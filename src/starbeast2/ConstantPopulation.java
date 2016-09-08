@@ -83,19 +83,28 @@ public class ConstantPopulation extends PopulationModel {
         return speciesBranchStatus[speciesNode.getNr()];
     }
 
-    protected static double constantLogP(double popSize, double genePloidy, double[] geneCoalescentTimes, int geneN, int geneK) {
+    protected static double constantLogP(double popSize, double ploidy, double[] geneTimes, int geneN, int geneK) {
         double partialGamma = 0.0;
         for (int i = 0; i < geneK; i++) {
-            partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i]) * (geneN - i) * (geneN - (i + 1.0)) / 2.0;
+            partialGamma += (geneTimes[i + 1] - geneTimes[i]) * (geneN - i) * (geneN - (i + 1.0)) / 2.0;
         }
         
         if (geneN - geneK > 1) {
-            partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK]) * (geneN - geneK) * (geneN - (geneK + 1.0)) / 2.0;
+            partialGamma += (geneTimes[geneK + 1] - geneTimes[geneK]) * (geneN - geneK) * (geneN - (geneK + 1.0)) / 2.0;
         }
 
-        final double branchGamma = partialGamma / genePloidy;
-        final double branchLogR = -geneK * Math.log(genePloidy);
+        final double branchGamma = partialGamma / ploidy;
+        final double branchLogR = -geneK * Math.log(ploidy);
         final double logP = branchLogR - (geneK * Math.log(popSize)) - (branchGamma / popSize);
+
+        /* StringBuffer sb = new StringBuffer();
+        sb.append(popSize + "/" + ploidy + "/" + geneN + "/" + geneK + ": ");
+        for (int i = 0; i < geneTimes.length; i++) {
+            sb.append(geneTimes[i] + ", ");
+        }
+        sb.append(logP);
+        System.out.println(sb); */
+
         return logP;
     }
 }

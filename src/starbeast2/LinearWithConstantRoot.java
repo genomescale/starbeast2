@@ -53,15 +53,12 @@ public class LinearWithConstantRoot extends PopulationModel {
             branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
         }
 
-        double logP;
         if (speciesTreeNode.isRoot()) {
-            logP = ConstantPopulation.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+            return ConstantPopulation.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         } else {
             final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
-            logP = linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+            return linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         }
-        
-        return logP;
     }
 
     @Override
@@ -189,6 +186,14 @@ public class LinearWithConstantRoot extends PopulationModel {
                 logP += -(i1 * (i1 - 1.0) / 2.0) * Math.log(f) / a;
             }
         }
+
+        /* StringBuffer sb = new StringBuffer();
+        sb.append(topPopSize + "/" + tipPopSize + "/" + ploidy + "/" + nLineagesBottom + "/" + k + ": ");
+        for (int i = 0; i < fTimes.length; i++) {
+            sb.append(fTimes[i] + ", ");
+        }
+        sb.append(logP);
+        System.out.println(sb); */
 
         return logP;
     }
