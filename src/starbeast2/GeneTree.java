@@ -22,7 +22,7 @@ public class GeneTree extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "Species tree for embedding the gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
-    public Input<PopulationModel> popModelInput = new Input<>("popModel", "Population model used to infer the multispecies coalescent probability for this gene");
+    public Input<PopulationModel> popModelInput = new Input<>("populationModel", "Population model used to infer the multispecies coalescent probability for this gene");
 
     private double ploidy;
     private int geneTreeLeafNodeCount;
@@ -309,7 +309,7 @@ public class GeneTree extends Distribution {
 	        	} else {
 	        		Node node = spTree.getNode(i);
 	        		if (node.isDirty() != Tree.IS_CLEAN ||
-	        			(node.isRoot() && node.getParent().isDirty() != Tree.IS_CLEAN)) {
+	        			(!node.isRoot() && node.getParent().isDirty() != Tree.IS_CLEAN)) {
 		        		speciesBranchIsDirty[i] = true;
 	        		} else if (coalescentTimesChanged(i)) {
 		        		speciesBranchIsDirty[i] = true;
