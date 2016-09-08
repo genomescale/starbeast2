@@ -12,8 +12,8 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import starbeast2.ConstantPopulation;
 import starbeast2.GeneTree;
+import starbeast2.ConstantPopulation;
 import starbeast2.PopulationModel;
 import starbeast2.SpeciesTreeParser;
 
@@ -61,6 +61,7 @@ public class ConstantPopulationTest {
         popsizeParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nBranches));
         state.initByName("stateNode", popsizeParameter);
         state.initialise();
+
         popModel = new ConstantPopulation();
         popModel.initByName("populationSizes", popsizeParameter, "speciesTree", speciesTree);
 
@@ -74,9 +75,9 @@ public class ConstantPopulationTest {
             calculatedLogP += geneTreeWrapper.calculateLogP();
         }
 
-        System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
+        // System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
         assertEquals(expectedLogP, calculatedLogP, allowedError);
-    }    
+    }
 
     public TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();

@@ -57,6 +57,7 @@ public class LinearWithConstantRootTest {
         TaxonSet speciesSuperset = generateSuperset();
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
+        state.initByName("stateNode", speciesTree);
 
         final int nBranches = nSpecies * 2 - 1;
         tipPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nSpecies));
@@ -78,7 +79,7 @@ public class LinearWithConstantRootTest {
             calculatedLogP += geneTreeWrapper.calculateLogP();
         }
 
-        System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
+        // System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 

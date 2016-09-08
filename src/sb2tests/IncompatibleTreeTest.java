@@ -61,7 +61,7 @@ public class IncompatibleTreeTest {
         state.initByName("stateNode", popsizeParameter);
 
         popModel = new ConstantPopulation();
-        popModel.initByName("populationSizes", popsizeParameter);
+        popModel.initByName("populationSizes", popsizeParameter, "speciesTree", speciesTree);
 
         double calculatedLogP = 0.0;
         for (String geneTreeNewick: newickGeneTrees) {
@@ -73,7 +73,7 @@ public class IncompatibleTreeTest {
             calculatedLogP += geneTreeWrapper.calculateLogP();
         }
 
-        System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
+        // System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
         assertEquals(expectedLogP, calculatedLogP, allowedError);
     }    
 

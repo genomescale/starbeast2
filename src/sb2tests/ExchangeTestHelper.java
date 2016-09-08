@@ -28,7 +28,7 @@ abstract class ExchangeTestHelper {
     SpeciesTreeParser speciesTreeWrapper;
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
-    RealParameter popSizesParameter;
+    RealParameter popsizeParameter;
     PopulationModel populationModel;
     MultispeciesCoalescent msc;
 
@@ -50,16 +50,16 @@ abstract class ExchangeTestHelper {
         initializeSpeciesTree(speciesSuperSet);
         initializeGeneTrees();
 
-        popSizesParameter = new RealParameter();
-        popSizesParameter.initByName("value", String.valueOf(popSize));
+        popsizeParameter = new RealParameter();
+        popsizeParameter.initByName("value", String.valueOf(popSize));
 
         // Create dummy state to allow statenode editing
         State state = new State();
-        state.initByName("stateNode", popSizesParameter);
+        state.initByName("stateNode", popsizeParameter);
         state.initialise();
 
         populationModel = new ConstantPopulation();
-        populationModel.initByName("populationSizes", popSizesParameter);
+        populationModel.initByName("populationSizes", popsizeParameter, "speciesTree", speciesTreeWrapper);
 
         int nBranches = speciesTreeWrapper.getNodeCount();
         populationModel.initPopSizes(nBranches);
