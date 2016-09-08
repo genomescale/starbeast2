@@ -25,9 +25,7 @@ public class LinearWithConstantRoot extends PopulationModel {
 
     @Override
     public boolean requiresRecalculation() {
-        if (speciesTreeInput.isDirty()) needsUpdate = true;
-        else needsUpdate = false;
-
+        needsUpdate = true;
         return needsUpdate;
     }
 

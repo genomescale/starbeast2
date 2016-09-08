@@ -15,10 +15,10 @@ import beast.evolution.tree.Node;
 @Description("Calculates probability of coalescence events within a branch for a single gene based on a demographic function.")
 public class PopulationModel extends CalculationNode {
     public Input<PopulationModel> childModelInput = new Input<>("childModel", "Pass calculations onwards to another model");
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
 
     PopulationModel childModel;
-    SpeciesTree speciesTree;
+    SpeciesTreeInterface speciesTree;
 
     @Override
     public void initAndValidate() {

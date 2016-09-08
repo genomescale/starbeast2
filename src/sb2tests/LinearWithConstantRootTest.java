@@ -1,5 +1,7 @@
 package sb2tests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,19 +11,41 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
+import beast.util.TreeParser;
+import starbeast2.GeneTree;
 import starbeast2.LinearWithConstantRoot;
 import starbeast2.PopulationModel;
+import starbeast2.SpeciesTreeParser;
 
-public class LinearWithConstantRootTest extends PopulationTestHelper {
-    private final int individualsPerSpecies = 2;
-    private RealParameter topPopSizesParameter;
+public class LinearWithConstantRootTest {
+    private String newickSpeciesTree;
+    private List<String> newickGeneTrees = new ArrayList<>();
+
+    private SpeciesTreeParser speciesTree;
+
+    private PopulationModel popModel;
+
+    private State state;
     private RealParameter tipPopSizesParameter;
+    private RealParameter topPopSizesParameter;
+
+    private double ploidy;
+    private double popSize;
+    private double expectedLogP;
+    private int nSpecies;
+
+    private final double allowedError = 10e-6;
+    private final int individualsPerSpecies = 2;
 
     public LinearWithConstantRootTest() throws Exception {
         popSize = 0.3;
         ploidy = 2.0;
         nSpecies = 4;
         expectedLogP = 3.6484899411510012; // I have no idea if this is the right answer
+
+        state = new State();
+        tipPopSizesParameter = new RealParameter();
+        topPopSizesParameter = new RealParameter();
 
         newickSpeciesTree = "((s0:0.32057156677143211,s3:0.32057156677143211):1.2653250035015629,(s1:0.56540722294658641,s2:0.56540722294658641):1.0204893473264085)";
         newickGeneTrees.add("((((s0_tip1:0.3416660303037105,s3_tip0:0.3416660303037105):0.024561190897159135,s0_tip0:0.36622722120086965):0.0643095990846464,s3_tip1:0.43053682028551604):1.4201019862262891,((s1_tip0:0.14473698225381706,s1_tip1:0.14473698225381706):0.5135479407233198,(s2_tip0:0.19897724687831703,s2_tip1:0.19897724687831703):0.4593076760988198):1.1923538835346683)");
@@ -30,11 +54,35 @@ public class LinearWithConstantRootTest extends PopulationTestHelper {
 
     @Test
     public void testLogP() throws Exception {
-        super.testLogP();
+        TaxonSet speciesSuperset = generateSuperset();
+        speciesTree = new SpeciesTreeParser();
+        speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
+
+        final int nBranches = nSpecies * 2 - 1;
+        tipPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nSpecies));
+        topPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nBranches - 1));
+        state.initByName("stateNode", tipPopSizesParameter);
+        state.initByName("stateNode", topPopSizesParameter);
+        state.initialise();
+
+        popModel = new LinearWithConstantRoot();
+        popModel.initByName("tipPopSizes", tipPopSizesParameter, "topPopSizes", topPopSizesParameter, "speciesTree", speciesTree);
+
+        double calculatedLogP = 0.0;
+        for (String geneTreeNewick: newickGeneTrees) {
+            TreeParser geneTree = new TreeParser();
+            geneTree.initByName("newick", geneTreeNewick, "IsLabelledNewick", true);
+
+            GeneTree geneTreeWrapper = new GeneTree();
+            geneTreeWrapper.initByName("tree", geneTree, "ploidy", ploidy, "speciesTree", speciesTree, "popModel", popModel);
+            calculatedLogP += geneTreeWrapper.calculateLogP();
+        }
+
+        System.out.println(String.format("expected %f, calculated %f", expectedLogP, calculatedLogP));
+        assertEquals(expectedLogP, calculatedLogP, allowedError);
     }
 
-    @Override
-    public TaxonSet generateSuperset() throws Exception {
+    public TaxonSet generateSuperset() {
         List<Taxon> superSetList = new ArrayList<>();
         for (int i = 0; i < nSpecies; i++) {
             final String speciesName = String.format("s%d", i);
@@ -49,24 +97,5 @@ public class LinearWithConstantRootTest extends PopulationTestHelper {
         TaxonSet speciesSuperset = new TaxonSet(superSetList);
         
         return speciesSuperset;
-    }
-
-    @Override
-    public PopulationModel generatePopulationModel() throws Exception {
-        topPopSizesParameter = new RealParameter();
-        tipPopSizesParameter = new RealParameter();
-        topPopSizesParameter.initByName("value", String.valueOf(popSize));
-        tipPopSizesParameter.initByName("value", String.valueOf(popSize));
-
-        // Create dummy state to allow statenode editing
-        State state = new State();
-        state.initByName("stateNode", topPopSizesParameter);
-        state.initByName("stateNode", tipPopSizesParameter);
-        state.initialise();
-
-        PopulationModel populationModel = new LinearWithConstantRoot();
-        populationModel.initByName("topPopSizes", topPopSizesParameter, "tipPopSizes", tipPopSizesParameter);
-        
-        return populationModel;
     }
 }

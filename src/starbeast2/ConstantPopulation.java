@@ -2,6 +2,7 @@ package starbeast2;
 
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
@@ -15,8 +16,22 @@ import beast.evolution.tree.Node;
 public class ConstantPopulation extends PopulationModel {
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("populationSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
+    private boolean needsUpdate;
+    private boolean[] speciesBranchStatus;
+    private int speciesNodeCount;
+
+    @Override
+    public boolean requiresRecalculation() {
+        needsUpdate = true;
+        return needsUpdate;
+    }
+
     @Override
     public void initAndValidate() {
+        super.initAndValidate();
+        speciesNodeCount = speciesTree.getNodeCount();
+        speciesBranchStatus = new boolean[speciesNodeCount];
+        needsUpdate = true;
     }
 
     @Override
@@ -26,12 +41,6 @@ public class ConstantPopulation extends PopulationModel {
         double logP = constantLogP(popSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
 
         return logP;
-    }
-
-    @Override
-    public void initPopSizes(int nBranches) {
-        final RealParameter popSizes = popSizesInput.get();
-        popSizes.setDimension(nBranches);
     }
 
     @Override
@@ -60,8 +69,18 @@ public class ConstantPopulation extends PopulationModel {
 
     @Override
     public boolean isDirtyBranch(Node speciesNode) {
-        final RealParameter popSizes = popSizesInput.get();
-        return popSizes.isDirty(speciesNode.getNr());
+        if (needsUpdate) {
+            final RealParameter popSizes = popSizesInput.get();
+
+            Arrays.fill(speciesBranchStatus, false);
+
+            for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++)
+                speciesBranchStatus[nodeI] |= popSizes.isDirty(nodeI);
+
+            needsUpdate = false;
+        }
+
+        return speciesBranchStatus[speciesNode.getNr()];
     }
 
     protected static double constantLogP(double popSize, double genePloidy, double[] geneCoalescentTimes, int geneN, int geneK) {
