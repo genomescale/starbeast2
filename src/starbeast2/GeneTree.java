@@ -78,9 +78,8 @@ public class GeneTree extends Distribution {
 
     @Override
     public void store() {
-    }
+        super.store();
 
-    private void doStore() {
         System.arraycopy(coalescentCounts, 0, storedCoalescentCounts, 0, coalescentCounts.length);
         System.arraycopy(coalescentTimes, 0, storedCoalescentTimes, 0, coalescentTimesLength);
         System.arraycopy(coalescentLineageCounts, 0, storedCoalescentLineageCounts, 0, coalescentLineageCounts.length);
@@ -91,13 +90,11 @@ public class GeneTree extends Distribution {
 
         storedGeneTreeCompatible = geneTreeCompatible;
         storedMaxCoalescentCounts = maxCoalescentCounts;
-
-        super.store();
     }
 
     @Override
     public void restore() {
-    	if (needsUpdate) return;
+        super.restore();
 
         double[] tmpCoalescentTimes = coalescentTimes;
         int[] tmpCoalescentCounts = coalescentCounts;
@@ -124,15 +121,14 @@ public class GeneTree extends Distribution {
         storedGeneTreeCompatible = tmpGeneTreeCompatible;
 
         maxCoalescentCounts = storedMaxCoalescentCounts;
-        
-        super.restore();
     }
 
     public void initAndValidate() {
         ploidy = ploidyInput.get();
         popModel = popModelInput.get();
-
         geneTree = treeInput.get();
+        spTree = speciesTreeInput.get();
+
         geneTreeNodeCount = geneTree.getNodeCount();
         geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
         storedGeneNodeSpeciesAssignment = new int[geneTreeNodeCount];
@@ -140,7 +136,6 @@ public class GeneTree extends Distribution {
         geneTreeLeafNodeCount = treeInput.get().getLeafNodeCount();
 
         // generate map of species tree tip node names to node numbers
-        spTree = speciesTreeInput.get();
         final Map<String, Integer> tipNumberMap = spTree.getTipNumberMap();
         TreeInterface geneTree = treeInput.get();
         localTipNumberMap = new int[geneTree.getLeafNodeCount()];
@@ -188,20 +183,16 @@ public class GeneTree extends Distribution {
 
     @Override
     public double calculateLogP() {
-        if (needsUpdate) {
-            update();
-        }
+        if (needsUpdate) update();
 
         if (!geneTreeCompatible) {
             logP = Double.NEGATIVE_INFINITY;
             return logP;
         }
 
+        logP = 0.0;
         // if using analytical integration no need to specify a population model
-        if (popModel == null) {
-            logP = 0.0;
-            return logP;
-        }
+        if (popModel == null) return logP;
 
         final Node[] speciesTreeNodes = spTree.getNodesAsArray();
         for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
@@ -213,9 +204,11 @@ public class GeneTree extends Distribution {
                 perBranchLogP[nodeI] = popModel.branchLogP(nodeI, speciesNode, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
             }
 
+            // System.out.println(String.format("%s-%d: %f", getID(), nodeI, logP));
             logP += perBranchLogP[nodeI];
         }
 
+        // System.out.println(String.format("%s-%d: %f", getID(), speciesNodeCount, logP));
         return logP;
     }
 
@@ -237,7 +230,6 @@ public class GeneTree extends Distribution {
 	            	coalescentTimesLength = speciesNodeCount * blocksize;
 	            	System.err.print("pop");
 				}
-	    	doStore();
 
 	        Arrays.fill(speciesOccupancy, 0);
 	        
@@ -300,7 +292,6 @@ public class GeneTree extends Distribution {
             	return;
             }
 
-	        
             // determine which species tree branch is dirty for this gene tree
 	        for (int i = 0; i < speciesNodeCount; i++) {
 	        	if (coalescentLineageCounts[i] != storedCoalescentLineageCounts[i] ||
@@ -309,12 +300,8 @@ public class GeneTree extends Distribution {
 	        	} else {
 	        		Node node = spTree.getNode(i);
 	        		if (node.isDirty() != Tree.IS_CLEAN ||
-	        			(!node.isRoot() && node.getParent().isDirty() != Tree.IS_CLEAN)) {
-		        		speciesBranchIsDirty[i] = true;
-	        		} else if (coalescentTimesChanged(i)) {
-		        		speciesBranchIsDirty[i] = true;
-	        		}
-
+	        			(!node.isRoot() && node.getParent().isDirty() != Tree.IS_CLEAN) ||
+	        			coalescentTimesChanged(i)) speciesBranchIsDirty[i] = true;
 	        	}
 	        }
 
@@ -415,7 +402,7 @@ public class GeneTree extends Distribution {
 		return speciesBranchIsDirty[nodeNr];
 	}
 
-	int [] getTipNumberMap() {
+	int[] getTipNumberMap() {
 		return localTipNumberMap;
 	}
 

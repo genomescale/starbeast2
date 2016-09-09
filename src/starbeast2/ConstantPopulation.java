@@ -30,6 +30,7 @@ public class ConstantPopulation extends PopulationModel {
     public void initAndValidate() {
         super.initAndValidate();
         speciesNodeCount = speciesTree.getNodeCount();
+        popSizesInput.get().setDimension(speciesNodeCount);
         speciesBranchStatus = new boolean[speciesNodeCount];
         needsUpdate = true;
     }

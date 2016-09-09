@@ -48,6 +48,7 @@ public class MultispeciesCoalescent extends CompoundDistribution {
 
     @Override
     public void store() {
+        super.store();
         if (dontCalculate) return;
 
         storedAlpha = alpha;
@@ -58,12 +59,11 @@ public class MultispeciesCoalescent extends CompoundDistribution {
         for (int i = 0; i < allCoalescentTimes.length; i++)
             System.arraycopy(allCoalescentTimes, 0, storedCoalescentTimes, 0, allCoalescentTimes.length);
         System.arraycopy(perBranchLogP, 0, storedPerBranchLogP, 0, perBranchLogP.length);
-
-        super.store();
     }
 
     @Override
     public void restore() {
+        super.restore();
         if (dontCalculate) return;
 
         double tmpAlpha = alpha;
@@ -86,8 +86,6 @@ public class MultispeciesCoalescent extends CompoundDistribution {
         storedEventCounts = tmpEventCounts;
         storedCoalescentTimes = tmpCoalescentTimes;
         storedPerBranchLogP = tmpPerBranchLogP;
-
-        super.restore();
     }
 
     @Override
@@ -147,8 +145,10 @@ public class MultispeciesCoalescent extends CompoundDistribution {
 
     @Override
 	public double calculateLogP() {
-        logP = super.calculateLogP();
-        if (logP == Double.NEGATIVE_INFINITY || dontCalculate) return logP;
+        double tmpLogP = logP;
+        super.calculateLogP();
+        // System.out.println(tmpLogP + " -> " + logP);
+        if (dontCalculate || Double.isInfinite(logP) || Double.isNaN(logP)) return logP;
 
         // need to recompute all branches if the parameters of the prior distribution have changed
         final boolean updatedPrior = checkHyperparameters(false);
@@ -231,6 +231,11 @@ public class MultispeciesCoalescent extends CompoundDistribution {
 
         return logP;
     }
+
+    /*@Override
+    public double getCurrentLogP() {
+        return calculateLogP();
+    }*/
 
     @Override
     public List<String> getArguments() {

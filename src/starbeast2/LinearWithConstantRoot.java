@@ -35,6 +35,8 @@ public class LinearWithConstantRoot extends PopulationModel {
         final int speciesNodeCount = speciesTree.getNodeCount();
         rootNodeNumber = speciesNodeCount - 1;
         leafNodeCount = speciesTree.getLeafNodeCount();
+        topPopSizesInput.get().setDimension(rootNodeNumber);
+        tipPopSizesInput.get().setDimension(leafNodeCount);
         speciesBranchStatus = new boolean[speciesNodeCount];
         needsUpdate = true;
     }
