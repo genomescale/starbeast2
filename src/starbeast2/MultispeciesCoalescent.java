@@ -145,7 +145,6 @@ public class MultispeciesCoalescent extends CompoundDistribution {
 
     @Override
 	public double calculateLogP() {
-        double tmpLogP = logP;
         super.calculateLogP();
         // System.out.println(tmpLogP + " -> " + logP);
         if (dontCalculate || Double.isInfinite(logP) || Double.isNaN(logP)) return logP;
