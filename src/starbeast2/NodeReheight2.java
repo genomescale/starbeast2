@@ -21,7 +21,7 @@ import beast.util.Randomizer;
         "then reconstructs the tree from node heights.")
 public class NodeReheight2 extends TreeOperator {
     public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
-    public final Input<List<GeneTree>> geneTreesInput = new Input<>("genetree", "list of gene trees that constrain species tree movement", new ArrayList<>());
+    public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
     Node[] m_nodes;
 
     /**

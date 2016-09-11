@@ -15,7 +15,7 @@ import beast.evolution.tree.Node;
  */
 
 public class ConstantPopulation extends CalculationNode implements PopulationModel {
-    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.", Validate.REQUIRED);
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("populationSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
     private SpeciesTreeInterface speciesTree;
