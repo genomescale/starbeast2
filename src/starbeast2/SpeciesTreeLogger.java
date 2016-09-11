@@ -21,7 +21,7 @@ import beast.evolution.tree.Node;
 public class SpeciesTreeLogger extends BEASTObject implements Loggable {
     final public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree to be logged.", Validate.REQUIRED);
     final public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
-    final public Input<PopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree", Validate.OPTIONAL);
+    final public Input<PassthroughModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree", Validate.OPTIONAL);
     // TODO: make this input a list of valuables
     final public Input<List<Function>> parameterInput = new Input<>("metadata", "meta data to be logged with the tree nodes",new ArrayList<>());
     final public Input<BranchRateModel> clockModelInput = new Input<>("branchratemodel", "rate to be logged with branches of the tree");
@@ -75,7 +75,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
             }
         }
         BranchRateModel branchRateModel = clockModelInput.get();
-        PopulationModel populationModel = populationModelInput.get();
+        PassthroughModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
         tree.getRoot().sort();
@@ -100,7 +100,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
         }
     }
 
-    String toNewick(Node node, List<Function> metadataList, BranchRateModel branchRateModel, PopulationModel populationModel) {
+    String toNewick(Node node, List<Function> metadataList, BranchRateModel branchRateModel, PassthroughModel populationModel) {
         StringBuffer buf = new StringBuffer();
         if (node.getLeft() != null) {
             buf.append("(");

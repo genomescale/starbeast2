@@ -16,7 +16,6 @@ import starbeast2.ConstantPopulation;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
-import starbeast2.PopulationModel;
 import starbeast2.SpeciesTreeParser;
 
 abstract class ExchangeTestHelper {
@@ -29,7 +28,7 @@ abstract class ExchangeTestHelper {
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
     RealParameter popsizeParameter;
-    PopulationModel populationModel;
+    ConstantPopulation populationModel;
     MultispeciesCoalescent msc;
 
     double ploidy;
@@ -86,7 +85,7 @@ abstract class ExchangeTestHelper {
         }
 
         CoordinatedExchange coex = new CoordinatedExchange();
-        coex.initByName("tree", speciesTreeWrapper, "geneTree", geneTrees, "testing", true);
+        coex.initByName("speciesTree", speciesTreeWrapper, "geneTree", geneTrees, "testing", true);
         coex.aNode = aNode;
         coex.bNode = bNode;
         coex.cNode = cNode;

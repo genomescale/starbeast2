@@ -4,6 +4,7 @@ package starbeast2;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 
+import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
@@ -14,9 +15,12 @@ import beast.evolution.tree.Node;
 * @author Joseph Heled
  */
 
-public class LinearWithConstantRoot extends PopulationModel {
+public class LinearWithConstantRoot extends CalculationNode implements PopulationModel {
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
     public Input<RealParameter> topPopSizesInput = new Input<>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
     public Input<RealParameter> tipPopSizesInput = new Input<>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
+
+    private SpeciesTreeInterface speciesTree;
 
     private boolean needsUpdate;
     private boolean[] speciesBranchStatus;
@@ -31,7 +35,7 @@ public class LinearWithConstantRoot extends PopulationModel {
 
     @Override
     public void initAndValidate() {
-        super.initAndValidate();
+        speciesTree = speciesTreeInput.get();
         final int speciesNodeCount = speciesTree.getNodeCount();
         rootNodeNumber = speciesNodeCount - 1;
         leafNodeCount = speciesTree.getLeafNodeCount();
@@ -61,16 +65,6 @@ public class LinearWithConstantRoot extends PopulationModel {
             final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
             return linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         }
-    }
-
-    @Override
-    public void initPopSizes(int nBranches) {
-        final RealParameter topPopSizes = topPopSizesInput.get();
-        final RealParameter tipPopSizes = tipPopSizesInput.get();
-        final int nTipSpecies = (nBranches + 1) / 2;
-
-        topPopSizes.setDimension(nBranches - 1);
-        tipPopSizes.setDimension(nTipSpecies);
     }
 
     @Override
@@ -198,5 +192,10 @@ public class LinearWithConstantRoot extends PopulationModel {
         System.out.println(sb); */
 
         return logP;
+    }
+
+    @Override
+    public PopulationModel getBaseModel() {
+        return this;
     }
 }

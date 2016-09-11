@@ -4,6 +4,7 @@ package starbeast2;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 
+import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
@@ -13,8 +14,11 @@ import beast.evolution.tree.Node;
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulation extends PopulationModel {
+public class ConstantPopulation extends CalculationNode implements PopulationModel {
+    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.");
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("populationSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
+
+    private SpeciesTreeInterface speciesTree;
 
     private boolean needsUpdate;
     private boolean[] speciesBranchStatus;
@@ -28,7 +32,7 @@ public class ConstantPopulation extends PopulationModel {
 
     @Override
     public void initAndValidate() {
-        super.initAndValidate();
+        speciesTree = speciesTreeInput.get();
         speciesNodeCount = speciesTree.getNodeCount();
         popSizesInput.get().setDimension(speciesNodeCount);
         speciesBranchStatus = new boolean[speciesNodeCount];
@@ -107,5 +111,10 @@ public class ConstantPopulation extends PopulationModel {
         System.out.println(sb); */
 
         return logP;
+    }
+
+    @Override
+    public PopulationModel getBaseModel() {
+        return this;
     }
 }

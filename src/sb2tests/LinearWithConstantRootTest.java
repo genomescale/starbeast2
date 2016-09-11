@@ -14,7 +14,6 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.GeneTree;
 import starbeast2.LinearWithConstantRoot;
-import starbeast2.PopulationModel;
 import starbeast2.SpeciesTreeParser;
 
 public class LinearWithConstantRootTest {
@@ -23,7 +22,7 @@ public class LinearWithConstantRootTest {
 
     private SpeciesTreeParser speciesTree;
 
-    private PopulationModel popModel;
+    private LinearWithConstantRoot popModel;
 
     private State state;
     private RealParameter tipPopSizesParameter;

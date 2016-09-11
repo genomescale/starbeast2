@@ -14,7 +14,6 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.ConstantPopulation;
 import starbeast2.GeneTree;
-import starbeast2.PopulationModel;
 import starbeast2.SpeciesTreeParser;
 
 public class IncompatibleTreeTest {
@@ -23,7 +22,7 @@ public class IncompatibleTreeTest {
 
     private SpeciesTreeParser speciesTree;
 
-    private PopulationModel popModel;
+    private ConstantPopulation popModel;
 
     private State state;
     private RealParameter popsizeParameter;

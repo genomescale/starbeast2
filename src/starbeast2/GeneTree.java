@@ -128,6 +128,8 @@ public class GeneTree extends Distribution {
         popModel = popModelInput.get();
         geneTree = treeInput.get();
         spTree = speciesTreeInput.get();
+        
+        if (popModel != null) popModel = popModel.getBaseModel();
 
         geneTreeNodeCount = geneTree.getNodeCount();
         geneNodeSpeciesAssignment = new int[geneTreeNodeCount];
@@ -192,7 +194,7 @@ public class GeneTree extends Distribution {
 
         logP = 0.0;
         // if using analytical integration no need to specify a population model
-        if (popModel == null) return logP;
+        if (popModel == null || popModel instanceof DummyModel) return logP;
 
         final Node[] speciesTreeNodes = spTree.getNodesAsArray();
         for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
