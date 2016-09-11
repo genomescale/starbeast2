@@ -27,6 +27,10 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
     private int rootNodeNumber;
     private int leafNodeCount;
 
+    // scale top population sizes by half, so that tip sizes
+    // have the same expectation as top sizes
+    public static final double TOP_SCALE_FACTOR = 0.5;
+
     @Override
     public boolean requiresRecalculation() {
         needsUpdate = true;
@@ -56,13 +60,13 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
         } else {
             final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
             final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
-            branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
+            branchTipPopSize = (topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber)) * TOP_SCALE_FACTOR;
         }
 
         if (speciesTreeNode.isRoot()) {
             return ConstantPopulation.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         } else {
-            final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+            final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber) * TOP_SCALE_FACTOR;
             return linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         }
     }
@@ -72,13 +76,11 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
         final RealParameter topPopSizes = topPopSizesInput.get();
         final RealParameter tipPopSizes = tipPopSizesInput.get();
 
-        for (int i = 0; i < topPopSizes.getDimension(); i++) {
-            topPopSizes.setValue(i, popInitial / 2.0);
-        }
+        for (int i = 0; i < topPopSizes.getDimension(); i++)
+            topPopSizes.setValue(i, popInitial);
 
-        for (int i = 0; i < tipPopSizes.getDimension(); i++) {
+        for (int i = 0; i < tipPopSizes.getDimension(); i++)
             tipPopSizes.setValue(i, popInitial);
-        }
     }
 
     @Override
@@ -87,7 +89,7 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final int speciesTreeNodeNumber = speciesTreeNode.getNr();
 
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber);
+        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber) * TOP_SCALE_FACTOR;
 
         double branchTipPopSize;
         if (speciesTreeNode.isLeaf()) {
@@ -95,7 +97,7 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
         } else {
             final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
             final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
-            branchTipPopSize = topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber);
+            branchTipPopSize = (topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber)) * TOP_SCALE_FACTOR;
         }
 
         buf.append("dmv={");
