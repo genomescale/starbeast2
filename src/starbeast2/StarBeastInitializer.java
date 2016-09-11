@@ -70,7 +70,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     final public Input<Function> muInput = new Input<>("baseRate",
             "Main clock rate used to scale trees (default 1).");
 
-    final public Input<PassthroughModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.");
+    final public Input<PopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.");
 
     @Override
     public void initStateNodes() {
@@ -114,7 +114,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final int nBranches = speciesTree.getNodeCount();
         final double averageBranchLength = speciesTreeLength / (nBranches - 1);
 
-        final PassthroughModel populationModel = populationFunctionInput.get();
+        final PopulationModel populationModel = populationFunctionInput.get();
         if (populationModel != null) populationModel.initPopSizes(averageBranchLength);
     }
 
