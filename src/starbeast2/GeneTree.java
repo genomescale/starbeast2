@@ -142,8 +142,12 @@ public class GeneTree extends Distribution {
         TreeInterface geneTree = treeInput.get();
         localTipNumberMap = new int[geneTree.getLeafNodeCount()];
         for (int i = 0; i < geneTree.getLeafNodeCount(); i++) {
-        	Node geneTreeLeafNode = geneTree.getNode(i);
-        	localTipNumberMap[geneTreeLeafNode.getNr()] = tipNumberMap.get(geneTreeLeafNode.getID());
+        	final Node geneTreeLeafNode = geneTree.getNode(i);
+        	final String geneTreeLeafName = geneTreeLeafNode.getID();
+        	final int geneTreeLeafNumber = geneTreeLeafNode.getNr();
+
+        	if (tipNumberMap.containsKey(geneTreeLeafName)) // not in BEAUTi
+        	    localTipNumberMap[geneTreeLeafNumber] = tipNumberMap.get(geneTreeLeafName);
         }
 
         geneTreeCompatible = false;

@@ -13,7 +13,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import starbeast2.GeneTree;
-import starbeast2.ConstantPopulation;
+import starbeast2.ConstantPopulations;
 import starbeast2.SpeciesTreeParser;
 
 public class ConstantPopulationTest {
@@ -22,7 +22,7 @@ public class ConstantPopulationTest {
 
     private SpeciesTreeParser speciesTree;
 
-    private ConstantPopulation popModel;
+    private ConstantPopulations popModel;
 
     private State state;
     private RealParameter popsizeParameter;
@@ -61,7 +61,7 @@ public class ConstantPopulationTest {
         state.initByName("stateNode", popsizeParameter);
         state.initialise();
 
-        popModel = new ConstantPopulation();
+        popModel = new ConstantPopulations();
         popModel.initByName("populationSizes", popsizeParameter, "speciesTree", speciesTree);
 
         double calculatedLogP = 0.0;

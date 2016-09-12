@@ -14,7 +14,7 @@ import beast.evolution.tree.Node;
 * @author Huw Ogilvie
  */
 
-public class ConstantPopulation extends CalculationNode implements PopulationModel {
+public class ConstantPopulations extends CalculationNode implements PopulationModel {
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.", Validate.REQUIRED);
     public Input<RealParameter> popSizesInput = new Input<RealParameter>("populationSizes", "Constant per-branch population sizes.", Validate.REQUIRED);
 
@@ -80,7 +80,7 @@ public class ConstantPopulation extends CalculationNode implements PopulationMod
             Arrays.fill(speciesBranchStatus, false);
 
             for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++)
-                speciesBranchStatus[nodeI] |= popSizes.isDirty(nodeI);
+                speciesBranchStatus[nodeI] = popSizes.isDirty(nodeI);
 
             needsUpdate = false;
         }

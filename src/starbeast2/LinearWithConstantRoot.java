@@ -9,6 +9,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 
 /**
 * @author Huw Ogilvie
@@ -17,8 +18,7 @@ import beast.evolution.tree.Node;
 
 public class LinearWithConstantRoot extends CalculationNode implements PopulationModel {
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.", Validate.REQUIRED);
-    public Input<RealParameter> topPopSizesInput = new Input<>("topPopSizes", "Population sizes at the top (rootward) end of each branch.", Validate.REQUIRED);
-    public Input<RealParameter> tipPopSizesInput = new Input<>("tipPopSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
+    public Input<RealParameter> lwcrPopSizesInput = new Input<>("populationSizes", "Population sizes at the tips of leaf branches.", Validate.REQUIRED);
 
     private SpeciesTreeInterface speciesTree;
 
@@ -28,7 +28,7 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
     private int leafNodeCount;
 
     // scale top population sizes by half, so that tip sizes
-    // have the same expectation as top sizes
+    // have the same expectation as top sizes for a given prior
     public static final double TOP_SCALE_FACTOR = 0.5;
 
     @Override
@@ -41,116 +41,113 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
     public void initAndValidate() {
         speciesTree = speciesTreeInput.get();
         final int speciesNodeCount = speciesTree.getNodeCount();
-        rootNodeNumber = speciesNodeCount - 1;
-        leafNodeCount = speciesTree.getLeafNodeCount();
-        topPopSizesInput.get().setDimension(rootNodeNumber);
-        tipPopSizesInput.get().setDimension(leafNodeCount);
+        leafNodeCount = speciesTree.getLeafNodeCount(); // also the number of "tip" population sizes
+        rootNodeNumber = speciesNodeCount - 1; // also the number of "top" population sizes
+        lwcrPopSizesInput.get().setDimension(leafNodeCount + rootNodeNumber);
         speciesBranchStatus = new boolean[speciesNodeCount];
         needsUpdate = true;
     }
 
     @Override
     public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double ploidy, double[] branchCoalescentTimes, int branchLineageCount, int branchEventCount) {
-        final RealParameter topPopSizes = topPopSizesInput.get();
-        final RealParameter tipPopSizes = tipPopSizesInput.get();
+        final RealParameter lwcrPopSizes = lwcrPopSizesInput.get();
 
         double branchTipPopSize;
         if (speciesTreeNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+            branchTipPopSize = lwcrPopSizes.getValue(speciesTreeNodeNumber);
         } else {
-            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
-            branchTipPopSize = (topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber)) * TOP_SCALE_FACTOR;
+            final int leftChildTopI = leafNodeCount + speciesTreeNode.getLeft().getNr();
+            final int rightChildTopI = leafNodeCount + speciesTreeNode.getRight().getNr();
+            branchTipPopSize = (lwcrPopSizes.getValue(leftChildTopI) + lwcrPopSizes.getValue(rightChildTopI)) * TOP_SCALE_FACTOR;
         }
 
         if (speciesTreeNode.isRoot()) {
-            return ConstantPopulation.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
+            return ConstantPopulations.constantLogP(branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         } else {
-            final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber) * TOP_SCALE_FACTOR;
+            final int speciesTopI = leafNodeCount + speciesTreeNodeNumber;
+            final double branchTopPopSize = lwcrPopSizes.getValue(speciesTopI) * TOP_SCALE_FACTOR;
             return linearLogP(branchTopPopSize, branchTipPopSize, ploidy, branchCoalescentTimes, branchLineageCount, branchEventCount);
         }
     }
 
     @Override
     public void initPopSizes(double popInitial) {
-        final RealParameter topPopSizes = topPopSizesInput.get();
-        final RealParameter tipPopSizes = tipPopSizesInput.get();
+        final RealParameter lwcrPopSizes = lwcrPopSizesInput.get();
 
-        for (int i = 0; i < topPopSizes.getDimension(); i++)
-            topPopSizes.setValue(i, popInitial);
-
-        for (int i = 0; i < tipPopSizes.getDimension(); i++)
-            tipPopSizes.setValue(i, popInitial);
+        for (int i = 0; i < lwcrPopSizes.getDimension(); i++)
+            lwcrPopSizes.setValue(i, popInitial);
     }
 
     @Override
     public void serialize(Node speciesTreeNode, StringBuffer buf, DecimalFormat df) {
-        final RealParameter topPopSizes = topPopSizesInput.get();
-        final RealParameter tipPopSizes = tipPopSizesInput.get();
+        final RealParameter lwcrPopSizes = lwcrPopSizesInput.get();
         final int speciesTreeNodeNumber = speciesTreeNode.getNr();
-
-        final double branchTopPopSize = topPopSizes.getValue(speciesTreeNodeNumber) * TOP_SCALE_FACTOR;
 
         double branchTipPopSize;
         if (speciesTreeNode.isLeaf()) {
-            branchTipPopSize = tipPopSizes.getValue(speciesTreeNodeNumber);
+            branchTipPopSize = lwcrPopSizes.getValue(speciesTreeNodeNumber);
         } else {
-            final int leftChildNodeNumber = speciesTreeNode.getLeft().getNr();
-            final int rightChildNodeNumber = speciesTreeNode.getRight().getNr();
-            branchTipPopSize = (topPopSizes.getValue(leftChildNodeNumber) + topPopSizes.getValue(rightChildNodeNumber)) * TOP_SCALE_FACTOR;
+            final int leftChildTopI = leafNodeCount + speciesTreeNode.getLeft().getNr();
+            final int rightChildTopI = leafNodeCount + speciesTreeNode.getRight().getNr();
+            branchTipPopSize = (lwcrPopSizes.getValue(leftChildTopI) + lwcrPopSizes.getValue(rightChildTopI)) * TOP_SCALE_FACTOR;
         }
 
-        buf.append("dmv={");
-        if (df == null) {
-            buf.append(branchTopPopSize);
-            buf.append(",");
-            buf.append(branchTipPopSize);
+        if (speciesTreeNode.isRoot()) {
+            buf.append("dmv=");
+            if (df == null) buf.append(branchTipPopSize);
+            else buf.append(df.format(branchTipPopSize));
+            buf.append("}");
         } else {
-            buf.append(df.format(branchTopPopSize));
-            buf.append(",");
-            buf.append(df.format(branchTipPopSize));
+            final int speciesTopI = leafNodeCount + speciesTreeNodeNumber;
+            final double branchTopPopSize = lwcrPopSizes.getValue(speciesTopI) * TOP_SCALE_FACTOR;
+            buf.append("dmv={");
+            if (df == null) buf.append(branchTopPopSize + "," + branchTipPopSize);
+            else buf.append(df.format(branchTopPopSize) + "," + df.format(branchTipPopSize));
+            buf.append("}");
         }
-        buf.append("}");
     }
 
     @Override
     public boolean isDirtyBranch(Node speciesNode) {
         if (needsUpdate) {
-            final RealParameter topPopSizes = topPopSizesInput.get();
-            final RealParameter tipPopSizes = tipPopSizesInput.get();
+            final RealParameter lwcrPopSizes = lwcrPopSizesInput.get();
 
             Arrays.fill(speciesBranchStatus, false);
             Node[] speciesNodes = speciesTree.getNodesAsArray();
-            
-            // non-root nodes (linear population sizes)
-            for (int nodeI = 0; nodeI < rootNodeNumber; nodeI++) {
-                speciesBranchStatus[nodeI] |= topPopSizes.isDirty(nodeI);
 
-                if (nodeI < leafNodeCount) { // a leaf node
-                    speciesBranchStatus[nodeI] |= tipPopSizes.isDirty(nodeI);
-                } else {
-                    final int leftChildNumber = speciesNodes[nodeI].getLeft().getNr();
-                    final int rightChildNumber = speciesNodes[nodeI].getRight().getNr();
-                    speciesBranchStatus[nodeI] |= topPopSizes.isDirty(leftChildNumber);
-                    speciesBranchStatus[nodeI] |= topPopSizes.isDirty(rightChildNumber);
+            // non-root nodes (linear population sizes)
+            for (int nodeI = 0; nodeI < speciesNodes.length; nodeI++) {
+                final int speciesTopI = leafNodeCount + nodeI;
+                // if the "top" population is dirty, no need to check the tip
+                if (nodeI < rootNodeNumber && lwcrPopSizes.isDirty(speciesTopI)) { // not the root node
+                    speciesBranchStatus[nodeI] = true;
+                    continue;
+                }
+
+                if (nodeI < leafNodeCount) { // is a leaf node
+                    speciesBranchStatus[nodeI] = lwcrPopSizes.isDirty(nodeI);
+                } else { // is an internal node
+                    final Node leftChild = speciesNodes[nodeI].getLeft();
+                    final Node rightChild = speciesNodes[nodeI].getRight();
+                    final int leftChildTopI = leafNodeCount + leftChild.getNr();
+                    final int rightChildTopI = leafNodeCount + rightChild.getNr();
+                    speciesBranchStatus[nodeI] = lwcrPopSizes.isDirty(leftChildTopI) ||
+                            lwcrPopSizes.isDirty(rightChildTopI) ||
+                            leftChild.isDirty() != Tree.IS_CLEAN ||
+                            rightChild.isDirty() != Tree.IS_CLEAN;
                 }
             }
 
-            // the root node (constant population size)
-            final int leftChildNumber = speciesNodes[rootNodeNumber].getLeft().getNr();
-            final int rightChildNumber = speciesNodes[rootNodeNumber].getRight().getNr();
-            speciesBranchStatus[rootNodeNumber] |= topPopSizes.isDirty(leftChildNumber);
-            speciesBranchStatus[rootNodeNumber] |= topPopSizes.isDirty(rightChildNumber);
-
+            //Arrays.fill(speciesBranchStatus, true);
             needsUpdate = false;
         }
 
         return speciesBranchStatus[speciesNode.getNr()];
     }
 
-    static double linearLogP(double topPopSize, double tipPopSize, double ploidy, double[] fTimes, int nLineagesBottom, int k) {
+    static double linearLogP(double topPopSize, double lwcrPopSize, double ploidy, double[] fTimes, int nLineagesBottom, int k) {
         final double fPopSizeTop = topPopSize * ploidy;
-        final double fPopSizeBottom = tipPopSize * ploidy;
+        final double fPopSizeBottom = lwcrPopSize * ploidy;
 
         final double d5 = fPopSizeTop - fPopSizeBottom;
         final double fTime0 = fTimes[0];
@@ -186,7 +183,7 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
         }
 
         /* StringBuffer sb = new StringBuffer();
-        sb.append(topPopSize + "/" + tipPopSize + "/" + ploidy + "/" + nLineagesBottom + "/" + k + ": ");
+        sb.append(topPopSize + "/" + lwcrPopSize + "/" + ploidy + "/" + nLineagesBottom + "/" + k + ": ");
         for (int i = 0; i < fTimes.length; i++) {
             sb.append(fTimes[i] + ", ");
         }

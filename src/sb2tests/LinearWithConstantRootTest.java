@@ -25,8 +25,7 @@ public class LinearWithConstantRootTest {
     private LinearWithConstantRoot popModel;
 
     private State state;
-    private RealParameter tipPopSizesParameter;
-    private RealParameter topPopSizesParameter;
+    private RealParameter lwcrPopSizesParameter;
 
     private double ploidy;
     private double popSize;
@@ -40,11 +39,10 @@ public class LinearWithConstantRootTest {
         popSize = 0.3;
         ploidy = 2.0;
         nSpecies = 4;
-        expectedLogP = -2.0667829111882234; // I have no idea if this is the right answer
+        expectedLogP = 2.8879769759752225; // need to double check this at some point
 
         state = new State();
-        tipPopSizesParameter = new RealParameter();
-        topPopSizesParameter = new RealParameter();
+        lwcrPopSizesParameter = new RealParameter();
 
         newickSpeciesTree = "((s0:0.32057156677143211,s3:0.32057156677143211):1.2653250035015629,(s1:0.56540722294658641,s2:0.56540722294658641):1.0204893473264085)";
         newickGeneTrees.add("((((s0_tip1:0.3416660303037105,s3_tip0:0.3416660303037105):0.024561190897159135,s0_tip0:0.36622722120086965):0.0643095990846464,s3_tip1:0.43053682028551604):1.4201019862262891,((s1_tip0:0.14473698225381706,s1_tip1:0.14473698225381706):0.5135479407233198,(s2_tip0:0.19897724687831703,s2_tip1:0.19897724687831703):0.4593076760988198):1.1923538835346683)");
@@ -58,15 +56,14 @@ public class LinearWithConstantRootTest {
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
         state.initByName("stateNode", speciesTree);
 
-        final int nBranches = nSpecies * 2 - 1;
-        tipPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nSpecies));
-        topPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nBranches - 1));
-        state.initByName("stateNode", tipPopSizesParameter);
-        state.initByName("stateNode", topPopSizesParameter);
+        final int nPopulations = nSpecies * 3 - 2; // the tip populations (leaves only) and top populations (all but the root)
+        lwcrPopSizesParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nPopulations));
+        state.initByName("stateNode", lwcrPopSizesParameter);
         state.initialise();
 
         popModel = new LinearWithConstantRoot();
-        popModel.initByName("tipPopSizes", tipPopSizesParameter, "topPopSizes", topPopSizesParameter, "speciesTree", speciesTree);
+        popModel.initByName("populationSizes", lwcrPopSizesParameter, "speciesTree", speciesTree);
+        popModel.initPopSizes(popSize);
 
         double calculatedLogP = 0.0;
         for (String geneTreeNewick: newickGeneTrees) {

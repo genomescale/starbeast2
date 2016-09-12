@@ -119,15 +119,17 @@ public class MultispeciesCoalescent extends CompoundDistribution {
             }
         }
 
-        allLineageCounts = new int[speciesNodeCount*nGeneTrees];
-        allEventCounts = new int[speciesNodeCount*nGeneTrees];
-        allCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
-        perBranchLogP = new double[speciesNodeCount];
-
-        storedLineageCounts = new int[speciesNodeCount*nGeneTrees];
-        storedEventCounts = new int[speciesNodeCount*nGeneTrees];
-        storedCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
-        storedPerBranchLogP = new double[speciesNodeCount];
+        if (speciesNodeCount != -1) { // not BEAUTi
+            allLineageCounts = new int[speciesNodeCount*nGeneTrees];
+            allEventCounts = new int[speciesNodeCount*nGeneTrees];
+            allCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
+            perBranchLogP = new double[speciesNodeCount];
+    
+            storedLineageCounts = new int[speciesNodeCount*nGeneTrees];
+            storedEventCounts = new int[speciesNodeCount*nGeneTrees];
+            storedCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
+            storedPerBranchLogP = new double[speciesNodeCount];
+        }
     }
 
     private boolean checkHyperparameters(final boolean force) {

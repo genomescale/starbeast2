@@ -12,7 +12,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
-import starbeast2.ConstantPopulation;
+import starbeast2.ConstantPopulations;
 import starbeast2.CoordinatedExchange;
 import starbeast2.GeneTree;
 import starbeast2.MultispeciesCoalescent;
@@ -28,7 +28,7 @@ abstract class ExchangeTestHelper {
     List<GeneTree> geneTreeWrappers = new ArrayList<>();
 
     RealParameter popsizeParameter;
-    ConstantPopulation populationModel;
+    ConstantPopulations populationModel;
     MultispeciesCoalescent msc;
 
     double ploidy;
@@ -57,7 +57,7 @@ abstract class ExchangeTestHelper {
         state.initByName("stateNode", popsizeParameter);
         state.initialise();
 
-        populationModel = new ConstantPopulation();
+        populationModel = new ConstantPopulations();
         populationModel.initByName("populationSizes", popsizeParameter, "speciesTree", speciesTreeWrapper);
 
         int nBranches = speciesTreeWrapper.getNodeCount();
