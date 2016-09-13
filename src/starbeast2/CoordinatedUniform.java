@@ -25,6 +25,14 @@ public class CoordinatedUniform extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
+    SpeciesTreeInterface speciesTree;
+
+    @Override
+    public void initAndValidate() {
+        speciesTree = speciesTreeInput.get();
+    	super.initAndValidate();
+    }
+
     /**
      * override this for proposals,
      *
@@ -33,7 +41,6 @@ public class CoordinatedUniform extends CoordinatedOperator {
     @Override
     public double proposal() {
         final double fLogHastingsRatio = 0.0; // this move is uniform in both directions
-        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
 
         final int nInternalNodes = speciesTree.getInternalNodeCount();
         if (nInternalNodes == 1) { // if there are no internal nodes other than the root

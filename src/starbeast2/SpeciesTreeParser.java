@@ -6,13 +6,15 @@ import java.util.Map;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import beast.evolution.tree.Tree;
+import beast.util.TreeParser;
 
 /**
 * @author Huw Ogilvie
  */
 
-public class SpeciesTree extends Tree implements SpeciesTreeInterface {
+// mainly for debugging... users who wish to use starting trees can more easily
+// set the "newick" attribute of the StarBeastInitializer
+public class SpeciesTreeParser extends TreeParser implements SpeciesTreeInterface {
     Map<String, Integer> tipNumberMap;
     Multimap<Integer, String> numberTipMap;
 

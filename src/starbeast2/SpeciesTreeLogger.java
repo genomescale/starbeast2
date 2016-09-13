@@ -16,19 +16,17 @@ import beast.core.StateNode;
 import beast.core.parameter.Parameter;
 import beast.evolution.branchratemodel.BranchRateModel;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 
 @Description("Based on the TreeWithMetaDataLogger class, but with support for population sizes")
 public class SpeciesTreeLogger extends BEASTObject implements Loggable {
-    final public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree to be logged.", Validate.REQUIRED);
+    final public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree to be logged.", Validate.REQUIRED);
     final public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
-    final public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree", Validate.OPTIONAL);
+    final public Input<PopulationModel> populationModelInput = new Input<>("populationmodel", "population sizes to be logged with branches of the tree");
     // TODO: make this input a list of valuables
     final public Input<List<Function>> parameterInput = new Input<>("metadata", "meta data to be logged with the tree nodes",new ArrayList<>());
     final public Input<BranchRateModel> clockModelInput = new Input<>("branchratemodel", "rate to be logged with branches of the tree");
     final public Input<Boolean> substitutionsInput = new Input<>("substitutions", "report branch lengths as substitutions (branch length times clock rate for the branch)", false);
     final public Input<Integer> decimalPlacesInput = new Input<>("dp", "the number of decimal places to use writing branch lengths and rates, use -1 for full precision (default = full precision)", -1);
-
 
     boolean someMetaDataNeedsLogging;
     boolean substitutions = false;
@@ -61,15 +59,15 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void init(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get().getTree();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         speciesTree.init(out);
     }
 
     @Override
     public void log(int nSample, PrintStream out) {
         // make sure we get the current version of the inputs
-        SpeciesTree speciesTree = speciesTreeInput.get();
-        Tree tree = speciesTree.getCurrentTree();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
+        SpeciesTreeInterface tree = (SpeciesTreeInterface) speciesTree.getCurrent();
         List<Function> metadata = parameterInput.get();
         for (int i = 0; i < metadata.size(); i++) {
             if (metadata.get(i) instanceof StateNode) {
@@ -77,7 +75,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
             }
         }
         BranchRateModel branchRateModel = clockModelInput.get();
-        MultispeciesPopulationModel populationModel = populationModelInput.get();
+        PopulationModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
         tree.getRoot().sort();
@@ -102,7 +100,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
         }
     }
 
-    String toNewick(Node node, List<Function> metadataList, BranchRateModel branchRateModel, MultispeciesPopulationModel populationModel) {
+    String toNewick(Node node, List<Function> metadataList, BranchRateModel branchRateModel, PopulationModel populationModel) {
         StringBuffer buf = new StringBuffer();
         if (node.getLeft() != null) {
             buf.append("(");
@@ -180,10 +178,10 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     // uses the height of the tallest species or gene tree
     private double getTreeHeight() {
-        double speciesTreeHeight = speciesTreeInput.get().getTreeHeight();
+        double speciesTreeHeight = speciesTreeInput.get().getRoot().getHeight();
 
         for (GeneTree gt: geneTreeInput.get()) {
-            speciesTreeHeight = Double.max(speciesTreeHeight, gt.getTreeHeight());
+            speciesTreeHeight = Double.max(speciesTreeHeight, gt.getRoot().getHeight());
         }
 
         return speciesTreeHeight;
@@ -191,7 +189,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
 
     @Override
     public void close(PrintStream out) {
-        Tree speciesTree = speciesTreeInput.get().getTree();
+        SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         speciesTree.close(out);
     }
 

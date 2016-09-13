@@ -2,7 +2,7 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,6 +49,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
     private int nInternalNodes; // excludes the root node
     private int nSpeciesNodes;
     private int czBranchCount;
+    TreeInterface speciesTree;
 
     private List<List<SortedMap<Node, Node>>> movedNodes;
     private List<SetMultimap<Integer, Node>> graftNodes;
@@ -58,6 +59,12 @@ public class CoordinatedExchange extends CoordinatedOperator {
     // reversed because nodes must be grafted oldest to youngest
     private final static Comparator<Node> nhc = new NodeHeightComparator().reversed();
 
+    @Override
+    public void initAndValidate() {
+        speciesTree = speciesTreeInput.get();
+    	super.initAndValidate();
+    }
+    
     /**
      * override this for proposals,
      *
@@ -66,7 +73,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
     @Override
     public double proposal() {
         testing = isTestInput.get();
-        TreeInterface speciesTree = speciesTreeInput.get().getTree();
         speciesTreeNodes = speciesTree.getNodesAsArray();
         nLeafNodes = speciesTree.getLeafNodeCount();
         nInternalNodes = speciesTree.getInternalNodeCount();
@@ -325,7 +331,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         final List<TreeInterface> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
-            final Set<Node> jGraftBranches = new HashSet<Node>();
+            final Set<Node> jGraftBranches = new LinkedHashSet<>();
             findGraftBranches(geneTreeRootNode, jGraftBranches, cousinDescendants);
             allGraftBranches.putAll(j, jGraftBranches);
         }

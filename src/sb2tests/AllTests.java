@@ -8,10 +8,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     ConstantIOTest.class,
     ConstantPopulationTest.class,
-    ContinuousRatesTest.class,
     UncorrelatedRatesTest.class,
     StarbeastClockTest.class,
-    LinearPopulationTest.class,
     LinearWithConstantRootTest.class,
     IncompatibleTreeTest.class,
     SmallCoordinatedExchangeTest.class,

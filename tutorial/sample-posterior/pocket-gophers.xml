@@ -356,15 +356,29 @@ name="alignment">
     </init>
 
     <distribution id="posterior" spec="util.CompoundDistribution">
-        <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent" populationModel="@constantPopIOModel.Species">
-            <speciesTree id="speciesTree" spec="starbeast2.SpeciesTree" tree="@Tree.t:Species"/>
-            <geneTree id="geneTree.t:64" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:64"/>
-            <geneTree id="geneTree.t:47" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:47"/>
-            <geneTree id="geneTree.t:59" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:59"/>
-            <geneTree id="geneTree.t:29" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:29"/>
-            <geneTree id="geneTree.t:53" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:53"/>
-            <geneTree id="geneTree.t:72" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:72"/>
-            <geneTree id="geneTree.t:26" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:26"/>
+        <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent2" useThreads="false" populationModel="@constantPopIOModel.Species">
+			<distribution id="speciescoalescent1" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species">
+				<speciesTree id="speciesTree" spec="starbeast2.SpeciesTree" tree="@Tree.t:Species"/>
+				<geneTree id="geneTree.t:64" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:64"/>
+			</distribution>
+			<distribution id="speciescoalescent2" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:47" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:47"/>
+			</distribution>
+			<distribution id="speciescoalescent3" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:59" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:59"/>
+			</distribution>
+			<distribution id="speciescoalescent4" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:29" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:29"/>
+			</distribution>
+			<distribution id="speciescoalescent5" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:53" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:53"/>
+			</distribution>
+			<distribution id="speciescoalescent6" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:72" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:72"/>
+			</distribution>
+			<distribution id="speciescoalescent7" spec="starbeast2.MultispeciesCoalescentSingle" populationModel="@constantPopIOModel.Species" speciesTree="@speciesTree">
+				<geneTree id="geneTree.t:26" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:26"/>
+			</distribution>
         </distribution>
         <distribution id="prior" spec="util.CompoundDistribution">
             <distribution id="YuleModel.t:Species" spec="beast.evolution.speciation.YuleModel" birthDiffRate="@speciationRate.t:Species" tree="@Tree.t:Species"/>
@@ -467,7 +481,7 @@ name="alignment">
                 </LogNormal>
             </prior>
         </distribution>
-        <distribution id="likelihood" spec="util.CompoundDistribution">
+        <distribution id="likelihood" spec="starbeast2.CompoundDistribution" useThreads="true">
             <distribution id="treeLikelihood.26" spec="TreeLikelihood" data="@26" tree="@Tree.t:26">
                 <siteModel id="SiteModel.s:26" spec="SiteModel">
                     <parameter id="mutationRate.s:26" estimate="false" name="mutationRate">1.0</parameter>
@@ -590,6 +604,9 @@ name="alignment">
 
     <operator id="UniformOperator.t:Species" spec="Uniform" tree="@Tree.t:Species" weight="10.727739726027396"/>
 
+<!--
+	The next SpeciesTree operators are hardly accepted, so do not contribute to ESSs, but do take up time
+-->
     <operator id="SubtreeSlide.t:Species" spec="SubtreeSlide" size="0.002" tree="@Tree.t:Species" weight="10.727739726027396"/>
 
     <operator id="Narrow.t:Species" spec="Exchange" tree="@Tree.t:Species" weight="10.727739726027396"/>
@@ -855,7 +872,7 @@ name="alignment">
         <log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLogger" branchratemodel="@branchRatesModel.Species" speciesTree="@speciesTree"/>
     </logger>
 
-    <logger id="screenlog" logEvery="5000" model="@posterior">
+    <logger id="screenlog" logEvery="50000">
         <log idref="posterior"/>
         <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
         <log idref="likelihood"/>

@@ -27,8 +27,6 @@
 		collapsedPlugins ="beast.core.MCMC.logger"
 		suppressPlugins = "beast.core.MCMC.operator,
 			beast.core.MCMC.operatorschedule,
-			beast.evolution.tree.coalescent.Coalescent.treeIntervals,
-			beast.evolution.tree.coalescent.Coalescent.tree,
 			beast.core.MCMC.state,
 			beast.core.MCMC.distribution,
 			beast.core.MCMC.init,
@@ -80,28 +78,21 @@
 			beast.evolution.branchratemodel.RandomLocalClockModel.indicators,
 			beast.evolution.operators.ScaleOperator.indicator,
 			beast.core.Operator.weight,
-			beast.evolution.speciation.GeneTreeForSpeciesTreeDistribution.speciesTree,
-			beast.evolution.speciation.GeneTreeForSpeciesTreeDistribution.speciesTreePrior,
-			beast.evolution.speciation.GeneTreeForSpeciesTreeDistribution.treetop,
-			beast.evolution.speciation.GeneTreeForSpeciesTreeDistribution.tree,
-			beast.evolution.speciation.GeneTreeForSpeciesTreeDistribution.treeIntervals,
-			beast.evolution.speciation.SpeciesTreePrior.bottomPopSize,
-			beast.evolution.speciation.SpeciesTreePrior.topPopSize,
-			beast.evolution.speciation.SpeciesTreePrior.taxonset,
-			beast.evolution.speciation.SpeciesTreePrior.tree,
-			beast.evolution.speciation.SpeciesTreePrior.treeIntervals,
 			beast.evolution.speciation.YuleModel.treeIntervals,
 			beast.evolution.speciation.YuleModel.useTipDates,
 			beast.evolution.speciation.YuleModel.tree,
 			beast.core.Logger.model,
-			starbeast2.GeneTree.speciesTree,
 			starbeast2.GeneTree.tree,
+			starbeast2.GeneTree.speciesTree,
+			starbeast2.GeneTree.populationModel,
 			starbeast2.UncorrelatedRates.rates,
 			starbeast2.UncorrelatedRates.noCache,
 			starbeast2.RandomLocalRates.rates,
 			starbeast2.RandomLocalRates.noCache,
-			starbeast2.StarBeastClock.speciesTreeRates,
-			starbeast2.StarBeastClock.geneTree"
+			starbeast2.ConstantPopulations.speciesTree,
+			starbeast2.LinearWithConstantRoot.speciesTree,
+			starbeast2.StarBeastClock.geneTree,
+			starbeast2.StarBeastClock.speciesTreeRates"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
@@ -109,9 +100,9 @@
 
 		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/geneTree" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
+		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="distribution/distribution[id='speciescoalescent']/populationModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
+		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Site Model" tiptext="Site model and substitution model specifications" path="siteModel" hasPartitions="SiteModel" icon="3.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-sitemodel-panels"/>
@@ -136,7 +127,7 @@
 
 		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.evolution.likelihood.TreeLikelihood" mainid="mcmc">
 <![CDATA[
-			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTree" speciesTree="@speciesTree" tree="@Tree.t:$(n)"/>
+			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:$(n)"/>
 
 			<!-- site model -->
 			<plugin spec="SiteModel" id="SiteModel.s:$(n)" gammaCategoryCount="0">
@@ -209,7 +200,7 @@
 
 			<connect srcID="treelog.t:$(n)" targetID="mcmc" inputName="logger" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
-			<connect srcID="geneTree.t:$(n)" targetID="speciescoalescent" inputName="geneTree" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="geneTree.t:$(n)" targetID="speciescoalescent" inputName="distribution" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<!-- hack to ensure that treePrior.$(n) is always deleted from prior, since it is already part of speciescoalescent -->
 			<connect srcID="geneTree.t:$(n)" targetID="prior" inputName="distribution" if="Tree.t:$(n)/estimate=XXX"/>
 
@@ -300,7 +291,7 @@
 		</taxon>
 	</taxonset>
 
-	<tree spec="beast.evolution.tree.Tree" id="Tree.t:Species" taxonset="@taxonsuperset" estimate="true"/>
+	<tree spec="starbeast2.SpeciesTree" id="Tree.t:Species" taxonset="@taxonsuperset" estimate="true"/>
 
 	<!-- framework for main model -->
 	<run spec="MCMC" id="mcmc" storeEvery="5000" chainLength="10000000">
@@ -308,16 +299,15 @@
 		<state storeEvery="5000" id="state">
 			<stateNode idref="Tree.t:Species"/>
 			<stateNode idref="popMean.Species"/>
+			<stateNode idref="popShape.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
 			<stateNode id="branchRates.Species" dimension="10" lower="0" value="1" estimate="true" spec="parameter.IntegerParameter"/>
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">
 			<distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
-				<populationModel populationShape="3.0" id="constantPopIOModel.Species" spec="starbeast2.ConstantPopulationIO">
-					<parameter name="populationMean" id="popMean.Species" lower="0.0" value="1.0" estimate="true"/>
-				</populationModel>
-				<speciesTree id="speciesTree" spec="starbeast2.SpeciesTree" tree="@Tree.t:Species"/>
+				<populationMean spec="parameter.RealParameter" id="popMean.Species" value="1.0" lower="0.0" estimate="true"/>
+				<populationShape spec="parameter.RealParameter" id="popShape.Species" value="3.0" lower="0.0" estimate="false"/>
 			</distribution>
 			<distribution spec="CompoundDistribution" id="prior">
 				<!-- species tree priors -->
@@ -342,8 +332,8 @@
 		<operator id="branchRatesUniform.Species" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@branchRates.Species" weight="9.0"/>
 
 		<operator id="Reheight.t:Species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
-		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" tree="@Tree.t:Species" speciesTree="@speciesTree"/>
-		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" tree="@Tree.t:Species" speciesTree="@speciesTree"/>
+		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
+		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 
 		<operator id="TreeScaler.t:Species" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:Species"/>
 		<operator id="TreeRootScaler.t:Species" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:Species" rootOnly="true"/>
@@ -375,7 +365,7 @@
 		</logger>
 
 		<logger fileName="species.trees" id="speciesTreeLogger" logEvery="5000" mode="tree">
-			<log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLogger" speciesTree="@speciesTree"/>
+			<log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLogger" speciesTree="@Tree.t:Species"/>
 		</logger>
 
 		<logger id="screenlog" logEvery="5000">
@@ -386,6 +376,10 @@
 			<log idref="prior"/>
 		</logger>
 
-		<init id="SBI" estimate="false" spec="starbeast2.StarBeastInitializer" speciesTree="@Tree.t:Species" birthRate="@speciationRate.t:Species" populationModel="@constantPopIOModel.Species"/>
+		<init id="SBI" estimate="false" spec="starbeast2.StarBeastInitializer" speciesTree="@Tree.t:Species" birthRate="@speciationRate.t:Species">
+			<populationModel id="popModelBridge.Species" spec="starbeast2.PassthroughModel">
+				<childModel id="constantPopIOModel.Species" spec="starbeast2.DummyModel"/>
+			</populationModel>
+		</init>
 	</run>
 </beast>

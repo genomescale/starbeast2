@@ -1,17 +1,14 @@
 package starbeast2;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
-import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
+import beast.core.util.CompoundDistribution;
 import beast.core.State;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Remco Bouckaert
@@ -20,124 +17,228 @@ import beast.evolution.tree.TreeInterface;
  */
 
 @Description("Calculates probability of gene trees conditioned on a species tree (the multi-species coalescent).")
-public class MultispeciesCoalescent extends Distribution {
-    public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree.", Validate.REQUIRED);
-    public Input<List<GeneTree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
-    public Input<MultispeciesPopulationModel> populationModelInput = new Input<>("populationModel", "The species tree population model.", Validate.REQUIRED);
+public class MultispeciesCoalescent extends CompoundDistribution {
+    final public Input<RealParameter> populationShapeInput = new Input<>("populationShape", "Shape of the inverse gamma prior distribution on population sizes.");
+    final public Input<RealParameter> populationMeanInput = new Input<>("populationMean", "Mean of the inverse gamma prior distribution on population sizes.");
+
+    private RealParameter invGammaShape;
+    private RealParameter invGammaMean;
 
     private int nGeneTrees;
-    private int speciesTreeNodeCount;
+    private int speciesNodeCount;
     private double[] perGenePloidy;
 
-    final private List<int[]> allLineageCounts = new ArrayList<>();
-    final private List<int[]> allEventCounts = new ArrayList<>();
-    final private List<List<Double[]>> allCoalescentTimes = new ArrayList<>();
+    private double alpha;
+    private double beta;
+
+    private double storedAlpha;
+    private double storedBeta;
+
+    private int[] allLineageCounts;
+    private int[] allEventCounts;
+    private double[][] allCoalescentTimes;
+    private double[] perBranchLogP;
+
+    private int[] storedLineageCounts;
+    private int[] storedEventCounts;
+    private double[][] storedCoalescentTimes;
+    private double[] storedPerBranchLogP;
+
+    private boolean dontCalculate;
+
+    @Override
+    public void store() {
+        super.store();
+        if (dontCalculate) return;
+
+        storedAlpha = alpha;
+        storedBeta = beta;
+
+        System.arraycopy(allLineageCounts, 0, storedLineageCounts, 0, allLineageCounts.length);
+        System.arraycopy(allEventCounts, 0, storedEventCounts, 0, allEventCounts.length);
+        for (int i = 0; i < allCoalescentTimes.length; i++)
+            System.arraycopy(allCoalescentTimes, 0, storedCoalescentTimes, 0, allCoalescentTimes.length);
+        System.arraycopy(perBranchLogP, 0, storedPerBranchLogP, 0, perBranchLogP.length);
+    }
+
+    @Override
+    public void restore() {
+        super.restore();
+        if (dontCalculate) return;
+
+        double tmpAlpha = alpha;
+        double tmpBeta = beta;
+        int[] tmpLineageCounts = allLineageCounts;
+        int[] tmpEventCounts = allEventCounts;
+        double[][] tmpCoalescentTimes = allCoalescentTimes;
+        double[] tmpPerBranchLogP = perBranchLogP;
+
+        alpha = storedAlpha;
+        beta = storedBeta;
+        allLineageCounts = storedLineageCounts;
+        allEventCounts = storedEventCounts;
+        allCoalescentTimes = storedCoalescentTimes;
+        perBranchLogP = storedPerBranchLogP;
+
+        storedAlpha = tmpAlpha;
+        storedBeta = tmpBeta;
+        storedLineageCounts = tmpLineageCounts;
+        storedEventCounts = tmpEventCounts;
+        storedCoalescentTimes = tmpCoalescentTimes;
+        storedPerBranchLogP = tmpPerBranchLogP;
+    }
 
     @Override
     public void initAndValidate() {
-        final List<GeneTree> geneTrees = geneTreeInput.get();
-        nGeneTrees = geneTrees.size();
+        super.initAndValidate();
 
-        // initialize gene trees and store ploidy
-        perGenePloidy = new double[nGeneTrees];
-        for (int i = 0; i < nGeneTrees; i++) {
-            final GeneTree geneTreeI = geneTrees.get(i);
-            perGenePloidy[i] = geneTreeI.ploidy;
+        if (populationShapeInput.get() == null ^ populationMeanInput.get() == null) {
+            throw new IllegalArgumentException("Either specify both population size prior parameters for analytical integration,"
+                    + "or neither for MCMC integration of population sizes.");
+        } else if (populationShapeInput.get() == null) {
+            dontCalculate = true;
+            return;
         }
 
-        final MultispeciesPopulationModel populationModel = populationModelInput.get();
-        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
-        speciesTreeNodeCount = speciesTree.getNodeCount();
-        populationModel.initPopSizes(speciesTreeNodeCount);
+        final List<Distribution> geneTrees = pDistributions.get();
+
+        dontCalculate = false;
+        checkHyperparameters(true);
+        nGeneTrees = geneTrees.size();
+        perGenePloidy = new double[nGeneTrees];
+        speciesNodeCount = -1;
+        for (int geneI = 0; geneI < nGeneTrees; geneI++) {
+            final Distribution pDist = geneTrees.get(geneI);
+            if (pDist instanceof GeneTree) {
+                final GeneTree gt = (GeneTree) pDist;
+                perGenePloidy[geneI] = gt.getPloidy();
+                if (speciesNodeCount == -1)
+                    speciesNodeCount = gt.speciesTreeInput.get().getNodeCount();
+            } else { // check that all input distributions are gene trees
+                throw new IllegalArgumentException("Input distributions must all be of class GeneTree.");
+            }
+        }
+
+        if (speciesNodeCount != -1) { // not BEAUTi
+            allLineageCounts = new int[speciesNodeCount*nGeneTrees];
+            allEventCounts = new int[speciesNodeCount*nGeneTrees];
+            allCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
+            perBranchLogP = new double[speciesNodeCount];
+    
+            storedLineageCounts = new int[speciesNodeCount*nGeneTrees];
+            storedEventCounts = new int[speciesNodeCount*nGeneTrees];
+            storedCoalescentTimes = new double[speciesNodeCount*nGeneTrees][];
+            storedPerBranchLogP = new double[speciesNodeCount];
+        }
     }
 
-    public double calculateLogP() {
-        final TreeInterface speciesTree = speciesTreeInput.get().getTree();
-        final MultispeciesPopulationModel populationModel = populationModelInput.get();
+    private boolean checkHyperparameters(final boolean force) {
+        invGammaShape = populationShapeInput.get();
+        invGammaMean = populationMeanInput.get();
+        final double currentAlpha = invGammaShape.getValue();
+        final double currentBeta = invGammaMean.getValue() * (alpha - 1.0);
 
-        speciesTreeNodeCount = speciesTree.getNodeCount();
-        double[] speciesStartTimes = new double[speciesTreeNodeCount]; // the earlier date (rootward end)
-        double[] speciesEndTimes = new double[speciesTreeNodeCount]; // the later date (tipward end)
-
-        final List<GeneTree> geneTrees = geneTreeInput.get();
-
-        assert SanityChecks.checkTreeSanity(speciesTree.getRoot()); // species tree should not be insane
-
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            final Node speciesNode = speciesTree.getNode(i);
-            final Node parentNode = speciesNode.getParent();
-
-            speciesEndTimes[i] = speciesNode.getHeight();
-            
-            if (parentNode == null) {
-                speciesStartTimes[i] = Double.POSITIVE_INFINITY;
-            } else {
-                speciesStartTimes[i] = parentNode.getHeight();
-            }
+        if (force || currentAlpha != alpha || currentBeta != beta) {
+            alpha = currentAlpha;
+            beta = currentBeta;
+            return true;
         }
 
-        allLineageCounts.clear();
-        allEventCounts.clear();
-        allCoalescentTimes.clear();
+        return false;
+    }
 
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            allLineageCounts.add(new int[nGeneTrees]);
-            allEventCounts.add(new int[nGeneTrees]);
-            allCoalescentTimes.add(new ArrayList<>());
-        }
+    @Override
+	public double calculateLogP() {
+        super.calculateLogP();
+        // System.out.println(tmpLogP + " -> " + logP);
+        if (dontCalculate || Double.isInfinite(logP) || Double.isNaN(logP)) return logP;
 
-        // transpose gene-branch list of lists to branch-gene list of lists
-        for (int j = 0; j < nGeneTrees; j++) { // for each gene "j"
-            final GeneTree geneTree = geneTrees.get(j);
-            assert SanityChecks.checkTreeSanity(geneTree.getRoot()); // gene trees should not be insane either
-            if (geneTree.computeCoalescentTimes()) {
-                for (int i = 0; i < speciesTreeNodeCount; i++) { // for each species tree node/branch "i"
-                    final List<Double> timesView = geneTree.coalescentTimes.get(i);
-                    final int geneBranchEventCount = timesView.size();
-                    final Double[] geneBranchCoalescentTimes = new Double[geneBranchEventCount];
-                    timesView.toArray(geneBranchCoalescentTimes);
-                    Arrays.sort(geneBranchCoalescentTimes);
+        // need to recompute all branches if the parameters of the prior distribution have changed
+        final boolean updatedPrior = checkHyperparameters(false);
 
-                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts.count(i);
+        final int[] branchLineageCounts = new int[nGeneTrees];
+        final int[] branchEventCounts = new int[nGeneTrees];
+        final double[][] branchCoalescentTimes = new double[nGeneTrees][];
 
-                    final Double[] coalescentTimesIJ = new Double[geneBranchEventCount + 2];
-                    coalescentTimesIJ[0] = speciesEndTimes[i];
-                    for (int k = 0; k < geneBranchEventCount; k++) {
-                        coalescentTimesIJ[k + 1] = geneBranchCoalescentTimes[k];
-                    }
-                    coalescentTimesIJ[geneBranchEventCount + 1] = speciesStartTimes[i];
+        final List<Distribution> pDists = pDistributions.get();
+        final GeneTree[] geneTrees = new GeneTree[pDists.size()];
 
-                    allLineageCounts.get(i)[j] = geneBranchLineageCount;
-                    allEventCounts.get(i)[j] = geneBranchEventCount;
-                    allCoalescentTimes.get(i).add(coalescentTimesIJ);
+        int nodeGeneI = 0;
+        for (int nodeI = 0; nodeI < speciesNodeCount; nodeI++) {
+            boolean dirtyBranch = false;
+            for (int geneI = 0; geneI < nGeneTrees; geneI++) {
+                if (nodeI == 0) geneTrees[geneI] = (GeneTree) pDists.get(geneI);
+                final GeneTree geneTree = geneTrees[geneI];
+
+                if (geneTree.isDirtyBranch(nodeI)) {
+                    dirtyBranch = true;
+
+                    final double[] geneBranchCoalescentTimes = geneTree.getCoalescentTimes(nodeI);
+                    final int geneBranchLineageCount = geneTree.coalescentLineageCounts[nodeI];
+                    final int geneBranchEventCount = geneTree.coalescentCounts[nodeI];
+
+                    allLineageCounts[nodeGeneI] = geneBranchLineageCount;
+                    allEventCounts[nodeGeneI] = geneBranchEventCount;
+                    allCoalescentTimes[nodeGeneI] = geneBranchCoalescentTimes;
                 }
-            } else { // this gene tree IS NOT compatible with the species tree
-                logP = Double.NEGATIVE_INFINITY;
-                return logP;
-            }
-        }
 
-        logP = 0.0;
-        for (int i = 0; i < speciesTreeNodeCount; i++) {
-            final Node speciesTreeNode = speciesTree.getNode(i); 
-            final List<Double[]> branchCoalescentTimes = allCoalescentTimes.get(i);
-            final int[] branchLineageCounts = allLineageCounts.get(i);
-            final int[] branchEventCounts = allEventCounts.get(i);
-            final double branchLogP = populationModel.branchLogP(i, speciesTreeNode, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
-            logP += branchLogP;
+                branchLineageCounts[geneI] = allLineageCounts[nodeGeneI];
+                branchEventCounts[geneI] = allEventCounts[nodeGeneI];
+                branchCoalescentTimes[geneI] = allCoalescentTimes[nodeGeneI];
 
-            /* for (int j = 0; j < branchCoalescentTimes.size(); j++) {
-                Double[] geneTimes = branchCoalescentTimes.get(j);
-                for (int k = 0; k < geneTimes.length; k++) {
-                    System.out.println(String.format("%d/%d/%d: %f", i, j, k, geneTimes[k]));
-                }
-                System.out.println(String.format("%d/%d: %d, %d", i, j, branchLineageCounts[j], branchEventCounts[j]));
+                nodeGeneI++;
             }
-            System.out.println(String.format("%d: %f", i, branchLogP)); */
+
+            if (updatedPrior || dirtyBranch)
+                perBranchLogP[nodeI] = analyticalLogP(alpha, beta, perGenePloidy, branchCoalescentTimes, branchLineageCounts, branchEventCounts);
+
+            logP += perBranchLogP[nodeI];
         }
 
         return logP;
     }
+
+    static private double analyticalLogP(double alpha, double beta, double[] perGenePloidy, double[][] branchCoalescentTimes, int[] branchLineageCounts, int[] branchEventCounts) {
+        final int nGenes = perGenePloidy.length;
+
+        int branchQ = 0;
+        double branchLogR = 0.0;
+        double branchGamma = 0.0;
+
+        for (int j = 0; j < nGenes; j++) {
+            final int geneN = branchLineageCounts[j];
+            final double[] geneCoalescentTimes = branchCoalescentTimes[j];
+            final int geneK = branchEventCounts[j];
+            final double genePloidy = perGenePloidy[j]; 
+            branchLogR -= geneK * Math.log(genePloidy);
+            branchQ += geneK;
+
+            double partialGamma = 0.0;
+            for (int i = 0; i < geneK; i++) {
+                partialGamma += (geneCoalescentTimes[i + 1] - geneCoalescentTimes[i]) * (geneN - i) * (geneN - (i + 1.0)) / 2.0;
+            }
+            
+            if (geneN - geneK > 1) {
+                partialGamma += (geneCoalescentTimes[geneK + 1] - geneCoalescentTimes[geneK]) * (geneN - geneK) * (geneN - (geneK + 1.0)) / 2.0;
+            }
+
+            branchGamma += partialGamma / genePloidy;
+        }
+
+        double logGammaRatio = 0.0;
+        for (int i = 0; i < branchQ; i++) {
+            logGammaRatio += Math.log(alpha + i);
+        }
+
+        final double logP = branchLogR + (alpha * Math.log(beta)) - ((alpha + branchQ) * Math.log(beta + branchGamma)) + logGammaRatio;
+
+        return logP;
+    }
+
+    /*@Override
+    public double getCurrentLogP() {
+        return calculateLogP();
+    }*/
 
     @Override
     public List<String> getArguments() {
