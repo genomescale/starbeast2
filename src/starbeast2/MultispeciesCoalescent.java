@@ -135,10 +135,12 @@ public class MultispeciesCoalescent extends CompoundDistribution {
     private boolean checkHyperparameters(final boolean force) {
         invGammaShape = populationShapeInput.get();
         invGammaMean = populationMeanInput.get();
+        final double currentAlpha = invGammaShape.getValue();
+        final double currentBeta = invGammaMean.getValue() * (alpha - 1.0);
 
-        if (invGammaShape.isDirty(0) || invGammaMean.isDirty(0) || force) {
-            alpha = invGammaShape.getValue();
-            beta = invGammaMean.getValue() * (alpha - 1.0);
+        if (force || currentAlpha != alpha || currentBeta != beta) {
+            alpha = currentAlpha;
+            beta = currentBeta;
             return true;
         }
 
