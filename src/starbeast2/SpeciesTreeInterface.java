@@ -33,11 +33,11 @@ public interface SpeciesTreeInterface extends TreeInterface {
     
             speciesNumberMap.put(speciesName, speciesNumber);
         }
-    
+
         // generate map of gene tree tip node names to species tree tip node numbers
         final TaxonSet taxonSuperSet = getTaxonset();
         final Set<Taxon> speciesSet = new LinkedHashSet<>(taxonSuperSet.taxonsetInput.get());
-    
+
         for (Taxon species: speciesSet) {
             final String speciesName = species.getID();
             int speciesNumber = 0;
@@ -46,7 +46,7 @@ public interface SpeciesTreeInterface extends TreeInterface {
             }
             final TaxonSet speciesTaxonSet = (TaxonSet) species;
             final Set<Taxon> tipSet = new LinkedHashSet<>(speciesTaxonSet.taxonsetInput.get());
-    
+
             for (Taxon tip: tipSet) {
                 final String tipName = tip.getID();
                 tipNumberMap.put(tipName, speciesNumber);
