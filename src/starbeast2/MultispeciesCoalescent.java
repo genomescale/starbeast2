@@ -56,8 +56,7 @@ public class MultispeciesCoalescent extends CompoundDistribution {
 
         System.arraycopy(allLineageCounts, 0, storedLineageCounts, 0, allLineageCounts.length);
         System.arraycopy(allEventCounts, 0, storedEventCounts, 0, allEventCounts.length);
-        for (int i = 0; i < allCoalescentTimes.length; i++)
-            System.arraycopy(allCoalescentTimes, 0, storedCoalescentTimes, 0, allCoalescentTimes.length);
+        System.arraycopy(allCoalescentTimes, 0, storedCoalescentTimes, 0, allCoalescentTimes.length);
         System.arraycopy(perBranchLogP, 0, storedPerBranchLogP, 0, perBranchLogP.length);
     }
 
