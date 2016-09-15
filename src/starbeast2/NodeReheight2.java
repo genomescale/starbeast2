@@ -17,12 +17,15 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
+
+
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
 public class NodeReheight2 extends TreeOperator {
     public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
     public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
     Node[] m_nodes;
+
 
     /**
      * map node number of leafs in gene trees to leaf nr in species tree *
@@ -90,7 +93,8 @@ public class NodeReheight2 extends TreeOperator {
         final Node root = reconstructTree(heights, reverseOrder, 0, heights.length, new boolean[heights.length]);
 
         assert checkConsistency(root, new boolean[heights.length]) ;
-
+        //            System.err.println("Inconsisten tree");
+        //        }
         root.setParent(null);
         tree.setRoot(root);
         return 0;
@@ -102,7 +106,7 @@ public class NodeReheight2 extends TreeOperator {
         } else {
             double maxLeft = calcMinHeight(node.getLeft());
             double maxRight = calcMinHeight(node.getRight());
-            return Math.max(maxLeft, maxRight);            
+            return Math.max(maxLeft, maxRight);    		
         }
     }
 
@@ -138,7 +142,6 @@ public class NodeReheight2 extends TreeOperator {
                 isLowerSpecies[node.getNr()] = true;
             }
         }
-
         // find species on the right of selected node
         final boolean[] isUpperSpecies = new boolean[nrOfSpecies];
         for (int i = nodeIndex + 1; i < nodes.length; i++) {
@@ -148,10 +151,15 @@ public class NodeReheight2 extends TreeOperator {
             }
         }
 
+        final boolean[] isUsedSpecies = new boolean[nrOfSpecies];
+        for (int i = 0; i < nrOfSpecies; i++) {
+            isUsedSpecies[i] = isLowerSpecies[i] || isUpperSpecies[i];
+        }
+
         // calculate for every species tree the maximum allowable merge point
         for (int i = 0; i < nrOfGeneTrees; i++) {
             final GeneTree tree = geneTreesInput.get().get(i);
-            findMaximaInGeneTree(tree.getRoot(), new boolean[nrOfSpecies], m_taxonMap[i], maxHeight);
+            findMaximaInGeneTree(tree.getRoot(), new boolean[nrOfSpecies], m_taxonMap[i], maxHeight, isUsedSpecies);
         }
 
         // find max
@@ -168,23 +176,26 @@ public class NodeReheight2 extends TreeOperator {
             }
         }
         return max;
-    }
+    } // calcMaxHeight
+
 
     /**
      * for every species in the left on the gene tree and for every species in the right
      * cap the maximum join height by the lowest place the two join in the gene tree
      */
-    private void findMaximaInGeneTree(final Node nodeX, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight) {
+    private void findMaximaInGeneTree(final Node nodeX, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight, boolean[] isUsedSpecies) {
         Tree tree = nodeX.getTree();
         int nrOfNodes = tree.getNodeCount();
         int [][] speciesList = new int[nrOfNodes][nrOfSpecies];
         int [] speciesCount = new int[nrOfNodes];
-        for (Node node : tree.listNodesPostOrder(null, null)) {     
+        for (Node node : tree.listNodesPostOrder(null, null)) { 	
             if (node.isLeaf()) {
                 int nodeNr = node.getNr();
                 final int species = taxonMap[nodeNr];
-                speciesList[nodeNr][0] = species;
-                speciesCount[nodeNr] = 1;
+                if (isUsedSpecies[species]) {
+                    speciesList[nodeNr][0] = species;
+                    speciesCount[nodeNr] = 1;
+                }
             } else {
                 int left = node.getLeft().getNr();
                 int right = node.getRight().getNr();
@@ -236,9 +247,6 @@ public class NodeReheight2 extends TreeOperator {
         }
     }
 
-    /**
-     * construct tree top down by joining heighest left and right nodes *
-     */
     private Node reconstructTree(final double[] heights, final int[] reverseOrder, final int from, final int to, final boolean[] hasParent) {
         //nodeIndex = maxIndex(heights, 0, heights.length);
         int nodeIndex = -1;
@@ -294,6 +302,19 @@ public class NodeReheight2 extends TreeOperator {
         return node;
     }
 
+    // helper for reconstructTree, to find maximum in range
+    //    private int maxIndex(final double[] heights, final int from, final int to) {
+    //        int maxIndex = -1;
+    //        double max = Double.NEGATIVE_INFINITY;
+    //        for (int i = from; i < to; i++) {
+    //            if (max < heights[i]) {
+    //                max = heights[i];
+    //                maxIndex = i;
+    //            }
+    //        }
+    //        return maxIndex;
+    //    }
+
     /**
      ** gather height of each node, and the node index associated with the height.*
      **/
@@ -326,4 +347,4 @@ public class NodeReheight2 extends TreeOperator {
             reorder(node.getRight());
         }
     }
-}
+} // class NodeReheight
