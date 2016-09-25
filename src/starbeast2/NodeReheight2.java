@@ -85,7 +85,16 @@ public class NodeReheight2 extends TreeOperator {
         while (m_nodes[reverseOrder[nodeIndex]].isLeaf()) {
             nodeIndex = Randomizer.nextInt(heights.length);
         }
-        final double maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
+        double maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
+        if (false) {
+        	// debugging code to ensure the new maxHeight equals the original one
+	        double maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
+	        if (Math.abs(maxHeight - maxHeight2) > 1e-10) {
+	            maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
+	            maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
+	        	
+	        }
+        }
         final double minHeight = calcMinHeight(m_nodes[reverseOrder[nodeIndex]]);
         heights[nodeIndex] = minHeight + Randomizer.nextDouble() * (maxHeight - minHeight);
         m_nodes[reverseOrder[nodeIndex]].setHeight(heights[nodeIndex]);
@@ -155,11 +164,64 @@ public class NodeReheight2 extends TreeOperator {
         for (int i = 0; i < nrOfSpecies; i++) {
             isUsedSpecies[i] = isLowerSpecies[i] || isUpperSpecies[i];
         }
+        
+        // calculate for every species tree the maximum allowable merge point
+        for (int i = 0; i < nrOfGeneTrees; i++) {
+            final GeneTree tree = geneTreesInput.get().get(i);
+            findMaximaInGeneTree(tree.getRoot(), m_taxonMap[i], maxHeight, isUsedSpecies);
+        }
+
+        // find max
+        double max = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < nrOfSpecies; i++) {
+            if (isLowerSpecies[i]) {
+                for (int j = 0; j < nrOfSpecies; j++) {
+                    if (j != i && isUpperSpecies[j]) {
+                        // final int x = Math.min(i, j);
+                        // final int y = Math.max(i, j);
+                        max = Math.min(max, maxHeight[i][j]);
+                        max = Math.min(max, maxHeight[j][i]);
+                    }
+                }
+            }
+        }
+        return max;
+    } // calcMaxHeight
+
+
+    /**
+     * calculate maximum height that node nodeIndex can become restricted
+     * by nodes on the left and right
+     */
+    private double calcMaxHeight2(final int[] reverseOrder, final int nodeIndex) {
+        // find maximum height between two species. Only upper right part is populated
+        final double[][] maxHeight = new double[nrOfSpecies][nrOfSpecies];
+        for (int i = 0; i < nrOfSpecies; i++) {
+            Arrays.fill(maxHeight[i], Double.POSITIVE_INFINITY);
+        }
 
         // calculate for every species tree the maximum allowable merge point
         for (int i = 0; i < nrOfGeneTrees; i++) {
             final GeneTree tree = geneTreesInput.get().get(i);
-            findMaximaInGeneTree(tree.getRoot(), new boolean[nrOfSpecies], m_taxonMap[i], maxHeight, isUsedSpecies);
+            findMaximaInGeneTree(tree.getRoot(), new boolean[nrOfSpecies], m_taxonMap[i], maxHeight);
+        }
+
+        // find species on the left of selected node
+        final boolean[] isLowerSpecies = new boolean[nrOfSpecies];
+        final Node[] nodes = treeInput.get().getNodesAsArray();
+        for (int i = 0; i < nodeIndex; i++) {
+            final Node node = nodes[reverseOrder[i]];
+            if (node.isLeaf()) {
+                isLowerSpecies[node.getNr()] = true;
+            }
+        }
+        // find species on the right of selected node
+        final boolean[] isUpperSpecies = new boolean[nrOfSpecies];
+        for (int i = nodeIndex + 1; i < nodes.length; i++) {
+            final Node node = nodes[reverseOrder[i]];
+            if (node.isLeaf()) {
+                isUpperSpecies[node.getNr()] = true;
+            }
         }
 
         // find max
@@ -178,12 +240,41 @@ public class NodeReheight2 extends TreeOperator {
         return max;
     } // calcMaxHeight
 
+    /**
+     * for every species in the left on the gene tree and for every species in the right
+     * cap the maximum join height by the lowest place the two join in the gene tree
+     */
+    private void findMaximaInGeneTree(final Node node, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight) {
+        if (node.isLeaf()) {
+            final int species = taxonMap[node.getNr()];
+            taxonSet[species] = true;
+        } else {
+            final boolean[] isLeftTaxonSet = new boolean[nrOfSpecies];
+            findMaximaInGeneTree(node.getLeft(), isLeftTaxonSet, taxonMap, maxHeight);
+            final boolean[] isRightTaxonSet = new boolean[nrOfSpecies];
+            findMaximaInGeneTree(node.getRight(), isRightTaxonSet, taxonMap, maxHeight);
+            for (int i = 0; i < nrOfSpecies; i++) {
+                if (isLeftTaxonSet[i]) {
+                    for (int j = 0; j < nrOfSpecies; j++) {
+                        if (j != i && isRightTaxonSet[j]) {
+                            final int x = Math.min(i, j);
+                            final int y = Math.max(i, j);
+                            maxHeight[x][y] = Math.min(maxHeight[x][y], node.getHeight());
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < nrOfSpecies; i++) {
+                taxonSet[i] = isLeftTaxonSet[i] | isRightTaxonSet[i];
+            }
+        }
+    }
 
     /**
      * for every species in the left on the gene tree and for every species in the right
      * cap the maximum join height by the lowest place the two join in the gene tree
      */
-    private void findMaximaInGeneTree(final Node nodeX, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight, boolean[] isUsedSpecies) {
+    private void findMaximaInGeneTree(final Node nodeX, final int [] taxonMap, final double[][] maxHeight, boolean[] isUsedSpecies) {
         Tree tree = nodeX.getTree();
         int nrOfNodes = tree.getNodeCount();
         int [][] speciesList = new int[nrOfNodes][nrOfSpecies];
@@ -201,9 +292,9 @@ public class NodeReheight2 extends TreeOperator {
                 int right = node.getRight().getNr();
                 for (int i = 0; i < speciesCount[left]; i++) {
                     for (int j = 0; j < speciesCount[right]; j++) {
-                        if (speciesList[i] != speciesList[j]) {
-                            int sp1 = speciesCount[i];
-                            int sp2 = speciesCount[j];
+                        if (speciesList[left][i] != speciesList[right][j]) {
+                            int sp1 = speciesList[left][i];
+                            int sp2 = speciesList[right][j];
                             final int x;
                             final int y;
                             if (sp1 < sp2) {
