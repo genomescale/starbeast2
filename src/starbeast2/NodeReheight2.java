@@ -86,15 +86,16 @@ public class NodeReheight2 extends TreeOperator {
             nodeIndex = Randomizer.nextInt(heights.length);
         }
         double maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
-        if (false) {
-        	// debugging code to ensure the new maxHeight equals the original one
-	        double maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
-	        if (Math.abs(maxHeight - maxHeight2) > 1e-10) {
-	            maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
-	            maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
-	        	
-	        }
+        // debugging code to ensure the new maxHeight equals the original one
+        /*
+        double maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
+        if (Math.abs(maxHeight - maxHeight2) > 1e-10) {
+            maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
+            maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
+        	
         }
+        */
+
         final double minHeight = calcMinHeight(m_nodes[reverseOrder[nodeIndex]]);
         heights[nodeIndex] = minHeight + Randomizer.nextDouble() * (maxHeight - minHeight);
         m_nodes[reverseOrder[nodeIndex]].setHeight(heights[nodeIndex]);
@@ -192,8 +193,10 @@ public class NodeReheight2 extends TreeOperator {
     /**
      * calculate maximum height that node nodeIndex can become restricted
      * by nodes on the left and right
+     * 
+     * only used for debugging now
      */
-    private double calcMaxHeight2(final int[] reverseOrder, final int nodeIndex) {
+    /* private double calcMaxHeight2(final int[] reverseOrder, final int nodeIndex) {
         // find maximum height between two species. Only upper right part is populated
         final double[][] maxHeight = new double[nrOfSpecies][nrOfSpecies];
         for (int i = 0; i < nrOfSpecies; i++) {
@@ -238,13 +241,15 @@ public class NodeReheight2 extends TreeOperator {
             }
         }
         return max;
-    } // calcMaxHeight
+    } */
 
     /**
      * for every species in the left on the gene tree and for every species in the right
      * cap the maximum join height by the lowest place the two join in the gene tree
+     * 
+     * only used for debugging now
      */
-    private void findMaximaInGeneTree(final Node node, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight) {
+    /* private void findMaximaInGeneTree(final Node node, final boolean[] taxonSet, final int [] taxonMap, final double[][] maxHeight) {
         if (node.isLeaf()) {
             final int species = taxonMap[node.getNr()];
             taxonSet[species] = true;
@@ -268,7 +273,7 @@ public class NodeReheight2 extends TreeOperator {
                 taxonSet[i] = isLeftTaxonSet[i] | isRightTaxonSet[i];
             }
         }
-    }
+    } */
 
     /**
      * for every species in the left on the gene tree and for every species in the right

@@ -234,7 +234,7 @@ public class GeneTree extends Distribution {
 	            	
 					blocksize -= 4;
 	            	coalescentTimesLength = speciesNodeCount * blocksize;
-	            	System.err.print("pop");
+	            	// System.err.print("pop");
 				}
 
 	        Arrays.fill(speciesOccupancy, 0);
@@ -286,7 +286,7 @@ public class GeneTree extends Distribution {
             	coalescentTimes = tmp;
             	storedCoalescentTimes = stmp;
             	blocksize += DELTA_BLOCK_SIZE;
-            	System.err.print("blocksize = " + blocksize + " ");
+            	// System.err.print("blocksize = " + blocksize + " ");
             	
             	// do calculation again, this time with properly sized array
             	// we only get here very occasionally (only when blocksize is updated)
