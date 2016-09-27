@@ -311,7 +311,7 @@
 
 		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 
-		<operator id="Reheight.t:Species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
+		<operator id="Reheight.t:Species" spec="starbeast2.NodeReheight2" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 

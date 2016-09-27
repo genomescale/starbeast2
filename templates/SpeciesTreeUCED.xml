@@ -331,7 +331,7 @@
 		<operator id="branchRatesCycle.Species" k="2" optimise="false" spec="starbeast2.DiscreteRateCycle" treeRates="@branchRates.Species" weight="9.0"/>
 		<operator id="branchRatesUniform.Species" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@branchRates.Species" weight="9.0"/>
 
-		<operator id="Reheight.t:Species" spec="NodeReheight" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
+		<operator id="Reheight.t:Species" spec="starbeast2.NodeReheight2" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 
