@@ -32,7 +32,7 @@
 
 In this tutorial we demonstrate the use of StarBEAST2, a fully Bayesian method
 of species tree estimation and a replacement for $\Conv$BEAST
-\citep{Heled01032010}. StarBEAST2 is approximately $6\times$ faster than $\Conv$BEAST,
+\citep{Heled01032010}. StarBEAST2 is many times faster than $\Conv$BEAST,
 and also supports applying a relaxed clock to the species tree. This enables
 estimating the substitution rates of extant and ancestral species under a
 multispecies coalescent model.
@@ -260,8 +260,8 @@ StarBEAST2, like $\Conv$BEAST before it, can estimate the effective population
 sizes for extant and ancestral species. However by default StarBEAST2
 analytically integrates over population sizes which is faster than making
 explicit estimates. If you do need to estimate population sizes, change the
-population model to \textbf{Constant Population}. For this tutorial, keep the
-default model which is \textbf{Constant Population IO}. In order to improve
+population model to \textbf{Constant Populations}. For this tutorial, keep the
+default model which is \textbf{Analytical Population Size Integration}. In order to improve
 convergence of the MCMC chain, set the population size mean to 0.003 and uncheck
 the option to estimate this value (Figure~\ref{fig:pop}). \textcolor{red}{For
 real analyses you should almost certainly estimate this value, but a fixed value
@@ -499,6 +499,19 @@ that contains 95\% of the posterior probability. It is also known as a
 confidence interval. The HPD for the sum of rate changes suggests that either 0,
 1 or 2 rate changes have occured.
 
+\subsection*{A note on prior distributions}
+
+For any Bayesian analysis, it is very important to compare your findings with
+the prior distribution. The default prior distribution for the number of
+substitution rate shifts for a random local clock is a Poisson distribution
+with the $\lambda$ parameter fixed at $\ln(2) \approx 0.69$. The prior
+probability of zero rate changes for the default distribution is equal to
+50\%. Tracer reported that around 1250 samples had zero rate shifts,
+out of $9000000 \div 5000 = 1800$ posterior samples. This means that after
+adding data, our belief in a strict clock increased from 50\% to about 70\%,
+a very modest change. The data in this tutorial suggests that a strict clock
+applies to pocket gophers, but falls far short of any standard of proof.
+
 \subsection*{Obtaining an estimate of the phylogenetic tree}
 
 BEAST also produces a sample of plausible trees. These can be summarized using
@@ -593,28 +606,7 @@ there is about 16\% support for \textit{heterodus} to be an outgroup, and about
 
 \clearpage
 
-\subsection*{Comparing your results to the prior}
-
-Redo the same analysis from scratch, but this time inside the MCMC panel select
-the \textbf{Sample From Prior} option (Figure~\ref{fig:mcmc}). This will allow
-you to visualize the full prior distribution, absent the evidence introduced by
-the sequence data. Load the ``starbeast.log'' log file in Tracer, and again
-select the sum of rate shifts. You can see that having no rate shifts is less
-probable when sampling from the prior, but that the HPD interval for this
-statistic is the same as the posterior; 0, 1 or 2
-(Figure~\ref{fig:tracerPrior}). This demonstrates that the evidence provided by
-the seven sequenced loci is insufficient to rule out rate shifts in pocket gophers.
-
-\begin{figure}[htb!]
-\centering
-\includegraphics[width=\textwidth]{figures/tracer-prior.png}
-\caption{Tracer with the prior distribution.}
-\label{fig:tracerPrior}
-\end{figure}
-
-\clearpage
-
 \bibliographystyle{natbib}
-\bibliography{StarBEAST2-tutorial}
+\bibliography{StarBEAST2-tutorial-1}
 
 \end{document}
