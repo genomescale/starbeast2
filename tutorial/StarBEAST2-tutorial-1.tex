@@ -22,7 +22,7 @@
 \renewcommand{\baselinestretch}{1.5}
 
 \begin{document}
-\title{StarBEAST2 -- Estimating Species Trees from Multilocus Data}
+\title{StarBEAST2 -- Species Trees with Relaxed Molecular Clocks}
 
 \author{Joseph Heled, Remco Bouckaert, Walter Xie, Alexei J Drummond and Huw A Ogilvie}
 
@@ -135,7 +135,7 @@ set clock rate} menu item (Figure~\ref{fig:disableAuto}).
 
 \clearpage
 
-\subsubsection*{Loading the NEXUS file}
+\subsubsection*{Loading the NEXUS files}
 
 StarBEAST2 supports multiple individuals per-species and multiple loci (we use
 the term locus to refer to a genomic sequence, and gene when referring to the
@@ -395,7 +395,7 @@ tracelog, speciesTreeLog, and other treelog file names (e.g.
 We are now ready to create the BEAST XML file. To do this, either select the
 \textbf{File/Save} or \textbf{File/Save~As} menu options. Save the file with an
 appropriate name (we usually end the filename with ``.xml'', e.g.
-``pocket-gophers.xml''). We are now ready to run the file through BEAST.
+``pocket-gophers-rlc.xml''). We are now ready to run the file through BEAST.
 
 \subsection*{Running BEAST}
 
@@ -465,7 +465,7 @@ Total calculation time: 1180.325 seconds
 End likelihood: -9120.501194044526
 \end{verbatim}}
 
-\subsection*{Analyzing the results}
+\section{Analyzing the results}
 
 Run the program called \textbf{Tracer} to analyze the output of BEAST. When the
 main window has opened, choose \textbf{Import Trace File...} from the
@@ -507,7 +507,7 @@ substitution rate shifts for a random local clock is a Poisson distribution
 with the $\lambda$ parameter fixed at $\ln(2) \approx 0.69$. The prior
 probability of zero rate changes for the default distribution is equal to
 50\%. Tracer reported that around 1250 samples had zero rate shifts,
-out of $9000000 \div 5000 = 1800$ posterior samples. This means that after
+out of $9000000 \div 5000 = 1800$ post-burnin posterior samples. This means that after
 adding data, our belief in a strict clock increased from 50\% to about 70\%,
 a very modest change. The data in this tutorial suggests that a strict clock
 applies to pocket gophers, but falls far short of any standard of proof.
