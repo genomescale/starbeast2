@@ -11,11 +11,11 @@ import beast.core.Input;
 import beast.core.Operator;
 import beast.core.Input.Validate;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import beast.evolution.tree.Tree;
 
 public abstract class CoordinatedOperator extends Operator {
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree state node.", Validate.REQUIRED);
-    public Input<List<TreeInterface>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
+    public Input<List<Tree>> geneTreeInput = new Input<>("geneTree", "Gene tree within the species tree.", new ArrayList<>());
 
     protected int nGeneTrees;
 

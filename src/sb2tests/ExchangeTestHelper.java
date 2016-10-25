@@ -11,6 +11,7 @@ import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
 import starbeast2.ConstantPopulations;
 import starbeast2.CoordinatedExchange;
@@ -55,6 +56,9 @@ abstract class ExchangeTestHelper {
         // Create dummy state to allow statenode editing
         State state = new State();
         state.initByName("stateNode", popsizeParameter);
+        for (Tree gt: geneTrees) {
+            state.initByName("stateNode", gt);
+        }
         state.initialise();
 
         populationModel = new ConstantPopulations();

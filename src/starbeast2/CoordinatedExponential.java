@@ -10,6 +10,7 @@ import com.google.common.collect.SetMultimap;
 import beast.core.Description;
 import beast.core.Input;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
@@ -23,7 +24,7 @@ import beast.util.Randomizer;
         + "topology of all trees. See http://dx.doi.org/10.1101/010199 for full details.")
 public class CoordinatedExponential extends CoordinatedOperator {
     public final Input<Double> betaInput = new Input<>("beta", "Beta parameter of the exponential proposal distribution", 1.0);
-    public final Input<Boolean> optimiseInput = new Input<>("optimise", "Adjust 'k' during the MCMC run to improve mixing.", true);
+    public final Input<Boolean> optimiseInput = new Input<>("optimise", "Adjust beta parameter during the MCMC run to improve mixing.", true);
 
     // scaled so that the median of the proposal distribution is equal to the mean waiting time
     // so half the time proposals will be above expectation, and half below
@@ -45,7 +46,6 @@ public class CoordinatedExponential extends CoordinatedOperator {
         optimise = optimiseInput.get();
         
         speciesTree = speciesTreeInput.get();
-
         super.initAndValidate();
     }
 
@@ -95,12 +95,14 @@ public class CoordinatedExponential extends CoordinatedOperator {
         final Set<String> rightChildDescendants = findDescendants(rightChildNode, rightChildNodeNumber);
 
         final SetMultimap<Integer, Node> allConnectingNodes = HashMultimap.create();
-        final List<TreeInterface> geneTrees = geneTreeInput.get();
+        final List<Tree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
-            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Tree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
             final Set<Node> jConnectingNodes = new HashSet<Node>();
             findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom);
             allConnectingNodes.putAll(j, jConnectingNodes);
+            geneTree.startEditing(null); // hack to stop beast.core.State.Trie memory leak
         }
 
         return allConnectingNodes;
@@ -147,7 +149,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
             if (leftDescent == descendsThrough.NEITHER) { // the gene tree node right child is the root node of a connected component
                 return descendsThrough.NEITHER;
             } else { // the gene tree node left child descends exclusively through the left XOR right child of the species tree node of interest
-                // so the current gene tree node is part of a connected component but the left child is not
+// so the current gene tree node is part of a connected component but the left child is not
                 final double connectedComponentTipFreedom = geneTreeNodeHeight - leftChild.getHeight();
                 tipwardFreedom.set(connectedComponentTipFreedom);
                 connectingNodes.add(geneTreeNode);

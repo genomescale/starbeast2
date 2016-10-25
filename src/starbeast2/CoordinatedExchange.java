@@ -107,6 +107,8 @@ public class CoordinatedExchange extends CoordinatedOperator {
             pruneAndRegraft(yNode, cNode, bNode);
         }
 
+        for (final Tree geneTree: geneTreeInput.get()) geneTree.startEditing(null); // hack to stop beast.core.State.Trie memory leak
+
         for (int i = 0; i < czBranchCount; i++) {
             final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);
             final SetMultimap<Integer, Node> perBranchGraftNodes = graftNodes.get(i);
@@ -328,9 +330,10 @@ public class CoordinatedExchange extends CoordinatedOperator {
         final Set<String> cousinDescendants = findDescendants(yNode, yNumber);
 
         final SetMultimap<Integer, Node> allGraftBranches = HashMultimap.create();
-        final List<TreeInterface> geneTrees = geneTreeInput.get();
+        final List<Tree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
-            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Tree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
             final Set<Node> jGraftBranches = new LinkedHashSet<>();
             findGraftBranches(geneTreeRootNode, jGraftBranches, cousinDescendants);
             allGraftBranches.putAll(j, jGraftBranches);
@@ -373,7 +376,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
         final Set<String> chosenDescendants = findDescendants(aNode, aNodeNumber);
 
         final List<SortedMap<Node, Node>> allMovedNodes = new ArrayList<>();
-        final List<TreeInterface> geneTrees = geneTreeInput.get();
+        final List<Tree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
             final Node geneTreeRootNode = geneTrees.get(j).getRoot();
             final SortedMap<Node, Node> jMovedNodes = new TreeMap<>(nhc);

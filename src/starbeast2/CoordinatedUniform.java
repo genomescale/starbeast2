@@ -9,6 +9,7 @@ import com.google.common.collect.SetMultimap;
 
 import beast.core.Description;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
@@ -25,12 +26,12 @@ public class CoordinatedUniform extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
-    SpeciesTreeInterface speciesTree;
+    TreeInterface speciesTree;
 
     @Override
     public void initAndValidate() {
         speciesTree = speciesTreeInput.get();
-    	super.initAndValidate();
+        super.initAndValidate();
     }
 
     /**
@@ -88,12 +89,14 @@ public class CoordinatedUniform extends CoordinatedOperator {
         final Set<String> rightChildDescendants = findDescendants(rightChildNode, rightChildNodeNumber);
 
         final SetMultimap<Integer, Node> allConnectingNodes = HashMultimap.create();
-        final List<TreeInterface> geneTrees = geneTreeInput.get();
+        final List<Tree> geneTrees = geneTreeInput.get();
         for (int j = 0; j < nGeneTrees; j++) {
-            final Node geneTreeRootNode = geneTrees.get(j).getRoot();
+            final Tree geneTree = geneTrees.get(j);
+            final Node geneTreeRootNode = geneTree.getRoot();
             final Set<Node> jConnectingNodes = new HashSet<Node>();
             findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom, rootwardFreedom);
             allConnectingNodes.putAll(j, jConnectingNodes);
+            geneTree.startEditing(null); // hack to stop beast.core.State.Trie memory leak
         }
 
         return allConnectingNodes;
@@ -144,7 +147,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
                 rootwardFreedom.set(connectedComponentRootFreedom);
                 return descendsThrough.NEITHER;
             } else { // the gene tree node left child descends exclusively through the left XOR right child of the species tree node of interest
-             // so the current gene tree node is part of a connected component but the left child is not
+// so the current gene tree node is part of a connected component but the left child is not
                 final double connectedComponentTipFreedom = geneTreeNodeHeight - leftChild.getHeight();
                 tipwardFreedom.set(connectedComponentTipFreedom);
                 connectingNodes.add(geneTreeNode);
