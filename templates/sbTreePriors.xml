@@ -12,7 +12,7 @@
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 			</prior>
 
-			<operator id="speciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@speciationRate.t:$(n)"/>
+			<operator id="speciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@speciationRate.t:$(n)"/>
 ]]>
 
 			<connect srcID="YuleModel.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true">
@@ -46,7 +46,7 @@
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 			</prior>
 
-			<operator id="cySpeciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@cySpeciationRate.t:$(n)"/>
+			<operator id="cySpeciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@cySpeciationRate.t:$(n)"/>
 ]]>
 
 			<connect srcID="CalibratedYuleModel.t:Species" targetID="prior" inputName="distribution" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(Tree.t:Species) and Tree.t:Species/estimate=true">
@@ -84,7 +84,7 @@
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
 			</prior>
 
-			<operator id="netDiversificationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.5" parameter="@netDiversificationRate.t:$(n)"/>
+			<operator id="netDiversificationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@netDiversificationRate.t:$(n)"/>
 			<operator id="ExtinctionFractionScale.t:$(n)" parameter="@ExtinctionFraction.t:$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="0.5" />
 			<operator id="ExtinctionFractionUniform.t:$(n)" parameter="@ExtinctionFraction.t:$(n)" spec="UniformOperator" weight="0.5" />
 ]]>

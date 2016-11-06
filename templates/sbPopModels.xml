@@ -63,6 +63,7 @@
 				<distr spec="beast.math.distributions.OneOnX"/>
 			</distribution>
 
+			<operator id="constPopSizesSwap.$(n)" parameter="@constPopSizes.$(n)" spec="SwapOperator" weight="3.0"/>
 			<operator id="constPopSizesScale.$(n)" parameter="@constPopSizes.$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
 			<operator id="constPopShapeScale.$(n)" parameter="@constPopShape.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 			<operator id="constPopMeanScale.$(n)" parameter="@constPopMean.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
@@ -79,6 +80,7 @@
 			<connect srcID="constPopShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
 			<connect srcID="constPopMeanPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
 
+			<connect srcID="constPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
 			<connect srcID="constPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
 			<connect srcID="constPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
 			<connect srcID="constPopMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
@@ -123,6 +125,8 @@
 				<distr spec="beast.math.distributions.OneOnX"/>
 			</distribution>
 
+			<operator id="tipPopSizesSwap.$(n)" parameter="@tipPopSizes.$(n)" spec="SwapOperator" weight="3.0"/>
+			<operator id="topPopSizesSwap.$(n)" parameter="@topPopSizes.$(n)" spec="SwapOperator" weight="3.0"/>
 			<operator id="tipPopSizesScale.$(n)" parameter="@tipPopSizes.$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
 			<operator id="topPopSizesScale.$(n)" parameter="@topPopSizes.$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
 			<operator id="tipPopShapeScale.$(n)" parameter="@tipPopShape.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
@@ -145,6 +149,8 @@
 			<connect srcID="topPopShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
 			<connect srcID="lwcrPopScalePrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
 
+			<connect srcID="tipPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
 			<connect srcID="tipPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
 			<connect srcID="topPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
 			<connect srcID="tipPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
