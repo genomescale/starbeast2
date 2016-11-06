@@ -169,7 +169,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -302,7 +302,7 @@
 			<stateNode idref="popShape.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
 			<stateNode id="branchRates.Species" dimension="10" lower="0" value="1" estimate="true" spec="parameter.IntegerParameter"/>
-			<stateNode id="branchRatesStdev.Species" lower="0.01" value="0.16" estimate="true" spec="parameter.RealParameter"/>
+			<stateNode id="branchRatesStdev.Species" lower="0.01" value="0.3" estimate="true" spec="parameter.RealParameter"/>
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">

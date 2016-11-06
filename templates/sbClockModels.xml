@@ -17,7 +17,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -43,7 +43,7 @@
 			<branchRateModel estimateRoot="false" id="GeneTreeUCLN.c:$(n)" spec="starbeast2.UncorrelatedRates" tree="@Tree.t:$(n)">
 				<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
 				<rates dimension="10" value="1" estimate="true" id="branchRates.c:$(n)" spec="parameter.IntegerParameter"/>
-				<parameter name="stdev" id="branchRatesStdev.c:$(n)" lower="0.01" value="0.32" estimate="true" />
+				<parameter name="stdev" id="branchRatesStdev.c:$(n)" lower="0.01" value="0.3" estimate="false" />
 			</branchRateModel>
 
 			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
@@ -59,7 +59,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -124,7 +124,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -176,7 +176,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
