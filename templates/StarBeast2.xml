@@ -169,7 +169,6 @@
 			<operator id="gammaShapeScaler.s:$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0" parameter="@gammaShape.s:$(n)"/>
 			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
 			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
-				<up idref="clockRate.c:$(n)"/>
 				<down idref="Tree.t:$(n)"/>
 			</upDownOperator>
 
@@ -206,9 +205,10 @@
 			<connect srcID="mutationRateScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 			<connect srcID="gammaShapeScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
 			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inposterior(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
-			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and clockRate.c:$(n)/estimate=true">
+			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">
 				Scale up substitution rate c:$(n) and scale down tree t:($n)
 			</connect>
+			<connect srcID="clockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
 
 			<connect srcID="TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
