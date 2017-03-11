@@ -59,7 +59,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             "state or a point estimate based on alignments data (default point-estimate)",
             Method.POINT, Method.values());
 
-    final public Input<Tree> speciesTreeInput = new Input<>("speciesTree", "The species tree to initialize.", Input.Validate.REQUIRED);
+    final public Input<SpeciesTree> speciesTreeInput = new Input<>("speciesTree", "The species tree to initialize.", Input.Validate.REQUIRED);
     final public Input<String> newickInput = new Input<>("newick", "Newick string for a custom initial species tree.");
 
     final public Input<List<Tree>> genes = new Input<>("geneTree", "Gene trees to initialize", new ArrayList<>());
@@ -74,7 +74,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     @Override
     public void initStateNodes() {
-        final Tree speciesTree = speciesTreeInput.get();
+        final SpeciesTree speciesTree = speciesTreeInput.get();
         final Set<BEASTInterface> treeOutputs = speciesTreeInput.get().getOutputs();
         final Method method = initMethod.get();
         final String newick = newickInput.get();
@@ -116,6 +116,20 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
         final PopulationModel populationModel = populationFunctionInput.get();
         if (populationModel != null) populationModel.initPopSizes(averageBranchLength);
+        
+        final Set<String> tipNames = speciesTree.getTipNumberMap().keySet();
+        for (Tree geneTree: genes.get()) {
+        	for (Node geneNode: geneTree.getNodesAsArray()) {
+        		if (geneNode.isLeaf()) {
+        			final String tipName = geneNode.getID();
+        			if (!tipNames.contains(tipName)) {
+        	            throw new RuntimeException(String.format("ERROR: Gene tree tip name '%s' is missing from taxon map. "
+        	            		+ "This typically occurs when a sequence or sample name is identical to a species name. "
+        	            		+ "Make sure all species names are distinct from sequence or sample names.", tipName));
+        			}
+        		}
+        	}
+        }
     }
 
     private double[] firstMeetings(final Tree gtree, final Map<String, Integer> tipName2Species, final int speciesCount) {
