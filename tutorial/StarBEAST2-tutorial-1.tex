@@ -118,23 +118,6 @@ message pops up indicating that this data will be lost if you switch templates.
 
 \clearpage
 
-\subsubsection*{Allow clock rates to vary}
-
-By default BEAUTi fixes the clock rate of the first partition to 1, so that
-the rates of other loci are estimated relative to the first locus. This is
-generally inappropriate for StarBEAST2 analyses, so it is \textcolor{red}{very
-important} to disable this behaviour by deselecting the \textbf{Mode/Automatic
-set clock rate} menu item (Figure~\ref{fig:disableAuto}).
-
-\begin{figure}[htb!]
-\centering
-\includegraphics[width=\textwidth]{figures/beauti-disable.png}
-\caption{Disable automatic setting of clock rates.}
-\label{fig:disableAuto}
-\end{figure}
-
-\clearpage
-
 \subsubsection*{Loading the NEXUS files}
 
 StarBEAST2 supports multiple individuals per-species and multiple loci (we use
@@ -301,8 +284,7 @@ on the left side.
 \subsubsection*{Setting the clock model}
 
 Click on the \textbf{Clock Model} tab at the top of the main window. In this
-panel you can configure the mean clock rate for each locus. If you followed the
-earlier instructions to disable automatic setting of clock rates, the
+panel you can configure the mean clock rate for each locus. The
 mean clock rate ``Clock.rate'' of all partitions should have the
 \textbf{estimate} box ticked (Figure~\ref{fig:clock}).
 
