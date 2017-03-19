@@ -19,7 +19,7 @@
 				Yule speciation prior applied to the species tree
 			</connect>
 			<connect srcID="speciationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
-			<connect srcID="speciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
+			<connect srcID="speciationRate.t:Species" targetID="updownAll:Species" inputName="up" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true"/>
 
 			<connect srcID="speciationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(YuleModel.t:Species) and inposterior(speciationRate.t:Species) and speciationRate.t:Species/estimate=true">
 				Prior on birth (a.k.a. speciation) rate applied to the species tree
@@ -53,7 +53,7 @@
 				Calibrated Yule speciation prior applied to the species tree
 			</connect>
 			<connect srcID="cySpeciationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(cySpeciationRate.t:Species) and cySpeciationRate.t:Species/estimate=true"/>
-			<connect srcID="cySpeciationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(cySpeciationRate.t:Species) and cySpeciationRate.t:Species/estimate=true"/>
+			<connect srcID="cySpeciationRate.t:Species" targetID="updownAll:Species" inputName="up" if="inposterior(CalibratedYuleModel.t:Species) and inposterior(cySpeciationRate.t:Species) and cySpeciationRate.t:Species/estimate=true"/>
 
 			<connect srcID="cySpeciationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(CalibratedYuleModel.t:Species) and cySpeciationRate.t:Species/estimate=true">
 				Prior on birth (a.k.a. speciation) rate applied to a calibrated species tree
@@ -93,7 +93,7 @@
 				Birth-Death speciation prior applied to the species tree
 			</connect>
 			<connect srcID="netDiversificationRate.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
-			<connect srcID="netDiversificationRate.t:Species" targetID="updown.all.Species" inputName="up" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
+			<connect srcID="netDiversificationRate.t:Species" targetID="updownAll:Species" inputName="up" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true"/>
 			<connect srcID="ExtinctionFraction.t:Species" targetID="state" inputName="stateNode" if="inposterior(BirthDeathModel.t:Species) and inposterior(ExtinctionFraction.t:Species) and ExtinctionFraction.t:Species/estimate=true"/>
 
 			<connect srcID="netDiversificationRatePrior.t:Species" targetID="prior" inputName="distribution" if="inposterior(BirthDeathModel.t:Species) and inposterior(netDiversificationRate.t:Species) and netDiversificationRate.t:Species/estimate=true">

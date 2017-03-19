@@ -5,12 +5,12 @@
 		<subtemplate id="StrictClock" class="beast.evolution.branchratemodel.StrictClockModel" mainid="StrictClock.c:$(n)">
 <![CDATA[
 			<branchRateModel spec="StrictClockModel" id="StrictClock.c:$(n)">
-				<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
+				<clock.rate id="strictClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="true"/>
 			</branchRateModel>
 
-			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@strictClockRate.c:$(n)"/>
 
-			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+			<prior id="clockRatePrior.c:$(n)" x="@strictClockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
 					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
@@ -18,18 +18,19 @@
 			</prior>
 ]]>
 
-			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
-			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+			<connect srcID="strictClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(StrictClock.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
+
+			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true">
 				Prior on the overall clock rate of partition c:$(n)
 			</connect>
-			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true">
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true">
 				Scale substitution rate of partition c:$(n)
 			</connect>
 
-			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="strictClockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
 
-			<connect srcID="clockRate.c:$(n)" targetID="updown.all.Species" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
-			<connect srcID="clockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="strictClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="strictClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
 		<!-- UCLN relaxed clock that applies to each gene tree branch -->
@@ -60,9 +61,9 @@
 				</distr>
 			</prior>
 ]]>
-			<connect srcID="uclnClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="uclnBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(uclnBranchRates.c:$(n)) and uclnBranchRates.c:$(n)/estimate=true"/>
-			<connect srcID="uclnBranchRatesStdev.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(uclnBranchRates.c:$(n)) and uclnBranchRatesStdev.c:$(n)/estimate=true"/>
+			<connect srcID="uclnClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeUCLN.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="uclnBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeUCLN.c:$(n)) and uclnBranchRates.c:$(n)/estimate=true"/>
+			<connect srcID="uclnBranchRatesStdev.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeUCLN.c:$(n)) and uclnBranchRatesStdev.c:$(n)/estimate=true"/>
 
 			<connect srcID="uclnClockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true">
 				Prior on the overall clock rate of partition c:$(n)
@@ -90,7 +91,7 @@
 
 			<connect srcID="GeneTreeUCLN.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeUCLN.c:$(n))"/>
 
-			<connect srcID="uclnClockRate.c:$(n)" targetID="updown.all.Species" inputName="up" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="uclnClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
 			<connect srcID="uclnClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
@@ -119,8 +120,8 @@
 				</distr>
 			</prior>
 ]]>
-			<connect srcID="ucedClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="ucedBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(ucedBranchRates.c:$(n)) and ucedBranchRates.c:$(n)/estimate=true"/>
+			<connect srcID="ucedClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeUCED.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="ucedBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeUCED.c:$(n)) and ucedBranchRates.c:$(n)/estimate=true"/>
 
 			<connect srcID="ucedClockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true">
 				Prior on the overall clock rate of partition c:$(n)
@@ -144,7 +145,7 @@
 
 			<connect srcID="GeneTreeUCED.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeUCED.c:$(n))"/>
 
-			<connect srcID="ucedClockRate.c:$(n)" targetID="updown.all.Species" inputName="up" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="ucedClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
 			<connect srcID="ucedClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
@@ -188,9 +189,9 @@
 				</distr>
 			</prior>
 ]]>
-			<connect srcID="rlcClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="rlcBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(rlcBranchRates.c:$(n)) and rlcBranchRates.c:$(n)/estimate=true"/>
-			<connect srcID="indicators.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(indicators.c:$(n)) and indicators.c:$(n)/estimate=true"/>
+			<connect srcID="rlcClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeRLC.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="rlcBranchRates.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeRLC.c:$(n)) and rlcBranchRates.c:$(n)/estimate=true"/>
+			<connect srcID="indicators.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(GeneTreeRLC.c:$(n)) and indicators.c:$(n)/estimate=true"/>
 
 			<connect srcID="rlcClockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true">
 				Prior on the overall clock rate of partition c:$(n)
@@ -217,7 +218,7 @@
 
 			<connect srcID="GeneTreeRLC.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeRLC.c:$(n))"/>
 
-			<connect srcID="rlcClockRate.c:$(n)" targetID="updown.all.Species" inputName="up" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="rlcClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
 			<connect srcID="rlcClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 	</mergewith>

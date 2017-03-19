@@ -35,7 +35,7 @@
 			<connect srcID="popShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
 			<connect srcID="popMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
 
-			<connect srcID="popMean.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popMean.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
 
 			<connect srcID="popShape.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
 			<connect srcID="popMean.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
@@ -85,8 +85,8 @@
 			<connect srcID="constPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
 			<connect srcID="constPopMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
 
-			<connect srcID="constPopSizes.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopMean.Species" targetID="updown.all.Species" inputName="down" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopMean.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
 
 			<connect srcID="constPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
 			<connect srcID="constPopMean.Species" targetID="tracelog" inputName="log" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
@@ -157,9 +157,9 @@
 			<connect srcID="topPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
 			<connect srcID="lwcrPopScaleScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
 
-			<connect srcID="tipPopSizes.Species" targetID="updown.all.Species" inputName="down" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizes.Species" targetID="updown.all.Species" inputName="down" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="lwcrPopScale.Species" targetID="updown.all.Species" inputName="down" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="lwcrPopScale.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
 
 			<connect srcID="tipPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
 			<connect srcID="topPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
