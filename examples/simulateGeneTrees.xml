@@ -18,7 +18,7 @@
         <sequence spec="Sequence" taxon="C" value="?"/>
     </alignment>
 
-    <run spec="GeneTreeSimulator" nSims="100" fileName="$(filebase).trees">
+    <run spec="GeneTreeSimulator" nSims="10000" fileName="$(filebase).trees" reportFileName="$(filebase).report">
         <speciesTree spec="TreeParser" newick="((A:1.5,B:0):0.5,C:1)" adjustTipHeights="false" IsLabelledNewick="true"/>
 
         <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">

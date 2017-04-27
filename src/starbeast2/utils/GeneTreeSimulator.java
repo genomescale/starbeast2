@@ -5,6 +5,7 @@ import beast.core.Runnable;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
+import beast.evolution.tree.TreeTraceAnalysis;
 import beast.util.Randomizer;
 
 import java.io.PrintStream;
@@ -35,10 +36,14 @@ public class GeneTreeSimulator extends Runnable {
             "Name of file to which gene trees will be written.",
             Input.Validate.REQUIRED);
 
+    public Input<String> reportFileNameInput = new Input<>(
+            "reportFileName",
+            "Name of file to which topology distribution report will be written.");
+
     public Tree speciesTree;
     public TraitSet sampleCounts;
     public int nSims;
-    public String fileName;
+    public String fileName, reportFileName;
 
     public GeneTreeSimulator() { }
 
@@ -48,6 +53,7 @@ public class GeneTreeSimulator extends Runnable {
         sampleCounts = sampleCountsInput.get();
         nSims = nSimsInput.get();
         fileName = fileNameInput.get();
+        reportFileName = reportFileNameInput.get();
     }
 
     int getTotalLineageCount(Map<Node, List<Node>> lineages) {
@@ -103,7 +109,7 @@ public class GeneTreeSimulator extends Runnable {
                     int count = (int)Math.round(sampleCounts.getValue(speciesNode.getID()));
 
                     for (int i=0; i<count; i++) {
-                        Node geneTreeSampleNode = new Node();
+                        Node geneTreeSampleNode = new Node(String.valueOf(nextNodeNr));
                         geneTreeSampleNode.setNr(nextNodeNr++);
                         geneTreeSampleNode.setHeight(speciesNode.getHeight());
                         activeLineages.get(speciesNode).add(geneTreeSampleNode);
@@ -136,7 +142,7 @@ public class GeneTreeSimulator extends Runnable {
                             node2 = lineageList.get(Randomizer.nextInt(k));
                         } while (node2 == node1);
 
-                        Node parent = new Node();
+                        Node parent = new Node(String.valueOf(nextNodeNr));
                         parent.setNr(nextNodeNr++);
                         parent.setHeight(t);
                         parent.addChild(node1);
@@ -157,9 +163,22 @@ public class GeneTreeSimulator extends Runnable {
 
     @Override
     public void run() throws Exception {
+
+        List<Tree> treeList = new ArrayList<>();
+
         try (PrintStream ps = new PrintStream(fileName)) {
             for (int i = 0; i < nSims; i++) {
-                ps.println(getSimulatedGeneTree().toString() + ";");
+                Tree tree = getSimulatedGeneTree();
+                treeList.add(tree);
+                ps.println(tree.toString() + ";");
+            }
+        }
+
+        if (reportFileName != null) {
+            try (PrintStream ps = new PrintStream(reportFileName)) {
+                TreeTraceAnalysis analysis = new TreeTraceAnalysis(treeList, 0.0);
+                analysis.analyze();
+                analysis.report(ps);
             }
         }
     }
