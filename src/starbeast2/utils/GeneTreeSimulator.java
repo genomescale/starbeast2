@@ -7,6 +7,7 @@ import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -24,8 +25,20 @@ public class GeneTreeSimulator extends Runnable {
             "TraitSet defining number of  samples per node in species tree.",
             Input.Validate.REQUIRED);
 
+    public Input<Integer> nSimsInput = new Input<>(
+            "nSims",
+            "Number of gene trees to simulate from given sample distribution.",
+            Input.Validate.REQUIRED);
+
+    public Input<String> fileNameInput = new Input<>(
+            "fileName",
+            "Name of file to which gene trees will be written.",
+            Input.Validate.REQUIRED);
+
     public Tree speciesTree;
     public TraitSet sampleCounts;
+    public int nSims;
+    public String fileName;
 
     public GeneTreeSimulator() { }
 
@@ -33,6 +46,8 @@ public class GeneTreeSimulator extends Runnable {
     public void initAndValidate() {
         speciesTree = speciesTreeInput.get();
         sampleCounts = sampleCountsInput.get();
+        nSims = nSimsInput.get();
+        fileName = fileNameInput.get();
     }
 
     int getTotalLineageCount(Map<Node, List<Node>> lineages) {
@@ -57,23 +72,10 @@ public class GeneTreeSimulator extends Runnable {
             return 0;
         });
 
-        Map<Node, Node> inactiveLinages;
-
-        // Set up leaves:
-        inactiveLinages = new HashMap<>();
-
-        for (Node sampleNode : speciesTree.getExternalNodes()) {
-            int count = (int)Math.round(sampleCounts.getValue(sampleNode.getID()));
-            for (int i=0; i<count; i++) {
-                Node geneTreeSampleNode = new Node();
-                geneTreeSampleNode.setHeight(sampleNode.getHeight());
-                inactiveLinages.put(geneTreeSampleNode, sampleNode);
-            }
-        }
-
         // Perform simulation
-        Map<Node,List<Node>> activeLineages = new HashMap<>();
 
+        Map<Node,List<Node>> activeLineages = new HashMap<>();
+        int nextNodeNr = 0;
         double t = 0.0;
 
         while (getTotalLineageCount(activeLineages) > 1 || !sortedSpeciesTreeNodes.isEmpty()) {
@@ -102,6 +104,7 @@ public class GeneTreeSimulator extends Runnable {
 
                     for (int i=0; i<count; i++) {
                         Node geneTreeSampleNode = new Node();
+                        geneTreeSampleNode.setNr(nextNodeNr++);
                         geneTreeSampleNode.setHeight(speciesNode.getHeight());
                         activeLineages.get(speciesNode).add(geneTreeSampleNode);
                     }
@@ -153,6 +156,10 @@ public class GeneTreeSimulator extends Runnable {
 
     @Override
     public void run() throws Exception {
-
+        try (PrintStream ps = new PrintStream(fileName)) {
+            for (int i = 0; i < nSims; i++) {
+                ps.println(getSimulatedGeneTree().toString() + ";");
+            }
+        }
     }
 }

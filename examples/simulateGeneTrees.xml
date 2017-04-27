@@ -1,0 +1,30 @@
+<beast version="2.0"
+       namespace="starbeast2
+                 :starbeast2.utils
+                 :beast.util
+                 :beast.evolution.tree
+                 :beast.evolution.alignment">
+
+    <taxonSet spec="TaxonSet" id="taxonSet">
+        <taxon spec="Taxon" id="A"/>
+        <taxon spec="Taxon" id="B"/>
+        <taxon spec="Taxon" id="C"/>
+    </taxonSet>
+
+    <!-- Dummy alignment (TreeParser needs one for some reason...) -->
+    <alignment spec="Alignment" id="alignment">
+        <sequence spec="Sequence" taxon="A" value="?"/>
+        <sequence spec="Sequence" taxon="B" value="?"/>
+        <sequence spec="Sequence" taxon="C" value="?"/>
+    </alignment>
+
+    <run spec="GeneTreeSimulator" nSims="100" fileName="$(filebase).trees">
+        <speciesTree spec="TreeParser" newick="((A:1.5,B:0):0.5,C:1)" adjustTipHeights="false" IsLabelledNewick="true"/>
+
+        <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">
+            A=2,
+            B=1,
+            C=1
+        </sampleCounts>
+    </run>
+</beast>
