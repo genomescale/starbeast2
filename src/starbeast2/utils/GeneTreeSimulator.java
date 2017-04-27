@@ -171,6 +171,65 @@ public class GeneTreeSimulator extends Runnable {
         return new Tree(activeLineages.get(speciesTree.getRoot()).get(0));
     }
 
+    /**
+     * Class of "comparable" nodes
+     */
+    class CNode extends Node {
+
+
+        @Override
+        public boolean equals(Object obj) {
+
+            if (obj instanceof CNode)
+                return false;
+
+            CNode that = (CNode)obj;
+
+            if (that.getID() != this.getID() || that.getHeight() != this.getHeight())
+                return false;
+
+            Set<CNode> thisChildSet = new HashSet<>();
+            Set<CNode> thatChildSet = new HashSet<>();
+
+            for (Node child : this.getChildren())
+                thisChildSet.add((CNode)child);
+
+            for (Node child : that.getChildren())
+                thisChildSet.add((CNode)child);
+
+            return thisChildSet.equals(thatChildSet);
+        }
+    }
+
+    class LineageConfiguration {
+        private Map<Node, Set<CNode>> lineages;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            LineageConfiguration that = (LineageConfiguration) o;
+
+            if (!this.lineages.keySet().equals(that.lineages.keySet())
+                return false;
+
+            for (Node speciesNode : this.lineages.keySet()) {
+
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return lineages.hashCode();
+        }
+    }
+
+    public Map<String, Double> getGeneTreeTopologyDist() {
+
+        return null;
+    }
+
     @Override
     public void run() throws Exception {
 
