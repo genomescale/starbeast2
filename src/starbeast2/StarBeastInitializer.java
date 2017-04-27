@@ -107,6 +107,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             Log.info.println(String.format("StarBEAST2: using randomInitGeneTrees to initialize gene trees (%f).", rootHeight));
             randomInitGeneTrees(rootHeight);
         }
+        
+        // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
+        resetTipHeights();
 
         // initialize population sizes to equal average branch length
         // this is equivalent to 2Ne = E[1/lambda]
@@ -132,7 +135,23 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    private double[] firstMeetings(final Tree gtree, final Map<String, Integer> tipName2Species, final int speciesCount) {
+    private void resetTipHeights() {
+    	final SpeciesTreeInterface speciesTree = speciesTreeInput.get();
+        final Map<String, Integer> tipNames = speciesTree.getTipNumberMap();
+        final List<Tree> geneTrees = genes.get();
+
+        for (final Tree gtree : geneTrees) {
+        	final int leafNodeCount = gtree.getLeafNodeCount();
+        	for (int geneLeafNr = 0; geneLeafNr < leafNodeCount; geneLeafNr++) {
+        		final Node geneLeaf = gtree.getNode(geneLeafNr);
+        		final int speciesLeafNr = tipNames.get(geneLeaf.getID());
+        		final Node speciesLeaf = speciesTree.getNode(speciesLeafNr);
+        		geneLeaf.setHeight(speciesLeaf.getHeight());
+        	}
+        }
+	}
+
+	private double[] firstMeetings(final Tree gtree, final Map<String, Integer> tipName2Species, final int speciesCount) {
         final Node[] nodes = gtree.listNodesPostOrder(null, null);
         @SuppressWarnings("unchecked")
 		final Set<Integer>[] tipsSpecies = new Set[nodes.length];
@@ -365,12 +384,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     private void initFromNewick(final Tree speciesTree, final String newick) {
-        final TreeParser newickParser = new TreeParser();
-        newickParser.setInputValue("IsLabelledNewick", true);
-        newickParser.setInputValue("newick", newick);
-        newickParser.setInputValue("taxonset", speciesTree.getTaxonset());
-        newickParser.initAndValidate();
-        speciesTree.assignFromWithoutID(newickParser);
+        final TreeParser parser = new TreeParser(newick);
+        speciesTree.assignFromWithoutID(parser);
+        System.out.println(speciesTree.toString());
     }
 
     private void randomInitGeneTrees(double speciesTreeHeight) {
