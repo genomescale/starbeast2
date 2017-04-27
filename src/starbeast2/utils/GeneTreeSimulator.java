@@ -65,6 +65,15 @@ public class GeneTreeSimulator extends Runnable {
         return count;
     }
 
+    int getTotalSampleCount() {
+        int count = 0;
+
+        for (Node speciesNode : speciesTree.getExternalNodes())
+            count += (int)Math.round(sampleCounts.getValue(speciesNode.getID()));
+
+        return count;
+    }
+
     public Tree getSimulatedGeneTree() {
 
         List<Node> sortedSpeciesTreeNodes = new ArrayList<>(Arrays.asList(speciesTree.getNodesAsArray()));
@@ -81,7 +90,8 @@ public class GeneTreeSimulator extends Runnable {
         // Perform simulation
 
         Map<Node,List<Node>> activeLineages = new HashMap<>();
-        int nextNodeNr = 0;
+        int nextLeafNodeNr = 0;
+        int nextIntNodeNr = getTotalSampleCount();
         double t = 0.0;
 
         while (getTotalLineageCount(activeLineages) > 1 || !sortedSpeciesTreeNodes.isEmpty()) {
@@ -109,8 +119,8 @@ public class GeneTreeSimulator extends Runnable {
                     int count = (int)Math.round(sampleCounts.getValue(speciesNode.getID()));
 
                     for (int i=0; i<count; i++) {
-                        Node geneTreeSampleNode = new Node(String.valueOf(nextNodeNr));
-                        geneTreeSampleNode.setNr(nextNodeNr++);
+                        Node geneTreeSampleNode = new Node(String.valueOf(nextLeafNodeNr));
+                        geneTreeSampleNode.setNr(nextLeafNodeNr++);
                         geneTreeSampleNode.setHeight(speciesNode.getHeight());
                         activeLineages.get(speciesNode).add(geneTreeSampleNode);
                     }
@@ -142,8 +152,8 @@ public class GeneTreeSimulator extends Runnable {
                             node2 = lineageList.get(Randomizer.nextInt(k));
                         } while (node2 == node1);
 
-                        Node parent = new Node(String.valueOf(nextNodeNr));
-                        parent.setNr(nextNodeNr++);
+                        Node parent = new Node(String.valueOf(nextIntNodeNr));
+                        parent.setNr(nextIntNodeNr++);
                         parent.setHeight(t);
                         parent.addChild(node1);
                         parent.addChild(node2);
