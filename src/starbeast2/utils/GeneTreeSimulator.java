@@ -137,6 +137,7 @@ public class GeneTreeSimulator extends Runnable {
                         } while (node2 == node1);
 
                         Node parent = new Node();
+                        parent.setNr(nextNodeNr++);
                         parent.setHeight(t);
                         parent.addChild(node1);
                         parent.addChild(node2);
