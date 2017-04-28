@@ -2,14 +2,13 @@ package starbeast2.utils;
 
 import beast.core.Input;
 import beast.core.Runnable;
-import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTraceAnalysis;
-import beast.util.Randomizer;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Tim Vaughan <tgvaughan@gmail.com> on 27/04/17.
@@ -40,10 +39,13 @@ public class GeneTreeSimulator extends Runnable {
             "reportFileName",
             "Name of file to which topology distribution report will be written.");
 
+    public Input<Double> credibilityThresholdInput = new Input<>(
+            "credibilityThreshold",
+            "Maximum probability of topologies included in credible set written to report file.",
+            0.95);
+
     public Tree speciesTree;
     public TraitSet sampleCounts;
-    public int nSims;
-    public String fileName, reportFileName;
 
     public GeneTreeSimulator() { }
 
@@ -51,124 +53,6 @@ public class GeneTreeSimulator extends Runnable {
     public void initAndValidate() {
         speciesTree = speciesTreeInput.get();
         sampleCounts = sampleCountsInput.get();
-        nSims = nSimsInput.get();
-        fileName = fileNameInput.get();
-        reportFileName = reportFileNameInput.get();
-    }
-
-    int getTotalLineageCount(Map<Node, List<Node>> lineages) {
-        int count = 0;
-
-        for (List<Node> lineageList : lineages.values())
-            count += lineageList.size();
-
-        return count;
-    }
-
-    int getTotalSampleCount() {
-        int count = 0;
-
-        for (Node speciesNode : speciesTree.getExternalNodes())
-            count += (int)Math.round(sampleCounts.getValue(speciesNode.getID()));
-
-        return count;
-    }
-
-    public Tree getSimulatedGeneTree() {
-
-        List<Node> sortedSpeciesTreeNodes = new ArrayList<>(Arrays.asList(speciesTree.getNodesAsArray()));
-
-        sortedSpeciesTreeNodes.sort((o1, o2) -> {
-            if (o1.getHeight() < o2.getHeight())
-                return -1;
-            if (o1.getHeight() > o2.getHeight())
-                return 1;
-
-            return 0;
-        });
-
-        // Perform simulation
-
-        Map<Node,List<Node>> activeLineages = new HashMap<>();
-        int nextLeafNodeNr = 0;
-        int nextIntNodeNr = getTotalSampleCount();
-        double t = 0.0;
-
-        while (getTotalLineageCount(activeLineages) > 1 || !sortedSpeciesTreeNodes.isEmpty()) {
-
-            // Compute propensity
-
-            double totalPropensity = 0;
-            Map<Node, Double> propensities = new HashMap<>();
-            for (Node speciesNode : activeLineages.keySet()) {
-                int k=activeLineages.get(speciesNode).size();
-                double thisProp = 0.5*k*(k-1);
-                propensities.put(speciesNode, thisProp);
-                totalPropensity += thisProp;
-            }
-
-            double dt = Randomizer.nextExponential(totalPropensity);
-
-            if (!sortedSpeciesTreeNodes.isEmpty() && t + dt > sortedSpeciesTreeNodes.get(0).getHeight()) {
-                Node speciesNode = sortedSpeciesTreeNodes.get(0);
-                t = speciesNode.getHeight();
-
-                activeLineages.put(speciesNode, new ArrayList<>());
-
-                if (speciesNode.isLeaf()) {
-                    int count = (int)Math.round(sampleCounts.getValue(speciesNode.getID()));
-
-                    for (int i=0; i<count; i++) {
-                        Node geneTreeSampleNode = new Node(String.valueOf(nextLeafNodeNr));
-                        geneTreeSampleNode.setNr(nextLeafNodeNr++);
-                        geneTreeSampleNode.setHeight(speciesNode.getHeight());
-                        activeLineages.get(speciesNode).add(geneTreeSampleNode);
-                    }
-
-                } else {
-                    for (Node speciesChild : speciesNode.getChildren()) {
-                        activeLineages.get(speciesNode).addAll(activeLineages.get(speciesChild));
-                        activeLineages.get(speciesChild).clear();
-                    }
-                }
-
-                sortedSpeciesTreeNodes.remove(0);
-
-            } else {
-                t += dt;
-
-                // Coalesce a random pair of lineages
-
-                double u = Randomizer.nextDouble()*totalPropensity;
-                for (Node speciesNode : propensities.keySet()) {
-                    u -= propensities.get(speciesNode);
-                    if (u < 0) {
-                        List<Node> lineageList = activeLineages.get(speciesNode);
-                        int k = lineageList.size();
-
-                        Node node1 = lineageList.get(Randomizer.nextInt(k));
-                        Node node2;
-                        do {
-                            node2 = lineageList.get(Randomizer.nextInt(k));
-                        } while (node2 == node1);
-
-                        Node parent = new Node(String.valueOf(nextIntNodeNr));
-                        parent.setNr(nextIntNodeNr++);
-                        parent.setHeight(t);
-                        parent.addChild(node1);
-                        parent.addChild(node2);
-                        lineageList.remove(node1);
-                        lineageList.remove(node2);
-                        lineageList.add(parent);
-
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Return tree with remaining lineage as root
-        return new Tree(activeLineages.get(speciesTree.getRoot()).get(0));
     }
 
     @Override
@@ -176,18 +60,22 @@ public class GeneTreeSimulator extends Runnable {
 
         List<Tree> treeList = new ArrayList<>();
 
-        try (PrintStream ps = new PrintStream(fileName)) {
-            for (int i = 0; i < nSims; i++) {
-                Tree tree = getSimulatedGeneTree();
+        try (PrintStream ps = new PrintStream(fileNameInput.get())) {
+            for (int i = 0; i < nSimsInput.get(); i++) {
+                Tree tree = new SimulatedGeneTree();
+                tree.initByName(
+                        "speciesTree", speciesTreeInput.get(),
+                        "sampleCounts", sampleCountsInput.get());
+
                 treeList.add(tree);
                 ps.println(tree.toString() + ";");
             }
         }
 
-        if (reportFileName != null) {
-            try (PrintStream ps = new PrintStream(reportFileName)) {
+        if (reportFileNameInput.get() != null) {
+            try (PrintStream ps = new PrintStream(reportFileNameInput.get())) {
                 TreeTraceAnalysis analysis = new TreeTraceAnalysis(treeList, 0.0);
-                analysis.analyze();
+                analysis.analyze(credibilityThresholdInput.get());
                 analysis.report(ps);
             }
         }
