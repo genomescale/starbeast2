@@ -3,6 +3,7 @@
                  :starbeast2.utils
                  :beast.core
                  :beast.util
+                 :beast.core.util
                  :beast.evolution.tree
                  :beast.evolution.speciation
                  :beast.evolution.alignment
@@ -14,7 +15,7 @@
         <taxon spec="Taxon" id="c"/>
     </taxonSet>
 
-    <run chainLength="10000000" id="mcmc" spec="MCMC" storeEvery="100000">
+    <run chainLength="100000000" id="mcmc" spec="MCMC" storeEvery="100000">
         <state id="state" storeEvery="10000">
             <stateNode id="tree" spec="TreeParser"
                        newick="((a:1.5,b:0):0.5,c:1)"
@@ -26,8 +27,8 @@
             <parameter name="birthRate" value ="1.0"/>
             <parameter name="deathRate" value ="0.5"/>
             <parameter name="removalProbability" value="0.0"/>
-            <parameter name="samplingRate" value="1.0"/>
-            <parameter name="rho" value="1.0"/>
+            <parameter name="samplingRate" value="0.1"/>
+            <parameter name="rho" value="0.1"/>
         </distribution>
 
         <operator spec="LeafToSampledAncestorJump" tree="@tree" weight="10.0"/>
@@ -38,15 +39,16 @@
         <operator spec="SAScaleOperator" rootOnly="true" scaleFactor="0.98" tree="@tree" weight="1.0"/>
         <operator spec="SAScaleOperator" scaleFactor="0.95" tree="@tree" weight="3.0"/>
 
-        <logger logEvery="1000">
+        <logger logEvery="100000">
             <log idref="probability"/>
+            <log spec="ESS" arg="@probability"/>
         </logger>
 
-        <logger fileName="$(filebase).species.trees" logEvery="10000" mode="tree">
+        <logger fileName="$(filebase).species.trees" logEvery="1000" mode="tree">
             <log idref="tree"/>
         </logger>
 
-        <logger fileName="$(filebase).gene.trees" logEvery="10000" mode="tree">
+        <logger fileName="$(filebase).gene.trees" logEvery="1000" mode="tree">
             <log spec="SimulatedGeneTreeLogger">
                 <simulatedGeneTree id="geneTree" spec="SimulatedGeneTree"
                                    speciesTree="@tree">
@@ -59,13 +61,11 @@
             </log>
         </logger>
 
-        <logger fileName="$(filebase).gene.report" logEvery="1000">
-            <log spec="TreeTopologyDistLogger" tree="@geneTree" burnInFrac="0.1" isSpeciesTree="false"/>
-        </logger>
+        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000"
+                tree="@geneTree" burninSamples="10000" isSpeciesTree="false"/>
 
-        <logger fileName="$(filebase).species.report" logEvery="1000">
-            <log spec="TreeTopologyDistLogger" tree="@tree" burnInFrac="0.1" isSpeciesTree="true"/>
-        </logger>
+        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000"
+                tree="@geneTree" burninSamples="10000" isSpeciesTree="true"/>
 
     </run>
 </beast>
