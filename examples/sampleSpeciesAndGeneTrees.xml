@@ -60,11 +60,11 @@
         </logger>
 
         <logger fileName="$(filebase).gene.report" logEvery="1000">
-            <log spec="TopologyDistLogger" tree="@geneTree" burnInFrac="0.1"/>
+            <log spec="TreeTopologyDistLogger" tree="@geneTree" burnInFrac="0.1" isSpeciesTree="false"/>
         </logger>
 
         <logger fileName="$(filebase).species.report" logEvery="1000">
-            <log spec="TopologyDistLogger" tree="@tree" burnInFrac="0.1"/>
+            <log spec="TreeTopologyDistLogger" tree="@tree" burnInFrac="0.1" isSpeciesTree="true"/>
         </logger>
 
     </run>
