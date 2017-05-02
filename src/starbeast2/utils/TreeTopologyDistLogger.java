@@ -30,11 +30,6 @@ public class TreeTopologyDistLogger extends Logger {
            "Number of burn-in samples omitted from analysis.",
             Input.Validate.REQUIRED);
 
-    public Input<Boolean> isSpeciesTreeInput = new Input<>(
-            "isSpeciesTree",
-            "Whether this is a species tree or not. (Default false.)", false);
-
-
     Tree tree;
     ModifiedTreeTraceAnalysis analysis;
     int burninSamples, nTreesTotal, nBurninTrees;
@@ -42,6 +37,8 @@ public class TreeTopologyDistLogger extends Logger {
     public TreeTopologyDistLogger() {
         loggersInput.setRule(Input.Validate.OPTIONAL);
         loggersInput.setValue(new DummyLoggable(), this);
+        modeInput.setRule(Input.Validate.OPTIONAL);
+        modeInput.setValue("tree", this);
     }
 
     @Override
@@ -52,7 +49,7 @@ public class TreeTopologyDistLogger extends Logger {
 
         burninSamples = burninSamplesInput.get();
 
-        analysis = new ModifiedTreeTraceAnalysis(isSpeciesTreeInput.get());
+        analysis = new ModifiedTreeTraceAnalysis();
 
     }
 
@@ -78,81 +75,6 @@ public class TreeTopologyDistLogger extends Logger {
     @Override
     public void close() {
         analysis.report(getM_out(), nTreesTotal, nBurninTrees);
-    }
-
-    /**
-     * TreeTraceAnalysis class with some modifications to support sampled
-     * ancestors and incremental sample addition.
-     */
-    class ModifiedTreeTraceAnalysis extends TreeTraceAnalysis {
-
-        boolean isSpeciesTree;
-
-        public ModifiedTreeTraceAnalysis(boolean isSpeciesTree) {
-            super(new ArrayList<>(), 0.1);
-
-            this.isSpeciesTree = isSpeciesTree;
-            topologiesFrequencySet = new FrequencySet<>();
-            topologiesFrequencySet.setCredSetProbability(1.0);
-        }
-
-        /**
-         * Add topology corresponding to given tree to topolgoy frequency set.
-         *
-         * @param tree tree whose topology to add
-         */
-        public void addTree(Tree tree) {
-            String topology = uniqueNewick(tree.getRoot());
-            topologiesFrequencySet.add(topology, 1);
-        }
-
-        public void report(PrintStream oStream, int totalTrees, int burnin) {
-            credibleSet = topologiesFrequencySet.getCredibleSet();
-            this.totalTrees = totalTrees;
-            this.burnin = burnin;
-
-            super.report(oStream);
-        }
-
-        /**
-         * Get tree topology in Newick that is sorted by taxon labels.
-         *
-         * @param node root of tree
-         * @return newick string
-         */
-        String getSortedNewickWithSAs(Node node) {
-            if (node.isLeaf()) {
-                    return String.valueOf(node.getID());
-            } else {
-                StringBuilder builder = new StringBuilder("(");
-
-                List<String> subTrees = new ArrayList<>();
-                for (Node child : node.getChildren()) {
-                    if (!child.isDirectAncestor())
-                        subTrees.add(getSortedNewickWithSAs(child));
-                }
-
-                Collections.sort(subTrees);
-
-                for (int i = 0; i < subTrees.size(); i++) {
-                    builder.append(subTrees.get(i));
-                    if (i < subTrees.size() - 1) {
-                        builder.append(",");
-                    }
-                }
-                builder.append(")");
-
-                if (node.isFake())
-                    builder.append(node.getDirectAncestorChild().getID());
-
-                return builder.toString();
-            }
-        }
-
-        @Override
-        public String uniqueNewick(Node node) {
-            return getSortedNewickWithSAs(node);
-        }
     }
 
     class DummyLoggable extends BEASTObject implements Loggable {

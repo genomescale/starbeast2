@@ -10,15 +10,15 @@
                  :beast.evolution.operators">
 
     <taxonSet spec="TaxonSet" id="taxonSet">
-        <taxon spec="Taxon" id="a"/>
-        <taxon spec="Taxon" id="b"/>
-        <taxon spec="Taxon" id="c"/>
+        <taxon spec="Taxon" id="A"/>
+        <taxon spec="Taxon" id="B"/>
+        <taxon spec="Taxon" id="C"/>
     </taxonSet>
 
-    <run chainLength="10000000" id="mcmc" spec="MCMC" storeEvery="100000">
+    <run chainLength="100000000" id="mcmc" spec="MCMC" storeEvery="100000">
         <state id="state" storeEvery="10000">
             <stateNode id="speciesTree" spec="TreeParser"
-                       newick="((a:1.5,b:0):0.5,c:1)"
+                       newick="((A:1.5,B:0):0.5,C:1)"
                        adjustTipHeights="false" IsLabelledNewick="true"/>
         </state>
 
@@ -53,19 +53,19 @@
                 <simulatedGeneTree id="geneTree" spec="SimulatedGeneTree"
                                    speciesTree="@speciesTree">
                     <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">
-                        a=2,
-                        b=1,
-                        c=1
+                        A=2,
+                        B=1,
+                        C=1
                     </sampleCounts>
                 </simulatedGeneTree>
             </log>
         </logger>
 
         <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000"
-                tree="@geneTree" burninSamples="10000" isSpeciesTree="false"/>
+                tree="@geneTree" burninSamples="10000" />
 
         <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000"
-                tree="@speciesTree" burninSamples="10000" isSpeciesTree="true"/>
+                tree="@speciesTree" burninSamples="10000" />
 
     </run>
 </beast>
