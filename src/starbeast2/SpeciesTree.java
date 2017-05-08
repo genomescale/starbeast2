@@ -31,4 +31,8 @@ public class SpeciesTree extends Tree implements SpeciesTreeInterface {
     public Multimap<Integer, String> getNumberTipMap() {
         return numberTipMap;
     }
+
+	public void adjustTreeNodeHeights() {
+		adjustTreeNodeHeights(root);
+	}
 }

@@ -27,7 +27,9 @@ import beast.evolution.alignment.distance.Distance;
 import beast.evolution.alignment.distance.JukesCantorDistance;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.RandomTree;
+import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
+import beast.evolution.tree.coalescent.ConstantPopulation;
 import beast.math.distributions.MRCAPrior;
 import beast.util.ClusterTree;
 import beast.util.TreeParser;
@@ -90,12 +92,15 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         if (newick != null) {
             Log.info.println("StarBEAST2: using initFromNewick to initialize species tree.");
             initFromNewick(speciesTree, newick);
-        } else if (calibrations.size() > 0)  {
-            Log.info.println("StarBEAST2: using initWithMRCACalibrations to initialize species tree.");
-            initWithMRCACalibrations(speciesTree, calibrations);
         } else if (method == Method.ALL_RANDOM) {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree.");
-            randomInit(speciesTree);
+            randomInit(speciesTree, calibrations);
+        } else if (calibrations.size() > 0)  {
+            Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by calibrations)).");
+            randomInit(speciesTree, calibrations);
+        } else if (speciesTree.hasDateTrait())  {
+            Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by tip dates).");
+            randomInit(speciesTree, calibrations);
         } else if (method == Method.POINT) {
             Log.info.println("StarBEAST2: using fullInit to initialize all trees.");
             fullInit(speciesTree);
@@ -105,11 +110,15 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         if (geneTreesNeedInit) {
             final double rootHeight = speciesTree.getRoot().getHeight();
             Log.info.println(String.format("StarBEAST2: using randomInitGeneTrees to initialize gene trees (%f).", rootHeight));
-            randomInitGeneTrees(rootHeight);
+
+            final List<Tree> geneTrees = genes.get();
+            for (final Tree gtree : geneTrees) {
+                gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
+            }
+
+            // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
+            resetGeneTreeTipHeights();
         }
-        
-        // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
-        resetTipHeights();
 
         // initialize population sizes to equal average branch length
         // this is equivalent to 2Ne = E[1/lambda]
@@ -135,7 +144,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    private void resetTipHeights() {
+    private void resetGeneTreeTipHeights() {
     	final SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         final Map<String, Integer> tipNames = speciesTree.getTipNumberMap();
         final List<Tree> geneTrees = genes.get();
@@ -197,7 +206,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
 
-    private void fullInit(final Tree speciesTree) {
+    private void fullInit(final SpeciesTree speciesTree) {
         // Build gene trees from  alignments
 
         final Function muInput = this.muInput.get();
@@ -353,47 +362,44 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    private void randomInit(final Tree speciesTree) {
-        double lam = 1;
-        final RealParameter lambda = birthRate.get();
-        if( lambda != null ) {
-            lam = lambda.getArrayValue();
-        }
-        final TaxonSet species = speciesTree.m_taxonset.get();
-        final int speciesCount = species.asStringList().size();
-        double s = 0;
-        for(int k = 2; k <= speciesCount; ++k) {
-            s += 1.0/k;
-        }
-        final double randomRootHeight = speciesTree.getRoot().getHeight();
-        final double scaledRootHeight = (1/lam) * s;
-        speciesTree.scale(scaledRootHeight/randomRootHeight);
-    }
+    private void randomInit(final SpeciesTree speciesTree, List<MRCAPrior> calibrations) {
+    	final Double lambda = birthRate.get().getValue();
+    	final Double initialPopSize = 1.0 / lambda; // scales coalescent tree height inverse to birth rate
+    	final RealParameter popSize = new RealParameter(initialPopSize.toString());
+        final ConstantPopulation pf = new ConstantPopulation();
+        pf.setInputValue("popSize", popSize);
 
-    private void initWithMRCACalibrations(final Tree speciesTree, List<MRCAPrior> calibrations) {
         final RandomTree rnd = new RandomTree();
         rnd.setInputValue("taxonset", speciesTree.getTaxonset());
+        rnd.setInputValue("trait", speciesTree.getDateTrait());
 
-        for (final MRCAPrior cal : calibrations) rnd.setInputValue("constraint", cal);
-        beast.evolution.tree.coalescent.ConstantPopulation pf = new beast.evolution.tree.coalescent.ConstantPopulation();
-        pf.setInputValue("popSize", new RealParameter("1.0"));
+        for (final MRCAPrior cal: calibrations) rnd.setInputValue("constraint", cal);
 
         rnd.setInputValue("populationModel", pf);
+        rnd.setInputValue("populationModel", pf);
         rnd.initAndValidate();
+
         speciesTree.assignFromWithoutID(rnd);
+        System.out.println("BEFORE = " + speciesTree.toString());
+
+        /*final TraitSet speciesTipDates = speciesTree.getDateTrait();
+        if (speciesTree.hasDateTrait()) {
+        	for (Node node: speciesTree.getNodesAsArray()) {
+        		if (node.isLeaf()) {
+        			final String taxonName = node.getID();
+        			final double taxonHeight = speciesTipDates.getValue(taxonName);
+        			node.setHeight(taxonHeight);
+        			
+        		}
+        	}
+            System.out.println("AFTER = " + speciesTree.toString());
+        }*/
     }
 
     private void initFromNewick(final Tree speciesTree, final String newick) {
         final TreeParser parser = new TreeParser(newick);
         speciesTree.assignFromWithoutID(parser);
         System.out.println(speciesTree.toString());
-    }
-
-    private void randomInitGeneTrees(double speciesTreeHeight) {
-      final List<Tree> geneTrees = genes.get();
-        for (final Tree gtree : geneTrees) {
-            gtree.makeCaterpillar(speciesTreeHeight, speciesTreeHeight/gtree.getInternalNodeCount(), true);
-        }
     }
 
     @Override
