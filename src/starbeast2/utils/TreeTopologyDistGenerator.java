@@ -1,14 +1,13 @@
 package starbeast2.utils;
 
+import beast.app.tools.SATreeTraceAnalysis;
 import beast.core.Input;
 import beast.core.Runnable;
 import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeTraceAnalysis;
 import beast.util.NexusParser;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Created by Tim Vaughan <tgvaughan@gmail.com> on 2/05/17.
@@ -48,13 +47,13 @@ public class TreeTopologyDistGenerator extends Runnable {
 
         if (reportFileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(reportFileNameInput.get())) {
-                ModifiedTreeTraceAnalysis analysis = new ModifiedTreeTraceAnalysis();
+                SATreeTraceAnalysis analysis = new SATreeTraceAnalysis();
 
                 for (int i=(burnin+1); i<nexusParser.trees.size(); i++)
                     analysis.addTree(nexusParser.trees.get(i));
 
-//                analysis.analyze(1.0);
-                analysis.report(ps, totalTrees, burnin);
+                analysis.computeCredibleSet(1.0, null);
+                analysis.report(ps);
             }
         }
     }

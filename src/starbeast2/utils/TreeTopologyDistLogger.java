@@ -1,5 +1,6 @@
 package starbeast2.utils;
 
+import beast.app.tools.SATreeTraceAnalysis;
 import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.Loggable;
@@ -31,7 +32,7 @@ public class TreeTopologyDistLogger extends Logger {
             Input.Validate.REQUIRED);
 
     Tree tree;
-    ModifiedTreeTraceAnalysis analysis;
+    SATreeTraceAnalysis analysis;
     int burninSamples, nTreesTotal, nBurninTrees;
 
     public TreeTopologyDistLogger() {
@@ -49,7 +50,7 @@ public class TreeTopologyDistLogger extends Logger {
 
         burninSamples = burninSamplesInput.get();
 
-        analysis = new ModifiedTreeTraceAnalysis();
+        analysis = new SATreeTraceAnalysis();
 
     }
 
@@ -74,7 +75,8 @@ public class TreeTopologyDistLogger extends Logger {
 
     @Override
     public void close() {
-        analysis.report(getM_out(), nTreesTotal, nBurninTrees);
+        analysis.computeCredibleSet(1.0);
+        analysis.report(getM_out());
     }
 
     class DummyLoggable extends BEASTObject implements Loggable {
