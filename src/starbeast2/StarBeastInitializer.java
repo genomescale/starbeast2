@@ -363,7 +363,8 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     private void randomInit(final SpeciesTree speciesTree, List<MRCAPrior> calibrations) {
-    	final Double lambda = birthRate.get().getValue();
+    	final RealParameter birthRateParameter = birthRate.get();
+    	final Double lambda = (birthRateParameter == null) ? 1.0 : birthRateParameter.getValue();
     	final Double initialPopSize = 1.0 / lambda; // scales coalescent tree height inverse to birth rate
     	final RealParameter popSize = new RealParameter(initialPopSize.toString());
         final ConstantPopulation pf = new ConstantPopulation();
@@ -371,7 +372,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
         final RandomTree rnd = new RandomTree();
         rnd.setInputValue("taxonset", speciesTree.getTaxonset());
-        rnd.setInputValue("trait", speciesTree.getDateTrait());
+        if (speciesTree.hasDateTrait()) rnd.setInputValue("trait", speciesTree.getDateTrait());
 
         for (final MRCAPrior cal: calibrations) rnd.setInputValue("constraint", cal);
 

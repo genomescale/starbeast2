@@ -58,6 +58,10 @@ public class CoordinatedExponential extends CoordinatedOperator {
     public double proposal() {
         // always operate on the root node
         final Node speciesTreeRoot = speciesTree.getRoot();
+        
+        // don't bother if root node is a sampled ancestor
+        // TODO make it work
+        if (speciesTreeRoot.isFake()) return Double.NEGATIVE_INFINITY;
 
         final double currentRootHeight = speciesTreeRoot.getHeight();
         final double leftChildHeight = speciesTreeRoot.getLeft().getHeight();

@@ -48,7 +48,10 @@ public class CoordinatedUniform extends CoordinatedOperator {
             return Double.NEGATIVE_INFINITY;
         } // otherwise select a non-root internal node
         Node speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-        while (speciesTreeNode.isRoot()) {
+
+        // don't operate on sampled ancestor nodes
+        // TODO make it work
+        while (speciesTreeNode.isRoot() || speciesTreeNode.isFake()) {
             speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
         }
 
