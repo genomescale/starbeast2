@@ -9,6 +9,7 @@ import beast.evolution.tree.Tree;
 import java.io.PrintStream;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Logs node heights in order of height.
@@ -19,6 +20,11 @@ public class NodeHeightLogger extends BEASTObject implements Loggable {
             "tree",
             "Tree whose node ages to log.",
             Input.Validate.REQUIRED);
+
+    public Input<Boolean>  excludeSAInput = new Input<>(
+            "excludeSANodes",
+            "If true, SA node heights will be recorded as NA.",
+            false);
 
     Tree tree;
 
@@ -42,19 +48,24 @@ public class NodeHeightLogger extends BEASTObject implements Loggable {
 
     @Override
     public void log(int sample, PrintStream out) {
-        List<Node> sortedNodes = tree.getInternalNodes();
-        sortedNodes.sort((o1, o2) -> {
-            if (o1.getHeight() < o2.getHeight())
-                return -1;
+        List<Node> nonSANodes = tree.getInternalNodes().stream()
+                .filter(x -> !x.isFake())
+                .sorted((n1, n2) -> {
+                    if (n1.getHeight() < n2.getHeight())
+                        return -1;
 
-            if (o1.getHeight() > o2.getHeight())
-                return 1;
+                    if (n1.getHeight() > n2.getHeight())
+                        return 1;
 
-            return 0;
-        });
+                    return 0;
+                })
+                .collect(Collectors.toList());
 
-        for (Node node : sortedNodes)
+        for (Node node : nonSANodes)
             out.print("\t" + node.getHeight());
+
+        for (int i=nonSANodes.size(); i<tree.getInternalNodeCount(); i++)
+            out.print("\tNA");
     }
 
     @Override
