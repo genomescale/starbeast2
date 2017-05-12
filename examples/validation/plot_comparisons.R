@@ -129,7 +129,7 @@ ggsave("species.nodes.4taxon.png", plot=p4speciesHeights, units = "mm", width = 
 ggsave("gene.nodes.3taxon.png", plot=p3geneHeights, units = "mm", width = 297, height = 210)
 ggsave("gene.nodes.4taxon.png", plot=p4geneHeights, units = "mm", width = 297, height = 210)
 
-ggsave("species.topology.3taxon.png", plot=p3speciesTopologies, units = "mm", width = 297, height = 210)
-ggsave("species.topology.4taxon.png", plot=p4speciesTopologies, units = "mm", width = 297, height = 210)
-ggsave("gene.topology.3taxon.png", plot=p3geneTopologies, units = "mm", width = 297, height = 210)
-ggsave("gene.topology.4taxon.png", plot=p4geneTopologies, units = "mm", width = 297, height = 210)
+ggsave("species.topologies.3taxon.png", plot=p3speciesTopologies, units = "mm", width = 297, height = 210)
+ggsave("species.topologies.4taxon.png", plot=p4speciesTopologies, units = "mm", width = 297, height = 210)
+ggsave("gene.topologies.3taxon.png", plot=p3geneTopologies, units = "mm", width = 297, height = 210)
+ggsave("gene.topologies.4taxon.png", plot=p4geneTopologies, units = "mm", width = 297, height = 210)
