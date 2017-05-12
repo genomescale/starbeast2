@@ -32,7 +32,6 @@ concatNodeHeightResults <- function(nonstarbeastDF, starbeastDF) {
 
 plotHeightsComparison <- function(df) {
     p <- ggplot(df) + geom_density(aes(Height, colour=Node, linetype=Analysis)) + guides(colour=FALSE)
-    #p <- ggplot(df) + geom_histogram(aes(Height, fill=Node, linetype=Analysis), position="dodge", alpha=0.5) + guides(colour=FALSE)
     return(p)
 }
 
@@ -42,6 +41,7 @@ readReport <- function(...) {
     # Convert percents
     df[,3] <- as.numeric(gsub("%", "", df[,3]))
     df[,4] <- as.numeric(gsub("%", "", df[,4]))
+    df[,5] <- as.numeric(gsub("%", "", df[,5]))
 
     return(df)
 }
@@ -51,6 +51,7 @@ combineReports <- function(nonstarbeastDF, starbeastDF) {
     nTopsSB <- dim(starbeastDF)[1]
 
     df <- data.frame(Topology=factorConcat(nonstarbeastDF$Tree, starbeastDF$Tree), Percent=c(nonstarbeastDF$Percent, starbeastDF$Percent),
+                     Error=c(nonstarbeastDF$Percent_StdErr, starbeastDF$Percent_StdErr),
                      Analysis=c(rep(starBeastName, nTopsSB), rep(nonStarBeastName, nTopsNSB)))
 
     return (df)
@@ -58,8 +59,8 @@ combineReports <- function(nonstarbeastDF, starbeastDF) {
 
 plotTopologyComparison <- function(df) {
     p <- ggplot(df)
-    #p <- p + geom_bar(aes(x=reorder(Topology, -Percent), y=Percent, fill=Analysis), position="identity", stat="identity", alpha=0.5)
     p <- p + geom_point(aes(x=reorder(Topology, -Percent), y=Percent, colour=Analysis))
+    p <- p + geom_errorbar(aes(x=reorder(Topology, -Percent), ymin=Percent-Error, ymax=Percent+Error, colour=Analysis))
     p <- p + labs(x="Topology") + theme(axis.text.x = element_text(angle=-90, hjust=0, vjust=0.5))
     return(p)
 }

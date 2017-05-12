@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by Tim Vaughan <tgvaughan@gmail.com> on 28/04/17.
+ * Computes the frequency distribution over topologies.
  */
 public class TreeTopologyDistLogger extends Logger {
 
@@ -32,8 +32,10 @@ public class TreeTopologyDistLogger extends Logger {
             Input.Validate.REQUIRED);
 
     Tree tree;
-    SATreeTraceAnalysis analysis;
+    TreeTraceAnalysisWithError analysis;
     int burninSamples, nTreesTotal, nBurninTrees;
+
+    int sampleNr;
 
     public TreeTopologyDistLogger() {
         loggersInput.setRule(Input.Validate.OPTIONAL);
@@ -50,7 +52,7 @@ public class TreeTopologyDistLogger extends Logger {
 
         burninSamples = burninSamplesInput.get();
 
-        analysis = new SATreeTraceAnalysis();
+        analysis = new TreeTraceAnalysisWithError();
 
     }
 
@@ -60,11 +62,18 @@ public class TreeTopologyDistLogger extends Logger {
 
         nTreesTotal = 0;
         nBurninTrees = 0;
+
+        sampleNr = 0;
     }
 
 
     @Override
     public void log(int sample) {
+        sampleNr += 1;
+
+        if (sampleNr % everyInput.get() != 0)
+            return;
+
         nTreesTotal += 1;
 
         if (sample> burninSamples)
