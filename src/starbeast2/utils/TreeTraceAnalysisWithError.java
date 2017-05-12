@@ -62,9 +62,9 @@ public class TreeTraceAnalysisWithError extends SATreeTraceAnalysis {
 
                 ps.print((i + 1) + "\t");
                 ps.print(credibleSet.getFrequency(i, topologiesFrequencySet) + "\t");
-                ps.format("%.2f%%\t", percent);
-                ps.format("%.2f%%\t", runningPercent);
-                ps.format("%.2f%%\t", percentSD);
+                ps.format("%.5f%%\t", percent);
+                ps.format("%.5f%%\t", runningPercent);
+                ps.format("%.5f%%\t", percentSD);
                 ps.format("%s\n", topology);
             }
         }

@@ -57,7 +57,7 @@ name="alignment">
 <map name="OneOnX" >beast.math.distributions.OneOnX</map>
 
 
-<run id="mcmc" spec="MCMC" chainLength="10000000" storeEvery="5000">
+<run id="mcmc" spec="MCMC" chainLength="100000000" storeEvery="5000">
     <state id="state" storeEvery="5000">
         <stateNode id="speciesTree" spec="starbeast2.SpeciesTree" taxonset="@taxonsuperset"/>
         <tree id="geneTree" name="stateNode">

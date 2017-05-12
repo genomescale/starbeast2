@@ -60,7 +60,7 @@ combineReports <- function(nonstarbeastDF, starbeastDF) {
 plotTopologyComparison <- function(df) {
     p <- ggplot(df)
     p <- p + geom_point(aes(x=reorder(Topology, -Percent), y=Percent, colour=Analysis))
-    p <- p + geom_errorbar(aes(x=reorder(Topology, -Percent), ymin=Percent-Error, ymax=Percent+Error, colour=Analysis))
+    p <- p + geom_errorbar(aes(x=reorder(Topology, -Percent), ymin=Percent-2*Error, ymax=Percent+2*Error, colour=Analysis))
     p <- p + labs(x="Topology") + theme(axis.text.x = element_text(angle=-90, hjust=0, vjust=0.5))
     return(p)
 }
@@ -84,12 +84,14 @@ p3geneHeights <- plotHeightsComparison(df3geneHeights) + ggtitle("3-taxon gene t
 df3speciesTopologies <- combineReports(readReport("prior_sampling_nonstarbeast/nonstarbeast_3taxon.species.report"),
                                        readReport("prior_sampling_starbeast/starbeast_3taxon.species.report"))
 
-p3speciesTopologies <- plotTopologyComparison(df3speciesTopologies) + ggtitle("3-taxon species tree topology distribution")
+p3speciesTopologies <- plotTopologyComparison(df3speciesTopologies) +
+    ggtitle("3-taxon species tree topology distribution (Error bars +/- 2SEM)")
 
 df3geneTopologies <- combineReports(readReport("prior_sampling_nonstarbeast/nonstarbeast_3taxon.gene.report"),
                                        readReport("prior_sampling_starbeast/starbeast_3taxon.gene.report"))
 
-p3geneTopologies <- plotTopologyComparison(df3geneTopologies)  + ggtitle("3-taxon gene tree topology distribution")
+p3geneTopologies <- plotTopologyComparison(df3geneTopologies)  +
+    ggtitle("3-taxon gene tree topology distribution (Error bars +/- 2SEM)")
 
 # 4 taxon node heights
 
@@ -111,7 +113,7 @@ df4speciesTopologies <- combineReports(readReport("prior_sampling_nonstarbeast/n
                                        readReport("prior_sampling_starbeast/starbeast_4taxon.species.report"))
 
 p4speciesTopologies <- plotTopologyComparison(df4speciesTopologies) +
-    ggtitle("4-taxon species tree topology distribution")
+    ggtitle("4-taxon species tree topology distribution (Error bars +/- 2SEM)")
 
 df4geneTopologies <- combineReports(readReport("prior_sampling_nonstarbeast/nonstarbeast_4taxon.gene.report"),
                                        readReport("prior_sampling_starbeast/starbeast_4taxon.gene.report"))
@@ -119,15 +121,15 @@ df4geneTopologies <- combineReports(readReport("prior_sampling_nonstarbeast/nons
 p4geneTopologies <- plotTopologyComparison(df4geneTopologies) +
     theme(axis.text.x=element_blank()) +
     scale_y_log10() +
-    ggtitle("4-taxon gene tree topology distribution")
+    ggtitle("4-taxon gene tree topology distribution (Error bars +/- 2SEM)")
 
 
-ggsave("SpeciesNodeHeights3taxon.png", plot=p3speciesHeights, units = "mm", width = 297, height = 210)
-ggsave("SpeciesNodeHeights4taxon.png", plot=p4speciesHeights, units = "mm", width = 297, height = 210)
-ggsave("GeneNodeHeights3taxon.png", plot=p3geneHeights, units = "mm", width = 297, height = 210)
-ggsave("GeneNodeHeights4taxon.png", plot=p4geneHeights, units = "mm", width = 297, height = 210)
+ggsave("species.nodes.3taxon.png", plot=p3speciesHeights, units = "mm", width = 297, height = 210)
+ggsave("species.nodes.4taxon.png", plot=p4speciesHeights, units = "mm", width = 297, height = 210)
+ggsave("gene.nodes.3taxon.png", plot=p3geneHeights, units = "mm", width = 297, height = 210)
+ggsave("gene.nodes.4taxon.png", plot=p4geneHeights, units = "mm", width = 297, height = 210)
 
-ggsave("SpeciesTopologies3taxon.png", plot=p3speciesTopologies, units = "mm", width = 297, height = 210)
-ggsave("SpeciesTopologies4taxon.png", plot=p4speciesTopologies, units = "mm", width = 297, height = 210)
-ggsave("GeneTopologies3taxon.png", plot=p3geneTopologies, units = "mm", width = 297, height = 210)
-ggsave("GeneTopologies4taxon.png", plot=p4geneTopologies, units = "mm", width = 297, height = 210)
+ggsave("species.topology.3taxon.png", plot=p3speciesTopologies, units = "mm", width = 297, height = 210)
+ggsave("species.topology.4taxon.png", plot=p4speciesTopologies, units = "mm", width = 297, height = 210)
+ggsave("gene.topology.3taxon.png", plot=p3geneTopologies, units = "mm", width = 297, height = 210)
+ggsave("gene.topology.4taxon.png", plot=p4geneTopologies, units = "mm", width = 297, height = 210)

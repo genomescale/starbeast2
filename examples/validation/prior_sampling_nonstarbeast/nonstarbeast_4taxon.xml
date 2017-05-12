@@ -16,7 +16,7 @@
         <taxon spec="Taxon" id="D"/>
     </taxonSet>
 
-    <run chainLength="10000000" id="mcmc" spec="MCMC" storeEvery="1000">
+    <run chainLength="100000000" id="mcmc" spec="MCMC" storeEvery="5000">
         <state id="state" storeEvery="1000">
             <stateNode id="speciesTree" spec="TreeParser"
                        newick="(((A:1.0,B:1.0):0.5,C:1.0):1.0,D:0.5)"
