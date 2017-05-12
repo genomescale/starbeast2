@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast version="2.4" beautitemplate='StarBeast2' beautistatus='noAutoSetClockRate'
+    namespace="beast.core
+              :beast.evolution.alignment
+              :beast.evolution.tree.coalescent
+              :beast.core.util
+              :beast.evolution.nuc
+              :beast.evolution.operators
+              :beast.evolution.sitemodel
+              :beast.evolution.substitutionmodel
+              :beast.evolution.likelihood
+              :starbeast2
+              :starbeast2.utils">
+
+<data
+id="gene"
+name="alignment">
+    <sequence id="seq_A1" taxon="A1" totalcount="4" value="-"/>
+    <sequence id="seq_A2" taxon="A2" totalcount="4" value="-"/>
+    <sequence id="seq_B1" taxon="B1" totalcount="4" value="-"/>
+    <sequence id="seq_C1" taxon="C1" totalcount="4" value="-"/>
+</data>
+
+<trait id="tipDates" spec='beast.evolution.tree.TraitSet' traitname='date-backward' units='year' value='
+    A = 0.0,
+    B = 1.5,
+    C = 1.0'>
+    <taxa id="taxonsuperset" spec="TaxonSet">
+        <taxon id="a" spec="TaxonSet">
+            <taxon id="A1" spec="Taxon"/>
+            <taxon id="A2" spec="Taxon"/>
+        </taxon>
+        <taxon id="B" spec="TaxonSet">
+            <taxon id="B1" spec="Taxon"/>
+        </taxon>
+        <taxon id="C" spec="TaxonSet">
+            <taxon id="C1" spec="Taxon"/>
+        </taxon>
+    </taxa>
+</trait>
+
+<map name="Uniform" >beast.math.distributions.Uniform</map>
+<map name="Exponential" >beast.math.distributions.Exponential</map>
+<map name="LogNormal" >beast.math.distributions.LogNormalDistributionModel</map>
+<map name="Normal" >beast.math.distributions.Normal</map>
+<map name="Beta" >beast.math.distributions.Beta</map>
+<map name="Gamma" >beast.math.distributions.Gamma</map>
+<map name="LaplaceDistribution" >beast.math.distributions.LaplaceDistribution</map>
+<map name="prior" >beast.math.distributions.Prior</map>
+<map name="InverseGamma" >beast.math.distributions.InverseGamma</map>
+<map name="OneOnX" >beast.math.distributions.OneOnX</map>
+
+
+<run id="mcmc" spec="MCMC" chainLength="100000000" storeEvery="5000">
+    <state id="state" storeEvery="5000">
+        <stateNode id="speciesTree" spec="starbeast2.SpeciesTree" taxonset="@taxonsuperset"/>
+        <tree id="geneTree" name="stateNode">
+            <taxonset id="TaxonSet.gene" spec="TaxonSet">
+                <alignment idref="gene"/>
+            </taxonset>
+        </tree>
+        <parameter id="origin.t:Species" estimate="false" name="stateNode">3.0</parameter>
+        <parameter id="birthRate.t:Species" estimate="false" name="stateNode">1.0</parameter>
+        <parameter id="deathRate.t:Species" estimate="false" name="stateNode">0.5</parameter>
+        <parameter id="samplingRate.t:Species" estimate="false" name="stateNode">0.1</parameter>
+        <parameter id="removalProbability.t:Species" estimate="false" name="stateNode">0.0</parameter>
+        <parameter id="rho.t:Species" estimate="false" name="stateNode">0.1</parameter>
+        <parameter id="popSizes.Species" estimate="false" name="stateNode">1.0</parameter>
+
+    </state>
+
+    <init id="SBI" spec="starbeast2.StarBeastInitializer" birthRate="@birthRate.t:Species" estimate="false" speciesTree="@speciesTree" newick="((A:1.5,B:0):0.5,C:1);">
+        <geneTree idref="geneTree"/>
+        <populationModel id="popModel.Species" spec="starbeast2.ConstantPopulations" speciesTree="@speciesTree" populationSizes="@popSizes.Species"/>
+    </init>
+
+    <distribution id="posterior" spec="util.CompoundDistribution">
+        <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
+            <distribution id="genegeneTree" spec="starbeast2.GeneTree" populationModel="@popModel.Species" ploidy="1.0" speciesTree="@speciesTree" tree="@geneTree"/>
+        </distribution>
+        <distribution id="prior" spec="util.CompoundDistribution">
+            <distribution id="FBD.t:Species" spec="beast.evolution.speciation.SABirthDeathModel" origin="@origin.t:Species" birthRate="@birthRate.t:Species" deathRate="@deathRate.t:Species" samplingRate="@samplingRate.t:Species" removalProbability="@removalProbability.t:Species" rho="@rho.t:Species" tree="@speciesTree"/>
+        </distribution>
+    </distribution>
+
+    <operator id="allUpDownOperator.c:Species" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
+        <down idref="geneTree"/>
+        <down idref="speciesTree"/>
+    </operator>
+
+    <operator id="LeafToSAFBD.t:Species" spec="LeafToSampledAncestorJump" tree="@speciesTree" weight="10.0"/>
+
+    <operator id="SAWilsonBaldingFBD.t:Species" spec="SAWilsonBalding" tree="@speciesTree" weight="10.0"/>
+
+    <operator id="SAWideFBD.t:Species" spec="SAExchange" isNarrow="false" tree="@speciesTree" weight="10.0"/>
+
+    <operator id="SANarrowFBD.t:Species" spec="SAExchange" tree="@speciesTree" weight="10.0"/>
+
+    <operator id="SAUniformOperatorFBD.t:Species" spec="SAUniform" tree="@speciesTree" weight="20.0"/>
+
+    <operator id="SATreeRootScalerFBD.t:Species" spec="SAScaleOperator" rootOnly="true" scaleFactor="0.95" tree="@speciesTree" weight="1.0"/>
+
+    <operator id="SATreeScalerFBD.t:Species" spec="SAScaleOperator" scaleFactor="0.95" tree="@speciesTree" weight="3.0"/>
+
+    <operator id="geneUpDownOperator.c:gene" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
+        <down idref="geneTree"/>
+    </operator>
+
+    <operator id="TreeScaler.t:gene" spec="ScaleOperator" scaleFactor="0.95" tree="@geneTree" weight="3.0"/>
+
+    <operator id="TreeRootScaler.t:gene" spec="ScaleOperator" rootOnly="true" scaleFactor="0.7" tree="@geneTree" weight="3.0"/>
+
+    <operator id="UniformOperator.t:gene" spec="Uniform" tree="@geneTree" weight="15.0"/>
+
+    <operator id="SubtreeSlide.t:gene" spec="SubtreeSlide" size="0.002" tree="@geneTree" weight="15.0"/>
+
+    <operator id="Narrow.t:gene" spec="Exchange" tree="@geneTree" weight="15.0"/>
+
+    <operator id="Wide.t:gene" spec="Exchange" isNarrow="false" tree="@geneTree" weight="15.0"/>
+
+    <operator id="WilsonBalding.t:gene" spec="WilsonBalding" tree="@geneTree" weight="15.0"/>
+
+    <logger id="screenlog" logEvery="5000" model="@posterior">
+        <log idref="speciescoalescent"/>
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+    </logger>
+
+    <logger id="speciesTreeLogger" fileName="$(filebase).species.trees" logEvery="5000" mode="tree">
+        <log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLogger" speciesTree="@speciesTree"/>
+    </logger>
+
+    <logger id="treelog.t:gene" fileName="$(filebase).gene.trees" logEvery="5000" mode="tree">
+        <log id="TreeWithMetaDataLogger.t:gene" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@geneTree"/>
+    </logger>
+
+    <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000"
+        tree="@geneTree" burninSamples="10000" />
+
+    <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000"
+        tree="@speciesTree" burninSamples="10000" />
+
+    <logger fileName="$(filebase).speciesNodeHeights.log" logEvery="1000">
+        <log spec="NodeHeightLogger" tree="@speciesTree" excludeSANodes="true"/>
+    </logger>
+
+    <logger fileName="$(filebase).geneNodeHeights.log" logEvery="1000">
+        <log spec="NodeHeightLogger" tree="@geneTree" excludeSANodes="true"/>
+    </logger>
+
+</run>
+
+</beast>
