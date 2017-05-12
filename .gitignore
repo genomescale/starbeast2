@@ -2,3 +2,7 @@
 /out
 /starbeast2.iml
 /META-INF
+/examples/validation/**/*.log
+/examples/validation/**/*.report
+/examples/validation/**/*.trees
+/examples/validation/**/*.state
