@@ -10,15 +10,16 @@
                  :beast.evolution.operators">
 
     <taxonSet spec="TaxonSet" id="taxonSet">
-        <taxon spec="Taxon" id="a"/>
-        <taxon spec="Taxon" id="b"/>
-        <taxon spec="Taxon" id="c"/>
+        <taxon spec="Taxon" id="A"/>
+        <taxon spec="Taxon" id="B"/>
+        <taxon spec="Taxon" id="C"/>
+        <taxon spec="Taxon" id="D"/>
     </taxonSet>
 
-    <run chainLength="10000000" id="mcmc" spec="MCMC" storeEvery="100000">
-        <state id="state" storeEvery="10000">
+    <run chainLength="100000000" id="mcmc" spec="MCMC" storeEvery="5000">
+        <state id="state" storeEvery="1000">
             <stateNode id="speciesTree" spec="TreeParser"
-                       newick="((a:1.5,b:0):0.5,c:1)"
+                       newick="(((A:1.0,B:1.0):0.5,C:1.0):1.0,D:0.5)"
                        adjustTipHeights="false" IsLabelledNewick="true"/>
         </state>
 
@@ -39,7 +40,7 @@
         <operator spec="SAScaleOperator" rootOnly="true" scaleFactor="0.98" tree="@speciesTree" weight="1.0"/>
         <operator spec="SAScaleOperator" scaleFactor="0.95" tree="@speciesTree" weight="3.0"/>
 
-        <logger logEvery="100000">
+        <logger logEvery="1000">
             <log idref="probability"/>
             <log spec="ESS" arg="@probability"/>
         </logger>
@@ -53,19 +54,28 @@
                 <simulatedGeneTree id="geneTree" spec="SimulatedGeneTree"
                                    speciesTree="@speciesTree">
                     <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">
-                        a=2,
-                        b=1,
-                        c=1
+                        A=2,
+                        B=1,
+                        C=2,
+                        D=0
                     </sampleCounts>
                 </simulatedGeneTree>
             </log>
         </logger>
 
         <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000"
-                tree="@geneTree" burninSamples="10000" isSpeciesTree="false"/>
+                tree="@geneTree" burninSamples="10000" />
 
         <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000"
-                tree="@speciesTree" burninSamples="10000" isSpeciesTree="true"/>
+                tree="@speciesTree" burninSamples="10000" />
+
+        <logger fileName="$(filebase).speciesNodeHeights.log" logEvery="1000">
+            <log spec="NodeHeightLogger" tree="@speciesTree" excludeSANodes="true"/>
+        </logger>
+
+        <logger fileName="$(filebase).geneNodeHeights.log" logEvery="1000">
+            <log spec="NodeHeightLogger" tree="@geneTree" excludeSANodes="true"/>
+        </logger>
 
     </run>
 </beast>
