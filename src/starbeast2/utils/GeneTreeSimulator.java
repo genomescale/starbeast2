@@ -75,7 +75,7 @@ public class GeneTreeSimulator extends Runnable {
         if (reportFileNameInput.get() != null) {
             try (PrintStream ps = new PrintStream(reportFileNameInput.get())) {
                 TreeTraceAnalysis analysis = new TreeTraceAnalysis(treeList, 0.0);
-                analysis.analyze(credibilityThresholdInput.get());
+                analysis.computeCredibleSet(credibilityThresholdInput.get());
                 analysis.report(ps);
             }
         }

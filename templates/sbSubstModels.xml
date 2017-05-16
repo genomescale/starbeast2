@@ -11,9 +11,17 @@
 				<shape spec="parameter.RealParameter" id="gammaShape.s:$(n)" value="1.0" estimate="false"/>
 			</plugin>
 
-				<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)"><distr spec="OneOnX"/></prior>
-			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)"><distr spec="beast.math.distributions.Exponential" mean="0.1"/></prior>
-			<prior id="PropInvariantPrior.s:$(n)" x="@proportionInvariant.s:$(n)"><distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/></prior>
+			<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)">
+				<distr spec="OneOnX"/>
+			</prior>
+
+			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
+				<distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="2.0"/>
+			</prior>
+
+			<prior id="PropInvariantPrior.s:$(n)" x="@proportionInvariant.s:$(n)">
+				<distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/>
+			</prior>
 
 			<operator id="proportionInvariantScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@proportionInvariant.s:$(n)"/>
 			<operator id="mutationRateScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@mutationRate.s:$(n)"/>

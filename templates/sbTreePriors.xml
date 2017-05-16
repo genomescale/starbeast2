@@ -201,12 +201,12 @@
 
 			<connect srcID="FBDModel.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(FBDModel.t:$(n))"/>
 			<plate var="p" range="diversificationRate,turnover,samplingProportion,rho">
-				<connect srcID='$(p)FBD.t:$(n)' targetID='state' inputName='stateNode' if='inposterior(FBD.t:$(n)) and $(p)FBD.t:$(n)/estimate=true'/>
-				<connect srcID='$(p)FBD.t:$(n)' targetID='tracelog' inputName='log' if='inposterior(FBD.t:$(n)) and $(p)FBD.t:$(n)/estimate=true'/>
+				<connect srcID='$(p)FBD.t:$(n)' targetID='state' inputName='stateNode' if='inposterior(FBDModel.t:$(n)) and $(p)FBD.t:$(n)/estimate=true'/>
+				<connect srcID='$(p)FBD.t:$(n)' targetID='tracelog' inputName='log' if='inposterior(FBDModel.t:$(n)) and $(p)FBD.t:$(n)/estimate=true'/>
 			</plate>
+
 			<connect srcID="originFBD.t:$(n)" targetID="state" inputName="stateNode" if="inposterior(FBDModel.t:$(n)) and originFBD.t:$(n)/estimate=true and FBDModel.t:$(n)/conditionOnRoot=false"/>
 			<connect srcID="originFBD.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(FBDModel.t:$(n)) and originFBD.t:$(n)/estimate=true and FBDModel.t:$(n)/conditionOnRoot=false"/>
-			<connect srcID="FBDModel.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(FBDModel.t:$(n))"/>
 		</subtemplate>
 	</mergewith>
 </beast>

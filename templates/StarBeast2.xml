@@ -165,9 +165,7 @@
 			<plugin id="TreeHeight.t:$(n)" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:$(n)"/>
 
 			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
-				<distr spec="beast.math.distributions.Exponential">
-					<mean id="GammaShapePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
-				</distr>
+				<distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="2.0"/>
 			</prior>
 
 			<prior id="PropInvariantPrior.t:$(n)" x="@proportionInvariant.s:$(n)">
