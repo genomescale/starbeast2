@@ -2,17 +2,13 @@ package starbeast2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.util.Log;
-import beast.evolution.alignment.Taxon;
+import beast.core.Operator;
 import beast.evolution.alignment.TaxonSet;
-import beast.evolution.operators.TreeOperator;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
@@ -21,7 +17,8 @@ import beast.util.Randomizer;
 
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
-public class NodeReheight2 extends TreeOperator {
+public class NodeReheight2 extends Operator {
+    public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
     public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
     public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
     Node[] m_nodes;
@@ -37,26 +34,6 @@ public class NodeReheight2 extends TreeOperator {
 
     @Override
     public void initAndValidate() {
-        /** maps gene taxa names to species number **/
-        final Map<String, Integer> taxonMap = new HashMap<>();
-        final List<Taxon> list = taxonSetInput.get().taxonsetInput.get();
-
-        if (list.size() <= 1) {
-            Log.warning.println("NodeReheight operator requires at least 2 taxa while the taxon set (id=" + taxonSetInput.get().getID() +") has only " + list.size() + " taxa. "
-                    + "If the XML file was set up in BEAUti, this probably means a taxon assignment needs to be set up in the taxonset panel.");
-            // assume we are in BEAUti, back off for now
-            return;
-        }
-
-        for (int i = 0; i < list.size(); i++) {
-            final Taxon taxa = list.get(i);
-            // cast should be ok if taxon-set is the set for the species tree
-            final TaxonSet set = (TaxonSet) taxa;
-            for (final Taxon taxon : set.taxonsetInput.get()) {
-                taxonMap.put(taxon.getID(), i);
-            }
-        }
-
         /** build the taxon map for each gene tree **/
         m_taxonMap = new int[geneTreesInput.get().size()][];
         int i = 0;
@@ -80,12 +57,15 @@ public class NodeReheight2 extends TreeOperator {
         final double[] heights = new double[nodeCount];
         final int[] reverseOrder = new int[nodeCount];
         collectHeights(tree.getRoot(), heights, reverseOrder, 0);
-        // change height of an internal node
+        // change height of an internal, non-sampled-ancestor node
         int nodeIndex = Randomizer.nextInt(heights.length);
-        while (m_nodes[reverseOrder[nodeIndex]].isLeaf()) {
+        Node node = m_nodes[reverseOrder[nodeIndex]];
+        while (node.isLeaf() || node.isFake()) {
             nodeIndex = Randomizer.nextInt(heights.length);
+            node = m_nodes[reverseOrder[nodeIndex]];
         }
         double maxHeight = calcMaxHeight(reverseOrder, nodeIndex);
+        double minHeight = calcMinHeight(node);
         // debugging code to ensure the new maxHeight equals the original one
         /*
         double maxHeight2 = calcMaxHeight2(reverseOrder, nodeIndex);
@@ -96,11 +76,15 @@ public class NodeReheight2 extends TreeOperator {
         }
         */
 
-        final double minHeight = calcMinHeight(m_nodes[reverseOrder[nodeIndex]]);
-        heights[nodeIndex] = minHeight + Randomizer.nextDouble() * (maxHeight - minHeight);
-        m_nodes[reverseOrder[nodeIndex]].setHeight(heights[nodeIndex]);
+        heights[nodeIndex] = minHeight + (Randomizer.nextDouble() * (maxHeight - minHeight));
+        node.setHeight(heights[nodeIndex]);
         // reconstruct tree from heights
-        final Node root = reconstructTree(heights, reverseOrder, 0, heights.length, new boolean[heights.length]);
+        // leave sampled ancestors connected to their fake parents
+        boolean[] hasParent = new boolean[heights.length];
+        for (int i = 0; i < heights.length; i++)
+        	hasParent[i] = m_nodes[reverseOrder[i]].isDirectAncestor();
+
+        final Node root = reconstructTree(heights, reverseOrder, 0, heights.length, hasParent);
 
         assert checkConsistency(root, new boolean[heights.length]) ;
         //            System.err.println("Inconsisten tree");
@@ -111,16 +95,19 @@ public class NodeReheight2 extends TreeOperator {
     }
 
     private double calcMinHeight(Node node) {
-        if (node.isLeaf()) {
-            return node.getHeight();
-        } else {
-            double maxLeft = calcMinHeight(node.getLeft());
-            double maxRight = calcMinHeight(node.getRight());
-            return Math.max(maxLeft, maxRight);    		
-        }
-    }
+		if (node.isLeaf()) {
+			return node.getHeight();
+		}
+		
+		double minHeight = 0.0;
+		for (Node child: node.getChildren()) {
+			minHeight = Math.max(minHeight, calcMinHeight(child));
+		}
+		
+		return minHeight;
+	}
 
-    private boolean checkConsistency(final Node node, final boolean[] used) {
+	private boolean checkConsistency(final Node node, final boolean[] used) {
         if (used[node.getNr()]) {
             // used twice? tha's bad
             return false;
@@ -357,42 +344,45 @@ public class NodeReheight2 extends TreeOperator {
             return null;
         }
         final Node node = m_nodes[reverseOrder[nodeIndex]];
+        final boolean keepLeftChild = node.getLeft().isDirectAncestor();
+        final boolean keepRightChild = node.getRight().isDirectAncestor();
 
-        //int left = maxIndex(heights, 0, nodeIndex);
-        int left = -1;
-        max = Double.NEGATIVE_INFINITY;
-        for (int j = from; j < nodeIndex; j++) {
-            if (max < heights[j] && !hasParent[j]) {
-                max = heights[j];
-                left = j;
-            }
+        if (!keepLeftChild) {
+	        //int left = maxIndex(heights, 0, nodeIndex);
+	        int left = -1;
+	        max = Double.NEGATIVE_INFINITY;
+	        for (int j = from; j < nodeIndex; j++) {
+	            if (max < heights[j] && !hasParent[j]) {
+	                max = heights[j];
+	                left = j;
+	            }
+	        }
+	        node.setLeft(m_nodes[reverseOrder[left]]);
+	        node.getLeft().setParent(node);
+	        if (node.getLeft().isLeaf()) {
+	            heights[left] = Double.NEGATIVE_INFINITY;
+	        }
+	        hasParent[left] = true;
         }
 
-        //int right = maxIndex(heights, nodeIndex+1, heights.length);
-        int right = -1;
-        max = Double.NEGATIVE_INFINITY;
-        for (int j = nodeIndex + 1; j < to; j++) {
-            if (max < heights[j] && !hasParent[j]) {
-                max = heights[j];
-                right = j;
-            }
+        if (!keepRightChild) {
+	        int right = -1;
+	        max = Double.NEGATIVE_INFINITY;
+	        for (int j = nodeIndex + 1; j < to; j++) {
+	            if (max < heights[j] && !hasParent[j]) {
+	                max = heights[j];
+	                right = j;
+	            }
+	        }
+	        node.setRight(m_nodes[reverseOrder[right]]);
+	        node.getRight().setParent(node);
+	        if (node.getRight().isLeaf()) {
+	            heights[right] = Double.NEGATIVE_INFINITY;
+	        }
+	        hasParent[right] = true;
         }
 
-        node.setLeft(m_nodes[reverseOrder[left]]);
-        node.getLeft().setParent(node);
-        node.setRight(m_nodes[reverseOrder[right]]);
-        node.getRight().setParent(node);
-        if (node.getLeft().isLeaf()) {
-            heights[left] = Double.NEGATIVE_INFINITY;
-        }
-        if (node.getRight().isLeaf()) {
-            heights[right] = Double.NEGATIVE_INFINITY;
-        }
-        hasParent[left] = true;
-        hasParent[right] = true;
         heights[nodeIndex] = Double.NEGATIVE_INFINITY;
-
-
         reconstructTree(heights, reverseOrder, from, nodeIndex, hasParent);
         reconstructTree(heights, reverseOrder, nodeIndex, to, hasParent);
         return node;
