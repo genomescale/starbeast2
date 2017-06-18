@@ -28,7 +28,6 @@ public class StarBeastAlignmentProvider extends BeautiAlignmentProvider {
     	} else {
     		final double updatedWeight = doc.alignments.size() + files.length;
     		operator.setInputValue("weight", updatedWeight);
-    		System.out.println("HERE WE ARE");
     	}
 
 		return super.getAlignments(doc, files);

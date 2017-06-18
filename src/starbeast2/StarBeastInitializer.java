@@ -6,12 +6,15 @@ import static java.lang.Math.min;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import com.google.common.collect.Multimap;
 
 import beast.core.BEASTInterface;
 import beast.core.Description;
@@ -95,6 +98,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         } else if (method == Method.ALL_RANDOM) {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree.");
             randomInit(speciesTree, calibrations);
+        } else if (!checkSpeciesAlwaysRepresented())  {
+            Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by missing data)).");
+            randomInit(speciesTree, calibrations);
         } else if (calibrations.size() > 0)  {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by calibrations)).");
             randomInit(speciesTree, calibrations);
@@ -142,6 +148,24 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         		}
         	}
         }
+    }
+
+    // check if every gene tree has at least one specimen from every species
+    private boolean checkSpeciesAlwaysRepresented() {
+        final SpeciesTree speciesTree = speciesTreeInput.get();
+        final Multimap<Integer, String> numberTipMap = speciesTree.getNumberTipMap();
+        for (Tree geneTree: genes.get()) {
+        	final String[] taxaNames = geneTree.getTaxaNames();
+        	for (Integer speciesNr: numberTipMap.keys()) {
+        		final Collection<String> speciesTaxa = numberTipMap.get(speciesNr);
+        		boolean speciesRepresented = false;
+        		for (String geneTaxon: taxaNames)
+        			speciesRepresented |= speciesTaxa.contains(geneTaxon);
+        		if (!speciesRepresented) return false;
+        	}
+        }
+
+        return true;
     }
 
     private void resetGeneTreeTipHeights() {
