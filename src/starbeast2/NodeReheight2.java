@@ -76,18 +76,20 @@ public class NodeReheight2 extends Operator {
         }
         */
 
+        // sample a new height compatible with the gene trees
         heights[nodeIndex] = minHeight + (Randomizer.nextDouble() * (maxHeight - minHeight));
         node.setHeight(heights[nodeIndex]);
-        // reconstruct tree from heights
+
         // leave sampled ancestors connected to their fake parents
         boolean[] hasParent = new boolean[heights.length];
         for (int i = 0; i < heights.length; i++)
         	hasParent[i] = m_nodes[reverseOrder[i]].isDirectAncestor();
 
+        // reconstruct tree from heights
         final Node root = reconstructTree(heights, reverseOrder, 0, heights.length, hasParent);
 
         assert checkConsistency(root, new boolean[heights.length]) ;
-        //            System.err.println("Inconsisten tree");
+        //            System.err.println("Inconsistent tree");
         //        }
         root.setParent(null);
         tree.setRoot(root);
