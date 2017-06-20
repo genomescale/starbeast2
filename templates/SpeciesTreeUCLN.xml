@@ -325,8 +325,9 @@
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
 				<distribution id="branchRatesStdevPrior.Species" spec="beast.math.distributions.Prior" x="@branchRatesStdev.Species">
-					<distr spec="beast.math.distributions.Exponential">
-						<mean id="branchRatesStdevPriorMean.Species" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+						<M id="branchRatesStdevPriorMean.Species" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+						<S id="branchRatesStdevPriorStdev.Species" spec="parameter.RealParameter" lower="0.0" value="2.0" estimate="false"/>
 					</distr>
 				</distribution>
 				<mergepoint id="aux-priors"/>

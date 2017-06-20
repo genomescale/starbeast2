@@ -16,7 +16,10 @@
 			</prior>
 
 			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
-				<distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="2.0"/>
+				<distr spec="LogNormalDistributionModel" meanInRealSpace="true">
+					<M id="gammaShapePriorMean.Species" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<S id="gammaShapePriorStdev.Species" spec="parameter.RealParameter" lower="0.0" value="2.0" estimate="false"/>
+				</distr>
 			</prior>
 
 			<prior id="PropInvariantPrior.s:$(n)" x="@proportionInvariant.s:$(n)">
