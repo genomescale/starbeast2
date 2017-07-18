@@ -102,7 +102,7 @@
 
 		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
+		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init[id='SBI']/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Site Model" tiptext="Site model and substitution model specifications" path="siteModel" hasPartitions="SiteModel" icon="3.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-sitemodel-panels"/>
