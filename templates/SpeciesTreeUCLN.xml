@@ -321,7 +321,7 @@
 				<distribution id="speciationRatePrior.t:Species" spec="beast.math.distributions.Prior" x="@speciationRate.t:Species">
 					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 				</distribution>
-				<distribution id="popMeanPrior.Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
+				<distribution id="popMeanPrior.t:Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
 				<distribution id="branchRatesStdevPrior.Species" spec="beast.math.distributions.Prior" x="@branchRatesStdev.Species">
