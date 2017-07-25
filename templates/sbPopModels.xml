@@ -21,24 +21,24 @@
 			<operator id="popMeanScale.$(n)" parameter="@popMean.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 ]]>
 
-			<connect srcID="constantPopIOModel.Species" targetID="popModelBridge.Species" inputName="childModel" if="inposterior(constantPopIOModel.Species)"/>
+			<connect srcID="constantPopIOModel.$(n)" targetID="popModelBridge.$(n)" inputName="childModel" if="inposterior(constantPopIOModel.$(n))"/>
 
-			<connect srcID="popShape.Species" targetID="speciescoalescent" inputName="populationShape" if="inposterior(constantPopIOModel.Species)"/>
-			<connect srcID="popMean.Species" targetID="speciescoalescent" inputName="populationMean" if="inposterior(constantPopIOModel.Species)"/>
+			<connect srcID="popShape.$(n)" targetID="speciescoalescent" inputName="populationShape" if="inposterior(constantPopIOModel.$(n))"/>
+			<connect srcID="popMean.$(n)" targetID="speciescoalescent" inputName="populationMean" if="inposterior(constantPopIOModel.$(n))"/>
 
-			<connect srcID="popShape.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
-			<connect srcID="popMean.Species" targetID="state" inputName="stateNode" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popShape.$(n)" targetID="state" inputName="stateNode" if="inposterior(constantPopIOModel.$(n)) and popShape.Species/estimate=true"/>
+			<connect srcID="popMean.$(n)" targetID="state" inputName="stateNode" if="inposterior(constantPopIOModel.$(n)) and popMean.Species/estimate=true"/>
 
-			<connect srcID="popShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
-			<connect srcID="popMeanPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popShapePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(constantPopIOModel.$(n)) and popShape.Species/estimate=true"/>
+			<connect srcID="popMeanPrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(constantPopIOModel.$(n)) and popMean.Species/estimate=true"/>
 
-			<connect srcID="popShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
-			<connect srcID="popMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popShapeScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.$(n)) and popShape.Species/estimate=true"/>
+			<connect srcID="popMeanScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constantPopIOModel.$(n)) and popMean.Species/estimate=true"/>
 
-			<connect srcID="popMean.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popMean.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(constantPopIOModel.$(n)) and popMean.Species/estimate=true"/>
 
-			<connect srcID="popShape.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.Species) and popShape.Species/estimate=true"/>
-			<connect srcID="popMean.Species" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.Species) and popMean.Species/estimate=true"/>
+			<connect srcID="popShape.$(n)" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.$(n)) and popShape.Species/estimate=true"/>
+			<connect srcID="popMean.$(n)" targetID="tracelog" inputName="log" if="inposterior(constantPopIOModel.$(n)) and popMean.Species/estimate=true"/>
 		</subtemplate>
 
 		<!-- Joint estimation of per-branch effective population sizes -->
@@ -69,27 +69,27 @@
 			<operator id="constPopMeanScale.$(n)" parameter="@constPopMean.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 ]]>
 
-			<connect srcID="constPopModel.Species" targetID="popModelBridge.Species" inputName="childModel" if="inposterior(constPopModel.Species)"/>
-			<connect srcID="constPopModel.Species" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(constPopModel.Species)"/>
+			<connect srcID="constPopModel.$(n)" targetID="popModelBridge.$(n)" inputName="childModel" if="inposterior(constPopModel.$(n))"/>
+			<connect srcID="constPopModel.$(n)" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(constPopModel.$(n))"/>
 
-			<connect srcID="constPopSizes.Species" targetID="state" inputName="stateNode" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopShape.Species" targetID="state" inputName="stateNode" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
-			<connect srcID="constPopMean.Species" targetID="state" inputName="stateNode" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopSizes.$(n)" targetID="state" inputName="stateNode" if="inposterior(constPopModel.$(n)) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopShape.$(n)" targetID="state" inputName="stateNode" if="inposterior(constPopModel.$(n)) and constPopShape.Species/estimate=true"/>
+			<connect srcID="constPopMean.$(n)" targetID="state" inputName="stateNode" if="inposterior(constPopModel.$(n)) and constPopMean.Species/estimate=true"/>
 
-			<connect srcID="constPopSizesPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
-			<connect srcID="constPopMeanPrior.Species" targetID="prior" inputName="distribution" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopSizesPrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(constPopModel.$(n)) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopShapePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(constPopModel.$(n)) and constPopShape.Species/estimate=true"/>
+			<connect srcID="constPopMeanPrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(constPopModel.$(n)) and constPopMean.Species/estimate=true"/>
 
-			<connect srcID="constPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
-			<connect srcID="constPopMeanScale.Species" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopSizesSwap.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.$(n)) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopSizesScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.$(n)) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopShapeScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.$(n)) and constPopShape.Species/estimate=true"/>
+			<connect srcID="constPopMeanScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(constPopModel.$(n)) and constPopMean.Species/estimate=true"/>
 
-			<connect srcID="constPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.Species) and constPopSizes.Species/estimate=true"/>
-			<connect srcID="constPopMean.Species" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopSizes.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.$(n)) and constPopSizes.Species/estimate=true"/>
+			<connect srcID="constPopMean.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(constPopModel.$(n)) and constPopMean.Species/estimate=true"/>
 
-			<connect srcID="constPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(constPopModel.Species) and constPopShape.Species/estimate=true"/>
-			<connect srcID="constPopMean.Species" targetID="tracelog" inputName="log" if="inposterior(constPopModel.Species) and constPopMean.Species/estimate=true"/>
+			<connect srcID="constPopShape.$(n)" targetID="tracelog" inputName="log" if="inposterior(constPopModel.$(n)) and constPopShape.Species/estimate=true"/>
+			<connect srcID="constPopMean.$(n)" targetID="tracelog" inputName="log" if="inposterior(constPopModel.$(n)) and constPopMean.Species/estimate=true"/>
 		</subtemplate>
 
 		<!-- Joint estimation of per-branch effective population sizes -->
@@ -134,36 +134,36 @@
 			<operator id="lwcrPopScaleScale.$(n)" parameter="@lwcrPopScale.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 ]]>
 
-			<connect srcID="lwcrPopModel.Species" targetID="popModelBridge.Species" inputName="childModel" if="inposterior(lwcrPopModel.Species)"/>
-			<connect srcID="lwcrPopModel.Species" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(lwcrPopModel.Species)"/>
+			<connect srcID="lwcrPopModel.$(n)" targetID="popModelBridge.$(n)" inputName="childModel" if="inposterior(lwcrPopModel.$(n))"/>
+			<connect srcID="lwcrPopModel.$(n)" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(lwcrPopModel.$(n))"/>
 
-			<connect srcID="tipPopSizes.Species" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizes.Species" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="tipPopShape.Species" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
-			<connect srcID="topPopShape.Species" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
-			<connect srcID="lwcrPopScale.Species" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopSizes.$(n)" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.$(n)) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizes.$(n)" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.$(n)) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="tipPopShape.$(n)" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.$(n)) and tipPopShape.Species/estimate=true"/>
+			<connect srcID="topPopShape.$(n)" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.$(n)) and topPopShape.Species/estimate=true"/>
+			<connect srcID="lwcrPopScale.$(n)" targetID="state" inputName="stateNode" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 
-			<connect srcID="tipPopSizesPrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizesPrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="tipPopShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
-			<connect srcID="topPopShapePrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
-			<connect srcID="lwcrPopScalePrior.Species" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopSizesPrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.$(n)) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizesPrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.$(n)) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="tipPopShapePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.$(n)) and tipPopShape.Species/estimate=true"/>
+			<connect srcID="topPopShapePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.$(n)) and topPopShape.Species/estimate=true"/>
+			<connect srcID="lwcrPopScalePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 
-			<connect srcID="tipPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizesSwap.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="tipPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizesScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="tipPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
-			<connect srcID="topPopShapeScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
-			<connect srcID="lwcrPopScaleScale.Species" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopSizesSwap.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizesSwap.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="tipPopSizesScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizesScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="tipPopShapeScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and tipPopShape.Species/estimate=true"/>
+			<connect srcID="topPopShapeScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and topPopShape.Species/estimate=true"/>
+			<connect srcID="lwcrPopScaleScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 
-			<connect srcID="tipPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and tipPopSizes.Species/estimate=true"/>
-			<connect srcID="topPopSizes.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and topPopSizes.Species/estimate=true"/>
-			<connect srcID="lwcrPopScale.Species" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopSizes.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.$(n)) and tipPopSizes.Species/estimate=true"/>
+			<connect srcID="topPopSizes.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.$(n)) and topPopSizes.Species/estimate=true"/>
+			<connect srcID="lwcrPopScale.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 
-			<connect srcID="tipPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.Species) and tipPopShape.Species/estimate=true"/>
-			<connect srcID="topPopShape.Species" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.Species) and topPopShape.Species/estimate=true"/>
-			<connect srcID="lwcrPopScale.Species" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.Species) and lwcrPopScale.Species/estimate=true"/>
+			<connect srcID="tipPopShape.$(n)" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.$(n)) and tipPopShape.Species/estimate=true"/>
+			<connect srcID="topPopShape.$(n)" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.$(n)) and topPopShape.Species/estimate=true"/>
+			<connect srcID="lwcrPopScale.$(n)" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 		</subtemplate>
 	</mergewith>
 </beast>
