@@ -113,7 +113,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
             final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);
             final SetMultimap<Integer, Node> perBranchGraftNodes = graftNodes.get(i);
             final double logForward = rearrangeGeneTrees(perBranchMovedNodes, perBranchGraftNodes, true);
-            assert logForward != Double.NEGATIVE_INFINITY;
             if (logForward == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
             else logHastingsRatio += logForward;
         }
@@ -131,7 +130,6 @@ public class CoordinatedExchange extends CoordinatedOperator {
             final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);
             final SetMultimap<Integer, Node> perBranchGraftNodes = graftNodes.get(i);
             final double logReverse = rearrangeGeneTrees(perBranchMovedNodes, perBranchGraftNodes, false);
-            assert logReverse != Double.NEGATIVE_INFINITY;
             if (logReverse == Double.NEGATIVE_INFINITY) return Double.NEGATIVE_INFINITY;
             else logHastingsRatio -= logReverse;
         }
