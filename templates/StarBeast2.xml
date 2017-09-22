@@ -263,6 +263,81 @@
 			<mergepoint id="aux-partitiontemplate"/>
 		</partitiontemplate>
 
+		<alignmentProvider id="Add Morphology to Species Tree" spec='BeautiMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
+
+		<subtemplate id='StarBEASTMKTrait' class='beast.evolution.alignment.FilteredAlignment' mainid='$(n)'
+		suppressInputs = 'beast.evolution.substitutionmodel.LewisMK.stateNumber,
+			beast.evolution.substitutionmodel.LewisMK.datatype,
+			beast.evolution.substitutionmodel.LewisMK.frequencies,
+			beast.evolution.substitutionmodel.LewisMK.proportionInvariant'>
+<![CDATA[
+			<distribution id="morphTreeLikelihood.$(n)" spec='TreeLikelihood' tree='@Tree.t:Species'>
+				<data spec="beast.evolution.alignment.FilteredAlignment" id='$(n)' filter="0-end">
+					<userDataType spec='beast.evolution.datatype.StandardData' id='morphDataType.$(n)' />
+				</data>
+				<siteModel spec='SiteModel' id="morphSiteModel.s:$(n)" gammaCategoryCount='0'>
+						<mutationRate spec='parameter.RealParameter' id='mutationRate.s:$(n)' value='1.0' estimate='false'/>
+						<shape spec='parameter.RealParameter' id='gammaShape.s:$(n)' value='1.0' estimate='false'/>
+					<!-- MK subst model -->
+					<substModel spec="LewisMK" id="LewisMK.s:$(n)" datatype='@morphDataType.$(n)'/>
+				</siteModel>
+				<branchRateModel id="StrictClock.c:$(n)" spec="beast.evolution.branchratemodel.StrictClockModel">
+					<parameter id="clockRate.c:$(n)" name="clock.rate" value="1.0" estimate='false'/>
+				</branchRateModel>
+			</distribution>
+
+			<prior id='ClockPrior.c:$(n)' x='@clockRate.c:$(n)'>
+				<distr spec="beast.math.distributions.Uniform" upper='Infinity'/>
+				</prior>
+			<prior id='MutationRatePrior.s:$(n)' x='@mutationRate.s:$(n)'>
+				<distr spec="OneOnX"/>
+			</prior>
+			<prior id='GammaShapePrior.s:$(n)' x='@gammaShape.s:$(n)'>
+				<distr spec="beast.math.distributions.Exponential" mean='1'/>
+			</prior>
+
+			<operator id='mutationRateScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@mutationRate.s:$(n)"/>
+			<operator id='gammaShapeScaler.s:$(n)' spec='ScaleOperator' scaleFactor="0.5" weight="0.1" parameter="@gammaShape.s:$(n)"/>
+
+			<operator id='allTipDatesRandomWalker.t:$(n)' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:Species"/>
+
+			<operator id='StrictClockRateScaler.c:$(n)' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:$(n)'/>
+			<!-- need updown operator for clockRate?!? Also in SubstModel.xml -->
+			<upDownOperator id='strictClockUpDownOperator.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
+				<up idref="clockRate.c:$(n)"/>
+				<down idref="Tree.t:Species"/>
+			</upDownOperator>
+]]>
+
+			<connect srcID='$(n)' targetID='taxonsuperset' inputName='alignment' if="isInitializing"/>
+			<connect srcID='morphTreeLikelihood.$(n)' targetID='likelihood' inputName='distribution' if="isInitializing"/>
+			<connect method="beast.app.beauti.SiteModelInputEditor.customConnector"/>
+
+			<connect srcID='ClockPrior.c:$(n)' targetID='prior' inputName='distribution' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
+			<!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
+			<connect srcID='MutationRatePrior.s:$(n)' targetID='prior' inputName='distribution' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
+
+			<connect srcID='mutationRate.s:$(n)' targetID='state' inputName='stateNode' if='inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
+			<connect srcID='gammaShape.s:$(n)' targetID='state' inputName='stateNode' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'/>
+			<connect srcID='clockRate.c:$(n)' targetID='state' inputName='stateNode' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
+
+			<connect srcID='mutationRateScaler.s:$(n)' targetID='mcmc' inputName='operator' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'>Scales mutation rate of partition s:$(n)</connect>
+			<connect srcID='gammaShapeScaler.s:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Scales gamma shape parameter of partition s:$(n)</connect>
+			<connect srcID='StrictClockRateScaler.c:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'>Scale clock rate of partition c:$(n)</connect>
+			<connect srcID='strictClockUpDownOperator.c:$(n)' targetID='mcmc' inputName='operator' if='nooperator(FixMeanRatesOperator) and inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:Species) and Tree.t:Species/estimate=true and clockRate.c:$(n)/estimate=true'>
+				Scale up substitution rate c:$(n) and scale down tree t:($n)
+			</connect>
+
+			<connect srcID='allTipDatesRandomWalker.t:$(n)' targetID='mcmc' inputName='operator' if='inposterior(Tree.t:Species) and Tree.t:Species/estimate=true and allTipDatesRandomWalker.t:$(n)/weight!=0.0'>Estimates tip dates for tree t:$(n)</connect>
+
+			<connect srcID='morphTreeLikelihood.$(n)' targetID='tracelog' inputName='log' if='inlikelihood(morphTreeLikelihood.$(n))'/>
+			<connect srcID='mutationRate.s:$(n)' targetID='tracelog' inputName='log' if='inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'/>
+			<connect srcID='gammaShape.s:$(n)' targetID='tracelog' inputName='log' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'/>
+			<connect srcID='clockRate.c:$(n)' targetID='tracelog' inputName='log' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'/>
+
+			<connect srcID='GammaShapePrior.s:$(n)' targetID='prior' inputName='distribution' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Prior on gamma shape for partition s:$(n)</connect>
+	</subtemplate>
+
 		<mergepoint id="sbSubstModelTemplates"/>
 		<mergepoint id="sbClockModelTemplates"/>
 		<mergepoint id="sbTreePriorTemplates"/>
@@ -271,7 +346,7 @@
 
 	</beauticonfig>
 
-	<taxonset spec="beast.evolution.alignment.TaxonSet" id="taxonsuperset">
+	<taxonset spec="starbeast2.StarBeastTaxonSet" id="taxonsuperset">
 		<!--
 		need to specify at least one taxon for a TaxonSet, so insert a dummy taxon here
 		This one is cleared by the TaxonSetInputEditor
