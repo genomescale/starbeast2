@@ -263,7 +263,7 @@
 			<mergepoint id="aux-partitiontemplate"/>
 		</partitiontemplate>
 
-		<alignmentProvider id="Add Morphology to Species Tree" spec='BeautiMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
+		<alignmentProvider id="Add Morphology to Species Tree" spec='StarBeastMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
 
 		<subtemplate id='StarBEASTMKTrait' class='beast.evolution.alignment.FilteredAlignment' mainid='$(n)'
 		suppressInputs = 'beast.evolution.substitutionmodel.LewisMK.stateNumber,
@@ -302,14 +302,8 @@
 			<operator id='allTipDatesRandomWalker.t:$(n)' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:Species"/>
 
 			<operator id='StrictClockRateScaler.c:$(n)' spec='ScaleOperator' scaleFactor="0.75" weight="3" parameter='@clockRate.c:$(n)'/>
-			<!-- need updown operator for clockRate?!? Also in SubstModel.xml -->
-			<upDownOperator id='strictClockUpDownOperator.c:$(n)' spec='UpDownOperator' scaleFactor="0.75" weight="3">
-				<up idref="clockRate.c:$(n)"/>
-				<down idref="Tree.t:Species"/>
-			</upDownOperator>
 ]]>
 
-			<connect srcID='$(n)' targetID='taxonsuperset' inputName='alignment' if="isInitializing"/>
 			<connect srcID='morphTreeLikelihood.$(n)' targetID='likelihood' inputName='distribution' if="isInitializing"/>
 			<connect method="beast.app.beauti.SiteModelInputEditor.customConnector"/>
 
@@ -324,9 +318,6 @@
 			<connect srcID='mutationRateScaler.s:$(n)' targetID='mcmc' inputName='operator' if='nooperator(FixMeanMutationRatesOperator) and inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true'>Scales mutation rate of partition s:$(n)</connect>
 			<connect srcID='gammaShapeScaler.s:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true'>Scales gamma shape parameter of partition s:$(n)</connect>
 			<connect srcID='StrictClockRateScaler.c:$(n)' targetID='mcmc' inputName='operator' if='inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true'>Scale clock rate of partition c:$(n)</connect>
-			<connect srcID='strictClockUpDownOperator.c:$(n)' targetID='mcmc' inputName='operator' if='nooperator(FixMeanRatesOperator) and inlikelihood(clockRate.c:$(n)) and inlikelihood(Tree.t:Species) and Tree.t:Species/estimate=true and clockRate.c:$(n)/estimate=true'>
-				Scale up substitution rate c:$(n) and scale down tree t:($n)
-			</connect>
 
 			<connect srcID='allTipDatesRandomWalker.t:$(n)' targetID='mcmc' inputName='operator' if='inposterior(Tree.t:Species) and Tree.t:Species/estimate=true and allTipDatesRandomWalker.t:$(n)/weight!=0.0'>Estimates tip dates for tree t:$(n)</connect>
 

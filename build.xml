@@ -12,14 +12,17 @@
 	<property name="diststarbeast2" location="${buildstarbeast2}/dist" />
 	<property name="beast2path" location="../beast2" />
 	<property name="SAPath" location="../sampled-ancestors" />
+	<property name="MMPath" location="../morph-models" />
 	<property name="libBeast2" location="${beast2path}/lib" />
 	<property name="srcBeast2" location="${beast2path}/src" />
 	<property name="beast2classpath" location="${beast2path}/build" />
 	<property name="SAClasspath" location="${SAPath}/build" />
+	<property name="MMClasspath" location="${MMPath}/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
 
     <import file="${beast2path}/build.xml" />
     <import file="${SAPath}/build.xml" />
+    <import file="${MMPath}/build.xml" />
 
 	<property name="main_class_BEAST" value="beast.app.BeastMCMC" />
 	<property name="report" value="${buildstarbeast2}/junitreport"/>
@@ -30,6 +33,7 @@
 		<fileset dir="${libstarbeast2}" includes="*.jar"/>
         <pathelement path="${beast2classpath}"/>
         <pathelement path="${SAClasspath}"/>
+        <pathelement path="${MMClasspath}"/>
 	</path>
 
 	<!-- start -->
