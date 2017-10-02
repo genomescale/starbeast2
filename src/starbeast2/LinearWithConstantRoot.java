@@ -70,17 +70,26 @@ public class LinearWithConstantRoot extends CalculationNode implements Populatio
     }
 
     @Override
-    public void initPopSizes(double popInitial) {
+    public void initPopSizes(double tipInitial) {
+        final double topInitial = tipInitial * 0.5;
 
         final RealParameter tipPopSizes = tipPopSizesInput.get();
         final RealParameter topPopSizes = topPopSizesInput.get();
 
-        if (tipPopSizes.isEstimatedInput.get() && topPopSizes.isEstimatedInput.get()) {
-	        for (int i = 0; i < tipPopSizes.getDimension(); i++)
-	            tipPopSizes.setValue(i, popInitial);
-	
+        final double tipLower = tipPopSizes.getLower();
+        final double tipUpper = tipPopSizes.getUpper();
+
+        final double topLower = topPopSizes.getLower();
+        final double topUpper = topPopSizes.getUpper();
+
+        if (tipPopSizes.isEstimatedInput.get() && tipInitial > tipLower && tipInitial < tipUpper) {
+            for (int i = 0; i < tipPopSizes.getDimension(); i++)
+                tipPopSizes.setValue(i, tipInitial);
+        }
+
+        if (topPopSizes.isEstimatedInput.get() && topInitial > topLower && topInitial < topUpper) {
 	        for (int i = 0; i < topPopSizes.getDimension(); i++)
-	            topPopSizes.setValue(i, popInitial * 0.5);
+	            topPopSizes.setValue(i, topInitial);
         }
     }
 

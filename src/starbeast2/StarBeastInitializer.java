@@ -405,7 +405,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         rnd.initAndValidate();
 
         speciesTree.assignFromWithoutID(rnd);
-        System.out.println("BEFORE = " + speciesTree.toString());
+        // System.out.println("BEFORE = " + speciesTree.toString());
 
         /*final TraitSet speciesTipDates = speciesTree.getDateTrait();
         if (speciesTree.hasDateTrait()) {

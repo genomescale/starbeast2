@@ -51,8 +51,10 @@ public class ConstantPopulations extends CalculationNode implements PopulationMo
     @Override
     public void initPopSizes(double popInitial) {
         final RealParameter popSizes = popSizesInput.get();
+        final double lower = popSizes.getLower();
+        final double upper = popSizes.getUpper();
 
-        if (popSizes.isEstimatedInput.get()) {
+        if (popSizes.isEstimatedInput.get() && popInitial > lower && popInitial < upper) {
 	        for (int i = 0; i < popSizes.getDimension(); i++) {
 	            popSizes.setValue(i, popInitial);
 	        }
