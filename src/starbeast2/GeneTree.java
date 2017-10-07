@@ -189,6 +189,7 @@ public class GeneTree extends Distribution {
 
     @Override
     public double calculateLogP() {
+        assert SanityChecks.checkTreeSanity(speciesTreeInput.get().getRoot());
         if (needsUpdate) update();
 
         if (!geneTreeCompatible) {

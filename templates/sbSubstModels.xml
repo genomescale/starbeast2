@@ -383,8 +383,11 @@
 			<frequencies id="equalFreqs.s:$(n)" spec="Frequencies" data="@$(n)" estimate="false"/>
 ]]>
 		</subtemplate>
-	</mergewith>
-	
-	
-</beast>
 
+		<subtemplate id="LewisMK" class="beast.evolution.substitutionmodel.LewisMK" mainid="LewisMK.s:$(n)">
+<![CDATA[
+			<plugin spec="LewisMK" id="LewisMK.s:$(n)"/>
+]]>
+		</subtemplate>
+	</mergewith>
+</beast>

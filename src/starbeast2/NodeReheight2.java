@@ -359,6 +359,10 @@ public class NodeReheight2 extends Operator {
 	                left = j;
 	            }
 	        }
+	        /* if (left >= reverseOrder.length || left < 0) {
+                System.out.println("(reverseOrder[" + left + "] out of bounds) Node number = " + node.getNr());
+                System.out.println(node.toNewick());
+            } */
 	        node.setLeft(m_nodes[reverseOrder[left]]);
 	        node.getLeft().setParent(node);
 	        if (node.getLeft().isLeaf()) {

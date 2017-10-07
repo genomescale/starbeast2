@@ -12,7 +12,7 @@
 
 			<prior id="clockRatePrior.c:$(n)" x="@strictClockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -50,7 +50,7 @@
 
 			<prior id="uclnClockRatePrior.c:$(n)" x="@uclnClockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="uclnClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
+					<S id="uclnClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="uclnClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -115,7 +115,7 @@
 
 			<prior id="ucedClockRatePrior.c:$(n)" x="@ucedClockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="ucedClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
+					<S id="ucedClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="ucedClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -170,7 +170,7 @@
 
 			<prior id="rlcClockRatePrior.c:$(n)" x="@rlcClockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="rlcClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
+					<S id="rlcClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="rlcClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
