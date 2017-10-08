@@ -1,6 +1,7 @@
 package starbeast2;
 
 
+import beast.core.BEASTInterface;
 import beast.core.Description;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.Sequence;
@@ -15,14 +16,22 @@ public class StarBeastTaxonSet extends TaxonSet {
 
     @Override
     public void initAndValidate() {
-        taxaNames = new ArrayList<>();
+        updateTaxaNames();
+    }
+
+    private void updateTaxaNames() {
+        if (taxaNames == null) {
+            taxaNames = new ArrayList<>();
+        } else {
+            taxaNames.clear();
+        }
 
         if (taxonsetInput.get() == null && alignmentInput.get() == null) {
             throw new IllegalArgumentException("Need a taxonset and/or an alignment as input");
         }
 
         if (taxonsetInput.get() != null) {
-            for (Taxon t: taxonsetInput.get()) {
+            for (Taxon t : taxonsetInput.get()) {
                 final String taxonName = t.getID();
                 taxaNames.add(taxonName);
             }
@@ -30,9 +39,23 @@ public class StarBeastTaxonSet extends TaxonSet {
 
         // Add taxon names in morphology but not in molecular data
         if (alignmentInput.get() != null) {
-            for (String taxonName: alignmentInput.get().getTaxaNames()) {
+            for (String taxonName : alignmentInput.get().getTaxaNames()) {
                 if (!taxaNames.contains(taxonName)) taxaNames.add(taxonName);
             }
         }
+    }
+
+    // Hack to get tip dates to update correctly
+    @Override
+    public List<String> asStringList() {
+        if (taxaNames == null) {
+            return null;
+        }
+
+        if (taxaNames.size() == 1) { // probably running BEAUTi
+            updateTaxaNames();
+        }
+
+        return Collections.unmodifiableList(taxaNames);
     }
 }
