@@ -13,6 +13,7 @@ import java.util.*;
 @Description("A TaxonSet is an ordered set of taxa. The order on the taxa is provided at the time of construction" +
         " either from a list of taxon objects or an alignment.")
 public class StarBeastTaxonSet extends TaxonSet {
+    private boolean insideBeauti = false;
 
     @Override
     public void initAndValidate() {
@@ -43,18 +44,15 @@ public class StarBeastTaxonSet extends TaxonSet {
                 if (!taxaNames.contains(taxonName)) taxaNames.add(taxonName);
             }
         }
+
+        insideBeauti |= taxaNames.contains("Beauti2DummyTaxonSet");
     }
 
     // Hack to get tip dates to update correctly
     @Override
     public List<String> asStringList() {
-        if (taxaNames == null) {
-            return null;
-        }
-
-        if (taxaNames.size() == 1) { // probably running BEAUTi
-            updateTaxaNames();
-        }
+        if (taxaNames == null) return null;
+        if (insideBeauti) updateTaxaNames();
 
         return Collections.unmodifiableList(taxaNames);
     }
