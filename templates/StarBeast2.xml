@@ -103,10 +103,10 @@
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
 		<mergepoint id="aux-partitions-panels"/>
 
+		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
+
 		<panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
 		<!-- <mergepoint id="aux-tipdates-panels"/> -->
-
-		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
@@ -202,7 +202,8 @@
 			<!-- hack to ensure that treePrior.$(n) is always deleted from prior, since it is already part of speciescoalescent -->
 			<connect srcID="geneTree.t:$(n)" targetID="prior" inputName="distribution" if="Tree.t:$(n)/estimate=XXX"/>
 
-			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+			<!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
+			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="nooperator(FixMeanMutationRatesOperator) and inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 
 			<connect srcID="Tree.t:$(n)" targetID="state" inputName="stateNode" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="proportionInvariant.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>

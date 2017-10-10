@@ -34,6 +34,13 @@
 			beast.evolution.speciation.BirthDeathGernhard08Model.type,
 			beast.evolution.speciation.BirthDeathGernhard08Model.sampleProbability,
 			beast.evolution.speciation.BirthDeathGernhard08Model.tree,
+			beast.evolution.speciation.SABirthDeathModel.removalProbability,
+			beast.evolution.speciation.SABirthDeathModel.treeIntervals,
+			beast.evolution.speciation.SABirthDeathModel.birthRate,
+			beast.evolution.speciation.SABirthDeathModel.deathRate,
+			beast.evolution.speciation.SABirthDeathModel.samplingRate,
+			beast.evolution.speciation.SABirthDeathModel.conditioningOnRoot,
+			beast.evolution.speciation.SABirthDeathModel.tree,
 			beast.evolution.tree.Tree,
 			beast.evolution.tree.Tree.trait,
 			beast.evolution.tree.Tree.taxa,
@@ -100,6 +107,9 @@
 
 		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
+		<panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
+		<!-- <mergepoint id="aux-tipdates-panels"/> -->
+
 		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init[id='SBI']/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
@@ -142,20 +152,20 @@
 				<tree idref="Tree.t:$(n)"/>
 				<siteModel idref="SiteModel.s:$(n)"/>
 				<branchRateModel id="SpeciesTreeRelaxedClock.c:$(n)" spec="starbeast2.StarBeastClock" geneTree="@geneTree.t:$(n)">
-					<clock.rate id="strictClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<speciesTreeRates estimateRoot="true" spec="starbeast2.UncorrelatedRates" id="branchRatesModel.Species" tree="@Tree.t:Species" rates="@branchRates.Species" stdev="@branchRatesStdev.Species"/>
 				</branchRateModel>
 			</plugin>
-
-			<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)">
-				<distr spec="OneOnX"/>
-			</prior>
 
 			<!-- tree and its properties -->
 			<taxonset id="TaxonSet.$(n)" spec="beast.evolution.alignment.TaxonSet" alignment="@$(n)"/>
 			<plugin spec="beast.evolution.tree.Tree" id="Tree.t:$(n)" taxonset="@TaxonSet.$(n)"/>
 
 			<plugin id="TreeHeight.t:$(n)" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:$(n)"/>
+
+			<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)">
+				<distr spec="OneOnX"/>
+			</prior>
 
 			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
 				<distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="2.0"/>
@@ -165,9 +175,9 @@
 				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
 			</prior>
 
-			<prior id="clockRatePrior.c:$(n)" x="@strictClockRate.c:$(n)">
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
 				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
-					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="0.6" estimate="false"/>
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -175,9 +185,9 @@
 			<operator id="proportionInvariantScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@proportionInvariant.s:$(n)"/>
 			<operator id="mutationRateScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@mutationRate.s:$(n)"/>
 			<operator id="gammaShapeScaler.s:$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0" parameter="@gammaShape.s:$(n)"/>
-			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@strictClockRate.c:$(n)"/>
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
 			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
-				<up idref="strictClockRate.c:$(n)"/>
+				<up idref="clockRate.c:$(n)"/>
 				<down idref="Tree.t:$(n)"/>
 			</upDownOperator>
 
@@ -195,7 +205,6 @@
 ]]>
 
 			<connect srcID="treeLikelihood.$(n)" targetID="likelihood" inputName="distribution" if="isInitializing"/>
-			<connect srcID="operatorSchedule" targetID="mcmc" inputName="operatorschedule" if="inposterior(Tree.t:Species)"/>
 
 			<connect srcID="treelog.t:$(n)" targetID="mcmc" inputName="logger" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
@@ -203,21 +212,25 @@
 			<!-- hack to ensure that treePrior.$(n) is always deleted from prior, since it is already part of speciescoalescent -->
 			<connect srcID="geneTree.t:$(n)" targetID="prior" inputName="distribution" if="Tree.t:$(n)/estimate=XXX"/>
 
-			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+			<!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
+			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="nooperator(FixMeanMutationRatesOperator) and inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+
+			<connect srcID="clockRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="inposterior(clockRate.s:$(n)) and clockRate.s:$(n)/estimate=true"/>
 
 			<connect srcID="Tree.t:$(n)" targetID="state" inputName="stateNode" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="proportionInvariant.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>
 			<connect srcID="mutationRate.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 			<connect srcID="gammaShape.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
-			<connect srcID="strictClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(SpeciesTreeRelaxedClock.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
 
 			<connect srcID="proportionInvariantScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>
 			<connect srcID="mutationRateScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 			<connect srcID="gammaShapeScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
-			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inposterior(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(strictClockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and strictClockRate.c:$(n)/estimate=true">
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inposterior(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true">
 				Scale up substitution rate c:$(n) and scale down tree t:($n)
 			</connect>
+			<connect srcID="clockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
 
 			<connect srcID="TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
@@ -233,24 +246,17 @@
 			<connect srcID="proportionInvariant.s:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>
 			<connect srcID="mutationRate.s:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 			<connect srcID="gammaShape.s:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
-			<connect srcID="strictClockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="branchRatesModel.Species" targetID="SpeciesTreeLoggerX" inputName="branchratemodel" if="inposterior(Tree.t:$(n))"/>
 
 			<connect srcID="GammaShapePrior.s:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
 			<connect srcID="PropInvariantPrior.s:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>
-
-			<connect srcID="strictClockRate.c:$(n)" targetID="state" inputName="stateNode" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
-
-			<connect srcID="clockRatePrior.c:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true">
-				Prior on the overall clock rate of partition c:$(n)
-			</connect>
-
-			<connect srcID="branchRatesModel.Species" targetID="SpeciesTreeLoggerX" inputName="branchratemodel" if="inposterior(Tree.t:$(n))"/>
 
 			<connect srcID="geneTree.t:$(n)" targetID="Reheight.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedUniform.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-			<connect srcID="strictClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
+			<connect srcID="clockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
 
 			<!--
 			Since "Species" is treated as a separate partition, we need the following
@@ -273,6 +279,78 @@
 			<mergepoint id="aux-partitiontemplate"/>
 		</partitiontemplate>
 
+		<alignmentProvider id="Add Morphology to Species Tree" spec='StarBeastMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
+
+		<subtemplate id='StarBEASTMKTrait' class='beast.evolution.alignment.FilteredAlignment' mainid='$(n)'
+		suppressInputs = 'beast.evolution.substitutionmodel.LewisMK.stateNumber,
+			beast.evolution.substitutionmodel.LewisMK.datatype,
+			beast.evolution.substitutionmodel.LewisMK.frequencies,
+			beast.evolution.substitutionmodel.LewisMK.proportionInvariant'>
+
+<![CDATA[
+			<distribution id="morphTreeLikelihood.$(n)" spec="TreeLikelihood" tree="@Tree.t:Species">
+				<data spec="beast.evolution.alignment.FilteredAlignment" id="$(n)" filter="0-end">
+					<userDataType spec="beast.evolution.datatype.StandardData" id="morphDataType.$(n)" />
+				</data>
+				<siteModel spec="SiteModel" id="morphSiteModel.s:$(n)" gammaCategoryCount="0">
+					<substModel spec="LewisMK" id="LewisMK.s:$(n)" datatype="@morphDataType.$(n)"/>
+					<mutationRate spec="parameter.RealParameter" id="mutationRate.s:$(n)" value="1.0" estimate="false"/>
+					<shape spec="parameter.RealParameter" id="gammaShape.s:$(n)" value="1.0" estimate="false"/>
+				</siteModel>
+				<branchRateModel id="MorphologyClock.c:$(n)" spec="StrictClockModel">
+					<clock.rate id="clockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</branchRateModel>
+			</distribution>
+
+			<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)">
+				<distr spec="OneOnX"/>
+			</prior>
+
+			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
+				<distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="2.0"/>
+			</prior>
+
+			<prior id="clockRatePrior.c:$(n)" x="@clockRate.c:$(n)">
+				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
+				</distr>
+			</prior>
+
+			<operator id="mutationRateScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@mutationRate.s:$(n)"/>
+			<operator id="gammaShapeScaler.s:$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0" parameter="@gammaShape.s:$(n)"/>
+			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@clockRate.c:$(n)"/>
+
+			<operator id='allTipDatesRandomWalker.t:$(n)' spec='TipDatesRandomWalker' windowSize="1" weight="0" tree="@Tree.t:Species"/>
+]]>
+
+			<connect srcID="morphTreeLikelihood.$(n)" targetID="likelihood" inputName="distribution" if="isInitializing"/>
+			<connect method="beast.app.beauti.SiteModelInputEditor.customConnector"/>
+
+			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+
+			<connect srcID="clockRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="inposterior(clockRate.s:$(n)) and clockRate.s:$(n)/estimate=true"/>
+
+			<connect srcID="mutationRate.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+			<connect srcID="gammaShape.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
+			<connect srcID="clockRate.c:$(n)" targetID="state" inputName="stateNode" if="inposterior(MorphologyClock.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+
+			<connect srcID="mutationRateScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+			<connect srcID="gammaShapeScaler.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
+			<connect srcID="clockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inposterior(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+			<connect srcID="allTipDatesRandomWalker.t:$(n)" targetID="mcmc" inputName="operator" if="Tree.t:Species/estimate=true and allTipDatesRandomWalker.t:$(n)/weight!=0.0">Estimates tip dates for the species tree</connect>
+			<connect srcID="clockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+
+			<connect srcID="morphTreeLikelihood.$(n)" targetID="tracelog" inputName="log" if="inlikelihood(morphTreeLikelihood.$(n))"/>
+			<connect srcID="mutationRate.s:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
+			<connect srcID="gammaShape.s:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
+			<connect srcID="clockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+
+			<connect srcID="GammaShapePrior.s:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
+
+			<connect srcID="clockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(clockRate.c:$(n)) and clockRate.c:$(n)/estimate=true"/>
+		</subtemplate>
+
 		<mergepoint id="sbSubstModelTemplates"/>
 		<mergepoint id="sbTreePriorTemplates"/>
 		<mergepoint id="sbPopModelTemplates"/>
@@ -280,7 +358,7 @@
 
 	</beauticonfig>
 
-	<taxonset spec="beast.evolution.alignment.TaxonSet" id="taxonsuperset">
+	<taxonset spec="starbeast2.StarBeastTaxonSet" id="taxonsuperset">
 		<!--
 		need to specify at least one taxon for a TaxonSet, so insert a dummy taxon here
 		This one is cleared by the TaxonSetInputEditor
@@ -346,21 +424,21 @@
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 
-		<operator id="TreeScaler.t:Species" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:Species"/>
-		<operator id="TreeRootScaler.t:Species" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:Species" rootOnly="true"/>
-		<operator id="UniformOperator.t:Species" spec="Uniform" weight="15.0" tree="@Tree.t:Species"/>
 		<operator id="SubtreeSlide.t:Species" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:Species"/>
-		<operator id="Narrow.t:Species" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:Species"/>
-		<operator id="Wide.t:Species" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:Species"/>
 		<operator id="WilsonBalding.t:Species" spec="WilsonBalding" weight="15.0" tree="@Tree.t:Species"/>
+		<operator id="Wide.t:Species" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:Species"/>
+		<operator id="Narrow.t:Species" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:Species"/>
+		<operator id="UniformOperator.t:Species" spec="Uniform" weight="15.0" tree="@Tree.t:Species"/>
+		<operator id="TreeRootScaler.t:Species" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:Species" rootOnly="true"/>
+		<operator id="TreeScaler.t:Species" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:Species"/>
+
+		<operator id="speciationRateScale.t:Species" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@speciationRate.t:Species"/>
 
 		<operator id="updownAll:Species" spec="UpDownOperator" scaleFactor="0.75" weight="6.0">
 			<up idref="speciationRate.t:Species"/>
 			<down idref="popMean.Species"/>
 			<down idref="Tree.t:Species"/>
 		</operator>
-
-		<operator id="speciationRateScale.t:Species" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@speciationRate.t:Species"/>
 
 		<logger id="tracelog" logEvery="5000" fileName="starbeast.log" sort="smart">
 			<model idref="posterior"/>
