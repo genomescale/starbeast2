@@ -30,7 +30,6 @@
 			<connect srcID="strictClockRate.c:$(n)" targetID="tracelog" inputName="log" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
 
 			<connect srcID="strictClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="strictClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(strictClockRate.c:$(n)) and strictClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
 		<!-- UCLN relaxed clock that applies to each gene tree branch -->
@@ -92,7 +91,6 @@
 			<connect srcID="GeneTreeUCLN.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeUCLN.c:$(n))"/>
 
 			<connect srcID="uclnClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="uclnClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(uclnClockRate.c:$(n)) and uclnClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
 		<!-- UCED relaxed clock that applies to each gene tree branch -->
@@ -104,11 +102,6 @@
 			</branchRateModel>
 
 			<operator id="ucedClockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@ucedClockRate.c:$(n)"/>
-
-			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
-				<up idref="ucedClockRate.c:$(n)"/>
-				<down idref="Tree.t:$(n)"/>
-			</upDownOperator>
 
 			<operator id="ucedBranchRatesCycle.c:$(n)" k="2" optimise="false" spec="starbeast2.DiscreteRateCycle" treeRates="@ucedBranchRates.c:$(n)" weight="9.0" />
 			<operator id="ucedBranchRatesUniform.c:$(n)" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@ucedBranchRates.c:$(n)" weight="9.0" />
@@ -130,9 +123,6 @@
 			<connect srcID="ucedClockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true">
 				Scale substitution rate of partition c:$(n)
 			</connect>
-			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(ucedClockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and ucedClockRate.c:$(n)/estimate=true">
-				Scale up substitution rate c:$(n) and scale down tree t:$(n)
-			</connect>
 
 			<connect srcID="ucedBranchRatesCycle.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(ucedBranchRates.c:$(n)) and ucedBranchRates.c:$(n)/estimate=true">
 				Cycle the substitution rates around a subset of branches by one step
@@ -146,7 +136,6 @@
 			<connect srcID="GeneTreeUCED.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeUCED.c:$(n))"/>
 
 			<connect srcID="ucedClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="ucedClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(ucedClockRate.c:$(n)) and ucedClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 
 		<!-- RLC relaxed clock that applies to each gene tree branch -->
@@ -159,11 +148,6 @@
 			</branchRateModel>
 
 			<operator id="rlcClockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@rlcClockRate.c:$(n)"/>
-
-			<upDownOperator id="clockUpDownOperator.c:$(n)" spec="UpDownOperator" scaleFactor="0.95" weight="3.0">
-				<up idref="rlcClockRate.c:$(n)"/>
-				<down idref="Tree.t:$(n)"/>
-			</upDownOperator>
 
 			<operator id="rlcBranchRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.75" parameter="@rlcBranchRates.c:$(n)" weight="18.0"/>
 			<operator id="indicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@indicators.c:$(n)" weight="9.0"/>
@@ -203,9 +187,6 @@
 			<connect srcID="rlcClockRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true">
 				Scale substitution rate of partition c:$(n)
 			</connect>
-			<connect srcID="clockUpDownOperator.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(rlcClockRate.c:$(n)) and inlikelihood(Tree.t:$(n)) and Tree.t:$(n)/estimate=true and rlcClockRate.c:$(n)/estimate=true">
-				Scale up substitution rate c:$(n) and scale down tree t:$(n)
-			</connect>
 
 			<connect srcID="rlcBranchRateScaler.c:$(n)" targetID="mcmc" inputName="operator" if="inlikelihood(rlcBranchRates.c:$(n)) and rlcBranchRates.c:$(n)/estimate=true">
 				Scale individual branch rates
@@ -219,7 +200,6 @@
 			<connect srcID="GeneTreeRLC.c:$(n)" targetID="TreeWithMetaDataLogger.t:$(n)" inputName="branchratemodel" if="inlikelihood(GeneTreeRLC.c:$(n))"/>
 
 			<connect srcID="rlcClockRate.c:$(n)" targetID="updownAll:Species" inputName="up" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
-			<connect srcID="rlcClockRate.c:$(n)" targetID="clockUpDownOperator.c:$(n)" inputName="up" if="inlikelihood(rlcClockRate.c:$(n)) and rlcClockRate.c:$(n)/estimate=true"/>
 		</subtemplate>
 	</mergewith>
 </beast>
