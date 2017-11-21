@@ -20,12 +20,12 @@ import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 
 import java.text.DecimalFormat;
 import java.util.*;
-
 
 /**
  * @author Nicola Felix Mueller
@@ -33,12 +33,13 @@ import java.util.*;
 
 @Description("Species tree that contains the information about things such as the speciation times and migration rates")
 public class ConstantWithGeneFlow extends CalculationNode implements PopulationModel {
-    public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree this model applies to.", Validate.REQUIRED);
-    public Input<RealParameter> NeInput = new Input<RealParameter>("Ne","contains the Ne of each branch", Validate.REQUIRED);
-    public Input<RealParameter> mInput  = new Input<>("m","relative migration rates between branches", Validate.REQUIRED);
-    public Input<RealParameter> mClockInput  = new Input<>("mClock","absolute migration rates", Validate.REQUIRED);
-    
-    private SpeciesTreeInterface speciesTree;
+    public Input<RealParameter> NeInput = new Input<RealParameter>("Ne","contains the Ne of each branch",Input.Validate.REQUIRED);   
+    public Input<RealParameter> mInput  = new Input<>("m","relative migration rates between branches",Input.Validate.REQUIRED);
+    public Input<BooleanParameter> indicatorInput  = new Input<>("indicator","indicator if rate is not 0");
+    public Input<MigrationModel> migrationModelInput  = new Input<>("migrationModel","input of model of migration",Input.Validate.REQUIRED);
+   
+    SpeciesTreeInterface speciesTree;
+    private MigrationModel migModel;
     
     private boolean needsUpdate;
     private int leafNodeCount;
@@ -78,6 +79,16 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 
     @Override
     public boolean requiresRecalculation() {
+//    	System.out.println(stateToNodeMap);
+//    	for (int i = 0; i < migrationMap.size(); i++)
+//			System.out.print(Arrays.toString(migrationMap.get(i)) + "\t");
+//    		if (migrationMap.get(i)[0]==2)
+//       	System.out.print("\n");
+//    	for (int i = 0; i < migrationMap.size(); i++)
+//    		if (migrationMap.get(i)[0]==3)
+//    			System.out.print(i + "\t");
+//    	System.out.print("\n");
+//    	System.out.println(speciesTree);
         needsUpdate = true;
         return needsUpdate;
     }
@@ -87,7 +98,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	// check if tree is dirty
 		calculateIntervals();    			
     	for (int i = 0; i < intervals.length; i++){
-    		if (speciesTreeInput.get().getNode(i).isDirty()>0){
+    		if (speciesTree.getNode(i).isDirty()>0){
     			needsUpdate = true;
     			stateToNodeMap();
     			return true;
@@ -138,11 +149,14 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 
     @Override
     public void initAndValidate() {
-        speciesTree = speciesTreeInput.get();
+    	migModel = migrationModelInput.get();
+        speciesTree = migModel.speciesTreeInput.get();
         final int speciesNodeCount = speciesTree.getNodeCount();
         leafNodeCount = speciesTree.getLeafNodeCount(); // also the number of "tip" population sizes
         NeInput.get().setDimension(2*leafNodeCount-1);
         mInput.get().setDimension((leafNodeCount-1)*(leafNodeCount-1)*2);
+        if (indicatorInput.get()!=null)
+        	indicatorInput.get().setDimension((leafNodeCount-1)*(leafNodeCount-1)*2);
         
         needsUpdate = true;
         
@@ -154,7 +168,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     
     
     @SuppressWarnings({ "unchecked", "deprecation" })
-    protected void calculateIntervals() {
+    public void calculateIntervals() {
     	Node[] speciesNodesTmp = speciesTree.getNodesAsArray();
     	Node[] speciesNodes = new Node[speciesNodesTmp.length];
     	System.arraycopy(speciesNodesTmp, 0, speciesNodes, 0, speciesNodesTmp.length);
@@ -193,7 +207,6 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	stateToNodeMap();
     }
     
-
 	// builds the map from state to node number
     public void stateToNodeMap(){
     	stateToNodeMap = new ArrayList<>();
@@ -238,7 +251,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	while (!isCoalescent[a]){
 			activeStates.add(lineagesAdded[a].get(0).getNr());
     		a++;
-    	}    		
+    	}    	
+    	// sorting ensures the correct order of migration rate elements
+    	Collections.sort(activeStates);
     	
     	for (int i = 0; i < activeStates.size(); i++){
     		for (int j = 0; j < activeStates.size(); j++){
@@ -268,7 +283,6 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         	a++;
     	}
     }
-
     
     // get the time of the next speciation event
     protected double getNextSpeciationTime(int currTreeInterval){
@@ -277,12 +291,8 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	else
     		return intervals[currTreeInterval];
     }
-	
-	
-	private double[] savedNes;
-	private double[] storedNes;	
-    
-    
+
+   
     // return the number of internal nodes
     protected int getIntNodes(){
     	return nrSamples-1;
@@ -297,26 +307,98 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     
     //slow to return migration rates
 	public double getMigrationRates(int currentInterval, int state1, int state2) {
+		int interval = currentInterval-getNumberOfSpecies();
+		double migration = migModel.getMigration(stateToNodeMap.get(interval).get(state1) , stateToNodeMap.get(interval).get(state2));
+		
 		for (int i = 0; i < migrationMap.size(); i++){
-			if (migrationMap.get(i)[0]==stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state1) 
-					&& migrationMap.get(i)[1]==stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state2))
-				return mInput.get().getArrayValue(i);
+			if (migrationMap.get(i)[0]==stateToNodeMap.get(interval).get(state1) 
+					&& migrationMap.get(i)[1]==stateToNodeMap.get(interval).get(state2)){
+					if (indicatorInput.get()!=null){
+						if(indicatorInput.get().getArrayValue(i) > 0.5)
+							return migration*mInput.get().getArrayValue(i);
+						else
+							return 0.0;
+					}else{
+						return migration*mInput.get().getArrayValue(i);						
+					}
+			}
 		}
 		return 0.0;
 	}
 	
-	// return all migration rates from a state
-	public ArrayList<Double> getAllMigrationRates(int state){
-		ArrayList<Double> migRates = new ArrayList<>();
-
+    //get migration rates between nodes
+	public double getMigrationRates(int node1, int node2) {		
+		double migration = migModel.getMigration(node1 , node2);
 		for (int i = 0; i < migrationMap.size(); i++){
-			if (migrationMap.get(i)[0]==state){
-				migRates.add(mInput.get().getArrayValue(i));
-				migRates.add((double) migrationMap.get(i)[1]);
-			}
+			if (migrationMap.get(i)[0]==node1 
+					&& migrationMap.get(i)[1]==node2)
+				return migration*mInput.get().getArrayValue(i);
 		}
+		return 0.0;
+	}
+	
+	public ArrayList<ArrayList<Integer>> getStateToNodeMap(){
+		calculateIntervals();
+		ArrayList<ArrayList<Integer>> returnList = new ArrayList<>();
+		for (int i= 0; i < stateToNodeMap.size(); i++){
+			ArrayList<Integer> add = new ArrayList<>();
+			for (int j = 0; j < stateToNodeMap.get(i).size(); j++)
+				add.add(stateToNodeMap.get(i).get(j));
+			returnList.add(add);		
+		}		
+		return returnList;
+	}
 
-		return migRates;
+	
+	// return all migration rates from a node
+	public String getAllMigrationRates(int nodeNr){
+		boolean isEmpty = true;
+		String migRates = new String();	
+		String migTo = new String();
+		migRates ="abcdef";
+		migTo ="abcdef";
+		ArrayList<Integer> visited = new ArrayList<>();
+		for (int i = 0; i < (stateToNodeMap.size()-1); i++){
+			for (int j = 0; j < stateToNodeMap.get(i).size(); j++){
+				if (stateToNodeMap.get(i).get(j) == nodeNr){
+					for (int k = 0; k < stateToNodeMap.get(i).size(); k++){
+						if (k!=j && visited.indexOf(stateToNodeMap.get(i).get(k))==-1){
+							visited.add(stateToNodeMap.get(i).get(k));
+							double migration = migModel.getMigration(stateToNodeMap.get(i).get(j) , stateToNodeMap.get(i).get(k));
+							for (int l = 0; l < migrationMap.size(); l++){
+								if (migrationMap.get(l)[0]==stateToNodeMap.get(i).get(j) 
+										&& migrationMap.get(l)[1]==stateToNodeMap.get(i).get(k)){
+										if (indicatorInput.get()!=null){
+											if (indicatorInput.get().getArrayValue(l) > 0.5){
+												migration*=mInput.get().getArrayValue(l);											
+											}else{
+												migration*=0.0;											
+											}											
+										}else{
+											migration*=mInput.get().getArrayValue(l);
+										}
+								}
+							}
+							migRates = migRates + "," + migration;
+							migTo = migTo + "," + stateToNodeMap.get(i).get(k);
+							isEmpty = false;
+						}
+					}
+				}
+			}
+		}		
+		migRates = migRates.replace("abcdef,", ",rates={");
+		migTo = migTo.replace("abcdef,", ",to={");
+		
+		migRates = migRates + "}";
+		migTo = migTo + "}";
+		String returnString = new String();
+		returnString =  migTo + migRates;
+
+		if (isEmpty)
+			return "";
+		else
+			return returnString;
 	}
 	
     protected void coalesce(int currTreeInterval) {
@@ -359,11 +441,6 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     
     protected int getDaughter2(int currTreeInterval){
     	int index = stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()).indexOf(daughterIndex2);
-
-//    	System.out.println(daughterIndex2);
-//    	System.out.println(currTreeInterval-getNumberOfSpecies());
-//    	System.out.println(stateToNodeMap);
-//    	System.out.println("daughter2 " + index);
     	return stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()).indexOf(daughterIndex2);
     }
 
@@ -390,14 +467,14 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 
     // get the state of a sample, i.e. the int corresponding to a sampled species
     public Integer getSampleState(String species){
-    	for (Node leaf: speciesTreeInput.get().getNodesAsArray()) {
+    	for (Node leaf: speciesTree.getNodesAsArray()) {
     		if (leaf.getID().equals(species)) return leaf.getNr();
     	}
     	return -1;
     }
     
     public int getNumberOfSpecies(){
-    	return speciesTreeInput.get().getLeafNodeCount();	
+    	return speciesTree.getLeafNodeCount();	
     }
     
 	public double getNodeNe(int nr) {
@@ -406,7 +483,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	
      
 	protected int getSpeciesState(int currentInterval, int state){
-		return stateToNodeMap.get(currentInterval - speciesTreeInput.get().getLeafNodeCount()).get(state);
+		return stateToNodeMap.get(currentInterval - speciesTree.getLeafNodeCount()).get(state);
 	}
 	
 	

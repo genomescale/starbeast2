@@ -23,10 +23,7 @@ public class Euler2ndOrder {
 		this.epsilon = epsilon;
         this.migration_rates = migration_rates;
         this.multiplicator = multiplicator;
-        this.coalescent_rates = new double[states];
-        for (int i = 0; i < states; i++){
-        	this.coalescent_rates[i] = 2*coalescent_rates[i];
-        }
+        this.coalescent_rates = coalescent_rates;
         this.lineages = lineages;
         this.states = states;
         this.dimension = this.lineages*this.states;
@@ -107,7 +104,7 @@ public class Euler2ndOrder {
     			tCR[j] = coalescent_rates[j] *  (sumStates[j] - p[currlin+j]);
     			sumCoal += p[currlin+j]*tCR[j];
     		}
-    		pDot[pDot.length-1] -= sumCoal;
+    		pDot[pDot.length-1] -= multiplicator[i]*sumCoal;
     		// Calculate the probability of a lineage changing states
     		for (int j = 0; j < states; j++){
     			double pj = p[currlin+j];
@@ -118,9 +115,6 @@ public class Euler2ndOrder {
 							pj*migration_rates[j][k];
 					pDot[currlin+j] += migrates;
 					pDot[currlin+k] -= migrates;
-//					if (j==0 && k==4)
-//						System.out.println(migrates);
-    				
     			}// j    			 
     			
     			// Calculate the Derivate of p:
@@ -151,7 +145,7 @@ public class Euler2ndOrder {
     		for (int j = 0; j<states; j++)
     			pDotDot[currlin+j] *= pDot[currlin+j];
     		
-    		pDotDot[pDot.length-1] -= pCoalRate;
+    		pDotDot[pDot.length-1] -= multiplicator[i]*pCoalRate;
     		
     		double migrates;
     		// Calculate the probability of a lineage changing states

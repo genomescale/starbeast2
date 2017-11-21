@@ -16,6 +16,7 @@
  */
 package starbeast2;
 
+import starbeast2.Euler2ndOrder;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
@@ -36,24 +37,13 @@ import java.util.*;
 		" and pairwise coalescent rates translating to 1/Ne for m=1 in the Wright Fisher model")
 public class GeneTreeWithMigration extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
-    public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 2).", 2.0);
+    public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 4).", 4.0);
     public Input<ConstantWithGeneFlow> popModelInput = new Input<>("populationModel", "Population model used to infer the multispecies coalescent probability for this gene");
-
-//    public Input<TraitSet> typeTraitInput = new Input<>(
-//            "species", "Type trait set.", Input.Validate.REQUIRED);     
-//            		
-//    public Input<SpeciesTree> speciesTreeInput = new Input<>(
-//    		"speciesTree",
-//    		"species tree input", Input.Validate.REQUIRED);    
-//        
-//    public Input<Double> inheritanceInput = new Input<>(
-//    		"inheritance",
-//    		"inheritance scaler", 4.0);
-    
    
 	public int samples;
 	public int nrSamples;
 	
+    SpeciesTreeInterface speciesTree;
 	
 	private double[] coalescentRates;
 	private double[][] migrationRates;
@@ -101,6 +91,7 @@ public class GeneTreeWithMigration extends Distribution {
     
     @Override
     public void initAndValidate(){    
+        speciesTree = popModelInput.get().migrationModelInput.get().speciesTreeInput.get();
     	popModelInput.get().calculateIntervals();
     	// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
     	calculateIntervals(); 
@@ -150,6 +141,7 @@ public class GeneTreeWithMigration extends Distribution {
    	
     	double nextGeneTime = intervals[geneInterval];
     	double nextSpeciesTime = popModelInput.get().getNextSpeciationTime(speciesInterval);  
+//    	System.out.println(nextSpeciesTime);
 //    	if (first) {	        
 	        // initialize the array that saves the most likely state of each node
 	        mostLikelyState = new int[2*nr_lineages+1];	        
@@ -167,74 +159,8 @@ public class GeneTreeWithMigration extends Distribution {
 	        initializeP();
 	        
 			// store the node
-			storeNode(geneInterval - nodeCount - 1, linProbs,
-						multiplicator, logP, speciesInterval,
-						activeLineages, sampleState);
 			nextGeneTime = intervals[geneInterval];
 
-//    	} else {	
-//    		// Check if the first interval is already dirty
-//			if (popModelInput.get().intervalIsDirty(speciesInterval) || intervalIsDirty(geneInterval)){ 
-//				restoreNode(0);				
-//        		updateRatesList(speciesInterval);
-//			}else{   	
-//				double lastNextSpeciesTime = nextSpeciesTime;
-//				int lastSpeciesInterval = speciesInterval;
-//				
-//	    		while(geneInterval < Integer.MAX_VALUE){
-//	    			// proceed to the next interval
-//		    		if (nextSpeciesTime < nextGeneTime){  
-//		    			// check if next interval is dirty, if yes stay in that gene interval
-//		    			if (popModelInput.get().intervalIsDirty(speciesInterval+1)){
-//		    				// use the next species time from the point of the last gene coalescent event
-//		    				nextSpeciesTime = lastNextSpeciesTime;
-//			    			nextGeneTime = intervals[geneInterval];
-//			    			speciesInterval = lastSpeciesInterval;
-//		    				// update the number of states
-//		    				states = 2*popModelInput.get().getNumberOfSpecies() - speciesInterval;
-//
-//		    				// restore from last (gene) coalescent event
-//		    				restoreNode(geneInterval-treeInput.get().getLeafNodeCount()-1);
-//		    				updateRatesList(speciesInterval);
-//		    				break;
-//		    			}
-//		    			states--;
-//		        		speciesInterval++; 
-//		        		nextGeneTime -= nextSpeciesTime;
-//		        		nextSpeciesTime = popModelInput.get().getNextSpeciationTime(speciesInterval);
-//		    		}else{
-//		        		geneInterval++;
-//		        		// Check if the last interval was reached
-//		        		if (geneInterval == intervals.length){
-//		        			logP = coalLogP[coalLogP.length-1];
-//		        			return logP;
-//		        		}			 
-//		        		
-//		        		
-//		        		nr_lineages--;
-//		        		nextSpeciesTime -= nextGeneTime;
-//		        		lastNextSpeciesTime = nextSpeciesTime;
-//		        		lastSpeciesInterval = speciesInterval;
-//		        		
-//		    			nextGeneTime = intervals[geneInterval];
-//		    			// check if this gene interval is dirty
-//		    			if (intervalIsDirty(geneInterval)){
-//		    				// if the interval is dirty, restore from last coalescent event
-//		    				speciesInterval = restoreNode(geneInterval-treeInput.get().getLeafNodeCount()-1);
-//		    				updateRatesList(speciesInterval);
-//		    				break;
-//		    			}
-//		    		}
-//	    		}
-//			}
-//		}	   	
-//			if(geneInterval!=26){
-//				System.exit(0);
-//			}
-				
-//		System.out.println(logP);
-//		System.out.println(treeInput.get().getID() + " " + geneInterval + " " + intervals[geneInterval] + " next speciation " + nextSpeciesTime + " species interval " + speciesInterval);
-        // integrate until there are no more intervals
         do {			
         	// Length of the current interval
         	final double duration = Math.min(nextGeneTime, nextSpeciesTime);
@@ -263,13 +189,13 @@ public class GeneTreeWithMigration extends Distribution {
 		        	euler.calculateValues(duration, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt);		        	
 	        		
 		            for (int i = 0; i < linProbs.length; i++) linProbs[i] = linProbs_tmp[i]; 
+		            	
 		            logP += linProbs_tmp[linProbs_tmp.length-1];
 		            
                 }else{
+//                	System.out.println(coalescentRates[0]);
                 	// use analytical solution instead
-                	double nonCoalProb = Math.exp(-duration * coalescentRates[0] * activeLineages.size()*(activeLineages.size()-1));
-	                for (int i = 0; i<linProbs.length; i++)
-	                	linProbs[i] *= nonCoalProb;  
+                	logP -= duration * coalescentRates[0] * activeLineages.size()*(activeLineages.size()-1)/2;	                
                 }
                 
         	}
@@ -279,6 +205,7 @@ public class GeneTreeWithMigration extends Distribution {
         		states--;
                 // update the coalescent and migration rates
         		updateRatesList(speciesInterval+1);
+
         		// combine the state probs of the newly combined states
         		combineStates(speciesInterval, logP, geneInterval);        		
         		speciesInterval++;  
@@ -300,6 +227,9 @@ public class GeneTreeWithMigration extends Distribution {
         	}else{
         		System.err.println("speciation and coalescence coincide, return negative infinity");
         	}
+        	if (logP == Double.NEGATIVE_INFINITY)
+        		return logP;
+
         }while(activeLineages.size()>1);
         first = false;  
         return logP;  	
@@ -315,15 +245,15 @@ public class GeneTreeWithMigration extends Distribution {
 		activeLineages.add(incomingLines.get(0).getNr());
 		final String geneLeafName = incomingLines.get(0).getID();
 		//String sampledSpecies = typeTraitInput.get().getStringValue(geneLeafName);
-		final Map<String, Integer> tipNumberMap = popModelInput.get().speciesTreeInput.get().getTipNumberMap();
+		final Map<String, Integer> tipNumberMap = speciesTree.getTipNumberMap();
 		final int sampledSpeciesNr = tipNumberMap.get(geneLeafName);
-		final String sampledSpeciesName = popModelInput.get().speciesTreeInput.get().getNode(sampledSpeciesNr).getID();
+		final String sampledSpeciesName =speciesTree.getNode(sampledSpeciesNr).getID();
 		sampleState.add(popModelInput.get().getSampleState(sampledSpeciesName));
 		mostLikelyState[incomingLines.get(0).getNr()] = popModelInput.get().getSampleState(sampledSpeciesName);
     }
  
     private void initializeP(){
-    	final int nrSpecies = popModelInput.get().speciesTreeInput.get().getLeafNodeCount();
+    	final int nrSpecies = speciesTree.getLeafNodeCount();
     	linProbs = new double[nrSpecies*nrSpecies];
     	multiplicator = new int[nrSpecies];
     	for (int i = 0; i < nrSpecies; i++){
@@ -373,8 +303,8 @@ public class GeneTreeWithMigration extends Distribution {
 		
     	if (coalLines.get(0) == null) {
     		// TODO throw exception
-			System.err.println("daughter nodes not found");
-			System.exit(0);
+			System.err.println("daughter nodes not found, possible multifurcations in the starting tree");
+			throw new IllegalArgumentException();
 		}
     	
     	//  get the indices of the daughter lineages
@@ -397,9 +327,8 @@ public class GeneTreeWithMigration extends Distribution {
 		 * supposed to happen
 		 */		
         for (int k = 0; k < states; k++) { 
-        	// calculate the coalscent rate. The 2 originates from lineage i coalescing with lineage j
-       		// AND vice versa.
-			final double pairCoalRate = coalescentRates[k] * 2 *
+        	// calculate the coalscent rate. 
+        	final double pairCoalRate = coalescentRates[k] *
 					(linProbs[sampleState.get(daughterIndex1)*states + k] * linProbs[sampleState.get(daughterIndex2)*states + k]);	
 			
 			if (!Double.isNaN(pairCoalRate)){
@@ -534,8 +463,10 @@ public class GeneTreeWithMigration extends Distribution {
 					multiplicator, logP + Math.log(sumProb) + intervalProbability, speciesInterval,
 					activeLineages, sampleState);
 		
-		
-    	return Math.log(sumProb) + intervalProbability;
+		if (sumProb==0)
+			return Double.NEGATIVE_INFINITY;
+		else
+			return Math.log(sumProb) + intervalProbability;
     }   
      
     private void updateRatesList(int speciesInterval){
