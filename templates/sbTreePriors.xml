@@ -106,7 +106,7 @@
 <![CDATA[
 			<distribution id="BirthDeathModel.t:$(n)" spec="beast.evolution.speciation.BirthDeathGernhard08Model" tree="@Tree.t:$(n)">
 				<birthDiffRate spec="parameter.RealParameter" id="netDiversificationRate.t:$(n)" value="1.0" lower="0.0" upper="10000.0" estimate="true" />
-				<relativeDeathRate spec="parameter.RealParameter" id="ExtinctionFraction.t:$(n)" value="0.0" lower="0.0" upper="1.0" estimate="true" />
+				<relativeDeathRate spec="parameter.RealParameter" id="ExtinctionFraction.t:$(n)" value="0.5" lower="0.0" upper="1.0" estimate="true" />
 			</distribution>
 
 			<prior id="netDiversificationRatePrior.t:$(n)" x="@netDiversificationRate.t:$(n)">
