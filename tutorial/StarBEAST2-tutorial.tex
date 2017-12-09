@@ -170,7 +170,7 @@ In this section we will reconstruct the species tree of \textit{Canis} using Sta
 
 First up, create a new folder somewhere with a sensible name like
 ``CanisPhylogeny''. Relaunch BEAUti and load up the strict clock
-template by selecting StarBeast2 from the Templates submenu of the File menu
+template by selecting ``StarBeast2'' from the Templates submenu of the File menu
 (Figure~\ref{fig:strictClockTemplate}). Now we will import multiple sequence
 alignments of the 16 nuclear loci sequenced by \cite{LindbladToh2005}. Select
 Import Alignments from the File menu, and navigate to the ``data'' subfolder
@@ -301,7 +301,7 @@ rate relative to transversions \citep{Hasegawa1985}.
 
 Now to change the site model for all loci to HKY with empirical base frequencies,
 select all of the partitions in the left hand column with the shift key. Then
-click ``Clone'' to apply the same site model used for the first locus
+click ``OK'' to apply the same site model used for the first locus
 to everything else (Figure~\ref{fig:cloneSiteModel}).
 
 \begin{figure}[htb!]
@@ -322,8 +322,8 @@ more computer time.
 
 \clearpage
 
-\subsection{Clock Model and Priors}
-\label{subsec:clockModelAndPriors}
+\subsection{Clock Model}
+\label{subsec:clockModel}
 
 \cite{Hugall2007} estimated that the molecular
 clock rate for the RAG-1 nuclear coding gene in mammals is approximately
@@ -342,12 +342,12 @@ notation shorthand, 1e-3, which is equivalent to 0.001.
 \label{fig:strictClockModel}
 \end{figure}
 
-Open the Priors panel and change ``Yule Model'' to ``Birth Death Model''.
-These models are identical, except the Birth-Death model allows for a
-non-zero rate of extinction.
-
-\subsection{MCMC}
+\subsection{Priors and MCMC}
 \label{subsec:MCMC}
+
+Open the Priors panel and change ``Yule Model'' to ``Birth Death Model''.
+These models are identical, except the birth-death model allows for a
+non-zero rate of extinction.
 
 StarBEAST2 is an MCMC method. These kind of methods do better at estimating
 the posterior distributions (of trees or other parameters) the longer they
@@ -360,7 +360,7 @@ need a bit more for good estimates; change the chain length to 40 million
 \centering
 \includegraphics[width=0.8\textwidth]{figures/chainLength.png}
 \caption
-{Using an \textit{a priori} clock rate for calibration}
+{Setting a longer MCMC chain length}
 \label{fig:chainLength}
 \end{figure}
 
@@ -549,7 +549,7 @@ years ago, more recent than the split between humans and chimpanzees \citep{Prad
 Summary trees are a way of reducing a posterior distribution of tree
 topologies and times to a single tree. This is often more readable than the
 cloud of trees that DensiTree displays, but researchers should be cautious not
-to give it too much emphasis, because for most clades and data
+to give it too much emphasis because for most clades and data
 sets there is substantial uncertainty in the posterior distribution of
 topologies and times.
 
@@ -569,7 +569,8 @@ like ``summary.tree'' and click Run to generate the summary tree
 
 Now start FigTree and open the summary tree file. Enable Branch Labels,
 and expand the Branch Labels panel. Choose ``dmv1\_95\%\_HPD'', and set
-the number of significant digits to 2. Now the 95\% credible intervals of
+the number of significant digits to 2. Now the 95\% highest posterior
+density (HPD) intervals of
 effective population sizes will be displayed on each branch
 (Figure~\ref{fig:figtree}).
 
@@ -594,7 +595,7 @@ generation time. So if the scaled effective population size is 1, that
 will correspond to 200,000 individuals.
 
 The effective population sizes inferred in this tutorial appear to have
-roughly an order of magnitude of uncertainty, and more precise estimates require
+roughly an order of magnitude of uncertainty, and more precise estimates would require
 a more informative data set. This could be achieved by sampling more
 individuals or more loci.
 
@@ -650,7 +651,7 @@ previously for this analysis, and give it a sensible name like ``CanisUCLN.xml''
 Run the MCMC chain by opening the XML file in BEAST, or running it from
 the command line as in subsection~\ref{subsec:runningBEAST}. This will
 take about twice as long (20 to 30 minutes) as the fixed clock analysis,
-because relaxed clocks are much more computationally intensive.
+because relaxed clocks are more computationally intensive.
 
 After BEAST has finished, open the ``starbeast.log'' file in Tracer to
 check that the important statistics have ESS values of at least 200.
@@ -669,7 +670,7 @@ the species tree. The default prior for this parameter in StarBEAST2 is a
 log-normal distribution with a mean of 1, but the posterior distribution of this
 parameter has a mean of about 0.2. This means that the data is pulling this
 parameter lower, probably because there is very little variation in clock
-rates between species. Indeed the peak of the posterior distribution is about
+rates between species. Indeed the mode of the posterior distribution is about
 zero, suggesting that a strict clock may be more appropriate
 (Figure~\ref{fig:tracerUCLN}).
 
@@ -678,7 +679,7 @@ Annotator, as in subsection~\ref{subsec:makeSummaryTree}
 (Figure~\ref{fig:treeAnnotator}). Again give it a sensible name like
 ``summary.tree''. Open up the summary tree file in FigTree. Enable Branch Labels,
 and expand the Branch Labels panel. Choose ``rate\_95\%\_HPD'', and set
-the number of significant digits to 2. Now the 95\% credible intervals of
+the number of significant digits to 2. Now the 95\% HPD intervals of
 relative clock rates will be displayed on each branch
 (Figure~\ref{fig:figtreeUCLN}).
 
@@ -690,7 +691,7 @@ relative clock rates will be displayed on each branch
 \label{fig:figtreeUCLN}
 \end{figure}
 
-All of the species tree branches have clock rate credible intervals
+All of the species tree branches have clock rate HPD intervals
 that include 1, further suggesting that a strict clock may be more
 appropriate for this clade. These rates are obviously relative, and
 to get absolute rates in substitutions per site per million years,
@@ -699,7 +700,208 @@ they must be scaled by the \textit{a priori} clock rate of 0.001.
 \section{Total evidence tip-dating}
 \label{sec:FBD}
 
-Coming soon
+The latest version of StarBEAST2 (v14) includes the ability to combine
+tip-dating using the fossilized birth death (FBD) process with multispecies
+coalescent (MSC) inference of species and gene trees. We call this
+integrative model ``FBD-MSC''.
+
+Create a new folder for this analysis with a sensible name, something like
+``CanisFBD''. Then repeat section~\ref{sec:speciesTree} from
+subsection~\ref{subsec:importingAlignments} to and including
+\ref{subsec:speciesNames}. Leave the population model set at the default
+(Analytical Population Size Integration) to save time, then set all site
+models to HKY with empirical frequencies as in
+subsection~\ref{subsec:siteModel}.
+
+Now go back to the Partitions tab, and from the File menu select
+``Add Morphology to Species Tree'' (Figure~\ref{fig:addMorphology}).
+It doesn't actually matter too much when the morphological data is added
+in BEAUti, but it must be \textbf{after} configuring the species names.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/addMorphology.png}
+\caption
+{The option to add morphological data to the species tree}
+\label{fig:addMorphology}
+\end{figure}
+
+Navigate to the data folder of the tutorial and import the
+``morphology\_canis.nex'' file. This file contains recorded states for 50
+morphological characters of \textit{Canis} species and some related species,
+taken from \cite{Slater2015}.
+
+Select Yes to condition on recording variable characters only (Mkv). Mkv is
+used when only characters that vary between species have been included in the
+character matrix, as is the case for this tutorial's data set. You
+should now see four morphology partitions
+(Figure~\ref{fig:morphologyPartitions}), one for each number of character
+states. For example, morphology\_canis2 is for binary characters.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/morphologyPartitions.png}
+\caption
+{After morphological data has been added to the species tree}
+\label{fig:morphologyPartitions}
+\end{figure}
+
+\clearpage
+
+Open the Tip Dates panel and enable ``Use tip dates''. Change
+``Since some time in the past'' to ``before the present''. Click
+on Auto-configure and select ``read from file''. Select the
+``tip\_dates\_canis.txt'' file in the data folder of the tutorial.
+Click OK, and your tip dates should look like Figure~\ref{fig:tipDates}.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/tipDates.png}
+\caption
+{Configured tip dates}
+\label{fig:tipDates}
+\end{figure}
+
+Go to the Clock Model panel, and enable ``estimate'' for the
+molecular clock (by default called APOBS1 after the first locus, although
+this can be changed in the Partitions tab). Then select the morphological
+data partition and enable ``estimate'' so that the morphological
+clock rate will also be estimated (Figure~\ref{fig:estimateMorphClock}).
+Make sure you have enabled ``estimate'' for \textbf{both} clocks, since we
+are using fossil data to calibrate our tree.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/estimateMorphClock.png}
+\caption
+{Estimating the clock rates}
+\label{fig:estimateMorphClock}
+\end{figure}
+
+Next, open the Priors panel and change the Tree prior from Yule to
+``FBDModel''. Scroll down to the strictClockRate.c:APOBS1 parameter,
+and expand that prior. Change the mean to 0.001, the \textit{a priori}
+molecular clock rate estimate from section~\ref{sec:speciesTree}. Leave
+the standard deviation set at 1, a moderately informative prior that will
+still allow the rate to be informed by the fossil data. Then
+change the prior distribution for the strictClockRate.c:morphology\_canis
+prior to 1/X (Figure~\ref{fig:clockPriors}). This is an improper,
+uninformative prior so the inferred morphological clock rate will be
+estimated solely from the data.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/clockPriors.png}
+\caption
+{Configuring the clock prior distributions}
+\label{fig:clockPriors}
+\end{figure}
+
+The FBD-MSC model is quite complex and requires very long chains for
+reliable sampling. Open the MCMC tab and change the chain length to 200
+million. We will need to reduce the sampling rate so that the output files remain
+managably small, so change the Store Every value to 50,000. Expand the
+tracelog, speciesTreeLogger, screenlog and every gene tree log, and set the
+Log Every value to 50,000 for each of them. This will limit the number of
+samples to 4,000 in each log file (Figure~\ref{fig:fbdChainLength}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/fbdChainLength.png}
+\caption
+{Setting a very long chain length}
+\label{fig:fbdChainLength}
+\end{figure}
+
+Save the XML file in the folder you created for this analysis, and name it
+something like ``CanisFBD.xml''. Run the MCMC chain by opening the XML file in
+BEAST, or running it from the command line as in
+subsection~\ref{subsec:runningBEAST}. The chain will take about 2 hours to
+finish, depending on the speed of your computer.
+
+After BEAST has finished, open the ``starbeast.log'' file in Tracer to check
+on the ESS values. Select the strictClockRate.c:APOBS1 parameter
+(Figure~\ref{fig:strictClockRate}). The 95\% HPD interval for this parameter
+spans approximately 0.0004 to 0.0013 substitutions per site per million years,
+in agreement with the \textit{a priori} rate of 0.001.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/strictClockRate.png}
+\caption
+{The posterior estimate of the molecular clock rate}
+\label{fig:strictClockRate}
+\end{figure}
+
+Start the DensiTree app again, and then open the ``species.trees'' file. Under
+the Show panel, enable the Root Canal tree to get an idea of the most
+plausible species tree. Then open the Grid panel, and enable the full grid.
+Compared with the fixed clock analysis (Figure~\ref{fig:densitree}), the
+divergence time between \textit{Canis lupus} and \textit{Canis latrans} is a
+little older, and the age of the MRCA of extant species is a little younger
+(Figure~\ref{fig:densitreeSA}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/densitreeSA.png}
+\caption
+{Cloud of FBD-MSC species trees}
+\label{fig:densitreeSA}
+\end{figure}
+
+\clearpage
+
+Open the Tree Annotator app included with BEAST2, and set the burnin
+percentage to 10. Trees inferred by the FBD-MSC model as implemented in
+StarBEAST2 can include sampled ancestors \citep{Gavryushkina2014}, which are
+incompatible with Common Ancestor heights \citep{Heled2013} as implemented in
+Tree Annotator. So in order to generate a summary tree, change ``Node heights'' to
+``Mean heights'' (Figure~\ref{fig:treeAnnotatorMeanHeights}). Choose the
+``species.trees'' file as the input file, and specify the output file to be
+something sensible like ``summary.tree'', then click Run.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.5\textwidth]{figures/treeAnnotatorMeanHeights.png}
+\caption
+{Running Tree Annotator for sampled ancestor trees}
+\label{fig:treeAnnotatorMeanHeights}
+\end{figure}
+
+Now start FigTree and open the summary tree file. Enable Node Labels,
+and expand the Node Labels panel. Choose ``posterior'', and set
+the number of significant digits to 2. Now the posterior support
+for each clade will be displayed next to each node
+(Figure~\ref{fig:figtreeFBD}).
+
+\clearpage
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/figtreeFBD.png}
+\caption
+{Showing posterior support for clades in FigTree}
+\label{fig:figtreeFBD}
+\end{figure}
+
+The tree topology is similar to the fixed clock analysis
+(Figure~\ref{fig:figtree}), except that \textit{Cuon alpinus} and
+\textit{Lycaon pictus} are now a clade with 100\% support. A disagreement
+between molecular data which contradicts this clade and morphological
+data which does has been reported previously \citep{Zrzavy2004}. This shows
+how morphological characters and fossil data can influence species tree
+estimates.
+
+\clearpage
+
+\section{Wrapping up}
+
+That concludes the tutorial. One final note; when runnning any MCMC method, it
+is possible than the chain has gotten stuck in a region of parameter space
+with high local probability. So for any kind of analysis intended for
+publication, it is a good idea to run at least two MCMC chains. Open both
+chains in Tracer, and check that the traces for the logged statistics and
+parameters have the same distributions. Happy trails!
 
 \bibliographystyle{natbib}
 \bibliography{StarBEAST2-tutorial}
