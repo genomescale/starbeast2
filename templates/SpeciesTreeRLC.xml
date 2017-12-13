@@ -135,7 +135,7 @@
 		<alignmentProvider id="Import Alignment" spec="StarBeastAlignmentProvider" template="@StarBEASTPartitionTemplate"/>
 
 
-		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.evolution.likelihood.ThreadedTreeLikelihood" mainid="mcmc">
+		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.evolution.likelihood.TreeLikelihood" mainid="mcmc">
 <![CDATA[
 			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:$(n)"/>
 
@@ -149,7 +149,7 @@
 				<shape spec="parameter.RealParameter" id="gammaShape.s:$(n)" value="1.0" estimate="false"/>
 			</plugin>
 
-			<plugin spec="ThreadedTreeLikelihood" id="treeLikelihood.$(n)">
+			<plugin spec="TreeLikelihood" id="treeLikelihood.$(n)">
 				<data idref="data"/>
 				<tree idref="Tree.t:$(n)"/>
 				<siteModel idref="SiteModel.s:$(n)"/>
@@ -408,7 +408,7 @@
 				</prior>
 				<mergepoint id="aux-priors"/>
 			</distribution>
-			<distribution spec="CompoundDistribution" id="likelihood" useThreads="true"> 
+			<distribution spec="CompoundDistribution" id="likelihood">
 				<mergepoint id="aux-likelihoods"/>
 			</distribution>
 		</distribution>
