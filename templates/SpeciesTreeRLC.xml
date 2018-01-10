@@ -375,7 +375,7 @@
 			<stateNode idref="popShape.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
 			<stateNode id="branchRates.Species" dimension="10" lower="0.0" value="1.0" estimate="true" spec="parameter.RealParameter"/>
-			<stateNode id="indicators.Species" dimension="10" value="true" estimate="true" spec="parameter.BooleanParameter"/>
+			<stateNode id="indicators.Species" dimension="10" value="false" estimate="true" spec="parameter.BooleanParameter"/>
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">

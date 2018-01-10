@@ -144,7 +144,7 @@
 			<branchRateModel id="GeneTreeRLC.c:$(n)" spec="starbeast2.RandomLocalRates" tree="@Tree.t:$(n)">
 				<clock.rate id="rlcClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				<rates dimension="10" value="1.0" estimate="true" id="rlcBranchRates.c:$(n)" spec="parameter.RealParameter"/>
-				<indicators dimension="10" value="true" estimate="true" id="indicators.c:$(n)" spec="parameter.BooleanParameter"/>
+				<indicators dimension="10" value="false" estimate="true" id="indicators.c:$(n)" spec="parameter.BooleanParameter"/>
 			</branchRateModel>
 
 			<operator id="rlcClockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@rlcClockRate.c:$(n)"/>
