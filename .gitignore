@@ -1,3 +1,6 @@
+.classpath
+.project
+.DS_Store
 /.idea
 /out
 /starbeast2.iml
@@ -6,3 +9,5 @@
 /examples/validation/**/*.report
 /examples/validation/**/*.trees
 /examples/validation/**/*.state
+/bin/
+/examples/*.*

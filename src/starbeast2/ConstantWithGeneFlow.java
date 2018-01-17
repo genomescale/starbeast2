@@ -308,8 +308,15 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     //slow to return migration rates
 	public double getMigrationRates(int currentInterval, int state1, int state2) {
 		int interval = currentInterval-getNumberOfSpecies();
-		double migration = migModel.getMigration(stateToNodeMap.get(interval).get(state1) , stateToNodeMap.get(interval).get(state2));
+		double Nesink = NeInput.get().getArrayValue(
+    			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state1));
+		double Nesource = NeInput.get().getArrayValue(
+    			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state2));
 		
+		double migration = migModel.getMigration(stateToNodeMap.get(interval).get(state1) , stateToNodeMap.get(interval).get(state2));
+		migration *= Nesource;
+		migration /= Nesink;
+				
 		for (int i = 0; i < migrationMap.size(); i++){
 			if (migrationMap.get(i)[0]==stateToNodeMap.get(interval).get(state1) 
 					&& migrationMap.get(i)[1]==stateToNodeMap.get(interval).get(state2)){

@@ -16,7 +16,7 @@
  */
 package starbeast2;
 
-import starbeast2.Euler2ndOrder;
+import beast.mascot.ode.Euler2ndOrder;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
@@ -45,8 +45,11 @@ public class GeneTreeWithMigration extends Distribution {
 	
     SpeciesTreeInterface speciesTree;
 	
+    private boolean hasIndicators;
+    
 	private double[] coalescentRates;
 	private double[][] migrationRates;
+	private int[][] indicators;
 	private double[] linProbs;
 	private int[] multiplicator;
 	private int[] mostLikelyState;
@@ -179,8 +182,11 @@ public class GeneTreeWithMigration extends Distribution {
 		        	double[] linProbs_tmpdt = new double[linProbs.length+1]; 
 		        	double[] linProbs_tmpddt = new double[linProbs.length+1]; 
 		        	double[] linProbs_tmpdddt = new double[linProbs.length+1]; 
-	        		
-	                Euler2ndOrder euler = new Euler2ndOrder(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+		        	Euler2ndOrder euler;
+		        	if (hasIndicators)
+		        		euler = new Euler2ndOrder(multiplicator, migrationRates, indicators, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+		        	else
+		        		euler = new Euler2ndOrder(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
 	                
 	                
 		        	for (int i = 0; i < linProbs.length; i++) linProbs_tmp[i] = linProbs[i];		        	
@@ -294,9 +300,6 @@ public class GeneTreeWithMigration extends Distribution {
     
     // seems to work:
     private double coalesce(int currTreeInterval, int speciesInterval) {
-    	// the probability that no coalescent event was observed in the last interval
-    	double intervalProbability = normalizeLineages();    	
-    	
     	// Get the daughter lineages
 		List<Node> coalLines = lineagesRemoved[currTreeInterval];
 		List<Node> parentLineage = lineagesAdded[currTreeInterval];
@@ -328,7 +331,7 @@ public class GeneTreeWithMigration extends Distribution {
 		 */		
         for (int k = 0; k < states; k++) { 
         	// calculate the coalscent rate. 
-        	final double pairCoalRate = coalescentRates[k] *
+        	Double pairCoalRate = coalescentRates[k] *
 					(linProbs[sampleState.get(daughterIndex1)*states + k] * linProbs[sampleState.get(daughterIndex2)*states + k]);	
 			
 			if (!Double.isNaN(pairCoalRate)){
@@ -458,33 +461,51 @@ public class GeneTreeWithMigration extends Distribution {
 		linProbs = newLinProbs;
 		multiplicator = newMultiplicator;		
 		
-		// store the node
-		storeNode(currTreeInterval - nodeCount, linProbs,
-					multiplicator, logP + Math.log(sumProb) + intervalProbability, speciesInterval,
-					activeLineages, sampleState);
+//		// store the node
+//		storeNode(currTreeInterval - nodeCount, linProbs,
+//					multiplicator, logP + Math.log(sumProb) + intervalProbability, speciesInterval,
+//					activeLineages, sampleState);
 		
-		if (sumProb==0)
+		if (sumProb<=0)
 			return Double.NEGATIVE_INFINITY;
 		else
-			return Math.log(sumProb) + intervalProbability;
+			return Math.log(sumProb);
     }   
      
     private void updateRatesList(int speciesInterval){
     	// initialize coalescent and migration rates
     	coalescentRates = new double[states];
     	migrationRates = new double[states][states];
+    	
     	//TODO check ploidity
     	for (int i = 0; i < states; i++){
     		coalescentRates[i] =  
     				1/(ploidyInput.get()*popModelInput.get().getPopulationSize(speciesInterval, i));
     	}
     	
+    	ArrayList<Integer[]> indicatorList = new ArrayList<>();
     	for (int i = 0; i < states; i++){
     		for (int j = 0; j < states; j++){
-    			if (i != j)
+    			if (i != j){
     				migrationRates[i][j] = popModelInput.get().getMigrationRates(speciesInterval, i, j);
+    				if (migrationRates[i][j]>0.0){
+    					Integer[] add={i,j};
+    					indicatorList.add(add);
+    				}    					
+    			}
     		}
     	}    	
+    	if (indicatorList.size() != 0){
+    		hasIndicators = true;
+    		indicators = new int[indicatorList.size()][2];
+    		for (int i = 0; i < indicators.length; i++){
+    			indicators[i][0] = indicatorList.get(i)[0];
+    			indicators[i][1] = indicatorList.get(i)[1];
+    		}    				
+    	}else{
+    		hasIndicators = false;
+    	}    	
+    		
     }
     
     // Could work
