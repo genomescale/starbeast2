@@ -46,6 +46,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{beramono}
+\usepackage{tcolorbox}
 
 \setlength{\parskip}{1em}
 \renewcommand{\baselinestretch}{2.0}
@@ -215,7 +216,13 @@ when setting up a StarBEAST2 analysis.
 \label{fig:linkModels}
 \end{figure}
 
-\clearpage
+\begin{tcolorbox}[colback=green!5,colframe=green!40!black,title=Mixing nuclear and mitochondrial loci]
+StarBEAST2 can be used with a combination of mitochondrial and nuclear loci, but this requires careful thought when specifying the model. One possibility is to link the nuclear loci as above, but not to link the mitochondrial loci. Then when editing the site models, untick ``estimate'' for the substitution rate of each mitochondrial locus. Now separate clock rates will be used for each mitochondrial locus, in addition to the overall clock rate which applies to nuclear loci.
+
+If the species tree is calibrated using an \textit{a priori} nuclear or mitochondrial molecular clock rate, you can set that rate in the Clock Model panel. If the mitochondrial rate is fixed, the nuclear rate should probably be estimated and \textit{vice versa}. If the species tree is calibrated using node or tip dating, then all clock rates should probably be estimated.
+
+Make sure appropriate priors are used for all estimated clock rates. This could be a $1/X$ prior for rates where you genuinely have no prior knowledge. However in most circumstances you will have a general idea of the clock rate, e.g. within an order of magnitude. In that case, you can set a broad prior with a mean based on your prior knowledge. This could be a Log Normal or Gamma distribution with a large standard deviation (up to about 2) or a small $\alpha$ (set ``alpha'' to 1 or 2) shape respectively.
+\end{tcolorbox}
 
 \subsection{Specifying species names}
 \label{subsec:speciesNames}
