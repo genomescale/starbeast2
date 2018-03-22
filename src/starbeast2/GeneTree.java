@@ -260,7 +260,7 @@ public class GeneTree extends Distribution {
 	            final int firstCoalescenceNumber = firstCoalescenceNode.getNr();
 	            final double lastHeight = 0.0;
 	
-	            if (!recurseCoalescenceEvents(geneTreeLeafNumber, lastHeight, 
+	            if (!collateCoalescenceEvents(geneTreeLeafNumber, lastHeight,
 	            		firstCoalescenceNode, firstCoalescenceNumber, 
 	            		speciesTreeLeafNode, speciesTreeLeafNumber)) {
 	                // this gene tree IS NOT compatible with the species tree
@@ -330,7 +330,7 @@ public class GeneTree extends Distribution {
 	}
 
     // non-recursive version of recurseCoalescenceEvents
-    private boolean recurseCoalescenceEvents(int lastGeneTreeNodeNumber, double lastHeight, Node geneTreeNode, int geneTreeNodeNumber, Node speciesTreeNode, int speciesTreeNodeNumber) {
+    private boolean collateCoalescenceEvents(int lastGeneTreeNodeNumber, double lastHeight, Node geneTreeNode, int geneTreeNodeNumber, Node speciesTreeNode, int speciesTreeNodeNumber) {
         while (true) {
             final double geneTreeNodeHeight = geneTreeNode.getHeight();
 
@@ -369,7 +369,7 @@ public class GeneTree extends Distribution {
                     lastHeight = geneTreeNodeHeight;
                     geneTreeNode = nextGeneTreeNode;
                     geneTreeNodeNumber = nextGeneTreeNode.getNr();
-                    //return recurseCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
+                    //return collateCoalescenceEvents(geneTreeNodeNumber, geneTreeNodeHeight, nextGeneTreeNode, nextGeneTreeNodeNumber, speciesTreeNode, speciesTreeNodeNumber);
                 }
             } else if (existingSpeciesAssignment == speciesTreeNodeNumber) {
                 return true; // gene tree OK up to here, but stop evaluating because deeper nodes have already been traversed

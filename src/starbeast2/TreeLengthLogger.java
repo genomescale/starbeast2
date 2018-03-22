@@ -30,7 +30,7 @@ public class TreeLengthLogger extends CalculationNode implements Loggable, Funct
     }
 
     @Override
-    public void log(int sample, PrintStream out) {
+    public void log(long sample, PrintStream out) {
         final double treeLength = TreeStats.getLength(treeInput.get());
         out.print(treeLength + "\t");
     }

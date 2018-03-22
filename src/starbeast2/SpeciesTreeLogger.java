@@ -64,7 +64,7 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
     }
 
     @Override
-    public void log(int nSample, PrintStream out) {
+    public void log(long nSample, PrintStream out) {
         // make sure we get the current version of the inputs
         SpeciesTreeInterface speciesTree = speciesTreeInput.get();
         SpeciesTreeInterface tree = (SpeciesTreeInterface) speciesTree.getCurrent();
