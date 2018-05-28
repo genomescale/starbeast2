@@ -67,7 +67,7 @@ public class SpeciesTreeLoggerWithGeneFlow extends Tree implements Loggable {
     }
 
     @Override
-    public void log(int nSample, PrintStream out) {
+    public void log(long nSample, PrintStream out) {
     	// build migration rate map	
     	popModelInput.get().calculateIntervals();
     	popModelInput.get().stateToNodeMap();

@@ -33,7 +33,7 @@ import java.util.*;
  */
 // Gene tree type trait nested in species tree as taxon superset
 @Description("Calculate the probability of a tree under the structured coalescent assuming lineage independence with constant rates" +
-		" as described in Mueller et. al.,2016. The Input rates are backwards in time migration rates" +
+		" as described in Mueller et. al.,2017. The Input rates are backwards in time migration rates" +
 		" and pairwise coalescent rates translating to 1/Ne for m=1 in the Wright Fisher model")
 public class GeneTreeWithMigration extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
@@ -117,8 +117,22 @@ public class GeneTreeWithMigration extends Distribution {
 //    		coalSampleState.add(emptyList);
 //    	}
     	
+    	int MAX_SIZE = popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount() *
+    			treeInput.get().getLeafNodeCount();
+    	linProbs_tmp = new double[MAX_SIZE];
+    	linProbs_tmpdt = new double[MAX_SIZE];
+    	linProbs_tmpddt = new double[MAX_SIZE];
+    	linProbs_tmpdddt = new double[MAX_SIZE];
+
+    	
         calculateLogP();
     }
+    
+    double [] linProbs_tmp;
+    double [] linProbs_tmpdt;
+    double [] linProbs_tmpddt;
+    double [] linProbs_tmpdddt;
+
     
     public double calculateLogP() {  
 //    	System.out.println("new tree");
@@ -144,25 +158,25 @@ public class GeneTreeWithMigration extends Distribution {
    	
     	double nextGeneTime = intervals[geneInterval];
     	double nextSpeciesTime = popModelInput.get().getNextSpeciationTime(speciesInterval);  
-//    	System.out.println(nextSpeciesTime);
-//    	if (first) {	        
-	        // initialize the array that saves the most likely state of each node
-	        mostLikelyState = new int[2*nr_lineages+1];	        
-	        
-	        // initialize the coalescent and migration rates
-	        updateRatesList(speciesInterval);
-	        
-	        int linsAdded = 0;
-	        while (!isCoalescent[geneInterval]){
-	        	addLineages(geneInterval, linsAdded);
-	        	geneInterval++;
-	        	linsAdded++;
-	        }
-	        // initialize the lineage state probs array
-	        initializeP();
-	        
-			// store the node
-			nextGeneTime = intervals[geneInterval];
+        // initialize the array that saves the most likely state of each node
+        mostLikelyState = new int[2*nr_lineages+1];	        
+        
+        linProbs = new double[0];
+        
+        // initialize the coalescent and migration rates
+        updateRatesList(speciesInterval);
+        
+        int linsAdded = 0;
+        while (!isCoalescent[geneInterval]){
+        	addLineages(geneInterval, linsAdded);
+        	geneInterval++;
+        	linsAdded++;
+        }
+        // initialize the lineage state probs array
+        initializeP();
+        
+		// store the node
+		nextGeneTime = intervals[geneInterval];
 
         do {			
         	// Length of the current interval
@@ -177,33 +191,12 @@ public class GeneTreeWithMigration extends Distribution {
     				maxTolerance *=0.9;
                 	return calculateLogP();
                 }              
-                if (states>1){	        		
-		        	double[] linProbs_tmp = new double[linProbs.length+1]; 
-		        	double[] linProbs_tmpdt = new double[linProbs.length+1]; 
-		        	double[] linProbs_tmpddt = new double[linProbs.length+1]; 
-		        	double[] linProbs_tmpdddt = new double[linProbs.length+1]; 
-		        	Euler2ndOrder euler;
-		        	if (hasIndicators)
-		        		euler = new Euler2ndOrder(multiplicator, migrationRates, indicators, coalescentRates, multiplicator.length , states, 0.001, 0.2);
-		        	else
-		        		euler = new Euler2ndOrder(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
-	                
-	                
-		        	for (int i = 0; i < linProbs.length; i++) linProbs_tmp[i] = linProbs[i];		        	
-		        	
-		        	linProbs[linProbs.length-1] = 0;
-		        	euler.calculateValues(duration, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt);		        	
-	        		
-		            for (int i = 0; i < linProbs.length; i++) linProbs[i] = linProbs_tmp[i]; 
-		            	
-		            logP += linProbs_tmp[linProbs_tmp.length-1];
-		            
+                if (states>1){	    
+	        		logP += doEuler(duration);		            
                 }else{
-//                	System.out.println(coalescentRates[0]);
                 	// use analytical solution instead
                 	logP -= duration * coalescentRates[0] * activeLineages.size()*(activeLineages.size()-1)/2;	                
-                }
-                
+                }                
         	}
         	
         	if (nextSpeciesTime < nextGeneTime){
@@ -239,17 +232,38 @@ public class GeneTreeWithMigration extends Distribution {
         }while(activeLineages.size()>1);
         first = false;  
         return logP;  	
-    }    
+    }   
+    
+	private double doEuler(double nextEventTime) {
+		Euler2ndOrder euler;
+		if (hasIndicators)
+    		euler = new Euler2ndOrder(multiplicator, migrationRates, indicators, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+    	else
+    		euler = new Euler2ndOrder(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+
+		//for (int i = 0; i < linProbs.length; i++) linProbs_tmp[i] = linProbs[i];
+		System.arraycopy(linProbs,0,linProbs_tmp,0,linProbs.length);
+		linProbs_tmp[linProbs.length] = 0;
+
+		linProbs[linProbs.length-1] = 0;
+		euler.calculateValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
+
+		//for (int i = 0; i < linProbs.length; i++) linProbs[i] = linProbs_tmp[i];
+		System.arraycopy(linProbs_tmp,0,linProbs,0,linProbs.length);
+
+		return linProbs_tmp[linProbs.length];
+	}
+
    
     // works: adds all sampled genes to the active lineages and saves their initial state
     private void addLineages(int currTreeInterval, int alreadyAdded) {
 		List<Node> incomingLines = lineagesAdded[currTreeInterval];
 		if (incomingLines.size()>1){
 			System.err.println("too many lineages in sampling interval");
-		}
+		}		
 		final int geneLeafNr = incomingLines.get(0).getNr();
 		activeLineages.add(incomingLines.get(0).getNr());
-		final String geneLeafName = incomingLines.get(0).getID();
+		final String geneLeafName = incomingLines.get(0).getID();		
 		//String sampledSpecies = typeTraitInput.get().getStringValue(geneLeafName);
 		final Map<String, Integer> tipNumberMap = speciesTree.getTipNumberMap();
 		final int sampledSpeciesNr = tipNumberMap.get(geneLeafName);
