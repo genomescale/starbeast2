@@ -12,6 +12,14 @@
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 			</prior>
 
+			<operator id="SubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
+			<operator id="WilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="Wide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="Narrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="UniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="TreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
+			<operator id="TreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
+
 			<operator id="speciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@speciationRate.t:$(n)"/>
 ]]>
 
@@ -28,6 +36,14 @@
 			<connect srcID="speciationRateScale.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(speciationRate.t:$(n)) and speciationRate.t:$(n)/estimate=true">
 				Scale the birth (a.k.a. speciation) rate of the species tree
 			</connect>
+
+			<connect srcID="SubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="WilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="Wide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="Narrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="UniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="TreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="TreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
 			<connect srcID="YuleModel.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(YuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="speciationRate.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(YuleModel.t:$(n)) and inposterior(speciationRate.t:$(n)) and speciationRate.t:$(n)/estimate=true"/>
@@ -46,6 +62,14 @@
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 			</prior>
 
+			<operator id="cySubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
+			<operator id="cyWilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="cyWide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="cyNarrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="cyUniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="cyTreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
+			<operator id="cyTreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
+
 			<operator id="cySpeciationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@cySpeciationRate.t:$(n)"/>
 ]]>
 
@@ -63,6 +87,14 @@
 				Scale the birth (a.k.a. speciation) rate of the calibrated species tree
 			</connect>
 
+			<connect srcID="cySubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyWilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyWide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyNarrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyUniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyTreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="cyTreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+
 			<connect srcID="CalibratedYuleModel.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="cySpeciationRate.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(CalibratedYuleModel.t:$(n)) and inposterior(cySpeciationRate.t:$(n)) and cySpeciationRate.t:$(n)/estimate=true"/>
 
@@ -74,7 +106,7 @@
 <![CDATA[
 			<distribution id="BirthDeathModel.t:$(n)" spec="beast.evolution.speciation.BirthDeathGernhard08Model" tree="@Tree.t:$(n)">
 				<birthDiffRate spec="parameter.RealParameter" id="netDiversificationRate.t:$(n)" value="1.0" lower="0.0" upper="10000.0" estimate="true" />
-				<relativeDeathRate spec="parameter.RealParameter" id="ExtinctionFraction.t:$(n)" value="0.0" lower="0.0" upper="1.0" estimate="true" />
+				<relativeDeathRate spec="parameter.RealParameter" id="ExtinctionFraction.t:$(n)" value="0.5" lower="0.0" upper="1.0" estimate="true" />
 			</distribution>
 
 			<prior id="netDiversificationRatePrior.t:$(n)" x="@netDiversificationRate.t:$(n)">
@@ -83,6 +115,14 @@
 			<prior id="ExtinctionFractionPrior.t:$(n)" x="@ExtinctionFraction.t:$(n)">
 				 <distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
 			</prior>
+
+			<operator id="bdSubtreeSlide.t:$(n)" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:$(n)"/>
+			<operator id="bdWilsonBalding.t:$(n)" spec="WilsonBalding" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="bdWide.t:$(n)" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="bdNarrow.t:$(n)" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="bdUniformOperator.t:$(n)" spec="Uniform" weight="15.0" tree="@Tree.t:$(n)"/>
+			<operator id="bdTreeRootScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:$(n)" rootOnly="true"/>
+			<operator id="bdTreeScaler.t:$(n)" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:$(n)"/>
 
 			<operator id="netDiversificationRateScale.t:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@netDiversificationRate.t:$(n)"/>
 			<operator id="ExtinctionFractionScale.t:$(n)" parameter="@ExtinctionFraction.t:$(n)" scaleFactor="0.5" spec="ScaleOperator" weight="0.5" />
@@ -113,6 +153,14 @@
 				Sample uniformly the extinction fraction of tree t:$(n)
 			</connect>
 
+			<connect srcID="bdSubtreeSlide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdWilsonBalding.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdWide.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdNarrow.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdUniformOperator.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdTreeRootScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+			<connect srcID="bdTreeScaler.t:$(n)" targetID="mcmc" inputName="operator" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+
 			<connect srcID="BirthDeathModel.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 			<connect srcID="netDiversificationRate.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(netDiversificationRate.t:$(n)) and netDiversificationRate.t:$(n)/estimate=true"/>
 			<connect srcID="ExtinctionFraction.t:$(n)" targetID="tracelog" inputName="log" if="inposterior(BirthDeathModel.t:$(n)) and inposterior(ExtinctionFraction.t:$(n)) and ExtinctionFraction.t:$(n)/estimate=true"/>
@@ -125,7 +173,7 @@
 <![CDATA[
 			<!-- Sampled Ancestor Birth Death model-->
 			<distribution id="FBDModel.t:$(n)" spec="beast.evolution.speciation.SABirthDeathModel" tree="@Tree.t:$(n)" conditionOnRhoSampling="true">
-				<origin spec="parameter.RealParameter" id="originFBD.t:$(n)" value ="100.0" lower="0.0"/>
+				<origin spec="parameter.RealParameter" id="originFBD.t:$(n)" value ="200.0" lower="0.0"/>
 				<diversificationRate spec="parameter.RealParameter" id="diversificationRateFBD.t:$(n)" value="1.0" lower="0.0"/>
 				<turnover spec="parameter.RealParameter" id="turnoverFBD.t:$(n)" value=".5" lower="0.0" upper="1.0"/>
 				<samplingProportion spec="parameter.RealParameter" id="samplingProportionFBD.t:$(n)" value="0.5" lower="0.0" upper="1.0"/>

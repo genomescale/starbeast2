@@ -47,7 +47,7 @@ public class NodeHeightLogger extends BEASTObject implements Loggable {
     }
 
     @Override
-    public void log(int sample, PrintStream out) {
+    public void log(long sample, PrintStream out) {
         List<Node> nonSANodes = tree.getInternalNodes().stream()
                 .filter(x -> !x.isFake())
                 .sorted((n1, n2) -> {

@@ -68,7 +68,7 @@ public class TreeTopologyDistLogger extends Logger {
 
 
     @Override
-    public void log(int sample) {
+    public void log(long sample) {
         sampleNr += 1;
 
         if (sampleNr % everyInput.get() != 0)
@@ -96,7 +96,7 @@ public class TreeTopologyDistLogger extends Logger {
         public void init(PrintStream out) { }
 
         @Override
-        public void log(int sample, PrintStream out) { }
+        public void log(long sample, PrintStream out) { }
 
         @Override
         public void close(PrintStream out) { }

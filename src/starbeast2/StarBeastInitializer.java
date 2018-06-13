@@ -104,7 +104,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         } else if (calibrations.size() > 0)  {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by calibrations)).");
             randomInit(speciesTree, calibrations);
-        } else if (speciesTree.hasDateTrait())  {
+        } else if (speciesTree.hasDateTrait()) {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by tip dates).");
             randomInit(speciesTree, calibrations);
         } else if (method == Method.POINT) {
@@ -153,10 +153,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     // check if every gene tree has at least one specimen from every species
     private boolean checkSpeciesAlwaysRepresented() {
         final SpeciesTree speciesTree = speciesTreeInput.get();
+        final int nSpecies = speciesTree.getLeafNodeCount();
         final Multimap<Integer, String> numberTipMap = speciesTree.getNumberTipMap();
         for (Tree geneTree: genes.get()) {
         	final String[] taxaNames = geneTree.getTaxaNames();
-        	for (Integer speciesNr: numberTipMap.keys()) {
+        	for (int speciesNr = 0; speciesNr < nSpecies; speciesNr++) {
         		final Collection<String> speciesTaxa = numberTipMap.get(speciesNr);
         		boolean speciesRepresented = false;
         		for (String geneTaxon: taxaNames)

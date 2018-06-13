@@ -45,7 +45,7 @@
 		<subtemplate id="ConstantPopulations" class="starbeast2.ConstantPopulations" mainid="constPopModel.$(n)">
 <![CDATA[
 			<plugin id="constPopModel.$(n)" spec="starbeast2.ConstantPopulations" speciesTree="@Tree.t:Species">
-				<parameter dimension="10" name="populationSizes" id="constPopSizes.$(n)" lower="0.0" value="1.0" estimate="true"/>
+				<parameter dimension="10" name="populationSizes" id="constPopSizes.$(n)" lower="0.0" value="1.0" upper="2.0" estimate="true"/>
 			</plugin>
 
 			<distribution id="constPopSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@constPopSizes.$(n)">
@@ -96,8 +96,8 @@
 		<subtemplate id="LinearWithConstantRootPopulations" class="starbeast2.LinearWithConstantRoot" mainid="lwcrPopModel.$(n)">
 <![CDATA[
 			<plugin id="lwcrPopModel.$(n)" spec="starbeast2.LinearWithConstantRoot" speciesTree="@Tree.t:Species">
-				<parameter dimension="10" name="tipPopulationSizes" id="tipPopSizes.$(n)" lower="0.0" value="1.0" estimate="true"/>
-				<parameter dimension="10" name="topPopulationSizes" id="topPopSizes.$(n)" lower="0.0" value="1.0" estimate="true"/>
+				<parameter dimension="10" name="tipPopulationSizes" id="tipPopSizes.$(n)" lower="0.0" value="1.0" upper="2.0" estimate="true"/>
+				<parameter dimension="10" name="topPopulationSizes" id="topPopSizes.$(n)" lower="0.0" value="1.0" upper="1.0" estimate="true"/>
 			</plugin>
 
 			<distribution id="tipPopSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@tipPopSizes.$(n)">
