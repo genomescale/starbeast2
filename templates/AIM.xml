@@ -90,20 +90,18 @@
 			beast.evolution.speciation.YuleModel.tree,
 			beast.core.Logger.model,
 			starbeast2.GeneTreeWithMigration.tree,
-			starbeast2.GeneTreeWithMigration.speciesTree,
 			starbeast2.GeneTreeWithMigration.populationModel,
 			starbeast2.UncorrelatedRates.rates,
 			starbeast2.UncorrelatedRates.noCache,
 			starbeast2.RandomLocalRates.rates,
 			starbeast2.RandomLocalRates.noCache,
-			starbeast2.ConstantPopulations.speciesTree,
-			starbeast2.LinearWithConstantRoot.speciesTree"
+			starbeast2.ConstantWithGeneFlow.migrationModel"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>
 		<mergepoint id="aux-partitions-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
+		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='coordinatedUniform.t:Species']/speciesTree/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
 		<panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
 		<!-- <mergepoint id="aux-tipdates-panels"/> -->
@@ -135,7 +133,7 @@
 
 		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.evolution.likelihood.TreeLikelihood" mainid="mcmc">
 <![CDATA[
-			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTreeWithMigration" populationModel="@popModelAIM.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:$(n)"/>
+			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTreeWithMigration" populationModel="@popModelAIM.Species" tree="@Tree.t:$(n)"/>
 
 			<stateNode id="strictClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 
@@ -237,7 +235,6 @@
 			<connect srcID="GammaShapePrior.s:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(gammaShape.s:$(n)) and gammaShape.s:$(n)/estimate=true"/>
 			<connect srcID="PropInvariantPrior.s:$(n)" targetID="prior" inputName="distribution" if="inlikelihood(proportionInvariant.s:$(n)) and proportionInvariant.s:$(n)/estimate=true"/>
 
-			<connect srcID="geneTree.t:$(n)" targetID="Reheight.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedUniform.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="coordinatedExponential.t:Species" inputName="geneTree" if="Tree.t:$(n)/estimate=true"/>
 			<connect srcID="Tree.t:$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(Tree.t:$(n)) and Tree.t:$(n)/estimate=true"/>
@@ -358,10 +355,7 @@
 		</state>
 
 		<distribution spec="CompoundDistribution" id="posterior">
-			<distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
-				<populationMean spec="parameter.RealParameter" id="popMean.Species" value="1.0" lower="0.0" estimate="true"/>
-				<populationShape spec="parameter.RealParameter" id="popShape.Species" value="3.0" lower="0.0" estimate="false"/>
-			</distribution>
+			<distribution spec="CompoundDistribution" id="speciescoalescent"/>
 			<distribution spec="CompoundDistribution" id="prior">
 				<!-- species tree priors -->
 				<distribution id="YuleModel.t:Species" spec="beast.evolution.speciation.YuleModel" tree="@Tree.t:Species">
@@ -380,7 +374,7 @@
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
 				<distribution id="migRatePriorPrior.Species" spec="beast.math.distributions.Prior" x="@migRatePrior.Species">
-					<distr spec="beast.math.distributions.OneOnX"/>
+					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
 				</distribution>
 				<distribution id="migIndicatorSumPrior.Species" spec="beast.math.distributions.Prior">
 					<x id="migIndicatorSum.Species" spec="beast.core.util.Sum" arg="@migIndicators.Species"/>
@@ -403,9 +397,8 @@
 		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 		<operator id="migRatePriorScale.Species" parameter="@migRatePrior.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 
-		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.c:$(n)" weight="9.0"/>
+		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.Species" weight="9.0"/>
 
-		<operator id="Reheight.t:Species" spec="starbeast2.NodeReheight2" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 
@@ -440,7 +433,7 @@
 		</logger>
 
 		<logger fileName="species.trees" id="speciesTreeLogger" logEvery="5000" mode="tree">
-			<log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLoggerWithGeneFlow" speciesTree="@Tree.t:Species"/>
+			<log id="SpeciesTreeLoggerX" spec="starbeast2.SpeciesTreeLoggerWithGeneFlow" populationModel="@popModelAIM.Species"/>
 		</logger>
 
 		<logger id="screenlog" logEvery="5000">
@@ -456,7 +449,7 @@
 				<Ne id="popSizes.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				<m id="migRates.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				<indicator id="migIndicators.Species" spec="parameter.BooleanParameter" value="false" estimate="true"/>
-				<migrationModel id="migModel.Species" spec="starbeast2.MinimalBranchLength">
+				<migrationModel id="migModel.Species" spec="starbeast2.MinimalBranchLength" speciesTree="@Tree.t:Species">
 					<effectiveMigrants id="migRatePrior.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				</migrationModel>
 			</populationModel>

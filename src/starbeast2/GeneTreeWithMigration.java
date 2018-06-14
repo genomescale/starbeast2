@@ -93,15 +93,18 @@ public class GeneTreeWithMigration extends Distribution {
     }
     
     @Override
-    public void initAndValidate(){    
-        speciesTree = popModelInput.get().migrationModelInput.get().speciesTreeInput.get();
-    	popModelInput.get().calculateIntervals();
-    	// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
-    	calculateIntervals(); 
-                
-    	// initialize the maximum relative tolerance 
-    	maxTolerance = 1e-3;    	
-    	    	
+    public void initAndValidate() {
+		speciesTree = popModelInput.get().migrationModelInput.get().speciesTreeInput.get();
+		final int speciesNodeCount = speciesTree.getNodeCount();
+
+		if (speciesNodeCount != 1) {
+			popModelInput.get().calculateIntervals();
+			// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
+			calculateIntervals();
+
+			// initialize the maximum relative tolerance
+			maxTolerance = 1e-3;
+
 //    	// initialize storing arrays and ArrayLists
 //    	coalLinProbs = new double[nodeCount+1][];
 //    	coalMultiplicator = new int[nodeCount+1][];
@@ -116,16 +119,17 @@ public class GeneTreeWithMigration extends Distribution {
 //    		coalActiveLineages.add(emptyList);
 //    		coalSampleState.add(emptyList);
 //    	}
-    	
-    	int MAX_SIZE = popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount() *
-    			treeInput.get().getLeafNodeCount();
-    	linProbs_tmp = new double[MAX_SIZE];
-    	linProbs_tmpdt = new double[MAX_SIZE];
-    	linProbs_tmpddt = new double[MAX_SIZE];
-    	linProbs_tmpdddt = new double[MAX_SIZE];
 
-    	
-        calculateLogP();
+			int MAX_SIZE = popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount() *
+					treeInput.get().getLeafNodeCount();
+			linProbs_tmp = new double[MAX_SIZE];
+			linProbs_tmpdt = new double[MAX_SIZE];
+			linProbs_tmpddt = new double[MAX_SIZE];
+			linProbs_tmpdddt = new double[MAX_SIZE];
+
+
+			calculateLogP();
+		}
     }
     
     double [] linProbs_tmp;
