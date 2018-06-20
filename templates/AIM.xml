@@ -348,7 +348,7 @@
 			<stateNode idref="popSizes.Species"/>
 			<stateNode idref="migRates.Species"/>
 			<stateNode idref="migIndicators.Species"/>
-			<stateNode idref="migRatePrior.Species"/>
+			<stateNode idref="migMean.Species"/>
 			<stateNode idref="popMean.Species"/>
 			<stateNode idref="popShape.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
@@ -373,14 +373,12 @@
 				<distribution id="popMeanPrior.Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
-				<distribution id="migRatePriorPrior.Species" spec="beast.math.distributions.Prior" x="@migRatePrior.Species">
+				<distribution id="migMeanPrior.Species" spec="beast.math.distributions.Prior" x="@migMean.Species">
 					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
 				</distribution>
 				<distribution id="migIndicatorSumPrior.Species" spec="beast.math.distributions.Prior">
 					<x id="migIndicatorSum.Species" spec="beast.core.util.Sum" arg="@migIndicators.Species"/>
-					<distr spec="beast.math.distributions.Poisson">
-						<lambda spec="parameter.RealParameter" estimate="false" value="0.6931471805599453"/>
-					</distr>
+					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="8.0"/>
 				</distribution>
 				<mergepoint id="aux-priors"/>
 			</distribution>
@@ -391,13 +389,13 @@
 
 		<operator id="popSizesSwap.Species" parameter="@popSizes.Species" spec="starbeast2.RealCycle" k="2" optimise="false" weight="3.0"/>
 		<operator id="popSizesScale.Species" parameter="@popSizes.Species" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
-		<operator id="migRatesSwap.Species" parameter="@migRates.Species" spec="starbeast2.RealCycle" k="2" optimise="false" weight="3.0"/>
-		<operator id="migRatesScale.Species" parameter="@migRates.Species" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
+
+		<operator id="migRatesScale.Species" parameter="@migRates.Species" scaleFactor="0.5" spec="ScaleOperator" weight="6.0"/>
 
 		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
-		<operator id="migRatePriorScale.Species" parameter="@migRatePrior.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+		<operator id="migMeanScale.Species" parameter="@migMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
 
-		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.Species" weight="9.0"/>
+		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.Species" weight="3.0"/>
 
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
@@ -427,7 +425,7 @@
 			<log idref="speciationRate.t:Species"/>
 			<log idref="YuleModel.t:Species"/>
 			<log idref="popMean.Species"/>
-			<log idref="migRatePrior.Species"/>
+			<log idref="migMean.Species"/>
 			<log id="TreeHeight.Species" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
 			<log id="TreeLength.Species" spec="starbeast2.TreeLengthLogger" tree="@Tree.t:Species"/>
 		</logger>
@@ -449,8 +447,8 @@
 				<Ne id="popSizes.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				<m id="migRates.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				<indicator id="migIndicators.Species" spec="parameter.BooleanParameter" value="false" estimate="true"/>
-				<migrationModel id="migModel.Species" spec="starbeast2.MinimalBranchLength" speciesTree="@Tree.t:Species">
-					<effectiveMigrants id="migRatePrior.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
+				<migrationModel id="migModel.Species" spec="starbeast2.MinimalBranchLength" speciesTree="@Tree.t:Species" minimalBranchLength="0.00005">
+					<effectiveMigrants id="migMean.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				</migrationModel>
 			</populationModel>
 		</init>
