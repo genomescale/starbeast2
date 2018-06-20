@@ -350,7 +350,6 @@
 			<stateNode idref="migIndicators.Species"/>
 			<stateNode idref="migMean.Species"/>
 			<stateNode idref="popMean.Species"/>
-			<stateNode idref="popShape.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
 		</state>
 
@@ -365,20 +364,25 @@
 					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 				</distribution>
 				<distribution id="popSizesPrior.Species" spec="beast.math.distributions.Prior" x="@popSizes.Species">
-					<Gamma name="distr" mode="ShapeMean">
-						<parameter name="alpha" id="popShape.Species" lower="0.0" value="2.0" estimate="false"/>
-						<parameter name="beta" id="popMean.Species" lower="0.0" value="1.0" estimate="true"/>
-					</Gamma>
+					<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true" S="0.25">
+						<M spec="parameter.RealParameter" id="popMean.Species" value="1.0" lower="0.0" upper="2.0" estimate="true"/>
+					</distr>
 				</distribution>
 				<distribution id="popMeanPrior.Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
+				<distribution id="migRatesPrior.Species" spec="beast.math.distributions.Prior" x="@migRates.Species">
+					<distr spec="beast.math.distributions.Exponential"/>
+				</distribution>
 				<distribution id="migMeanPrior.Species" spec="beast.math.distributions.Prior" x="@migMean.Species">
-					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/>
+					<distr spec="beast.math.distributions.Exponential" mean="0.2"/>
 				</distribution>
 				<distribution id="migIndicatorSumPrior.Species" spec="beast.math.distributions.Prior">
 					<x id="migIndicatorSum.Species" spec="beast.core.util.Sum" arg="@migIndicators.Species"/>
 					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="8.0"/>
+				</distribution>
+				<distribution id="migIndicatorPrior.Species" spec="beast.math.distributions.Prior" x="@migIndicators.Species">
+					<distr spec="beast.math.distributions.Exponential" mean="0.339623"/>
 				</distribution>
 				<mergepoint id="aux-priors"/>
 			</distribution>
@@ -426,6 +430,7 @@
 			<log idref="YuleModel.t:Species"/>
 			<log idref="popMean.Species"/>
 			<log idref="migMean.Species"/>
+			<log idref="migIndicators.Species"/>
 			<log id="TreeHeight.Species" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
 			<log id="TreeLength.Species" spec="starbeast2.TreeLengthLogger" tree="@Tree.t:Species"/>
 		</logger>
