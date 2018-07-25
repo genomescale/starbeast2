@@ -41,7 +41,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     SpeciesTreeInterface speciesTree;
     private MigrationModel migModel;
     
-    private boolean needsUpdate;
+    private boolean needsUpdate = true;
     private int leafNodeCount;
     
 	public int nrSamples;
@@ -59,13 +59,22 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	
 	//  get the indices of the daughter lineages at the last coalescent event
 	private int daughterIndex1, daughterIndex2;	
+	
+	private ArrayList<Boolean[]> connected;
+	private ArrayList<Boolean[]> storedConnected;
+	
+	private ArrayList<DoubleArrayForList> migrationRates;
+	private ArrayList<IntegerArrayForList> indicators;
+	private ArrayList<DoubleArrayForList> storedMigrationRates;
+	private ArrayList<IntegerArrayForList> storedIndicators;
+	
+	
 
 	
     protected double[] intervals;
     protected double[] storedIntervals;
     protected boolean[] isCoalescent;
-    protected boolean[] intervalIsDirty;
-    private boolean lastIntervalDirty;
+    protected boolean[] storedIsCoalescent;
 
     final static NodeHeightComparator nhc = new NodeHeightComparator();
     
@@ -79,72 +88,10 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 
     @Override
     public boolean requiresRecalculation() {
-//    	System.out.println(stateToNodeMap);
-//    	for (int i = 0; i < migrationMap.size(); i++)
-//			System.out.print(Arrays.toString(migrationMap.get(i)) + "\t");
-//    		if (migrationMap.get(i)[0]==2)
-//       	System.out.print("\n");
-//    	for (int i = 0; i < migrationMap.size(); i++)
-//    		if (migrationMap.get(i)[0]==3)
-//    			System.out.print(i + "\t");
-//    	System.out.print("\n");
-//    	System.out.println(speciesTree);
         needsUpdate = true;
         return needsUpdate;
     }
     
-    
-    protected boolean checkDirty(){
-    	// check if tree is dirty
-		calculateIntervals();    			
-    	for (int i = 0; i < intervals.length; i++){
-    		if (speciesTree.getNode(i).isDirty()>0){
-    			needsUpdate = true;
-    			stateToNodeMap();
-    			return true;
-    		}
-    	}
-   	
-    	boolean isDirty = false;
-    	
-    	
-    	// set all intervals clean. This point is only reached if only migration or
-    	// Ne is changed
-    	setIntervalsClean();  	
-
-		// check what is dirty
-		for (int i = 0; i < NeInput.get().getDimension(); i++){
-			if (NeInput.get().isDirty(i)){
-				isDirty = true;
-				for (int a = 0; a < stateToNodeMap.size(); a++){
-					for (int b = 0; b < stateToNodeMap.get(a).size(); b++ )
-						if (i==stateToNodeMap.get(a).get(b))
-							setIntervalIsDirty(nrSamples+a);
-				}
-			}
-		}
-		
-		// TODO adjust for symmetric and all the same rates
-		// TODO make sure the correct interval is used
-		int diffMigCount = nrSamples*(nrSamples-1);
-		int intCount = 0;
-		int counti = 0;
-		for (int i = 0; i < mInput.get().getDimension(); i++){
-			if (counti == diffMigCount){
-				counti = 0;
-				intCount++;
-				diffMigCount = (nrSamples-intCount)*(nrSamples-intCount-1) - (nrSamples-intCount-1)*(nrSamples-intCount-2);
-			}
-			if (mInput.get().isDirty(i)){
-				isDirty = true;
-				setIntervalIsDirty(nrSamples + intCount);
-			}
-			counti++;
-		}		
-		
-		return isDirty;
-    }
-
     
 
     @Override
@@ -162,22 +109,175 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         
     	// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
         calculateIntervals();        
-        // initialize the state to node mapping
-        stateToNodeMap();     
+    }
+    
+    public void checkConnections(){
+//    	System.out.println(stateToNodeMap);
+//    	System.out.println(speciesTree);
+    	connected = new ArrayList<>();
+        // check the connectivity for 
+        ArrayList<Boolean[][]> isConnectedList = new ArrayList<>();
+        
+    	ArrayList<Integer> activeStates = new ArrayList<>();
+    	
+    	int currentInterval = 0;
+    	boolean firstCoalescent = true;
+    	Boolean[][] isConnected = new Boolean[0][0];
+    	for (int i = 0; i < intervals.length; i++){
+    		if (isCoalescent[i]){
+    			if(firstCoalescent){
+    		    	isConnected = new Boolean[activeStates.size()][activeStates.size()];
+    		    	for (int a = 0; a < activeStates.size(); a++)
+    		    		for (int b = 0; b < activeStates.size(); b++)
+    		    			isConnected[a][b] = false;
+    		    	getInitialConnectedStates(activeStates, currentInterval, isConnected);
+    		    	getConnectedStates(isConnected, activeStates);
+    				firstCoalescent = false;
+    			}
+    			// get the added and removed lineages
+    			List<Node> lins = lineagesRemoved[i];
+    			int ind1 = activeStates.indexOf(lins.get(0).getNr());
+    			int ind2 = activeStates.indexOf(lins.get(1).getNr());
+    			// get the correct order of indices
+    			int min_ind = Math.min(ind1,  ind2);
+    			int max_ind = Math.max(ind1,  ind2);
+		    	Boolean[][] new_isConnected = new Boolean[activeStates.size()-1][activeStates.size()-1];
+		    	for (int a = 0; a < activeStates.size()-1; a++)
+		    		for (int b = 0; b < activeStates.size()-1; b++)
+		    			new_isConnected[a][b] = false;
+
+		    	
+		    	// add all connections of the preexisting and the daughter species
+		    	int a_val,b_val;
+		    	for (int a = 0; a < activeStates.size(); a++){
+    				if (a<min_ind){
+    					a_val = a;
+    				}else if(a==min_ind){
+    					a_val = activeStates.size()-2;
+    				}else if(a>min_ind && a<max_ind){
+    					a_val = a-1;
+    				}else if(a==max_ind){
+    					a_val = activeStates.size()-2;   					
+    				}else{
+    					a_val = a-2;
+    				}
+		    		for (int b = 0; b < activeStates.size(); b++){
+	    				if (b<min_ind){
+	    					b_val = b;
+	    				}else if(b==min_ind){
+	    					b_val = activeStates.size()-2;
+	    				}else if(b>min_ind && b<max_ind){
+	    					b_val = b-1;
+	    				}else if(b==max_ind){
+	    					b_val = activeStates.size()-2;   					
+	    				}else{
+	    					b_val = b-2;
+	    				}
+	    				if (isConnected[a][b])
+	    					new_isConnected[a_val][b_val] = true;
+		    		}
+		    	}
+		    	// remove daughter lineages
+    			activeStates.remove(max_ind);
+    			activeStates.remove(min_ind);
+		    	
+		    	// get the parent lineage
+		    	int par_lin = lins.get(1).getParent().getNr();
+		    	// find potential connections of the parent lineage
+	    		for (int a = 0; a < activeStates.size(); a++){
+    				if (a!=par_lin){					
+    					for (int c = 0; c < migrationMap.size(); c++){
+    						if (migrationMap.get(c)[0]==activeStates.get(a)
+    								&& migrationMap.get(c)[1]==par_lin){
+    							if(indicatorInput.get().getArrayValue(c) > 0.5)
+    								new_isConnected[a][activeStates.size()] = true;
+    						}
+    					}
+    					for (int c = 0; c < migrationMap.size(); c++){
+    						if (migrationMap.get(c)[0]==par_lin
+    								&& migrationMap.get(c)[1]==activeStates.get(a)){
+    							if(indicatorInput.get().getArrayValue(c) > 0.5)
+    								new_isConnected[activeStates.size()][a] = true;
+    						}
+    					}
+
+    				}
+	    			
+	    		}
+				isConnectedList.add(new_isConnected);
+				isConnected = new_isConnected;    			    			
+    			activeStates.add(par_lin);
+    			
+//		    	System.out.println(Arrays.toString(isConnected[0]));
+//		    	System.out.println(Arrays.toString(isConnected[1]));
+
+    			
+		    	getConnectedStates(isConnected, activeStates);
+    			
+    			currentInterval++;
+
+    			
+    		}else{
+    			activeStates.add(lineagesAdded[i].get(0).getNr());
+    		}
+    	}
+    	
+//    	System.out.println("");
+//    	for (int i = 0; i < connected.size(); i++)
+//    		System.out.println(Arrays.toString(connected.get(i)));
+
+    	
+    }
+    
+    private void getInitialConnectedStates(ArrayList activeStates, int currentInterval, Boolean[][] isConnected){
+    	
+		// check migration between any two states
+		for (int a = 0; a < activeStates.size(); a++){
+			for (int b = 0; b < activeStates.size(); b++){
+				if (a!=b){					
+					for (int c = 0; c < migrationMap.size(); c++){
+						if (migrationMap.get(c)[0]==activeStates.get(a)
+								&& migrationMap.get(c)[1]==activeStates.get(b)){
+							if(indicatorInput.get().getArrayValue(c) > 0.5){
+								isConnected[a][b] = true;
+							}
+						}
+					}
+				}
+			}
+		}
     }
     
     
+    private void getConnectedStates(Boolean[][] isConnected, ArrayList<Integer> activeStates){
+    	Boolean[] con = new Boolean[speciesTree.getNodeCount()];
+    	for (int a = 0; a < con.length; a++)
+    		con[a] = false;
+    	for (int a = 0; a < isConnected.length; a++){
+    		for (int b = 0; b < isConnected.length; b++){
+    			if (a!=b){
+	    			if (isConnected[a][b]){
+	    				con[activeStates.get(a)] = true;
+	    				con[activeStates.get(b)] = true;
+	    			}
+    			}
+    		}
+    	}
+    	connected.add(con);
+    	
+    }
+    
     @SuppressWarnings({ "unchecked", "deprecation" })
-    public void calculateIntervals() {
+    private void calculateIntervals() {
     	Node[] speciesNodesTmp = speciesTree.getNodesAsArray();
     	Node[] speciesNodes = new Node[speciesNodesTmp.length];
-    	System.arraycopy(speciesNodesTmp, 0, speciesNodes, 0, speciesNodesTmp.length);
+    	// make a deep copy of every node
+    	for (int i = 0; i < speciesNodesTmp.length; i++)
+    		speciesNodes[i] = speciesNodesTmp[i].copy();
 
     	
     	Arrays.sort(speciesNodes, nhc);
     	
-    	
- 	
         intervals = new double[speciesNodes.length];
         isCoalescent = new boolean[speciesNodes.length];
         lineagesAdded = new List[speciesNodes.length];
@@ -186,17 +286,22 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         ArrayList<Node> initAL = new ArrayList<>(); 
         intervals[0] = speciesNodes[0].getHeight();
         lineagesAdded[0] = new ArrayList<>(); 
-		lineagesAdded[0].add(speciesNodes[0]);
+		lineagesAdded[0].add(speciesNodes[0].copy());
 		isCoalescent[0] = false;
-    	for (int i = 1; i < speciesNodes.length; i++){
+		lineagesRemoved[0] = new ArrayList<>(); 
+		lineagesRemoved[0].add(null);
+		lineagesRemoved[0].add(null);    		  			
+		for (int i = 1; i < speciesNodes.length; i++){
     		intervals[i] = speciesNodes[i].getHeight()-speciesNodes[i-1].getHeight();
             lineagesAdded[i] = new ArrayList<>(); 
-    		lineagesAdded[i].add(speciesNodes[i]);
+    		lineagesAdded[i].add(speciesNodes[i].copy());
     		if (!speciesNodes[i].isLeaf()){
     			isCoalescent[i] = true;
     			lineagesRemoved[i] = new ArrayList<>(); 
-	    		lineagesRemoved[i].add(speciesNodes[i].getLeft());
-	    		lineagesRemoved[i].add(speciesNodes[i].getRight());  
+	    		lineagesRemoved[i].add(speciesNodes[i].getLeft().copy());
+	    		lineagesRemoved[i].add(speciesNodes[i].getRight().copy()); 
+	    		lineagesRemoved[i].get(0).setParent(lineagesAdded[i].get(0));
+	    		lineagesRemoved[i].get(1).setParent(lineagesAdded[i].get(0));
     		}else{
     			isCoalescent[i] = false;
     			lineagesRemoved[i] = new ArrayList<>(); 
@@ -204,11 +309,19 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	    		lineagesRemoved[i].add(null);    		  			
     		}
     	}   
+    	
     	stateToNodeMap();
+    	preComputeMigrationRates();
+        if (indicatorInput.get()!=null)
+        	checkConnections();
+        
+        needsUpdate = false;
+        
+
     }
     
 	// builds the map from state to node number
-    public void stateToNodeMap(){
+    private void stateToNodeMap(){
     	stateToNodeMap = new ArrayList<>();
     	ArrayList<Integer> activeStates = new ArrayList<>();
 	
@@ -227,12 +340,12 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     			List<Node> lins = lineagesRemoved[i];
     			activeStates.remove(activeStates.indexOf(lins.get(0).getNr()));
     			activeStates.remove(activeStates.indexOf(lins.get(1).getNr()));
-    			
     			if (lins.get(1).getParent().getNr() != lins.get(0).getParent().getNr()){
     				System.err.println("lineages don't have the same parent");
     				System.exit(0);
     			}
     			if (lins.get(1).getParent().getNr() != lineagesAdded[i].get(0).getNr()){
+    				System.out.println(lins.get(1).getParent().getNr() + " " + lineagesAdded[i].get(0).getNr());
     				System.err.println("wrong lineage added");  				
     			}
     			
@@ -244,6 +357,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     		}
     	}
     	migrationMap = new ArrayList<>();
+    	migrationRates = new ArrayList<>();
+    	
+    	int migrationRatePoint = 0;
     	
     	// get the migration map for each interval
     	activeStates = new ArrayList<>();
@@ -255,15 +371,16 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	// sorting ensures the correct order of migration rate elements
     	Collections.sort(activeStates);
     	
+    	
     	for (int i = 0; i < activeStates.size(); i++){
     		for (int j = 0; j < activeStates.size(); j++){
-    			if (i!=j){
+    			if (i!=j){    			
     				Integer[] migroute = new Integer[]{activeStates.get(i), activeStates.get(j)};
     				migrationMap.add(migroute);
+    				
     			}
     		}
     	}
-    	
     	
     	while (a < intervals.length){
     		int parent = lineagesAdded[a].get(0).getNr();
@@ -284,8 +401,74 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     	}
     }
     
+    private void preComputeMigrationRates(){
+    	indicators = new ArrayList<>();
+    	migrationRates = new ArrayList<>();
+    	// get the correct mapping of migration rates
+    	//TODO speed up that thing
+    	for (int i = 0; i < stateToNodeMap.size(); i++){
+    		int[][] mRateMapping = new int[stateToNodeMap.get(i).size()][stateToNodeMap.get(i).size()];
+    		for (int a = 0; a < mRateMapping.length; a++){
+    			for (int b = 0; b < mRateMapping.length; b++){
+    				for (int k = 0; k< migrationMap.size(); k++){
+    					if (migrationMap.get(k)[0]==stateToNodeMap.get(i).get(a) 
+    							&& migrationMap.get(k)[1]==stateToNodeMap.get(i).get(b)){
+    						mRateMapping[a][b] = k;
+    					}
+    				}
+    			}
+    		}
+    		
+    		// build the indicators list
+    		if (indicatorInput.get()!=null){
+	        	ArrayList<Integer[]> indicatorList = new ArrayList<>();
+	        	for (int a = 0; a < mRateMapping.length; a++){
+	    			for (int b = 0; b < mRateMapping.length; b++){
+	    				if (a!=b){
+		    				if(indicatorInput.get().getArrayValue(mRateMapping[a][b]) > 0.5){
+		    					Integer[] add={a,b};
+		    					indicatorList.add(add);
+		    				}
+	    				}
+	    			}
+	    		}
+	        	IntegerArrayForList indicators_array = new IntegerArrayForList(indicatorList.size());
+	    		for (int a = 0; a < indicatorList.size(); a++){
+	    			indicators_array.setValue(a, indicatorList.get(a)[0], indicatorList.get(a)[1]);
+	    		}  
+	    		indicators.add(indicators_array);
+	    		
+	    		// also add migration rates
+	    		DoubleArrayForList migration_array = new DoubleArrayForList(mRateMapping.length);
+	    		for (int a = 0; a < indicatorList.size(); a++){
+	    			int x_c = indicators_array.getValue(a, 0);
+	    			int y_c = indicators_array.getValue(a, 1);
+	    			migration_array.setValue(x_c, y_c, migModel.getMigration(stateToNodeMap.get(i).get(x_c) , stateToNodeMap.get(i).get(y_c))
+	    					* mInput.get().getArrayValue(mRateMapping[x_c][y_c]));
+	    		}
+	    		migrationRates.add(migration_array);
+	    				
+    		}else{
+	    		DoubleArrayForList migration_array = new DoubleArrayForList(mRateMapping.length);
+	        	for (int a = 0; a < mRateMapping.length; a++){
+	    			for (int b = 0; b < mRateMapping.length; b++){
+	    				if (a!=b){
+	    					migration_array.setValue(a, b, migModel.getMigration(stateToNodeMap.get(i).get(a) , stateToNodeMap.get(i).get(b))
+	    							* mInput.get().getArrayValue(mRateMapping[a][b]));
+	    				}
+	    			}
+	    		}    
+	    		migrationRates.add(migration_array);
+    		}
+    	}
+    	
+    }
+    
     // get the time of the next speciation event
     protected double getNextSpeciationTime(int currTreeInterval){
+    	if (needsUpdate)
+    		calculateIntervals();
+    	
     	if (currTreeInterval >= intervals.length)
     		return Double.POSITIVE_INFINITY;
     	else
@@ -295,18 +478,78 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
    
     // return the number of internal nodes
     protected int getIntNodes(){
+    	if (needsUpdate)
+    		calculateIntervals();
+
     	return nrSamples-1;
     }
     
 
     // get the effective population size of a state in the current interval
     public double getPopulationSize(int currentInterval, int state){
+    	if (needsUpdate)
+    		calculateIntervals();
+
     	return NeInput.get().getArrayValue(
     			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state));
     }
     
+    public boolean getIsConnected(int currentInterval, int state){
+    	if (needsUpdate)
+    		calculateIntervals();
+
+        if (indicatorInput.get()!=null)      
+        	return connected.get(currentInterval-getNumberOfSpecies())[
+    			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state)];
+        else
+        	return true;
+    }
+    
+    public int getIsNodeConnected(int nodeNr){
+    	if (needsUpdate)
+    		calculateIntervals();
+
+    	for (int i =0; i < connected.size();i++)
+    		if (connected.get(i)[nodeNr])
+    			return 1;
+    			
+    	return 0;
+    }
+    
+    
+//    migrationRates
+//    
+//    private void computeAllMigrationRates(){
+//    	
+//    }
+//    
+//    private double[][] getAllMigrationRates(){
+//    	
+//    }
+    
+    // faster way to return migration rates
+    
+    public double[][] getMigrationRates(int currentInterval){
+    	if (needsUpdate)
+    		calculateIntervals();
+    	
+    	
+    	return migrationRates.get(currentInterval-getNumberOfSpecies()).getArray();
+    }
+    
+    public int[][] getIndicatorsRates(int currentInterval){
+    	if (needsUpdate)
+    		calculateIntervals();
+
+    	return indicators.get(currentInterval-getNumberOfSpecies()).getArray();
+    }
+
+    
     //slow to return migration rates
 	public double getMigrationRates(int currentInterval, int state1, int state2) {
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		int interval = currentInterval-getNumberOfSpecies();
 //		double Nesink = NeInput.get().getArrayValue(
 //    			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state1));
@@ -316,7 +559,6 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		double migration = migModel.getMigration(stateToNodeMap.get(interval).get(state1) , stateToNodeMap.get(interval).get(state2));
 //		migration *= Nesource;
 //		migration /= Nesink;
-				
 		for (int i = 0; i < migrationMap.size(); i++){
 			if (migrationMap.get(i)[0]==stateToNodeMap.get(interval).get(state1) 
 					&& migrationMap.get(i)[1]==stateToNodeMap.get(interval).get(state2)){
@@ -334,7 +576,11 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	}
 	
     //get migration rates between nodes
-	public double getMigrationRates(int node1, int node2) {		
+	
+	public double getMigrationRates(int node1, int node2) {	
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		double migration = migModel.getMigration(node1 , node2);
 		for (int i = 0; i < migrationMap.size(); i++){
 			if (migrationMap.get(i)[0]==node1 
@@ -344,8 +590,11 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		return 0.0;
 	}
 	
+	
 	public ArrayList<ArrayList<Integer>> getStateToNodeMap(){
-		calculateIntervals();
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		ArrayList<ArrayList<Integer>> returnList = new ArrayList<>();
 		for (int i= 0; i < stateToNodeMap.size(); i++){
 			ArrayList<Integer> add = new ArrayList<>();
@@ -359,6 +608,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	
 	// return all migration rates from a node
 	public String getAllMigrationRates(int nodeNr){
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		boolean isEmpty = true;
 		String migRates = new String();	
 		String migTo = new String();
@@ -408,7 +660,10 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 			return returnString;
 	}
 	
-    protected void coalesce(int currTreeInterval) {
+    
+	protected void coalesce(int currTreeInterval) {
+    	if (needsUpdate)
+    		calculateIntervals();
     	
     	// Get the daughter lineages
 		List<Node> coalLines = lineagesRemoved[currTreeInterval];
@@ -417,6 +672,8 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 			System.exit(0);
 		}
     	if (coalLines.size() < 2) {
+    		System.out.println(coalLines);
+    		System.out.println(lineagesAdded[currTreeInterval]);
     		System.err.println();
     		System.err.println("WARNING: Less than two lineages found at coalescent event!");
     		System.err.println();
@@ -435,6 +692,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     }
     
     protected int getDaughter1(int currTreeInterval){
+    	if (needsUpdate)
+    		calculateIntervals();
+
     	int index = stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()).indexOf(daughterIndex1);
     	if (index < 0){
     		System.out.println(daughterIndex1);
@@ -442,16 +702,43 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     		System.out.println(stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()));
     		System.out.println(daughterIndex1 + " " + daughterIndex2);
     		System.out.println(lineagesRemoved[currTreeInterval]);
+    		System.out.println("daughter lineage 1 not found");
+    		for (int i = 0; i < lineagesAdded.length; i++)
+    			System.out.println(lineagesAdded[i]);
+    		System.out.println(lineagesAdded.length);
+    		System.out.println(speciesTree);
+    		calculateIntervals();
+    		System.out.println("");
+    		for (int i = 0; i < lineagesAdded.length; i++)
+    			System.out.println(lineagesAdded[i]);
+    		System.out.println(lineagesAdded.length);
+    		System.out.println(lineagesAdded.length);
+    		System.exit(0);
     	}
     	return index;
     }
     
     protected int getDaughter2(int currTreeInterval){
+    	if (needsUpdate)
+    		calculateIntervals();
+
     	int index = stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()).indexOf(daughterIndex2);
+    	if (index < 0){
+    		System.out.println(daughterIndex1);
+    		System.out.println(stateToNodeMap);
+    		System.out.println(stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()));
+    		System.out.println(daughterIndex1 + " " + daughterIndex2);
+    		System.out.println(lineagesRemoved[currTreeInterval]);
+    		System.out.println("daughter lineage 2 not found");
+    	}
+
     	return stateToNodeMap.get(currTreeInterval-getNumberOfSpecies()).indexOf(daughterIndex2);
     }
 
 	public int getCurrentNumberOfStates(int speciesInterval) {	
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		if (speciesInterval < (intervals.length+1)/2)
 			return (intervals.length+1)/2;
 		else
@@ -490,12 +777,23 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	
      
 	protected int getSpeciesState(int currentInterval, int state){
+    	if (needsUpdate)
+    		calculateIntervals();
+
 		return stateToNodeMap.get(currentInterval - speciesTree.getLeafNodeCount()).get(state);
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	protected void store(){		
+	protected void store(){	
+//		System.out.println("store..");
+
+	    storedIntervals = new double[intervals.length];
+		System.arraycopy(intervals,0,storedIntervals,0,intervals.length);
+	    		
+		
+		
 		storedStateToNodeMap = new ArrayList<>();
 		for (int i= 0; i < stateToNodeMap.size(); i++){
 			ArrayList<Integer> add = new ArrayList<>();
@@ -508,12 +806,84 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		for (Integer[] m : migrationMap)
 			storedMigrationMap.add(m);
 		
+		// store the lineages added and removed
+		storedLineagesAdded = new List[lineagesAdded.length];
+		storedLineagesRemoved = new List[lineagesRemoved.length];
+		
+//		System.out.println("");
+//		for (int i = 0; i <lineagesAdded.length; i++)
+//			System.out.println(lineagesAdded[i] + " " + storedLineagesAdded[i]);
+
+		
+		for (int i = 0; i < lineagesAdded.length; i++){
+			ArrayList<Node> add = new ArrayList<>();
+			for (Node n : lineagesAdded[i]){
+				add.add(n.copy());
+			}
+			storedLineagesAdded[i] = new ArrayList<>(add);
+		}
+			
+		for (int i = 0; i < lineagesRemoved.length; i++){
+			ArrayList<Node> remove = new ArrayList<Node>();
+			if (lineagesRemoved[i] != null){
+				for (Node n : lineagesRemoved[i]){
+					if (n!=null){
+						remove.add(n.copy());
+					}else{
+						remove.add(null);
+					}						
+				}
+				storedLineagesRemoved[i] = new ArrayList<>(remove);
+			}else{
+				storedLineagesRemoved[i] = null;
+			}
+
+		}	
+		
+		storedIsCoalescent = new boolean[isCoalescent.length];
+		System.arraycopy(isCoalescent,0,storedIsCoalescent,0,isCoalescent.length);
+		
+		storedMigrationRates = new ArrayList<>();
+		for (DoubleArrayForList dafl : migrationRates){
+			DoubleArrayForList add  = new DoubleArrayForList(dafl.getArray());
+			storedMigrationRates.add(add);
+		}
+		
+		storedIndicators = new ArrayList<>();
+		for (IntegerArrayForList iafl : indicators){
+			IntegerArrayForList add  = new IntegerArrayForList(iafl.getArray());
+			storedIndicators.add(add);
+		}
+//		System.exit(0);
+
+		storedConnected = new ArrayList<>();
+		for (Boolean[] bool : connected){
+			Boolean[] con = new Boolean[bool.length];
+			for (int i = 0; i < con.length; i++)
+				con[i] = bool[i];
+			storedConnected.add(con);
+		}
+		
+//		System.out.println("");
+//		for (int i = 0; i <lineagesAdded.length; i++)
+//			System.out.println(lineagesAdded[i]);
+//		System.out.println("");
+//		for (int i = 0; i <lineagesAdded.length; i++)
+//			System.out.println(storedLineagesAdded[i]);
+
+		
 //		storedNes = Arrays.copyOf(savedNes, savedNes.length);
 		super.store();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void restore(){
+//		System.out.println("restore..");
+		intervals = new double[storedIntervals.length];
+		System.arraycopy(storedIntervals,0,intervals,0,storedIntervals.length);
+
+		
 		stateToNodeMap = new ArrayList<>();
 		for (int i= 0; i < storedStateToNodeMap.size(); i++){
 			ArrayList<Integer> add = new ArrayList<>();
@@ -525,6 +895,63 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		migrationMap = new ArrayList<>();
 		for (Integer[] m : storedMigrationMap)
 			migrationMap.add(m);
+		
+		// restore the lineages added and removed
+		lineagesAdded = new List[storedLineagesAdded.length];
+		lineagesRemoved = new List[storedLineagesRemoved.length];
+		for (int i = 0; i < storedLineagesAdded.length; i++){
+			ArrayList<Node> add = new ArrayList<Node>();
+			for (Node n : storedLineagesAdded[i])
+				add.add(n.copy());
+			lineagesAdded[i] = new ArrayList<>(add);			
+		}
+		
+		for (int i = 0; i < storedLineagesRemoved.length; i++){
+			ArrayList<Node> remove = new ArrayList<Node>();
+			if (storedLineagesRemoved[i]!=null){
+				for (Node n : storedLineagesRemoved[i])
+					if (n!=null){
+						remove.add(n.copy());
+					}else{
+						remove.add(null);
+					}
+
+				lineagesRemoved[i] = new ArrayList<>(remove);
+			}else{
+				lineagesRemoved[i] = null;
+			}
+
+		}				
+
+		isCoalescent = new boolean[storedIsCoalescent.length];
+		System.arraycopy(storedIsCoalescent,0,isCoalescent,0,storedIsCoalescent.length);
+
+		
+		migrationRates = new ArrayList<>();
+		for (DoubleArrayForList dafl : storedMigrationRates){
+			DoubleArrayForList add  = new DoubleArrayForList(dafl.getArray());
+			migrationRates.add(add);
+		}
+		
+		indicators = new ArrayList<>();
+		for (IntegerArrayForList iafl : storedIndicators){
+			IntegerArrayForList add  = new IntegerArrayForList(iafl.getArray());
+			indicators.add(add);
+		}
+
+		connected = new ArrayList<>();
+		for (Boolean[] bool : storedConnected){
+			Boolean[] con = new Boolean[bool.length];
+			for (int i = 0; i < con.length; i++)
+				con[i] = bool[i];
+			connected.add(con);
+		}
+		
+//		System.out.println("");
+//		for (int i = 0; i < lineagesAdded.length; i++)
+//			System.out.println(lineagesAdded[i]);
+
+
 		
 //		savedNes = Arrays.copyOf(storedNes, storedNes.length);
 		super.restore();
@@ -560,34 +987,91 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-    protected boolean intervalIsDirty(int i) {
-        if (needsUpdate) {
-            calculateIntervals();
-        }
-        //TODO change to correct
-        return true;
-//        if (i < intervals.length)
-//        	return intervalIsDirty[i];
-//        else
-//        	return lastIntervalDirty;
-        	
-    }    
+
+//	
+//    protected boolean intervalIsDirty(int i) {
+//        if (needsUpdate) {
+//            calculateIntervals();
+//        }
+//        //TODO change to correct
+//        return true;
+////        if (i < intervals.length)
+////        	return intervalIsDirty[i];
+////        else
+////        	return lastIntervalDirty;
+//        	
+//    }    
+//    
+//    protected void setIntervalIsDirty(int i) {
+//        if (needsUpdate) {
+//            calculateIntervals();
+//        }
+//        if (i < intervals.length){
+//        	intervalIsDirty[i] = true;
+//        }else{
+//        	lastIntervalDirty = true;
+//        }
+//    }    
+//  
+//    protected void setIntervalsClean(){
+//        intervalIsDirty = new boolean[intervals.length];
+//        lastIntervalDirty = false;
+//    }
+
+    // helper class to have primitiv classes
+    private class DoubleArrayForList{
+    	double[][] array;
+    	
+    	DoubleArrayForList(int states){
+    		this.array = new double[states][states];
+    	}
+    	
+    	DoubleArrayForList(double[][] array){
+    		this.array = new double[array.length][array.length];
+    		for (int i = 0; i < this.array.length; i++)
+    			System.arraycopy(array[i], 0, this.array[i], 0, array[i].length);
+    	}
+    	
+    	void setValue(int i, int j, double val){
+    		this.array[i][j] = val;
+    	}
+    	
+    	double[][] getArray(){
+    		return array;
+    	}
+    }
     
-    protected void setIntervalIsDirty(int i) {
-        if (needsUpdate) {
-            calculateIntervals();
-        }
-        if (i < intervals.length){
-        	intervalIsDirty[i] = true;
-        }else{
-        	lastIntervalDirty = true;
-        }
-    }    
-  
-    protected void setIntervalsClean(){
-        intervalIsDirty = new boolean[intervals.length];
-        lastIntervalDirty = false;
+    // helper class to have primitiv classes
+    private class IntegerArrayForList{
+    	int[][] array;
+    	
+    	IntegerArrayForList(int states){
+    		this.array = new int[states][2];
+    	}
+    	
+    	IntegerArrayForList(int[][] array){
+    		this.array = new int[array.length][2];
+    		for (int i = 0; i < this.array.length; i++)
+    			System.arraycopy(array[i], 0, this.array[i], 0, array[i].length);
+//    		for (int i = 0; i < this.array.length; i++){
+//    			System.out.println(Arrays.toString(this.array[i]));
+//    			System.out.println(Arrays.toString(array[i]));
+//    		}
+    	}
+
+    	
+    	void setValue(int i, int val0, int val1){
+    		this.array[i][0] = val0;
+    		this.array[i][1] = val1;
+    	}
+    	
+    	int getValue(int i, int j){
+    		return this.array[i][j];
+    	}
+    	
+    	int[][] getArray(){
+    		return array;
+    	}
     }
 
 

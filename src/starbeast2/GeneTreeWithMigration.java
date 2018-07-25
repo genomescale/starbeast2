@@ -16,7 +16,7 @@
  */
 package starbeast2;
 
-import beast.mascot.ode.Euler2ndOrder;
+import beast.core.Citation;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
@@ -35,6 +35,7 @@ import java.util.*;
 @Description("Calculate the probability of a tree under the structured coalescent assuming lineage independence with constant rates" +
 		" as described in Mueller et. al.,2017. The Input rates are backwards in time migration rates" +
 		" and pairwise coalescent rates translating to 1/Ne for m=1 in the Wright Fisher model")
+@Citation("Nicola F. Müller, David A. Rasmussen, Tanja Stadler (2017)\n  The Structured Coalescent and its Approximations.\n  Mol Biol Evol 2017 msx186. doi: 10.1093/molbev/msx186")
 public class GeneTreeWithMigration extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 4).", 4.0);
@@ -45,11 +46,12 @@ public class GeneTreeWithMigration extends Distribution {
 	
     SpeciesTreeInterface speciesTree;
 	
-    private boolean hasIndicators;
+//    private boolean hasIndicators;
     
 	private double[] coalescentRates;
 	private double[][] migrationRates;
 	private int[][] indicators;
+	private boolean[] isConnected;
 	private double[] linProbs;
 	private int[] multiplicator;
 	private int[] mostLikelyState;
@@ -60,21 +62,21 @@ public class GeneTreeWithMigration extends Distribution {
     private int nr_lineages;  
     
     // store the linProbs, multiplicators and logP's at coalescent points in jagged arrays from last time
-    private double[][] coalLinProbs;
-    private int[][] coalMultiplicator;
-    private double[] coalLogP;
-    private int[] coalSpeciesInterval;
-    private ArrayList<ArrayList<Integer>> coalActiveLineages;
-    private ArrayList<ArrayList<Integer>> coalSampleState;
-    
-    // deep store the things above for MCMC
-    private double[][] storeLinProbs;
-    private int[][] storeMultiplicator;
-    private double[] storeLogP;
-    private int[] storeSpeciesInterval;
-    private ArrayList<ArrayList<Integer>> storeActiveLineages;
-    private ArrayList<ArrayList<Integer>> storeSampleState;
-    private boolean storedFirst;
+//    private double[][] coalLinProbs;
+//    private int[][] coalMultiplicator;
+//    private double[] coalLogP;
+//    private int[] coalSpeciesInterval;
+//    private ArrayList<ArrayList<Integer>> coalActiveLineages;
+//    private ArrayList<ArrayList<Integer>> coalSampleState;
+//    
+//    // deep store the things above for MCMC
+//    private double[][] storeLinProbs;
+//    private int[][] storeMultiplicator;
+//    private double[] storeLogP;
+//    private int[] storeSpeciesInterval;
+//    private ArrayList<ArrayList<Integer>> storeActiveLineages;
+//    private ArrayList<ArrayList<Integer>> storeSampleState;
+//    private boolean storedFirst;
     
         
     // Set up for lineage state probabilities
@@ -95,30 +97,21 @@ public class GeneTreeWithMigration extends Distribution {
     @Override
     public void initAndValidate(){    
         speciesTree = popModelInput.get().migrationModelInput.get().speciesTreeInput.get();
-    	popModelInput.get().calculateIntervals();
+//    	popModelInput.get().calculateIntervals();
     	// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
     	calculateIntervals(); 
                 
     	// initialize the maximum relative tolerance 
-    	maxTolerance = 1e-3;    	
+    	maxTolerance = 1e-3;
     	    	
-//    	// initialize storing arrays and ArrayLists
-//    	coalLinProbs = new double[nodeCount+1][];
-//    	coalMultiplicator = new int[nodeCount+1][];
-//    	coalLogP = new double[nodeCount+1];
-//    	coalSpeciesInterval = new int[nodeCount+1];
-//    	coalActiveLineages = new ArrayList<>();
-//    	coalSampleState = new ArrayList<>();
-//    	
-//    	
-//    	ArrayList<Integer> emptyList = new ArrayList<>();
-//    	for (int i = 0; i <= nodeCount; i++){
-//    		coalActiveLineages.add(emptyList);
-//    		coalSampleState.add(emptyList);
-//    	}
     	
-    	int MAX_SIZE = popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount() *
+    	int MAX_SIZE_TMP = popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount() *
     			treeInput.get().getLeafNodeCount();
+    	int MAX_SIZE = Math.max(MAX_SIZE_TMP, 
+    			popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount()*
+    			popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getLeafNodeCount())
+    			+1;
+
     	linProbs_tmp = new double[MAX_SIZE];
     	linProbs_tmpdt = new double[MAX_SIZE];
     	linProbs_tmpddt = new double[MAX_SIZE];
@@ -132,11 +125,14 @@ public class GeneTreeWithMigration extends Distribution {
     double [] linProbs_tmpdt;
     double [] linProbs_tmpddt;
     double [] linProbs_tmpdddt;
-
     
-    public double calculateLogP() {  
+    public double calculateLogP() { 
+    	
+    	
+    	
+//    	System.out.println(popModelInput.get().speciesTree);
 //    	System.out.println("new tree");
-    	popModelInput.get().calculateIntervals();
+//    	popModelInput.get().calculateIntervals();
     	recalculateLogP = false;
 		calculateIntervals();
     	
@@ -174,10 +170,10 @@ public class GeneTreeWithMigration extends Distribution {
         }
         // initialize the lineage state probs array
         initializeP();
-        
+
 		// store the node
 		nextGeneTime = intervals[geneInterval];
-
+		
         do {			
         	// Length of the current interval
         	final double duration = Math.min(nextGeneTime, nextSpeciesTime);
@@ -192,7 +188,7 @@ public class GeneTreeWithMigration extends Distribution {
                 	return calculateLogP();
                 }              
                 if (states>1){	    
-	        		logP += doEuler(duration);		            
+	        		logP += doEuler(duration);	
                 }else{
                 	// use analytical solution instead
                 	logP -= duration * coalescentRates[0] * activeLineages.size()*(activeLineages.size()-1)/2;	                
@@ -210,6 +206,7 @@ public class GeneTreeWithMigration extends Distribution {
         		speciesInterval++;  
         		nextGeneTime -= nextSpeciesTime;
         		nextSpeciesTime = popModelInput.get().getNextSpeciationTime(speciesInterval);
+//        		System.out.println(nextSpeciesTime);
         	}else if (nextSpeciesTime >= nextGeneTime){
                 logP += coalesce(geneInterval, speciesInterval); 
                 
@@ -231,27 +228,76 @@ public class GeneTreeWithMigration extends Distribution {
 
         }while(activeLineages.size()>1);
         first = false;  
+//        System.exit(0);
         return logP;  	
     }   
     
 	private double doEuler(double nextEventTime) {
-		Euler2ndOrder euler;
-		if (hasIndicators)
-    		euler = new Euler2ndOrder(multiplicator, migrationRates, indicators, coalescentRates, multiplicator.length , states, 0.001, 0.2);
-    	else
-    		euler = new Euler2ndOrder(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+		Euler2ndOrderAIM euler;
+		
+		double logVal = 0.0;
+		int inactiveStates = 0;
+		
+		// add the prob of the unstructured parts
+		int[] nrLins = new int[states];
+		if (popModelInput.get().indicatorInput.get()!=null){
+			for (int j = 0; j < states; j++){
+				if (!isConnected[j]){
+					inactiveStates++;
+					for (int i = 0; i < multiplicator.length; i++){
+						if (linProbs[states*i+j]>0.999999999999999){
+							nrLins[j] += multiplicator[i];
+						}else if (linProbs[states*i+j]>0.000000000000001){
+							System.out.println("error in the lin probs of unconnected state, return negative infinity");
+							logVal = Double.NEGATIVE_INFINITY;
+						}	
+					}
+				}
+			}
+			for (int j = 0; j < states; j++){
+				if (!isConnected[j]){
+					logVal -= nextEventTime*coalescentRates[j]* nrLins[j]*(nrLins[j]-1)/2;
+				}
+			}
+		}
+//		System.out.println("start " + states + " " + multiplicator.length + " " + Arrays.toString(isConnected));
+//		for (int a = 0; a < migrationRates.length; a++)
+//			System.out.println(Arrays.toString(migrationRates[a]));
+//		System.out.println(Arrays.toString(linProbs));
+			
 
-		//for (int i = 0; i < linProbs.length; i++) linProbs_tmp[i] = linProbs[i];
+		double[] coaltmp = new double[coalescentRates.length];
+		System.arraycopy(coalescentRates,0,coaltmp,0,coalescentRates.length);
+//		for (int j = 0; j < states; j++){
+//			if (!isConnected[j]){
+//				coaltmp[j] = 0.0;
+//			}
+//		}
+//		if (hasIndicators){
+//			if (inactiveStates>0){
+//				System.out.println(Arrays.toString(coalescentRates));
+//				System.out.println(Arrays.toString(coaltmp));
+//			}
+//		}
+//		for (int a = 0; a < migrationRates.length; a++)
+//			System.out.println(Arrays.toString(migrationRates[a]));
+		
 		System.arraycopy(linProbs,0,linProbs_tmp,0,linProbs.length);
 		linProbs_tmp[linProbs.length] = 0;
 
-		linProbs[linProbs.length-1] = 0;
-		euler.calculateValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
-
-		//for (int i = 0; i < linProbs.length; i++) linProbs[i] = linProbs_tmp[i];
+		if (popModelInput.get().indicatorInput.get()!=null){
+			if (inactiveStates<states){
+				//TODO error left in the Connected Values calcs!!
+				euler = new Euler2ndOrderAIM(multiplicator, migrationRates, indicators, isConnected, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+				euler.calculateConnectedValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
+			}
+		}else{
+    		euler = new Euler2ndOrderAIM(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
+			euler.calculateValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
+		}
 		System.arraycopy(linProbs_tmp,0,linProbs,0,linProbs.length);
-
-		return linProbs_tmp[linProbs.length];
+		
+		return linProbs_tmp[linProbs.length] + logVal;
 	}
 
    
@@ -281,7 +327,7 @@ public class GeneTreeWithMigration extends Distribution {
     	}
     	for (int i = 0; i < sampleState.size(); i++){
 			multiplicator[sampleState.get(i)] += 1;
-    	}    	
+    	}   
     }
     
     // works: normalizes the lineage state probabilities 
@@ -320,6 +366,7 @@ public class GeneTreeWithMigration extends Distribution {
 		
     	if (coalLines.get(0) == null) {
     		// TODO throw exception
+    		System.err.println(treeInput.get());
 			System.err.println("daughter nodes not found, possible multifurcations in the starting tree");
 			throw new IllegalArgumentException();
 		}
@@ -346,8 +393,8 @@ public class GeneTreeWithMigration extends Distribution {
         for (int k = 0; k < states; k++) { 
         	// calculate the coalscent rate. 
         	Double pairCoalRate = coalescentRates[k] *
-					(linProbs[sampleState.get(daughterIndex1)*states + k] * linProbs[sampleState.get(daughterIndex2)*states + k]);	
-			
+					(linProbs[sampleState.get(daughterIndex1)*states + k] * linProbs[sampleState.get(daughterIndex2)*states + k]);
+        				
 			if (!Double.isNaN(pairCoalRate)){
 				coalProb[k] = pairCoalRate;
 			}
@@ -480,45 +527,33 @@ public class GeneTreeWithMigration extends Distribution {
 //					multiplicator, logP + Math.log(sumProb) + intervalProbability, speciesInterval,
 //					activeLineages, sampleState);
 		
-		if (sumProb<=0)
+		if (sumProb<=0){
+//			System.out.println("sum prob");
 			return Double.NEGATIVE_INFINITY;
-		else
+		}else{
 			return Math.log(sumProb);
+		}
     }   
      
     private void updateRatesList(int speciesInterval){
     	// initialize coalescent and migration rates
     	coalescentRates = new double[states];
-    	migrationRates = new double[states][states];
+    	migrationRates = popModelInput.get().getMigrationRates(speciesInterval);
+    	isConnected = new boolean[states];
     	
     	//TODO check ploidity
     	for (int i = 0; i < states; i++){
     		coalescentRates[i] =  
     				1/(ploidyInput.get()*popModelInput.get().getPopulationSize(speciesInterval, i));
+    	}    	
+    	
+    	if (popModelInput.get().indicatorInput.get()!=null){
+    		indicators = popModelInput.get().getIndicatorsRates(speciesInterval);
+    		for (int i = 0; i < states; i++){
+    			isConnected[i] = popModelInput.get().getIsConnected(speciesInterval, i);
+    		}
     	}
     	
-    	ArrayList<Integer[]> indicatorList = new ArrayList<>();
-    	for (int i = 0; i < states; i++){
-    		for (int j = 0; j < states; j++){
-    			if (i != j){
-    				migrationRates[i][j] = popModelInput.get().getMigrationRates(speciesInterval, i, j);
-    				if (migrationRates[i][j]>0.0){
-    					Integer[] add={i,j};
-    					indicatorList.add(add);
-    				}    					
-    			}
-    		}
-    	}    	
-    	if (indicatorList.size() != 0){
-    		hasIndicators = true;
-    		indicators = new int[indicatorList.size()][2];
-    		for (int i = 0; i < indicators.length; i++){
-    			indicators[i][0] = indicatorList.get(i)[0];
-    			indicators[i][1] = indicatorList.get(i)[1];
-    		}    				
-    	}else{
-    		hasIndicators = false;
-    	}    	
     		
     }
     
@@ -551,10 +586,9 @@ public class GeneTreeWithMigration extends Distribution {
     	// add the combined states at the end
     	for (int i = 0; i < multiplicator.length; i++){
     		if (((states+1)*i+state1)<0){
-    			System.exit(0);
     			System.out.println("daughter lineages not found at speciation event");
     			System.out.println(states + " " + state1 + " " + state2);
-    			
+    			System.exit(0);    			
     		}
 
 			newLinProbs[states*i+(states-1)] = 
@@ -709,7 +743,7 @@ public class GeneTreeWithMigration extends Distribution {
 
     
     /**
-     * parent and daugheter lineages at each coalescent event
+     * parent and daughter lineages at each coalescent event
      */
     protected List<Node>[] lineagesAdded;
     protected List<Node>[] lineagesRemoved;
