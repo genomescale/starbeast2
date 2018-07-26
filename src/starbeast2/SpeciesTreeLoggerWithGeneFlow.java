@@ -69,8 +69,7 @@ public class SpeciesTreeLoggerWithGeneFlow extends Tree implements Loggable {
     @Override
     public void log(long nSample, PrintStream out) {
     	// build migration rate map	
-    	popModelInput.get().calculateIntervals();
-    	popModelInput.get().stateToNodeMap();
+//    	popModelInput.get().calculateIntervals();
     	
         // make sure we get the current version of the inputs
         Tree tree = (Tree) popModelInput.get().migrationModelInput.get().speciesTreeInput.get().getCurrent();
@@ -122,6 +121,8 @@ public class SpeciesTreeLoggerWithGeneFlow extends Tree implements Loggable {
 //        if (!node.isLeaf()) {
 	        buf.append("[&species=" + node.getNr() + ",Ne=" +  popModelInput.get().getNodeNe(node.getNr()) + "" + popModelInput.get().getAllMigrationRates(node.getNr()));		
 
+	        if (popModelInput.get().indicatorInput.get()!=null)
+	        	buf.append(",con="+popModelInput.get().getIsNodeConnected(node.getNr()));
 	        
 	        
 	        buf.append("]");
