@@ -1,6 +1,6 @@
-<addon name="starbeast2" version="0.15.0">
+<addon name="starbeast2" version="0.15.1">
 	<depends on="beast2" atleast="2.5.0"/>
 	<depends on="SA" atleast="2.0.0"/>
 	<depends on="MM" atleast="1.1.0"/>
-	<depends on="Mascot" atleast="1.0.0"/>
+	<depends on="Mascot" atleast="1.1.0"/>
 </addon>

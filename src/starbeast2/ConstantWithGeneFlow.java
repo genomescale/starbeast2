@@ -107,13 +107,10 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         
         needsUpdate = true;
 
-        // make sure we are not in BEAUt
-		System.out.println("NUMBER OF SPECIES NODES = " + speciesNodeCount);
+        // make sure we are not in BEAUti
         if (speciesNodeCount != 1) {
 			// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
 			calculateIntervals();
-			// initialize the state to node mapping
-			stateToNodeMap();
 		}
     }
     
