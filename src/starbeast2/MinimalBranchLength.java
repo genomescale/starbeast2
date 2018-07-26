@@ -10,7 +10,7 @@ import beast.evolution.tree.Node;
 public class MinimalBranchLength extends MigrationModel {
 	
     public Input<RealParameter> effectiveMigrantsInput  = new Input<>("effectiveMigrants","absolute migration rates",Input.Validate.REQUIRED);
-    public Input<Double> minimalBranchLengthInput  = new Input<>("minimalBranchLength","absolute migration rates", 0.0);
+    public Input<Double> minimalBranchLengthInput  = new Input<>("minimalBranchLength","minimum bound to stop arbitrarily large prior on migration rate", 0.0001);
 
     
 	@Override
