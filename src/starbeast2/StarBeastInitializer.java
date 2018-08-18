@@ -178,9 +178,13 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         	final int leafNodeCount = gtree.getLeafNodeCount();
         	for (int geneLeafNr = 0; geneLeafNr < leafNodeCount; geneLeafNr++) {
         		final Node geneLeaf = gtree.getNode(geneLeafNr);
-        		final int speciesLeafNr = tipNames.get(geneLeaf.getID());
-        		final Node speciesLeaf = speciesTree.getNode(speciesLeafNr);
-        		geneLeaf.setHeight(speciesLeaf.getHeight());
+        		if (tipNames.containsKey(geneLeaf.getID())) {
+                    final int speciesLeafNr = tipNames.get(geneLeaf.getID());
+                    final Node speciesLeaf = speciesTree.getNode(speciesLeafNr);
+                    geneLeaf.setHeight(speciesLeaf.getHeight());
+                } else {
+        		    throw new RuntimeException("The taxon " + geneLeaf.getID() + " is missing from the taxonsuperset!");
+                }
         	}
         }
 	}
