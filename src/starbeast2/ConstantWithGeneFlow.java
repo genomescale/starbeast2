@@ -110,9 +110,12 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         	indicatorInput.get().setDimension((leafNodeCount-1)*(leafNodeCount-1)*2);
         
         needsUpdate = true;
-        
-    	// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
-        calculateIntervals();        
+
+        // make sure we are not in BEAUti
+        if (speciesNodeCount != 1) {
+			// Calculate the tree intervals (time between events, which nodes participate at a event etc.)
+			calculateIntervals();
+		}
     }
     
     public void checkConnections(){

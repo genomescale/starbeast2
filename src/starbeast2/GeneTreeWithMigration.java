@@ -117,10 +117,13 @@ public class GeneTreeWithMigration extends Distribution {
     	linProbs_tmpddt = new double[MAX_SIZE];
     	linProbs_tmpdddt = new double[MAX_SIZE];
 
-    	
-        calculateLogP();
+        // make sure we are not in BEAUti
+        final int speciesNodeCount = speciesTree.getNodeCount();
+        if (speciesNodeCount != 1) {
+            calculateLogP();
+        }
     }
-    
+
     double [] linProbs_tmp;
     double [] linProbs_tmpdt;
     double [] linProbs_tmpddt;
