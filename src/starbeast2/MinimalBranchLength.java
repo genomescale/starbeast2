@@ -49,6 +49,11 @@ public class MinimalBranchLength extends MigrationModel {
 		double b = Math.max(Math.min((heights.get(0)-n1.getHeight()), (heights.get(0)-n2.getHeight())), minimalBranchLengthInput.get());
 		
 		return effectiveMigrantsInput.get().getValue()/(b) ; 		
+	}
+
+	@Override
+	public double getEM() {
+		return effectiveMigrantsInput.get().getValue();
 	}	
 
 		

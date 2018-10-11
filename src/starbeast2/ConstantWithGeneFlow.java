@@ -17,6 +17,7 @@
 package starbeast2;
 
 import beast.core.CalculationNode;
+import beast.core.Citation;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
@@ -32,11 +33,14 @@ import java.util.*;
  */
 
 @Description("Species tree that contains the information about things such as the speciation times and migration rates")
+@Citation("Nicola F. Müller, Huw A. Ogilvie, Chi Zhang, Alexei J. Drummond and Tanja Stadler(2018)\n  Inference of species histories in the presence of gene flow.\n  bioRxiv doi: 10.1101/348391")
 public class ConstantWithGeneFlow extends CalculationNode implements PopulationModel {
     public Input<RealParameter> NeInput = new Input<RealParameter>("Ne","contains the Ne of each branch",Input.Validate.REQUIRED);   
+    public Input<RealParameter> NeMeanInput = new Input<RealParameter>("NeMean","contains the Ne of each branch");   
     public Input<RealParameter> mInput  = new Input<>("m","relative migration rates between branches",Input.Validate.REQUIRED);
     public Input<BooleanParameter> indicatorInput  = new Input<>("indicator","indicator if rate is not 0");
     public Input<MigrationModel> migrationModelInput  = new Input<>("migrationModel","input of model of migration",Input.Validate.REQUIRED);
+    public Input<Boolean> rateIsForwardInput  = new Input<>("rateIsForward","input of direction of migration",false);
    
     SpeciesTreeInterface speciesTree;
     private MigrationModel migModel;
@@ -489,8 +493,12 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     public double getPopulationSize(int currentInterval, int state){
     	if (needsUpdate)
     		calculateIntervals();
-
-    	return NeInput.get().getArrayValue(
+    	
+    	if (NeMeanInput.get()!=null)
+    		return NeMeanInput.get().getValue()*NeInput.get().getArrayValue(
+        			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state));
+    	else
+    		return NeInput.get().getArrayValue(
     			stateToNodeMap.get(currentInterval-getNumberOfSpecies()).get(state));
     }
     
@@ -584,8 +592,14 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		double migration = migModel.getMigration(node1 , node2);
 		for (int i = 0; i < migrationMap.size(); i++){
 			if (migrationMap.get(i)[0]==node1 
-					&& migrationMap.get(i)[1]==node2)
-				return migration*mInput.get().getArrayValue(i);
+					&& migrationMap.get(i)[1]==node2){
+				if (!rateIsForwardInput.get()){
+					double NeRatio = NeInput.get().getArrayValue(node2)/NeInput.get().getArrayValue(node1);
+					return migration*mInput.get().getArrayValue(i) * NeRatio;
+				}else{
+					return migration*mInput.get().getArrayValue(i);
+				}
+			}
 		}
 		return 0.0;
 	}
@@ -661,6 +675,83 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	}
 	
     
+	public String getAllMigrationRatesLong(int nodeNr){
+    	if (needsUpdate)
+    		calculateIntervals();
+
+		boolean isEmpty = true;
+		String migRates = new String();	
+		String migInd = new String();
+		migRates ="abcdef";
+		migInd ="abcdef";
+		ArrayList<Integer> visited = new ArrayList<>();
+		for (int i = 0; i < (stateToNodeMap.size()-1); i++){
+			for (int j = 0; j < stateToNodeMap.get(i).size(); j++){
+				if (stateToNodeMap.get(i).get(j) == nodeNr){
+					for (int k = 0; k < stateToNodeMap.get(i).size(); k++){
+						if (k!=j && visited.indexOf(stateToNodeMap.get(i).get(k))==-1){
+							visited.add(stateToNodeMap.get(i).get(k));
+							double migration = migModel.getMigration(stateToNodeMap.get(i).get(j) , stateToNodeMap.get(i).get(k));
+							for (int l = 0; l < migrationMap.size(); l++){
+								if (migrationMap.get(l)[0]==stateToNodeMap.get(i).get(j) 
+										&& migrationMap.get(l)[1]==stateToNodeMap.get(i).get(k)){
+										if (indicatorInput.get()!=null){
+											if (indicatorInput.get().getArrayValue(l) > 0.5){
+												migration=mInput.get().getArrayValue(l)*migModel.getEM();											
+											}else{
+												migration*=0.0;											
+											}											
+										}else{
+											migration=mInput.get().getArrayValue(l)*migModel.getEM();
+										}
+								}
+							}
+							// get the node numbers of all children
+							ArrayList<Integer> node_nr = new ArrayList<>();
+							for (Node n : speciesTree.getNode(stateToNodeMap.get(i).get(k)).getAllLeafNodes())
+								node_nr.add(n.getNr());
+							// sort the node numbers
+							Collections.sort(node_nr);	
+							
+							migRates = migRates + ",r";
+							migInd = migInd + ",i";
+							
+							for (Integer leaf_nr : node_nr){
+								migRates = migRates + "." + (leaf_nr+1);
+								migInd = migInd + "." + (leaf_nr+1);
+							}
+							
+							if (node_nr.size()==0){
+								migRates = migRates + "." + (stateToNodeMap.get(i).get(k)+1);
+								migInd = migInd + "." + (stateToNodeMap.get(i).get(k)+1);
+							}
+								
+							migRates = migRates + "=" + migration;
+							if (migration==0)
+								migInd = migInd + "=0";
+							else
+								migInd = migInd + "=1";
+							
+							isEmpty = false;
+						}
+					}
+				}
+			}
+		}		
+		migRates = migRates.replace("abcdef,", ",");
+		migInd = migInd.replace("abcdef,", ",");
+		
+		String returnString = new String();
+		returnString =  migInd + "" + migRates;
+
+		if (isEmpty)
+			return "";
+		else
+			return returnString;
+	}
+	
+
+	
 	protected void coalesce(int currTreeInterval) {
     	if (needsUpdate)
     		calculateIntervals();
@@ -772,7 +863,10 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     }
     
 	public double getNodeNe(int nr) {
-    	return NeInput.get().getArrayValue(nr);
+		if (NeMeanInput.get()!=null)
+			return NeMeanInput.get().getValue()*NeInput.get().getArrayValue(nr);
+		else
+			return NeInput.get().getArrayValue(nr);
 	}
 	
      

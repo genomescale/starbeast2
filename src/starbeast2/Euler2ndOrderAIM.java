@@ -150,7 +150,7 @@ public class Euler2ndOrderAIM {
 			approximateConnectedThirdDerivate(p, pDot, pDotDot, pDotDotDot, length);
 			duration = updateConnectedP(duration, p,  pDot, pDotDot, pDotDotDot, length - 1);
 			
-			if (iterations>1000000000){
+			if (iterations>1000000){
 				System.err.println("too many iterations, return negative infinity");
 				p[length-1] = Double.NEGATIVE_INFINITY;
 			}
