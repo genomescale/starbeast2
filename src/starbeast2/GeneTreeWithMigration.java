@@ -130,7 +130,10 @@ public class GeneTreeWithMigration extends Distribution {
     double [] linProbs_tmpdddt;
     
     public double calculateLogP() { 
-    	
+//    	if(treeInput.get().getID().contentEquals("Tree.t:chr3L-10165")){
+//    		System.out.println(treeInput.get());
+//        	System.exit(0);   		
+//    	}
     	
     	
 //    	System.out.println(popModelInput.get().speciesTree);
@@ -212,7 +215,6 @@ public class GeneTreeWithMigration extends Distribution {
 //        		System.out.println(nextSpeciesTime);
         	}else if (nextSpeciesTime >= nextGeneTime){
                 logP += coalesce(geneInterval, speciesInterval); 
-                
                 if (logP == Double.NEGATIVE_INFINITY){
                 	return logP;                
                 }
@@ -290,7 +292,6 @@ public class GeneTreeWithMigration extends Distribution {
 
 		if (popModelInput.get().indicatorInput.get()!=null){
 			if (inactiveStates<states){
-				//TODO error left in the Connected Values calcs!!
 				euler = new Euler2ndOrderAIM(multiplicator, migrationRates, indicators, isConnected, coalescentRates, multiplicator.length , states, 0.001, 0.2);
 				euler.calculateConnectedValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
 			}
@@ -298,7 +299,13 @@ public class GeneTreeWithMigration extends Distribution {
     		euler = new Euler2ndOrderAIM(multiplicator, migrationRates, coalescentRates, multiplicator.length , states, 0.001, 0.2);
 			euler.calculateValues(nextEventTime, linProbs_tmp, linProbs_tmpdt, linProbs_tmpddt, linProbs_tmpdddt, linProbs.length + 1);
 		}
+		
+		if (Double.isNaN(linProbs_tmp[linProbs.length])){
+			return Double.NEGATIVE_INFINITY;
+		}
+		
 		System.arraycopy(linProbs_tmp,0,linProbs,0,linProbs.length);
+
 		
 		return linProbs_tmp[linProbs.length] + logVal;
 	}
@@ -372,7 +379,8 @@ public class GeneTreeWithMigration extends Distribution {
     		System.err.println(treeInput.get());
 			System.err.println("daughter nodes not found, possible multifurcations in the starting tree");
 			throw new IllegalArgumentException();
-		}
+		}	
+    	
     	
     	//  get the indices of the daughter lineages
     	final int daughterIndex1 = activeLineages.indexOf(coalLines.get(0).getNr());
@@ -382,8 +390,8 @@ public class GeneTreeWithMigration extends Distribution {
 					+ coalLines.get(0).getNr() + " lin2 " + coalLines.get(1).getNr() + " parent " + parentLineage.get(0).getNr() 
 					+ "\n " + coalLines.get(1).getParent().getNr());
 			System.err.println("daughter lineages at coalescent event not found");
+			System.out.println(treeInput.get());
 			first = true;
-//			System.exit(0);
 			return Double.NEGATIVE_INFINITY;
 		}
 		double[] coalProb = new double[states];
@@ -402,6 +410,7 @@ public class GeneTreeWithMigration extends Distribution {
 				coalProb[k] = pairCoalRate;
 			}
 			else{
+				System.out.println("allalalala");
 				return Double.NEGATIVE_INFINITY;
 			}
         }

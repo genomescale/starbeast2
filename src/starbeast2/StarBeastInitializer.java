@@ -90,7 +90,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 calibrations.add((MRCAPrior) plugin);
             }
         }
-
+        
         boolean geneTreesNeedInit = true;
         if (newick != null) {
             Log.info.println("StarBEAST2: using initFromNewick to initialize species tree.");
@@ -120,7 +120,10 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             final List<Tree> geneTrees = genes.get();
             for (final Tree gtree : geneTrees) {
                 gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
+
             }
+            
+
 
             // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
             resetGeneTreeTipHeights();
@@ -237,6 +240,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     private void fullInit(final SpeciesTree speciesTree) {
         // Build gene trees from  alignments
+    	
 
         final Function muInput = this.muInput.get();
         final double mu =  (muInput != null )  ? muInput.getArrayValue() : 1;
