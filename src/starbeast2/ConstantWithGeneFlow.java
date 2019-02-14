@@ -40,10 +40,12 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     public Input<RealParameter> mInput  = new Input<>("m","relative migration rates between branches",Input.Validate.REQUIRED);
     public Input<BooleanParameter> indicatorInput  = new Input<>("indicator","indicator if rate is not 0");
     public Input<MigrationModel> migrationModelInput  = new Input<>("migrationModel","input of model of migration",Input.Validate.REQUIRED);
+    public Input<MigrationModel> maxMigrationModelInput  = new Input<>("maxMigrationRateModel","input of model of migration");
     public Input<Boolean> rateIsForwardInput  = new Input<>("rateIsForward","input of direction of migration",false);
    
     SpeciesTreeInterface speciesTree;
     private MigrationModel migModel;
+    private MigrationModel maxMigRatesModel;
     
     private boolean needsUpdate = true;
     private int leafNodeCount;
@@ -101,6 +103,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     @Override
     public void initAndValidate() {
     	migModel = migrationModelInput.get();
+    	if (maxMigrationModelInput.get()!=null)
+    		maxMigRatesModel = maxMigrationModelInput.get();
+    	
         speciesTree = migModel.speciesTreeInput.get();
         final int speciesNodeCount = speciesTree.getNodeCount();
         leafNodeCount = speciesTree.getLeafNodeCount(); // also the number of "tip" population sizes
@@ -1085,6 +1090,41 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		return null;
 	}
 
+	public boolean checkMaxRates(){
+		if (maxMigrationModelInput.get()==null)
+			return true;
+		
+    	for (int i = 0; i < stateToNodeMap.size(); i++){
+    		int[][] mRateMapping = new int[stateToNodeMap.get(i).size()][stateToNodeMap.get(i).size()];
+    		for (int a = 0; a < mRateMapping.length; a++){
+    			for (int b = 0; b < mRateMapping.length; b++){
+    				for (int k = 0; k< migrationMap.size(); k++){
+    					if (migrationMap.get(k)[0]==stateToNodeMap.get(i).get(a) 
+    							&& migrationMap.get(k)[1]==stateToNodeMap.get(i).get(b)){
+    						mRateMapping[a][b] = k;
+    					}
+    				}
+    			}
+    		}
+    		
+    		// check if rates are valid (all are below the maximal rate
+    		DoubleArrayForList migration_array = new DoubleArrayForList(mRateMapping.length);
+        	for (int a = 0; a < mRateMapping.length; a++){
+    			for (int b = 0; b < mRateMapping.length; b++){
+    				if (a!=b){
+    					double migRate = migModel.getMigration(stateToNodeMap.get(i).get(a) , stateToNodeMap.get(i).get(b))
+    							* mInput.get().getArrayValue(mRateMapping[a][b]);
+    					double maxMigRate = maxMigRatesModel.getMigration(stateToNodeMap.get(i).get(a) , stateToNodeMap.get(i).get(b));
+    					if (migRate>maxMigRate){
+    						return false;
+    					}
+    					
+    				}
+    			}
+    		}   
+    	}
+    	return true;
+	}
 //	
 //    protected boolean intervalIsDirty(int i) {
 //        if (needsUpdate) {
