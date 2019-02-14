@@ -36,6 +36,7 @@ import java.util.*;
 		" as described in Mueller et. al.,2017. The Input rates are backwards in time migration rates" +
 		" and pairwise coalescent rates translating to 1/Ne for m=1 in the Wright Fisher model")
 @Citation("Nicola F. Müller, David A. Rasmussen, Tanja Stadler (2017)\n  The Structured Coalescent and its Approximations.\n  Mol Biol Evol 2017 msx186. doi: 10.1093/molbev/msx186")
+@Citation("Nicola Felix Mueller, Huw Ogilvie, Chi Zhang, Alexei Drummond, Tanja Stadler (2018)\n  Inference of species histories in the presence of gene flow.\n  BioRxiv 348391; doi: https://doi.org/10.1101/348391")
 public class GeneTreeWithMigration extends Distribution {
     public Input<Tree> treeInput = new Input<>("tree", "The gene tree.", Validate.REQUIRED);
     public Input<Double> ploidyInput = new Input<>("ploidy", "Ploidy (copy number) for this gene, typically a whole number or half (default is 4).", 4.0);
@@ -130,6 +131,9 @@ public class GeneTreeWithMigration extends Distribution {
     double [] linProbs_tmpdddt;
     
     public double calculateLogP() { 
+    	if (!popModelInput.get().checkMaxRates())
+    		return Double.NEGATIVE_INFINITY;
+    	
 //    	if(treeInput.get().getID().contentEquals("Tree.t:chr3L-10165")){
 //    		System.out.println(treeInput.get());
 //        	System.exit(0);   		
@@ -141,6 +145,8 @@ public class GeneTreeWithMigration extends Distribution {
 //    	popModelInput.get().calculateIntervals();
     	recalculateLogP = false;
 		calculateIntervals();
+		
+		
     	
         // Set up ArrayLists for the indices of active lineages and the lineage state probabilities
         activeLineages = new ArrayList<Integer>(); 
@@ -264,28 +270,10 @@ public class GeneTreeWithMigration extends Distribution {
 					logVal -= nextEventTime*coalescentRates[j]* nrLins[j]*(nrLins[j]-1)/2;
 				}
 			}
-		}
-//		System.out.println("start " + states + " " + multiplicator.length + " " + Arrays.toString(isConnected));
-//		for (int a = 0; a < migrationRates.length; a++)
-//			System.out.println(Arrays.toString(migrationRates[a]));
-//		System.out.println(Arrays.toString(linProbs));
-			
+		}			
 
 		double[] coaltmp = new double[coalescentRates.length];
 		System.arraycopy(coalescentRates,0,coaltmp,0,coalescentRates.length);
-//		for (int j = 0; j < states; j++){
-//			if (!isConnected[j]){
-//				coaltmp[j] = 0.0;
-//			}
-//		}
-//		if (hasIndicators){
-//			if (inactiveStates>0){
-//				System.out.println(Arrays.toString(coalescentRates));
-//				System.out.println(Arrays.toString(coaltmp));
-//			}
-//		}
-//		for (int a = 0; a < migrationRates.length; a++)
-//			System.out.println(Arrays.toString(migrationRates[a]));
 		
 		System.arraycopy(linProbs,0,linProbs_tmp,0,linProbs.length);
 		linProbs_tmp[linProbs.length] = 0;
@@ -614,107 +602,8 @@ public class GeneTreeWithMigration extends Distribution {
 //    	System.out.println("linProbs after speciation " + Arrays.toString(linProbs));
     	
    }
-        
-    private void storeNode(int storingInterval, double[] storeLinProbs,
-    		int[] storeMultiplicator, double probability, int storeSpeciesInterval,
-    		ArrayList<Integer> storeActiveLineages, ArrayList<Integer> storeSampleState){    	
-    	
-//    	coalLinProbs[storingInterval] = Arrays.copyOf(storeLinProbs, storeLinProbs.length);
-//    	coalMultiplicator[storingInterval] = Arrays.copyOf(storeMultiplicator, storeMultiplicator.length);
-//    	coalLogP[storingInterval] = probability;		
-//    	coalSpeciesInterval[storingInterval] = storeSpeciesInterval;   	
-//   	
-//    	// copy the array lists
-//    	ArrayList<Integer> tmp_activeLins = new ArrayList<>(storeActiveLineages);
-//    	ArrayList<Integer> tmp_sampleState = new ArrayList<>(storeSampleState);
-//    	coalActiveLineages.set(storingInterval, tmp_activeLins);
-//    	coalSampleState.set(storingInterval, tmp_sampleState);
-    }
-        
-    private int restoreNode(int restoringInterval){   
-//    	System.out.println(restoringInterval);
-//    	linProbs = Arrays.copyOf(coalLinProbs[restoringInterval], coalLinProbs[restoringInterval].length);
-//    	multiplicator = Arrays.copyOf(coalMultiplicator[restoringInterval], coalMultiplicator[restoringInterval].length);
-//    	logP = coalLogP[restoringInterval];    	
-//    	activeLineages = new ArrayList<>(coalActiveLineages.get(restoringInterval));
-//    	sampleState = new ArrayList<>(coalSampleState.get(restoringInterval));
-//    	
-    	return 0;
-//    	return coalSpeciesInterval[restoringInterval];
-    }
-    
-    @Override
-	public void store(){
-    	// store the intermediate results
-//    	storeLinProbs = new double[coalLinProbs.length][];
-//    	storeMultiplicator  = new int[coalMultiplicator.length][];
-//    	for (int i = 0; i < coalLinProbs.length; i++)
-//    		storeLinProbs[i] = Arrays.copyOf(coalLinProbs[i], coalLinProbs[i].length);
-//    	for (int i = 0; i < coalMultiplicator.length; i++)
-//    		storeMultiplicator[i] = Arrays.copyOf(coalMultiplicator[i], coalMultiplicator[i].length);
-//    	
-//        storeLogP = Arrays.copyOf(coalLogP, coalLogP.length);
-//        storeSpeciesInterval = Arrays.copyOf(coalSpeciesInterval, coalSpeciesInterval.length);
-//        
-//        
-//        storeActiveLineages = new ArrayList<>();
-//		for (int i= 0; i < coalActiveLineages.size(); i++){
-//			ArrayList<Integer> add = new ArrayList<>();
-//			for (int j = 0; j < coalActiveLineages.get(i).size(); j++)
-//				add.add(coalActiveLineages.get(i).get(j));
-//			storeActiveLineages.add(add);			
-//		}
-//		
-//		storeSampleState = new ArrayList<>();
-//		for (int i= 0; i < coalSampleState.size(); i++){
-//			ArrayList<Integer> add = new ArrayList<>();
-//			for (int j = 0; j < coalSampleState.get(i).size(); j++)
-//				add.add(coalSampleState.get(i).get(j));
-//			storeSampleState.add(add);			
-//		}        
-//        
-//        
-//        storedFirst = first;
-    	// store the 
-    	super.store();
-    }
-        
-    @Override
-	public void restore(){
-    	// store the intermediate results
-//    	coalLinProbs = Arrays.copyOf(storeLinProbs, storeLinProbs.length);
-//    	coalMultiplicator = Arrays.copyOf(storeMultiplicator, storeMultiplicator.length);
-//    	coalLogP = Arrays.copyOf(storeLogP, storeLogP.length);
-//    	coalSpeciesInterval = Arrays.copyOf(storeSpeciesInterval, storeSpeciesInterval.length);
-//    	coalStates = Arrays.copyOf(storeStates, storeStates.length);
-//    	coalActiveLineages = storeActiveLineages;
-//    	coalSampleState = storeSampleState;
-    	
-    	
-//    	coalActiveLineages = new ArrayList<>();
-//		for (int i= 0; i < storeActiveLineages.size(); i++){
-//			ArrayList<Integer> add = new ArrayList<>();
-//			for (int j = 0; j < storeActiveLineages.get(i).size(); j++)
-//				add.add(storeActiveLineages.get(i).get(j));
-//			coalActiveLineages.add(add);			
-//		}
-//		
-//		coalSampleState = new ArrayList<>();
-//		for (int i= 0; i < storeSampleState.size(); i++){
-//			ArrayList<Integer> add = new ArrayList<>();
-//			for (int j = 0; j < storeSampleState.get(i).size(); j++)
-//				add.add(storeSampleState.get(i).get(j));
-//			coalSampleState.add(add);			
-//		}        
-//
-//    	
-//    	
-//    	first = storedFirst;
-//    	calculateIntervals();
-    	// store the 
-    	super.restore();
-    }
-        
+            
+                
 	public String getType(){
    		return "state";    	
     }
@@ -814,18 +703,6 @@ public class GeneTreeWithMigration extends Distribution {
     
     protected boolean intervalIsDirty(int i) {
     	return true;
-    	
-    	//TODO change again
-//    	Node node = treeInput.get().getNode(i);
-//    	if (node.isRoot()){
-//    		return false;
-//    	}else{
-//    		if(node.getParent().isDirty()>0)
-//    			return true;
-//    		else
-//    			return false;
-//    		
-//    	}
     }    
 
     

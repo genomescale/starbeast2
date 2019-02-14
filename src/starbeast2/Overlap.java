@@ -32,8 +32,6 @@ public class Overlap extends MigrationModel {
 					}
 				}
 			}
-				
-			
 			hasExcluded = true;
 		}
 	}
