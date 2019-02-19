@@ -36,7 +36,7 @@ import java.util.*;
 @Citation("Nicola F. Müller, Huw A. Ogilvie, Chi Zhang, Alexei J. Drummond and Tanja Stadler(2018)\n  Inference of species histories in the presence of gene flow.\n  bioRxiv doi: 10.1101/348391")
 public class ConstantWithGeneFlow extends CalculationNode implements PopulationModel {
     public Input<RealParameter> NeInput = new Input<RealParameter>("Ne","contains the Ne of each branch",Input.Validate.REQUIRED);   
-    public Input<RealParameter> NeMeanInput = new Input<RealParameter>("NeMean","contains the Ne of each branch");   
+    public Input<RealParameter> NeMeanInput = new Input<RealParameter>("NeMean","contains the Ne of each branch",Input.Validate.OPTIONAL);   
     public Input<RealParameter> mInput  = new Input<>("m","relative migration rates between branches",Input.Validate.REQUIRED);
     public Input<BooleanParameter> indicatorInput  = new Input<>("indicator","indicator if rate is not 0");
     public Input<MigrationModel> migrationModelInput  = new Input<>("migrationModel","input of model of migration",Input.Validate.REQUIRED);

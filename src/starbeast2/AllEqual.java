@@ -9,7 +9,7 @@ import beast.evolution.tree.Node;
 
 public class AllEqual extends MigrationModel {	
 
-    public Input<RealParameter> effectiveMigrantsInput  = new Input<>("effectiveMigrants","absolute migration rates",Input.Validate.REQUIRED);
+    public Input<RealParameter> effectiveMigrantsInput  = new Input<>("effectiveMigrants","absolute migration rates",Input.Validate.OPTIONAL);
 
     public Input<String> excludeInput = new Input<>("exclude", "nodes with no migration");
 
@@ -17,7 +17,7 @@ public class AllEqual extends MigrationModel {
     private ArrayList<Integer> exclNode;
     
 	@Override
-	public void initAndValidate() {
+	public void initAndValidate() {		
 		if (excludeInput.get()!=null){
 			exclNode = new ArrayList<Integer>();
 			String[] splitStr = excludeInput.get().split("\\s+");
@@ -68,13 +68,18 @@ public class AllEqual extends MigrationModel {
 				return 0.0;
 				
 		}		
-		
-		return effectiveMigrantsInput.get().getValue(); 		
+		if (effectiveMigrantsInput.get()==null)
+			return 1.0;
+		else
+			return effectiveMigrantsInput.get().getValue(); 		
 	}
 
 	@Override
 	public double getEM() {
-		return effectiveMigrantsInput.get().getValue();
+		if (effectiveMigrantsInput.get()==null)
+			return 1.0;
+		else
+			return effectiveMigrantsInput.get().getValue();
 	}	
 		
 }

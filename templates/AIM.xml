@@ -103,7 +103,7 @@
 
 		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='coordinatedUniform.t:Species']/speciesTree/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
+		<!-- <panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/> -->
 		<!-- <mergepoint id="aux-tipdates-panels"/> -->
 
 		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
@@ -159,7 +159,7 @@
 			<plugin id="TreeHeight.t:$(n)" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:$(n)"/>
 
 			<prior id="MutationRatePrior.s:$(n)" x="@mutationRate.s:$(n)">
-				<distr spec="OneOnX"/>
+				<distr spec="beast.math.distributions.Uniform"/>
 			</prior>
 
 			<prior id="GammaShapePrior.s:$(n)" x="@gammaShape.s:$(n)">
@@ -348,7 +348,7 @@
 			<stateNode idref="popSizes.Species"/>
 			<stateNode idref="migRates.Species"/>
 			<stateNode idref="migIndicators.Species"/>
-			<stateNode idref="migMean.Species"/>
+			<!-- <stateNode idref="migMean.Species"/> -->
 			<stateNode idref="popMean.Species"/>
 			<stateNode idref="speciationRate.t:Species"/>
 		</state>
@@ -364,25 +364,23 @@
 					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
 				</distribution>
 				<distribution id="popSizesPrior.Species" spec="beast.math.distributions.Prior" x="@popSizes.Species">
-					<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true" S="0.25">
-						<M spec="parameter.RealParameter" id="popMean.Species" value="1.0" lower="0.0" upper="2.0" estimate="true"/>
+					<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+						<M id="popMean.mean" spec="parameter.RealParameter" value="1.0" estimate="false"/>
+						<S id="popMean.variance" spec="parameter.RealParameter" value="0.25" estimate="false"/>
 					</distr>
 				</distribution>
 				<distribution id="popMeanPrior.Species" spec="beast.math.distributions.Prior" x="@popMean.Species">
 					<distr spec="beast.math.distributions.OneOnX"/>
 				</distribution>
 				<distribution id="migRatesPrior.Species" spec="beast.math.distributions.Prior" x="@migRates.Species">
-					<distr spec="beast.math.distributions.Exponential"/>
+					<distr spec="beast.math.distributions.LogNormalDistributionModel" M="1.0" S="1.0" meanInRealSpace="true"/>
 				</distribution>
-				<distribution id="migMeanPrior.Species" spec="beast.math.distributions.Prior" x="@migMean.Species">
-					<distr spec="beast.math.distributions.Exponential" mean="0.2"/>
-				</distribution>
+				<!-- <distribution id="migMeanPrior.Species" spec="beast.math.distributions.Prior" x="@migMean.Species">
+					<distr spec="beast.math.distributions.OneOnX"/>
+				</distribution> -->
 				<distribution id="migIndicatorSumPrior.Species" spec="beast.math.distributions.Prior">
 					<x id="migIndicatorSum.Species" spec="beast.core.util.Sum" arg="@migIndicators.Species"/>
-					<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="8.0"/>
-				</distribution>
-				<distribution id="migIndicatorPrior.Species" spec="beast.math.distributions.Prior" x="@migIndicators.Species">
-					<distr spec="beast.math.distributions.Exponential" mean="0.339623"/>
+					<distr spec="beast.math.distributions.Poisson" lambda="0.693"/>
 				</distribution>
 				<mergepoint id="aux-priors"/>
 			</distribution>
@@ -392,19 +390,19 @@
 		</distribution>
 
 		<operator id="popSizesSwap.Species" parameter="@popSizes.Species" spec="starbeast2.RealCycle" k="2" optimise="false" weight="3.0"/>
-		<operator id="popSizesScale.Species" parameter="@popSizes.Species" scaleFactor="0.5" spec="ScaleOperator" weight="3.0"/>
+		<operator id="popSizesScale.Species" parameter="@popSizes.Species" scaleFactor="0.5" spec="ScaleOperator" weight="15.0"/>
 
-		<operator id="migRatesScale.Species" parameter="@migRates.Species" scaleFactor="0.5" spec="ScaleOperator" weight="6.0"/>
+		<operator id="migRatesScale.Species" parameter="@migRates.Species" scaleFactor="0.5" spec="ScaleOperator" weight="15.0"/>
 
-		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
-		<operator id="migMeanScale.Species" parameter="@migMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+		<operator id="popMeanScale.Species" parameter="@popMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="3.0"/>
+		<!-- <operator id="migMeanScale.Species" parameter="@migMean.Species" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/> -->
 
-		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.Species" weight="3.0"/>
+		<operator id="migIndicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@migIndicators.Species" weight="15.0"/>
 
-		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
-		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
+		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="1.0" speciesTree="@Tree.t:Species"/>
+		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="1.0" speciesTree="@Tree.t:Species"/>
 
-		<operator id="SubtreeSlide.t:Species" spec="SubtreeSlide" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:Species"/>
+		<operator id="SubtreeSlideAndSwap.t:Species" spec="starbeast2.SubtreeSlideAndSwap" Ne="@popSizes.Species" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:Species"/>
 		<operator id="WilsonBalding.t:Species" spec="WilsonBalding" weight="15.0" tree="@Tree.t:Species"/>
 		<operator id="Wide.t:Species" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:Species"/>
 		<operator id="Narrow.t:Species" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:Species"/>
@@ -414,9 +412,9 @@
 
 		<operator id="speciationRateScale.t:Species" spec="ScaleOperator" scaleFactor="0.5" weight="1.0" parameter="@speciationRate.t:Species"/>
 
-		<operator id="updownAll:Species" spec="UpDownOperator" scaleFactor="0.75" weight="6.0">
+		<operator id="updownAll:Species" spec="UpDownOperator" scaleFactor="0.75" weight="1.0">
 			<up idref="speciationRate.t:Species"/>
-			<down idref="popMean.Species"/>
+			<down idref="popSizes.Species"/>
 			<down idref="Tree.t:Species"/>
 		</operator>
 
@@ -429,7 +427,9 @@
 			<log idref="speciationRate.t:Species"/>
 			<log idref="YuleModel.t:Species"/>
 			<log idref="popMean.Species"/>
-			<log idref="migMean.Species"/>
+			<log idref="popSizes.Species"/>
+			<log idref="migRates.Species"/>
+			<log idref="migIndicatorSum.Species"/>
 			<log idref="migIndicators.Species"/>
 			<log id="TreeHeight.Species" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
 			<log id="TreeLength.Species" spec="starbeast2.TreeLengthLogger" tree="@Tree.t:Species"/>
@@ -448,13 +448,15 @@
 		</logger>
 
 		<init id="SBI" estimate="false" spec="starbeast2.StarBeastInitializer" speciesTree="@Tree.t:Species" birthRate="@speciationRate.t:Species">
-			<populationModel id="popModelAIM.Species" spec="starbeast2.ConstantWithGeneFlow">
+			<populationModel id="popModelAIM.Species" spec="starbeast2.ConstantWithGeneFlow" rateIsForward="true">
 				<Ne id="popSizes.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
 				<m id="migRates.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
+				<NeMean id="popMean.Species" spec="parameter.RealParameter" value="0.005" estimate="true"/>
 				<indicator id="migIndicators.Species" spec="parameter.BooleanParameter" value="false" estimate="true"/>
-				<migrationModel id="migModel.Species" spec="starbeast2.MinimalBranchLength" speciesTree="@Tree.t:Species" minimalBranchLength="0.00005">
-					<effectiveMigrants id="migMean.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
-				</migrationModel>
+				<migrationModel id="migModel.Species" spec="starbeast2.AllEqual" speciesTree="@Tree.t:Species"/>
+				<maxMigrationRateModel id="maxMigModel.Species" spec="starbeast2.Overlap" speciesTree="@Tree.t:Species">
+					<effectiveMigrants id="maxMigMean.Species" spec="parameter.RealParameter" value="1.0" estimate="true"/>
+				</maxMigrationRateModel>
 			</populationModel>
 		</init>
 	</run>

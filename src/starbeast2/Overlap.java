@@ -10,7 +10,7 @@ import beast.evolution.tree.Node;
 
 public class Overlap extends MigrationModel {
 	
-    public Input<RealParameter> effectiveMigrantsInput  = new Input<>("effectiveMigrants","absolute migration rates",Input.Validate.REQUIRED);
+    public Input<RealParameter> effectiveMigrantsInput  = new Input<>("effectiveMigrants","absolute migration rates",Input.Validate.OPTIONAL);
     public Input<Double> minimalBranchLengthInput  = new Input<>("minimalBranchLength","absolute migration rates", 0.0);
 
     public Input<String> excludeInput = new Input<>("exclude", "nodes with no migration");
@@ -76,8 +76,10 @@ public class Overlap extends MigrationModel {
 		double upper = Math.min(n1.getParent().getHeight(), n2.getParent().getHeight());
 
 		double b = Math.max(upper-lower, minimalBranchLengthInput.get());
-		
-		return effectiveMigrantsInput.get().getValue()/(b); 		
+		if (effectiveMigrantsInput.get()==null)
+			return 1.0/b;
+		else
+			return effectiveMigrantsInput.get().getValue()/(b); 		
 	}
 
 	@Override
