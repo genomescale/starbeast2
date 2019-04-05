@@ -49,7 +49,22 @@ public class NodeReheight2 extends Operator {
     public double proposal() {
         final Tree tree = treeInput.get();
         m_nodes = tree.getNodesAsArray();
-        final int nodeCount = tree.getNodeCount();
+
+        final int leafNodeCount = tree.getLeafNodeCount();
+        final int nodeCount = leafNodeCount + leafNodeCount - 1;
+
+        int trueInternalNodeCount = 0;
+        for (int i = leafNodeCount; i < nodeCount; i++) {
+            if (!m_nodes[i].isFake()) {
+                trueInternalNodeCount++;
+            }
+        }
+
+        // there are no binary nodes to change the height of
+        if (trueInternalNodeCount == 0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
         // randomly change left/right order
         tree.startEditing(this);  // we change the tree
         reorder(tree.getRoot());
