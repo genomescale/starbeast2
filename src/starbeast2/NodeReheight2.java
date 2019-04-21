@@ -18,8 +18,6 @@ public class NodeReheight2 extends Operator {
     public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
     public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
 
-    final private double window = 1.0;
-
     private int lastIndex;
     private int trueBifurcationCount;
     private Node[] canonicalOrder;
@@ -36,13 +34,14 @@ public class NodeReheight2 extends Operator {
 
     @Override
     public double proposal() {
-        final Node rootNode = treeInput.get().getRoot();
+        final SpeciesTree tree = treeInput.get();
+        final Node originalRoot = tree.getRoot();
 
         // chooseCanonicalOrder also fills in nodeHeights and trueBifurcations
         // the lastIndex will be the last and right-most node index
         lastIndex = -1;
         trueBifurcationCount = 0;
-        chooseCanonicalOrder(rootNode);
+        chooseCanonicalOrder(originalRoot);
 
         // no nodes can be changed by this operator
         if (trueBifurcationCount == 0) {
@@ -51,9 +50,9 @@ public class NodeReheight2 extends Operator {
 
         // pick a bifurcation at random and change the height
         final int chosenNode = trueBifurcations[Randomizer.nextInt(trueBifurcationCount)];
-        final double minHeight = Double.min(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
+        final double minHeight = Double.max(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
 
-        double newHeight = window * (Randomizer.nextDouble() - 0.5);
+        double newHeight = nodeHeights[chosenNode] + Randomizer.nextDouble() - 0.5;
         if (newHeight < minHeight) { // reflection
             newHeight = minHeight + minHeight - newHeight;
         }
@@ -61,13 +60,17 @@ public class NodeReheight2 extends Operator {
         nodeHeights[chosenNode] = newHeight;
         canonicalOrder[chosenNode].setHeight(newHeight);
 
-        rebuildTree(0, lastIndex);
+        final int rootIndex = rebuildTree(0, lastIndex);
+        if (canonicalOrder[rootIndex] != originalRoot) {
+            canonicalOrder[rootIndex].setParent(null);
+            tree.setRoot(canonicalOrder[rootIndex]);
+        }
 
-        int[] visitedCounts = new int[lastIndex + 1];
-        checkConsistency(rootNode, visitedCounts);
+        /* int[] visitedCounts = new int[lastIndex + 1];
+        checkConsistency(canonicalOrder[rootIndex], visitedCounts);
         for (int i = 0; i <= lastIndex; i++) {
             assert visitedCounts[i] == 1;
-        }
+        } */
 
         return 0.0;
     }
@@ -104,6 +107,7 @@ public class NodeReheight2 extends Operator {
         final int thisIndex = lastIndex;
 
         canonicalOrder[thisIndex] = node;
+        nodeHeights[thisIndex] = height;
 
         final double rightChildHeight = chooseCanonicalOrder(canonicalRight);
 
