@@ -14,17 +14,11 @@ final class SanityChecks {
             final double childHeight = childNode.getHeight();
             assert childNode.getParent() == node;
 
-            if (childNode.isLeaf()) {
-                // direct ancestor branches have zero height
-                // so equal height allowed in this case
-                assert childHeight <= nodeHeight;
-            } else{
-                if (childHeight >= nodeHeight) {
-                    System.out.println(node.toNewick());
-                }
-                assert childHeight < nodeHeight;
-                checkTreeSanity(childNode);
-            }
+            // direct ancestor branches have zero height
+            // so equal height allowed in this case
+            assert childHeight <= nodeHeight;
+
+            if (!childNode.isLeaf()) checkTreeSanity(childNode);
         }
 
         return true;

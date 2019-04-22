@@ -13,7 +13,7 @@ import java.util.List;
 
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
-public class NodeReheight2 extends Operator {
+public class SAMau1999 extends Operator {
     public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
     public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
     public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
