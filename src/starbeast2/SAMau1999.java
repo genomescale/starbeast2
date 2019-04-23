@@ -4,44 +4,50 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
-import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.ArrayList;
-import java.util.List;
+/**
+ * @author Huw Ogilvie
+ */
 
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
 public class SAMau1999 extends Operator {
-    public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
-    public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
-    public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
+    public final Input<Tree> treeInput = new Input<>("tree", "the tree", Validate.REQUIRED);
+    public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
 
-    private int lastIndex;
+    private int nextIndex;
+    private int nodeCount;
     private int trueBifurcationCount;
     private Node[] canonicalOrder;
     private int[] trueBifurcations;
     private double[] nodeHeights;
     private boolean superimposedAncestors;
+    private double window;
 
     @Override
     public void initAndValidate() {
-        final int nodeCount = treeInput.get().getNodeCount();
+        final Tree tree = treeInput.get();
+        nodeCount = tree.getNodeCount();
         canonicalOrder = new Node[nodeCount];
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
+        window = windowInput.get();
     }
 
+    /* This improves the proposal suggested by Mau (1999). It has been made compatible with sampled ancestors by
+    enforcing a minimum height and disallowing superimposed sampled ancestor nodes. */
     @Override
     public double proposal() {
-        final SpeciesTree tree = treeInput.get();
+        final Tree tree = treeInput.get();
         final Node originalRoot = tree.getRoot();
 
         // chooseCanonicalOrder also fills in nodeHeights and trueBifurcations
         // the lastIndex will be the last and right-most node index
-        lastIndex = -1;
         trueBifurcationCount = 0;
+        nextIndex = 0;
         chooseCanonicalOrder(originalRoot);
 
         // no nodes can be changed by this operator
@@ -51,10 +57,15 @@ public class SAMau1999 extends Operator {
 
         // pick a bifurcation at random and change the height
         final int chosenNode = trueBifurcations[Randomizer.nextInt(trueBifurcationCount)];
+        // as long as the height is above the tips (or sampled ancestors) immediately either side in the canonical
+        // order, the species tree seems buildable from the new times
         final double minHeight = Double.max(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
 
-        double newHeight = nodeHeights[chosenNode] + Randomizer.nextDouble() - 0.5;
-        if (newHeight < minHeight) { // reflection
+        final double heightDelta = window * (Randomizer.nextDouble() - 0.5);
+
+        // use reflection to avoid invalid heights
+        double newHeight = nodeHeights[chosenNode] + heightDelta;
+        if (newHeight < minHeight) {
             newHeight = minHeight + minHeight - newHeight;
         }
 
@@ -62,7 +73,7 @@ public class SAMau1999 extends Operator {
         canonicalOrder[chosenNode].setHeight(newHeight);
 
         superimposedAncestors = false;
-        final int rootIndex = rebuildTree(0, lastIndex);
+        final int rootIndex = rebuildTree(0, nodeCount - 1);
         if (superimposedAncestors) {
             return Double.NEGATIVE_INFINITY;
         }
@@ -73,8 +84,6 @@ public class SAMau1999 extends Operator {
             tree.setRoot(newRoot);
         }
 
-        assert checkVisitedCounts(tree);
-
         return 0.0;
     }
 
@@ -82,17 +91,6 @@ public class SAMau1999 extends Operator {
        a canonical order in the sense of Mau et al 1999. Also identify which nodes are true bifurcations
        (not fake nodes used for sampled ancestors) */
     private double chooseCanonicalOrder(final Node node) {
-        final double height = node.getHeight();
-
-        if (node.isLeaf()) {
-            lastIndex++;
-
-            canonicalOrder[lastIndex] = node;
-            nodeHeights[lastIndex] = height;
-
-            return height;
-        }
-
         Node canonicalLeft;
         Node canonicalRight;
 
@@ -104,27 +102,51 @@ public class SAMau1999 extends Operator {
             canonicalRight = node.getLeft();
         }
 
-        final double leftChildHeight = chooseCanonicalOrder(canonicalLeft);
+        double leftChildHeight;
+        if (canonicalLeft.isLeaf()) {
+            final int leftChildIndex = nextIndex;
+            nextIndex++;
 
-        lastIndex++;
-        final int thisIndex = lastIndex;
+            canonicalOrder[leftChildIndex] = canonicalLeft;
+
+            leftChildHeight = canonicalLeft.getHeight();
+            nodeHeights[leftChildIndex] = leftChildHeight;
+        } else {
+            leftChildHeight = chooseCanonicalOrder(canonicalLeft);
+        }
+
+        final int thisIndex = nextIndex;
+        nextIndex++;
 
         canonicalOrder[thisIndex] = node;
-        nodeHeights[thisIndex] = height;
 
-        final double rightChildHeight = chooseCanonicalOrder(canonicalRight);
+        final double thisHeight = node.getHeight();
+        nodeHeights[thisIndex] = thisHeight;
 
-        if (height != leftChildHeight && height != rightChildHeight) {
+        double rightChildHeight;
+        if (canonicalRight.isLeaf()) {
+            final int rightChildIndex = nextIndex;
+            nextIndex++;
+
+            canonicalOrder[rightChildIndex] = canonicalRight;
+
+            rightChildHeight = canonicalRight.getHeight();
+            nodeHeights[rightChildIndex] = rightChildHeight;
+        } else {
+            rightChildHeight = chooseCanonicalOrder(canonicalRight);
+        }
+
+        if (thisHeight > leftChildHeight && thisHeight > rightChildHeight) {
             trueBifurcations[trueBifurcationCount] = thisIndex;
             trueBifurcationCount++;
         }
 
-        return height;
+        return thisHeight;
     }
 
     /* from and to are inclusive */
     private int rebuildTree(final int from, final int to) {
-        double height = 0.0;
+        double thisHeight = 0.0;
         int nodeIndex = -1;
 
         /* Only check internal nodes, which are odd numbered (leaves are even numbered). Reject move if multiple
@@ -133,10 +155,10 @@ public class SAMau1999 extends Operator {
            matches the following behaviour of LeafToSampledAncestorJump (see lines 68-70):
            if (getOtherChild(parent, leaf).getHeight() >= leaf.getHeight()) return Double.NEGATIVE_INFINITY; */
         for (int i = from + 1; i < to; i = i + 2) {
-            if (nodeHeights[i] > height) {
-                height = nodeHeights[i];
+            if (nodeHeights[i] > thisHeight) {
+                thisHeight = nodeHeights[i];
                 nodeIndex = i;
-            } else if (nodeHeights[i] == height) {
+            } else if (nodeHeights[i] == thisHeight) {
                 superimposedAncestors = true;
             }
         }
@@ -162,32 +184,5 @@ public class SAMau1999 extends Operator {
         canonicalOrder[nodeIndex].setRight(canonicalOrder[rightNodeIndex]);
 
         return nodeIndex;
-    }
-
-    private boolean checkVisitedCounts(SpeciesTree tree) {
-        int[] visitedCounts = new int[lastIndex + 1];
-        recurseVisitedCounts(tree.getRoot(), visitedCounts);
-        for (int i = 0; i <= lastIndex; i++) {
-            if (visitedCounts[i] != 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void recurseVisitedCounts(Node node, int[] visitedCounts) {
-        visitedCounts[node.getNr()]++;
-        final List<Node> children = node.getChildren();
-        if (!node.isLeaf()) {
-            assert children.size() == 2;
-            final Node leftChild = children.get(0);
-            final Node rightChild = children.get(1);
-            assert leftChild.getParent() == node;
-            assert rightChild.getParent() == node;
-            assert leftChild.getHeight() <= node.getHeight();
-            assert rightChild.getHeight() <= node.getHeight();
-            recurseVisitedCounts(leftChild, visitedCounts);
-            recurseVisitedCounts(rightChild, visitedCounts);
-        }
     }
 }
