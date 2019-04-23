@@ -49,13 +49,13 @@ public class CoordinatedUniform extends CoordinatedOperator {
         final int nLeaves = speciesTree.getLeafNodeCount();
         final int nNodes = nLeaves + nLeaves - 1;
         final Node[] nodeArray = speciesTree.getNodesAsArray();
-        final List<Node> trueNonRootInternalNodes = new ArrayList<>();
+        final Node[] trueNonRootInternalNodes = new Node[nNodes];
 
         int trueNonRootInternalNodeCount = 0;
         for (int nodeIndex = nLeaves; nodeIndex < nNodes; nodeIndex++) {
             final Node node = nodeArray[nodeIndex];
             if (!(node.isFake() || node.isRoot())) {
-                trueNonRootInternalNodes.add(node);
+                trueNonRootInternalNodes[trueNonRootInternalNodeCount] = node;
                 trueNonRootInternalNodeCount++;
             }
         }
@@ -64,7 +64,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
             return Double.NEGATIVE_INFINITY;
         }
 
-        final Node speciesTreeNode = trueNonRootInternalNodes.get(Randomizer.nextInt(trueNonRootInternalNodeCount));
+        final Node speciesTreeNode = trueNonRootInternalNodes[Randomizer.nextInt(trueNonRootInternalNodeCount)];
 
         final double speciesTreeNodeHeight = speciesTreeNode.getHeight();
 
