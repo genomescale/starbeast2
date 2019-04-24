@@ -4,6 +4,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
@@ -17,6 +18,7 @@ import beast.util.Randomizer;
 public class SAMau1999 extends Operator {
     public final Input<Tree> treeInput = new Input<>("tree", "the tree", Validate.REQUIRED);
     public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
+    public final Input<RealParameter> originInput = new Input<RealParameter>("origin", "The time when the process started", (RealParameter) null);
 
     private int nextIndex;
     private int nodeCount;
@@ -26,6 +28,7 @@ public class SAMau1999 extends Operator {
     private double[] nodeHeights;
     private boolean superimposedAncestors;
     private double window;
+    private boolean originSpecified;
 
     @Override
     public void initAndValidate() {
@@ -35,6 +38,7 @@ public class SAMau1999 extends Operator {
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
         window = windowInput.get();
+        originSpecified = originInput.get() != null;
     }
 
     /* This improves the proposal suggested by Mau (1999). It has been made compatible with sampled ancestors by
@@ -43,6 +47,13 @@ public class SAMau1999 extends Operator {
     public double proposal() {
         final Tree tree = treeInput.get();
         final Node originalRoot = tree.getRoot();
+
+        double maxHeight;
+        if (originSpecified) {
+            maxHeight = originInput.get().getValue();
+        } else {
+            maxHeight = Double.POSITIVE_INFINITY;
+        }
 
         // chooseCanonicalOrder also fills in nodeHeights and trueBifurcations
         // the lastIndex will be the last and right-most node index
@@ -65,8 +76,13 @@ public class SAMau1999 extends Operator {
 
         // use reflection to avoid invalid heights
         double newHeight = nodeHeights[chosenNode] + heightDelta;
-        if (newHeight < minHeight) {
-            newHeight = minHeight + minHeight - newHeight;
+        while (newHeight < minHeight || newHeight > maxHeight) {
+            if (newHeight < minHeight) {
+                newHeight = minHeight + minHeight - newHeight;
+            }
+            if (newHeight > maxHeight) {
+                newHeight = maxHeight + maxHeight - newHeight;
+            }
         }
 
         nodeHeights[chosenNode] = newHeight;
