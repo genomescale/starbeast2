@@ -4,6 +4,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
@@ -19,9 +20,10 @@ import java.util.List;
         "then reconstructs the tree from node heights.")
 public class NodeReheight2 extends Operator {
     public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
-    public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED);
+    public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED); // left for compatibility with previous StarBEAST2 versions
     public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
     public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
+    public final Input<RealParameter> originInput = new Input<RealParameter>("origin", "The time when the process started", (RealParameter) null);
 
     private enum RelativePosition {LEFT, RIGHT, BOTH};
 
@@ -38,6 +40,7 @@ public class NodeReheight2 extends Operator {
     private boolean superimposedAncestors;
     private double maxHeight;
     private double window;
+    private boolean originSpecified;
 
     @Override
     public void initAndValidate() {
@@ -48,6 +51,7 @@ public class NodeReheight2 extends Operator {
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
         window = windowInput.get();
+        originSpecified = originInput.get() != null;
 
         final List<GeneTree> geneTrees = geneTreesInput.get();
         geneTreeCount = geneTrees.size();
@@ -122,7 +126,11 @@ public class NodeReheight2 extends Operator {
     }
 
     private void recalculateMaxHeight(final int centerIndex) {
-        maxHeight = Double.POSITIVE_INFINITY;
+        if (originSpecified) {
+            maxHeight = originInput.get().getValue();
+        } else {
+            maxHeight = Double.POSITIVE_INFINITY;
+        }
 
         final List<GeneTree> geneTrees = geneTreesInput.get();
         for (int i = 0; i < geneTreeCount; i++) {
