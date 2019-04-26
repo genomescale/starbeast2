@@ -269,7 +269,7 @@ public class NodeReheight2 extends Operator {
         /* Only check internal nodes, which are odd numbered (leaves are even numbered). If there are multiple highest
            internal nodes in the range, they are likely fake bifurcations, and connecting
            them will result in multiple sampled ancestors at the same point in time along the same lineage.
-           In this case we repeat changing the height of the chosen node until this no longer occurs.
+           In this case we reject the move.
            This is similar to the following behaviour of LeafToSampledAncestorJump (see lines 68-70):
            if (getOtherChild(parent, leaf).getHeight() >= leaf.getHeight()) return Double.NEGATIVE_INFINITY; */
         for (int i = from + 1; i < to; i = i + 2) {

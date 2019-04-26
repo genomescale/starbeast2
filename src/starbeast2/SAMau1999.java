@@ -6,6 +6,7 @@ import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
 
@@ -16,7 +17,7 @@ import beast.util.Randomizer;
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
 public class SAMau1999 extends Operator {
-    public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
+    public final Input<Tree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
     public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
     public final Input<RealParameter> originInput = new Input<RealParameter>("origin", "The time when the process started", (RealParameter) null);
 
@@ -35,8 +36,8 @@ public class SAMau1999 extends Operator {
 
     @Override
     public void initAndValidate() {
-        final SpeciesTree speciesTree = treeInput.get();
-        nodeCount = speciesTree.getNodeCount();
+        final Tree tree = treeInput.get();
+        nodeCount = tree.getNodeCount();
         canonicalOrder = new Node[nodeCount];
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
@@ -54,7 +55,7 @@ public class SAMau1999 extends Operator {
     sample the heights of nodes without maximum height constraints. */
     @Override
     public double proposal() {
-        final SpeciesTree tree = treeInput.get();
+        final Tree tree = treeInput.get();
         final Node originalRoot = tree.getRoot();
 
         // chooseCanonicalOrder also fills in nodeHeights and trueBifurcations
@@ -192,7 +193,7 @@ public class SAMau1999 extends Operator {
         /* Only check internal nodes, which are odd numbered (leaves are even numbered). If there are multiple highest
            internal nodes in the range, they are likely fake bifurcations, and connecting
            them will result in multiple sampled ancestors at the same point in time along the same lineage.
-           In this case we repeat changing the height of the chosen node until this no longer occurs.
+           In this case we reject the move.
            This is similar to the following behaviour of LeafToSampledAncestorJump (see lines 68-70):
            if (getOtherChild(parent, leaf).getHeight() >= leaf.getHeight()) return Double.NEGATIVE_INFINITY; */
         for (int i = from + 1; i < to; i = i + 2) {
