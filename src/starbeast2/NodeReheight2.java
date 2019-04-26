@@ -25,7 +25,7 @@ public class NodeReheight2 extends Operator {
     public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
     public final Input<RealParameter> originInput = new Input<RealParameter>("origin", "The time when the process started", (RealParameter) null);
 
-    private enum RelativePosition {LEFT, RIGHT, BOTH};
+    private enum RelativePosition {LEFT, RIGHT, BOTH}
 
     private int nextIndex;
     private int nodeCount;
@@ -37,6 +37,9 @@ public class NodeReheight2 extends Operator {
     private int[] canonicalMap;
     private int[] trueBifurcations;
     private double[] nodeHeights;
+    private Node[] leftChildren;
+    private Node[] rightChildren;
+    private Node[] parents;
     private boolean superimposedAncestors;
     private double maxHeight;
     private double window;
@@ -50,6 +53,9 @@ public class NodeReheight2 extends Operator {
         canonicalMap = new int[nodeCount];
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
+        leftChildren = new Node[nodeCount];
+        rightChildren = new Node[nodeCount];
+        parents = new Node[nodeCount];
         window = windowInput.get();
         originSpecified = originInput.get() != null;
 
@@ -86,16 +92,20 @@ public class NodeReheight2 extends Operator {
 
         // pick a bifurcation at random and change the height
         final int chosenNode = trueBifurcations[Randomizer.nextInt(trueBifurcationCount)];
+        final double originalHeight = nodeHeights[chosenNode];
+
         // as long as the height is above the tips (or sampled ancestors) immediately either side in the canonical
-        // order, the species tree seems buildable from the new times
+        // order, the species tree seems buildable from the new times (except in the case of superimposed
+        // sampled ancestors, as discussed below)
         final double minHeight = Double.max(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
 
         recalculateMaxHeight(chosenNode);
 
-        final double heightDelta = window * (Randomizer.nextDouble() - 0.5);
-
-        // use reflection to avoid invalid heights
-        double newHeight = nodeHeights[chosenNode] + heightDelta;
+        // Use reflection to avoid invalid heights. Height returns to original position every 2 * (max - min) units,
+        // so modulus is used to avoid unnecessary looping if the difference between window size and the tree scale
+        // is extreme.
+        final double heightDelta = (window * (Randomizer.nextDouble() - 0.5)) % (2.0 * (maxHeight - minHeight));
+        double newHeight = originalHeight + heightDelta;
         while (newHeight < minHeight || newHeight > maxHeight) {
             if (newHeight < minHeight) {
                 newHeight = minHeight + minHeight - newHeight;
@@ -106,17 +116,28 @@ public class NodeReheight2 extends Operator {
         }
 
         nodeHeights[chosenNode] = newHeight;
-        canonicalOrder[chosenNode].setHeight(newHeight);
 
         superimposedAncestors = false;
         final int rootIndex = rebuildTree(0, nodeCount - 1);
+        parents[rootIndex] = null;
         if (superimposedAncestors) {
             return Double.NEGATIVE_INFINITY;
         }
 
+        // wait until after checking for superimposed ancestors before modifying tree
+        canonicalOrder[chosenNode].setHeight(newHeight);
+
+        for (int i = 0; i < nodeCount; i++) {
+            canonicalOrder[i].setParent(parents[i]);
+
+            if (i % 2 == 1) { // internal node
+                canonicalOrder[i].setLeft(leftChildren[i]);
+                canonicalOrder[i].setRight(rightChildren[i]);
+            }
+        }
+
         final Node newRoot = canonicalOrder[rootIndex];
         if (newRoot != originalRoot) {
-            newRoot.setParent(null);
             tree.setRoot(newRoot);
         }
 
@@ -245,10 +266,11 @@ public class NodeReheight2 extends Operator {
         double thisHeight = 0.0;
         int nodeIndex = -1;
 
-        /* Only check internal nodes, which are odd numbered (leaves are even numbered). Reject move if multiple
-           internal nodes in the range have the same height, as they are likely fake bifurcations, and connecting
-           them will result in multiple sampled ancestors at the same point in time along the same lineage. This
-           matches the following behaviour of LeafToSampledAncestorJump (see lines 68-70):
+        /* Only check internal nodes, which are odd numbered (leaves are even numbered). If there are multiple highest
+           internal nodes in the range, they are likely fake bifurcations, and connecting
+           them will result in multiple sampled ancestors at the same point in time along the same lineage.
+           In this case we repeat changing the height of the chosen node until this no longer occurs.
+           This is similar to the following behaviour of LeafToSampledAncestorJump (see lines 68-70):
            if (getOtherChild(parent, leaf).getHeight() >= leaf.getHeight()) return Double.NEGATIVE_INFINITY; */
         for (int i = from + 1; i < to; i = i + 2) {
             if (nodeHeights[i] > thisHeight) {
@@ -266,8 +288,8 @@ public class NodeReheight2 extends Operator {
             leftNodeIndex = rebuildTree(from, nodeIndex - 1);
         }
 
-        canonicalOrder[leftNodeIndex].setParent(canonicalOrder[nodeIndex]);
-        canonicalOrder[nodeIndex].setLeft(canonicalOrder[leftNodeIndex]);
+        parents[leftNodeIndex] = canonicalOrder[nodeIndex];
+        leftChildren[nodeIndex] = canonicalOrder[leftNodeIndex];
 
         int rightNodeIndex;
         if (nodeIndex + 1 == to) {
@@ -276,8 +298,8 @@ public class NodeReheight2 extends Operator {
             rightNodeIndex = rebuildTree(nodeIndex + 1, to);
         }
 
-        canonicalOrder[rightNodeIndex].setParent(canonicalOrder[nodeIndex]);
-        canonicalOrder[nodeIndex].setRight(canonicalOrder[rightNodeIndex]);
+        parents[rightNodeIndex] = canonicalOrder[nodeIndex];
+        rightChildren[nodeIndex] = canonicalOrder[rightNodeIndex];
 
         return nodeIndex;
     }
