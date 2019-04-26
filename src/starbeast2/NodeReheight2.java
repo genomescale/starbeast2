@@ -94,9 +94,9 @@ public class NodeReheight2 extends Operator {
         final int chosenNode = trueBifurcations[Randomizer.nextInt(trueBifurcationCount)];
         final double originalHeight = nodeHeights[chosenNode];
 
-        // as long as the height is above the tips (or sampled ancestors) immediately either side in the canonical
-        // order, the species tree seems buildable from the new times (except in the case of superimposed
-        // sampled ancestors, as discussed below)
+        // As long as the height is above the tips (or sampled ancestors) immediately either side in the canonical
+        // order, the species tree seems buildable from the new times. The exception is fake bifurcation nodes of equal
+        // height, which can result in the superimposition of those sampled ancestors.
         final double minHeight = Double.max(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
 
         recalculateMaxHeight(chosenNode);
@@ -136,9 +136,9 @@ public class NodeReheight2 extends Operator {
             }
         }
 
-        final Node newRoot = canonicalOrder[rootIndex];
         // for some reason if the root is not reset - even if the root node is the same node as before! - the
         // morphological likelihood will be radically wrong (idk why)
+        final Node newRoot = canonicalOrder[rootIndex];
         tree.setRoot(newRoot);
 
         assert checkVisitedCounts(tree);
