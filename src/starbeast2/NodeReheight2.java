@@ -137,9 +137,9 @@ public class NodeReheight2 extends Operator {
         }
 
         final Node newRoot = canonicalOrder[rootIndex];
-        if (newRoot != originalRoot) {
-            tree.setRoot(newRoot);
-        }
+        // for some reason if the root is not reset - even if the root node is the same node as before! - the
+        // morphological likelihood will be radically wrong (idk why)
+        tree.setRoot(newRoot);
 
         assert checkVisitedCounts(tree);
 
