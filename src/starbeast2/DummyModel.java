@@ -17,7 +17,7 @@ public class DummyModel extends CalculationNode implements PopulationModel {
 
     @Override
     public double branchLogP(int speciesTreeNodeNumber, Node speciesTreeNode, double ploidy, double[] branchCoalescentTimes, int branchLineageCount, int branchEventCount) {
-        return 0.0;
+        throw new RuntimeException("Cannot calculate the log probability of a branch for a single gene tree");
     }
 
     @Override
