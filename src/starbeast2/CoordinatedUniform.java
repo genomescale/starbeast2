@@ -1,5 +1,6 @@
 package starbeast2;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class CoordinatedUniform extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
-    TreeInterface speciesTree;
+    SpeciesTreeInterface speciesTree;
 
     @Override
     public void initAndValidate() {
@@ -43,17 +44,27 @@ public class CoordinatedUniform extends CoordinatedOperator {
     public double proposal() {
         final double fLogHastingsRatio = 0.0; // this move is uniform in both directions
 
-        final int nInternalNodes = speciesTree.getInternalNodeCount();
-        if (nInternalNodes == 1) { // if there are no internal nodes other than the root
-            return Double.NEGATIVE_INFINITY;
-        } // otherwise select a non-root internal node
-        Node speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
-
         // don't operate on sampled ancestor nodes
         // TODO make it work
-        while (speciesTreeNode.isRoot() || speciesTreeNode.isFake()) {
-            speciesTreeNode = speciesTree.getNode(nInternalNodes + 1 + Randomizer.nextInt(nInternalNodes));
+        final int nLeaves = speciesTree.getLeafNodeCount();
+        final int nNodes = nLeaves + nLeaves - 1;
+        final Node[] nodeArray = speciesTree.getNodesAsArray();
+        final Node[] trueNonRootInternalNodes = new Node[nNodes];
+
+        int trueNonRootInternalNodeCount = 0;
+        for (int nodeIndex = nLeaves; nodeIndex < nNodes; nodeIndex++) {
+            final Node node = nodeArray[nodeIndex];
+            if (!(node.isFake() || node.isRoot())) {
+                trueNonRootInternalNodes[trueNonRootInternalNodeCount] = node;
+                trueNonRootInternalNodeCount++;
+            }
         }
+
+        if (trueNonRootInternalNodeCount == 0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final Node speciesTreeNode = trueNonRootInternalNodes[Randomizer.nextInt(trueNonRootInternalNodeCount)];
 
         final double speciesTreeNodeHeight = speciesTreeNode.getHeight();
 

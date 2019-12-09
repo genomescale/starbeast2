@@ -5,12 +5,10 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.Operator;
 import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Huw Ogilvie
@@ -18,39 +16,29 @@ import java.util.List;
 
 @Description("Tree operator which randomly changes the height of a node, " +
         "then reconstructs the tree from node heights.")
-public class NodeReheight2 extends Operator {
-    public final Input<SpeciesTree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
-    public final Input<TaxonSet> taxonSetInput = new Input<>("taxonset", "taxon set describing species tree taxa and their gene trees", Validate.REQUIRED); // left for compatibility with previous StarBEAST2 versions
-    public final Input<List<GeneTree>> geneTreesInput = new Input<>("geneTree", "list of gene trees that constrain species tree movement", new ArrayList<>());
+public class SAMau1999 extends Operator {
+    public final Input<Tree> treeInput = new Input<>("tree", "the species tree", Validate.REQUIRED);
     public final Input<Double> windowInput = new Input<>("window", "size of the random walk window", 10.0);
     public final Input<RealParameter> originInput = new Input<RealParameter>("origin", "The time when the process started", (RealParameter) null);
 
-    private enum RelativePosition {LEFT, RIGHT, BOTH}
-
     private int nextIndex;
     private int nodeCount;
-    private int geneTreeCount;
-    private int[][] leafNodeMaps;
-    private RelativePosition[][] leafPositionArrays;
     private int trueBifurcationCount;
     private Node[] canonicalOrder;
-    private int[] canonicalMap;
     private int[] trueBifurcations;
     private double[] nodeHeights;
     private Node[] leftChildren;
     private Node[] rightChildren;
     private Node[] parents;
     private boolean superimposedAncestors;
-    private double maxHeight;
     private double window;
     private boolean originSpecified;
 
     @Override
     public void initAndValidate() {
-        final SpeciesTree speciesTree = treeInput.get();
-        nodeCount = speciesTree.getNodeCount();
+        final Tree tree = treeInput.get();
+        nodeCount = tree.getNodeCount();
         canonicalOrder = new Node[nodeCount];
-        canonicalMap = new int[nodeCount];
         trueBifurcations = new int[nodeCount];
         nodeHeights = new double[nodeCount];
         leftChildren = new Node[nodeCount];
@@ -58,15 +46,6 @@ public class NodeReheight2 extends Operator {
         parents = new Node[nodeCount];
         window = windowInput.get();
         originSpecified = originInput.get() != null;
-
-        final List<GeneTree> geneTrees = geneTreesInput.get();
-        geneTreeCount = geneTrees.size();
-        leafNodeMaps = new int[geneTreeCount][];
-        leafPositionArrays = new RelativePosition[geneTreeCount][];
-        for (int i = 0; i < geneTreeCount; i++) {
-            leafNodeMaps[i] = geneTrees.get(i).getTipNumberMap();
-            leafPositionArrays[i] = new RelativePosition[leafNodeMaps[i].length];
-        }
     }
 
     /* This proposal improves TREE SLIDE, developed by Joseph Heled. See section 3.4.1 of Heled's 2011 PhD thesis
@@ -76,7 +55,7 @@ public class NodeReheight2 extends Operator {
     sample the heights of nodes without maximum height constraints. */
     @Override
     public double proposal() {
-        final SpeciesTree tree = treeInput.get();
+        final Tree tree = treeInput.get();
         final Node originalRoot = tree.getRoot();
 
         // chooseCanonicalOrder also fills in nodeHeights and trueBifurcations
@@ -99,7 +78,12 @@ public class NodeReheight2 extends Operator {
         // height, which can result in the superimposition of those sampled ancestors.
         final double minHeight = Double.max(nodeHeights[chosenNode - 1], nodeHeights[chosenNode + 1]);
 
-        recalculateMaxHeight(chosenNode);
+        double maxHeight;
+        if (originSpecified) {
+            maxHeight = originInput.get().getValue();
+        } else {
+            maxHeight = Double.POSITIVE_INFINITY;
+        }
 
         // Use reflection to avoid invalid heights. Height returns to original position every 2 * (max - min) units,
         // so modulus is used to avoid unnecessary looping if the difference between window size and the tree scale
@@ -141,64 +125,7 @@ public class NodeReheight2 extends Operator {
         final Node newRoot = canonicalOrder[rootIndex];
         tree.setRoot(newRoot);
 
-        assert checkVisitedCounts(tree);
-
         return 0.0;
-    }
-
-    private void recalculateMaxHeight(final int centerIndex) {
-        if (originSpecified) {
-            maxHeight = originInput.get().getValue();
-        } else {
-            maxHeight = Double.POSITIVE_INFINITY;
-        }
-
-        final List<GeneTree> geneTrees = geneTreesInput.get();
-        for (int i = 0; i < geneTreeCount; i++) {
-            final int[] leafNodeMap = leafNodeMaps[i];
-            final RelativePosition[] leafPositions = leafPositionArrays[i];
-            for (int j = 0; j < leafNodeMap.length; j++) {
-                final int speciesNodeNumber = leafNodeMap[j];
-                final int speciesIndex = canonicalMap[speciesNodeNumber];
-                if (speciesIndex < centerIndex) {
-                    leafPositions[j] = RelativePosition.LEFT;
-                } else {
-                    leafPositions[j] = RelativePosition.RIGHT;
-                }
-            }
-
-            final Node geneTreeRoot = geneTrees.get(i).getRoot();
-            recurseMaxHeight(geneTreeRoot, leafPositions);
-        }
-    }
-
-    private RelativePosition recurseMaxHeight(final Node node, final RelativePosition[] leafPositions) {
-        final Node leftChild = node.getLeft();
-        final Node rightChild = node.getRight();
-
-        RelativePosition leftDescendantPosition;
-        if (leftChild.isLeaf()) {
-            leftDescendantPosition = leafPositions[leftChild.getNr()];
-        } else {
-            leftDescendantPosition = recurseMaxHeight(leftChild, leafPositions);
-        }
-
-        RelativePosition rightDescendantPosition;
-        if (rightChild.isLeaf()) {
-            rightDescendantPosition = leafPositions[rightChild.getNr()];
-        } else {
-            rightDescendantPosition = recurseMaxHeight(rightChild, leafPositions);
-        }
-
-        if (leftDescendantPosition == rightDescendantPosition) {
-            return leftDescendantPosition;
-        } else {
-            // if all descendants of one child are on the left, and all descendants of the other child are on the right
-            if (leftDescendantPosition != RelativePosition.BOTH && rightDescendantPosition != RelativePosition.BOTH) {
-                maxHeight = Double.min(maxHeight, node.getHeight());
-            }
-            return RelativePosition.BOTH;
-        }
     }
 
     /* Performs an in-order traversal of the species tree, randomly shuffling left and right nodes, to produce
@@ -221,7 +148,6 @@ public class NodeReheight2 extends Operator {
             final int leftChildIndex = nextIndex;
             nextIndex++;
 
-            canonicalMap[canonicalLeft.getNr()] = leftChildIndex;
             canonicalOrder[leftChildIndex] = canonicalLeft;
 
             leftChildHeight = canonicalLeft.getHeight();
@@ -233,7 +159,6 @@ public class NodeReheight2 extends Operator {
         final int thisIndex = nextIndex;
         nextIndex++;
 
-        canonicalMap[node.getNr()] = thisIndex;
         canonicalOrder[thisIndex] = node;
 
         final double thisHeight = node.getHeight();
@@ -244,7 +169,6 @@ public class NodeReheight2 extends Operator {
             final int rightChildIndex = nextIndex;
             nextIndex++;
 
-            canonicalMap[canonicalRight.getNr()] = rightChildIndex;
             canonicalOrder[rightChildIndex] = canonicalRight;
 
             rightChildHeight = canonicalRight.getHeight();
@@ -302,34 +226,5 @@ public class NodeReheight2 extends Operator {
         rightChildren[nodeIndex] = canonicalOrder[rightNodeIndex];
 
         return nodeIndex;
-    }
-
-    // for debugging, only called when assertions are enabled
-    private boolean checkVisitedCounts(SpeciesTree tree) {
-        int[] visitedCounts = new int[nodeCount];
-        recurseVisitedCounts(tree.getRoot(), visitedCounts);
-        for (int i = 0; i < nodeCount; i++) {
-            if (visitedCounts[i] != 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // for debugging, only called when assertions are enabled
-    private void recurseVisitedCounts(Node node, int[] visitedCounts) {
-        visitedCounts[node.getNr()]++;
-        final List<Node> children = node.getChildren();
-        if (!node.isLeaf()) {
-            assert children.size() == 2;
-            final Node leftChild = children.get(0);
-            final Node rightChild = children.get(1);
-            assert leftChild.getParent() == node;
-            assert rightChild.getParent() == node;
-            assert leftChild.getHeight() <= node.getHeight();
-            assert rightChild.getHeight() <= node.getHeight();
-            recurseVisitedCounts(leftChild, visitedCounts);
-            recurseVisitedCounts(rightChild, visitedCounts);
-        }
     }
 }
