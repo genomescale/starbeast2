@@ -74,6 +74,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	private ArrayList<DoubleArrayForList> storedMigrationRates;
 	private ArrayList<IntegerArrayForList> storedIndicators;
 	
+	private boolean migrationRatesValid = false;
+	private boolean storedMigrationRatesValid = false;
+	
 	
 
 	
@@ -327,7 +330,10 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
         if (indicatorInput.get()!=null)
         	checkConnections();
         
-        needsUpdate = false;
+    	precomputeMaxRates();
+
+    	needsUpdate = false;
+        
         
 
     }
@@ -893,6 +899,9 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 
 	    storedIntervals = new double[intervals.length];
 		System.arraycopy(intervals,0,storedIntervals,0,intervals.length);
+		
+		
+		storedMigrationRatesValid = migrationRatesValid;
 	    		
 		
 		
@@ -1052,6 +1061,8 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 //		System.out.println("");
 //		for (int i = 0; i < lineagesAdded.length; i++)
 //			System.out.println(lineagesAdded[i]);
+		
+		migrationRatesValid = storedMigrationRatesValid;
 
 
 		
@@ -1090,9 +1101,11 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		return null;
 	}
 
-	public boolean checkMaxRates(){
-		if (maxMigrationModelInput.get()==null)
-			return true;
+	public void precomputeMaxRates(){
+		if (maxMigrationModelInput.get()==null){
+			migrationRatesValid = true;
+			return;
+		}
 		
     	for (int i = 0; i < stateToNodeMap.size(); i++){
     		int[][] mRateMapping = new int[stateToNodeMap.get(i).size()][stateToNodeMap.get(i).size()];
@@ -1108,7 +1121,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     		}
     		
     		// check if rates are valid (all are below the maximal rate
-    		DoubleArrayForList migration_array = new DoubleArrayForList(mRateMapping.length);
+//    		DoubleArrayForList migration_array = new DoubleArrayForList(mRateMapping.length);
         	for (int a = 0; a < mRateMapping.length; a++){
     			for (int b = 0; b < mRateMapping.length; b++){
     				if (a!=b){
@@ -1116,15 +1129,21 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     							* mInput.get().getArrayValue(mRateMapping[a][b]);
     					double maxMigRate = maxMigRatesModel.getMigration(stateToNodeMap.get(i).get(a) , stateToNodeMap.get(i).get(b));
     					if (migRate>maxMigRate){
-    						return false;
+    						migrationRatesValid = false;
+    						return;
     					}
     					
     				}
     			}
     		}   
     	}
-    	return true;
+    	migrationRatesValid = true;
 	}
+	
+	public boolean checkMaxRates(){
+    	return migrationRatesValid;
+	}
+
 //	
 //    protected boolean intervalIsDirty(int i) {
 //        if (needsUpdate) {
