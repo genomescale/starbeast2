@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,9 @@ public class RankedCladeSystem {
     		}
     	}
     	
+    	// puts the node heights in the correct order, otherwise orderred according to nr
+    	Collections.sort(nodeHeights);
+    	    	
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
@@ -142,8 +146,6 @@ public class RankedCladeSystem {
     }
     
     private void collectAttributesForClade(RankedBitSet rbs, Node node, Set<String> attributeNames) {
-    	
-    	
         if (rbs.attributeValues == null) {
         	rbs.attributeValues = new ArrayList<>();
         }
@@ -446,7 +448,13 @@ public class RankedCladeSystem {
             final RankedTree rt = (RankedTree) o;
             
             for (RankedBitSet rbs :  rt.rankedSet) {
-            	if (rankedSet.indexOf(rbs)==-1)
+            	// compare all vs. all
+            	boolean equal=false;
+            	for (RankedBitSet rbs2 : rankedSet) {
+            		if (rbs.equals(rbs2))
+            			equal=true;
+            	}
+            	if (!equal)
             		return false;
             }
 
@@ -464,8 +472,7 @@ public class RankedCladeSystem {
         double credibility;
         Tree tree;
     }
-    
-
+ 
     public class RankedBitSet {
     	
         public RankedBitSet(BitSet bits, int rank, int nodeNr) {
@@ -488,6 +495,10 @@ public class RankedCladeSystem {
             // compare ranks
             if (rbs.rank!=rank)
             	return false;
+            
+            if (!bits.equals(rbs.bits))
+            	return false;
+            
 
             return !(bits != null ? !bits.equals(rbs.bits) : rbs.bits != null);
 

@@ -19,9 +19,12 @@ package starbeast2.aimannotator;
 import beast.app.treeannotator.CladeSystem;
 import beast.app.treeannotator.TreeAnnotator;
 import beast.app.treeannotator.TreeAnnotator.*;
+import beast.app.treeannotator.TreeAnnotator.TreeSet;
 import beast.core.util.Log;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import beast.util.NexusParser;
+import beast.util.TreeParser;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -34,11 +37,11 @@ import java.util.List;
 /** 
  * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
-public class AIMannotator extends TreeAnnotator {
+public class AIMannotator extends TreeAnnotator   {
 
     private enum SummaryStrategy { MEAN, MEDIAN }
 
-    private static class NetworkAnnotatorOptions {
+    private static class AIMAnnotatorOptions {
         File inFile;
         File outFile = new File("summary.tree");
         File geneFlowFile = new File("");
@@ -58,7 +61,7 @@ public class AIMannotator extends TreeAnnotator {
        }
     }
 
-    public AIMannotator(NetworkAnnotatorOptions options) throws IOException {
+    public AIMannotator(AIMAnnotatorOptions options) throws IOException {
     	// define which attributes to get
     	Set<String> attributeNames = new HashSet<>();
     	attributeNames.add("length");
@@ -104,7 +107,6 @@ public class AIMannotator extends TreeAnnotator {
 //	    	rankedCladeSystem.rankedTrees.get(0).tree.init(ps);
 	    	ps.println("#NEXUS");
 	    	ps.println("Begin trees;");
-
 	    	for (int i = 0; i < treeOrder.length; i++) {
 	    		if (rankedCladeSystem.rankedTrees.get(treeOrder[i]).credibility/totalTrees < options.minTreeSupport/100.0) {
 	    			break;
@@ -147,7 +149,7 @@ public class AIMannotator extends TreeAnnotator {
      * @param options options object to populate using GUI
      * @return true if options successfully collected, false otherwise
      */
-    private static boolean getOptionsGUI(NetworkAnnotatorOptions options) {
+    private static boolean getOptionsGUI(AIMAnnotatorOptions options) {
 
         boolean[] canceled = {false};
 
@@ -442,9 +444,8 @@ public class AIMannotator extends TreeAnnotator {
                     + "-burnin percentage       Choose _percentage_ of log to discard\n"
                     + "                         in order to remove burn-in period.\n"
                     + "                         (Default 10%)\n"
-                    + "-threshold percentage    Choose minimum posterior probability\n"
-                    + "                         for including conversion in summary.\n"
-                    + "                         (Default 50%)\n"
+                    + "-minTreeSupport percentage    Choose the minimum support a.\n"
+                    + "                         Tree has to have to be included (Default 0%)\n"
                     + "\n"
                     + "If no output file is specified, output is written to a file\n"
                     + "named 'summary.tree'.";
@@ -472,7 +473,7 @@ public class AIMannotator extends TreeAnnotator {
      * @param args command line arguments
      * @param options object to populate with options
      */
-    public static void getCLIOptions(String[] args, NetworkAnnotatorOptions options) {
+    public static void getCLIOptions(String[] args, AIMAnnotatorOptions options) {
         int i=0;
         while (args[i].startsWith("-")) {
             switch(args[i]) {
@@ -559,9 +560,9 @@ public class AIMannotator extends TreeAnnotator {
      * @param args command line arguments
      */
     public static void main(String[] args) {
-    	NetworkAnnotatorOptions options = new NetworkAnnotatorOptions();
+    	AIMAnnotatorOptions options = new AIMAnnotatorOptions();
 
-        if (args.length == 0) {
+    	if (args.length == 0) {
             // Retrieve options from GUI:
 
             try {
@@ -589,7 +590,6 @@ public class AIMannotator extends TreeAnnotator {
         // Run ACGAnnotator
         try {
             new AIMannotator(options);
-
         } catch (Exception e) {
             if (args.length == 0) {
                 JOptionPane.showMessageDialog(null, e.getMessage(),
@@ -604,4 +604,5 @@ public class AIMannotator extends TreeAnnotator {
             System.exit(1);
         }
     }
+
 }
