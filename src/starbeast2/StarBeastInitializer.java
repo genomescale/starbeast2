@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
@@ -119,8 +118,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
             final List<Tree> geneTrees = genes.get();
             for (final Tree gtree : geneTrees) {
-                gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
-
+                if (gtree instanceof beast.util.TreeParser) {
+                    boostGeneTreeInternalNodeHeights(gtree, speciesTree.getRoot().getHeight());
+                } else {
+                    gtree.makeCaterpillar(rootHeight, rootHeight / gtree.getInternalNodeCount(), true);
+                }
             }
             
 
@@ -150,6 +152,15 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         			}
         		}
         	}
+        }
+    }
+
+    private void boostGeneTreeInternalNodeHeights(Tree gtree, double boost) {
+        for (Node node: gtree.getNodesAsArray()) {
+            if (!node.isLeaf()) {
+                final double newHeight = node.getHeight() + boost;
+                node.setHeight(newHeight);
+            }
         }
     }
 
