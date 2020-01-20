@@ -78,7 +78,6 @@ public class SpeciesTreeLogger extends BEASTObject implements Loggable {
         PopulationModel populationModel = populationModelInput.get();
         // write out the log tree with meta data
         out.print("tree STATE_" + nSample + " = ");
-        tree.getRoot().sort();
         out.print(toNewick(tree.getRoot(), metadata, branchRateModel, populationModel));
         //out.print(tree.getRoot().toShortNewick(false));
         out.print(";");

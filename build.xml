@@ -22,6 +22,10 @@
 	<property name="MascotClasspath" location="${MascotPath}/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
 
+	<!-- compile with java 8 so that more users can run StarBEAST2 -->
+	<property name="JDK1.8.dir" location="/usr/lib/jvm/java-8-openjdk-amd64" />
+	<property name="javac1.8" location="${JDK1.8.dir}/bin/javac" />
+
     <import file="${beast2path}/build.xml" />
     <import file="${SAPath}/build.xml" />
     <import file="${MMPath}/build.xml" />
@@ -79,7 +83,8 @@
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="256m"
-			   includeAntRuntime='false'>
+			   includeAntRuntime='false'
+			   executable="${javac1.8}">
 			<include name="**/**" />
 		</javac>
 		<echo message="Successfully compiled." />
