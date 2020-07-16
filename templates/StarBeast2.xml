@@ -97,7 +97,8 @@
 			starbeast2.RandomLocalRates.rates,
 			starbeast2.RandomLocalRates.noCache,
 			starbeast2.ConstantPopulations.speciesTree,
-			starbeast2.LinearWithConstantRoot.speciesTree"
+			starbeast2.LinearWithConstantRoot.speciesTree,
+			starbeast2.UniformPopulations.speciesTree"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
 		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.evolution.alignment.Alignment"/>

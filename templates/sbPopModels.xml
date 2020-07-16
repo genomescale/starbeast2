@@ -165,5 +165,33 @@
 			<connect srcID="topPopShape.$(n)" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.$(n)) and topPopShape.Species/estimate=true"/>
 			<connect srcID="lwcrPopScale.$(n)" targetID="tracelog" inputName="log" if="inposterior(lwcrPopModel.$(n)) and lwcrPopScale.Species/estimate=true"/>
 		</subtemplate>
+
+		<!-- Joint estimation of a single universal effective population size -->
+		<subtemplate id="UniformPopulations" class="starbeast2.UniformPopulations" mainid="uniformPopModel.$(n)">
+<![CDATA[
+			<plugin id="uniformPopModel.$(n)" spec="starbeast2.UniformPopulations" speciesTree="@Tree.t:Species">
+				<parameter name="universalSize" id="universalPopSize.$(n)" lower="0.0" value="1.0" upper="2.0" estimate="true"/>
+			</plugin>
+
+			<distribution id="universalPopSizePrior.$(n)" spec="beast.math.distributions.Prior" x="@universalPopSize.$(n)">
+				<distr spec="beast.math.distributions.OneOnX"/>
+			</distribution>
+
+			<operator id="universalPopSizeScale.$(n)" parameter="@universalPopSize.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
+]]>
+
+			<connect srcID="uniformPopModel.$(n)" targetID="popModelBridge.$(n)" inputName="childModel" if="inposterior(uniformPopModel.$(n))"/>
+			<connect srcID="uniformPopModel.$(n)" targetID="SpeciesTreeLoggerX" inputName="populationmodel" if="inposterior(uniformPopModel.$(n))"/>
+
+			<connect srcID="universalPopSize.$(n)" targetID="state" inputName="stateNode" if="inposterior(uniformPopModel.$(n)) and universalPopSize.Species/estimate=true"/>
+
+			<connect srcID="universalPopSizePrior.$(n)" targetID="prior" inputName="distribution" if="inposterior(uniformPopModel.$(n)) and universalPopSize.Species/estimate=true"/>
+
+			<connect srcID="universalPopSizeScale.$(n)" targetID="mcmc" inputName="operator" if="inposterior(uniformPopModel.$(n)) and universalPopSize.Species/estimate=true"/>
+
+			<connect srcID="universalPopSize.$(n)" targetID="updownAll:Species" inputName="down" if="inposterior(uniformPopModel.$(n)) and universalPopSize.Species/estimate=true"/>
+
+			<connect srcID="universalPopSize.$(n)" targetID="tracelog" inputName="log" if="inposterior(uniformPopModel.$(n)) and universalPopSize.Species/estimate=true"/>
+		</subtemplate>
 	</mergewith>
 </beast>
