@@ -60,7 +60,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 	private ArrayList<ArrayList<Integer>> storedStateToNodeMap;
 	
 	// maps branches migration rates
-	private ArrayList<Integer[]> migrationMap;
+	public ArrayList<Integer[]> migrationMap;
 	private ArrayList<Integer[]> storedMigrationMap;
 	
 	//  get the indices of the daughter lineages at the last coalescent event
@@ -283,7 +283,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     }
     
     @SuppressWarnings({ "unchecked", "deprecation" })
-    private void calculateIntervals() {
+	public void calculateIntervals() {
     	Node[] speciesNodesTmp = speciesTree.getNodesAsArray();
     	Node[] speciesNodes = new Node[speciesNodesTmp.length];
     	// make a deep copy of every node
@@ -339,7 +339,7 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
     }
     
 	// builds the map from state to node number
-    private void stateToNodeMap(){
+    public void stateToNodeMap(){
     	stateToNodeMap = new ArrayList<>();
     	ArrayList<Integer> activeStates = new ArrayList<>();
 	
@@ -882,7 +882,6 @@ public class ConstantWithGeneFlow extends CalculationNode implements PopulationM
 		else
 			return NeInput.get().getArrayValue(nr);
 	}
-	
      
 	protected int getSpeciesState(int currentInterval, int state){
     	if (needsUpdate)

@@ -7,7 +7,7 @@ import beast.evolution.tree.Node;
 // unambiguous, so only identical nodes are considered equal
 // if height is equal, consider distance from root (depth)
 // if depth is equal, consider assigned node number
-final class NodeHeightComparator implements Comparator<Node> {
+public final class NodeHeightComparator implements Comparator<Node> {
     final int lessThan = -1;
     final int greaterThan = 1;
 

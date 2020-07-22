@@ -47,7 +47,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package starbeast2;
+package starbeast2.aimoperator;
 
 
 import java.text.DecimalFormat;
@@ -73,7 +73,7 @@ import beast.util.Randomizer;
         "If it moves up, it can exceed the root and become a new root. " +
         "If it moves down, it may need to make a choice which branch to " +
         "slide down into.")
-public class SubtreeSlideAndSwap extends TreeOperator {
+public class SubtreeSlideAndSwap extends RankingAwareOperator {
 	
 	final public Input<RealParameter> NeInput = new Input<>("Ne", "input of ne's of the species", Validate.REQUIRED);
     final public Input<Double> sizeInput = new Input<>("size", "size of the slide, default 1.0", 1.0);
@@ -86,7 +86,6 @@ public class SubtreeSlideAndSwap extends TreeOperator {
     private double limit;
     
     Parameter<?> Ne;
-
 
     @Override
     public void initAndValidate() {
@@ -101,7 +100,7 @@ public class SubtreeSlideAndSwap extends TreeOperator {
      * @return log of Hastings Ratio, or Double.NEGATIVE_INFINITY if proposal should not be accepted *
      */
     @Override
-    public double proposal() {
+    public double treeProposal() {
         final Tree tree = treeInput.get(this);
 
         double logq;
