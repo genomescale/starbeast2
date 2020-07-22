@@ -75,11 +75,13 @@
 		<!-- Compile the java code from ${srcstarbeast2} into ${buildstarbeast2} /bin -->
 		<!-- <javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath" debug="true" -->
 		<javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath"
+			   source="1.8"
+			   target="1.8"
 			   debug="true"
 		       fork="true"
 		       memoryinitialsize="256m"
-		       memorymaximumsize="256m"
-			   includeAntRuntime='false'>
+		       memorymaximumsize="1024m"
+			   includeAntRuntime="false">
 			<include name="**/**" />
 		</javac>
 		<echo message="Successfully compiled." />

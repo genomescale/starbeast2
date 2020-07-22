@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
@@ -90,7 +89,16 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                 calibrations.add((MRCAPrior) plugin);
             }
         }
-        
+
+        final List<Tree> geneTrees = genes.get();
+        boolean userSpecifiedGeneTrees = false;
+        for (final Tree gtree : geneTrees) {
+            if (gtree instanceof beast.util.TreeParser) {
+                userSpecifiedGeneTrees = true;
+                break;
+            }
+        }
+
         boolean geneTreesNeedInit = true;
         if (newick != null) {
             Log.info.println("StarBEAST2: using initFromNewick to initialize species tree.");
@@ -107,6 +115,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         } else if (speciesTree.hasDateTrait()) {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by tip dates).");
             randomInit(speciesTree, calibrations);
+        } else if (userSpecifiedGeneTrees) {
+            Log.info.println("StarBEAST2: using randomInit to initialize species tree (required by user-specified gene trees).");
+            randomInit(speciesTree, calibrations);
         } else if (method == Method.POINT) {
             Log.info.println("StarBEAST2: using fullInit to initialize all trees.");
             fullInit(speciesTree);
@@ -115,15 +126,17 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
         if (geneTreesNeedInit) {
             final double rootHeight = speciesTree.getRoot().getHeight();
-            Log.info.println(String.format("StarBEAST2: using randomInitGeneTrees to initialize gene trees (%f).", rootHeight));
+            Log.info.println(String.format("StarBEAST2: initializing gene trees with random or user-specified topologies (%f).", rootHeight));
 
-            final List<Tree> geneTrees = genes.get();
             for (final Tree gtree : geneTrees) {
-                gtree.makeCaterpillar(rootHeight, rootHeight/gtree.getInternalNodeCount(), true);
-
+                if (gtree instanceof beast.util.TreeParser) {
+                    /* add the height of the species root node to all gene tree node height, to
+                    ensure compatibility of the trees while preserving user-specified topologies */
+                    boostGeneTreeInternalNodeHeights(gtree, rootHeight);
+                } else {
+                    gtree.makeCaterpillar(rootHeight, rootHeight / gtree.getInternalNodeCount(), true);
+                }
             }
-            
-
 
             // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
             resetGeneTreeTipHeights();
@@ -150,6 +163,15 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         			}
         		}
         	}
+        }
+    }
+
+    private void boostGeneTreeInternalNodeHeights(Tree gtree, double boost) {
+        for (Node node: gtree.getNodesAsArray()) {
+            if (!node.isLeaf()) {
+                final double newHeight = node.getHeight() + boost;
+                node.setHeight(newHeight);
+            }
         }
     }
 

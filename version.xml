@@ -1,4 +1,4 @@
-<addon name="starbeast2" version="0.15.5">
+<addon name="starbeast2" version="0.15.7">
 	<depends on="beast2" atleast="2.5.0"/>
 	<depends on="SA" atleast="2.0.0"/>
 	<depends on="MM" atleast="1.1.0"/>
