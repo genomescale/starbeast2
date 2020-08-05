@@ -5,13 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import beast.app.treeannotator.CladeSystem;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.math.statistic.DiscreteStatistics;
@@ -20,16 +16,16 @@ import beast.math.statistic.DiscreteStatistics;
  * extracted from TreeAnnotator
  */
 //TODO merge with CladeSet?
-public class RankedCladeSystem {
+public class UnrankedCladeSystem {
 	private boolean processSA = true;
 
-    protected List<RankedTree> rankedTrees = new ArrayList<>();
-    protected List<RankedTree> orderedRankedTrees = new ArrayList<>();
-    protected RankedTree newRankedTree;
+    protected List<UnrankedTree> unrankedTrees = new ArrayList<>();
+    protected List<UnrankedTree> orderedUnrankedTrees = new ArrayList<>();
+    protected UnrankedTree newRankedTree;
 
-    public RankedCladeSystem() { }
+    public UnrankedCladeSystem() { }
 
-    public RankedCladeSystem(Tree targetTree, Set<String> attributeNames) {
+    public UnrankedCladeSystem(Tree targetTree, Set<String> attributeNames) {
         add(targetTree, true, attributeNames);
     }
     
@@ -40,14 +36,14 @@ public class RankedCladeSystem {
     	getCurrentRankedTree(tree, includeTips, attributeNames);
     	// get all node heights for ranking the nodes
         // compare the new ranked tree to the current ranked trees
-        int rtIndex = rankedTrees.indexOf(newRankedTree);
+        int rtIndex = unrankedTrees.indexOf(newRankedTree);
         if (rtIndex==-1) {
-        	rankedTrees.add(newRankedTree);
-        	rankedTrees.get(rankedTrees.size()-1).setCount(1);
-        	rankedTrees.get(rankedTrees.size()-1).tree = tree.copy();
-        	return rankedTrees.size()-1;
+        	unrankedTrees.add(newRankedTree);
+        	unrankedTrees.get(unrankedTrees.size()-1).setCount(1);
+        	unrankedTrees.get(unrankedTrees.size()-1).tree = tree.copy();
+        	return unrankedTrees.size()-1;
         }else {
-        	rankedTrees.get(rtIndex).setCount(rankedTrees.get(rtIndex).getCount()+1);
+        	unrankedTrees.get(rtIndex).setCount(unrankedTrees.get(rtIndex).getCount()+1);
         	// add the attribute values
         	addAttributes(rtIndex);
         	return rtIndex;
@@ -69,7 +65,7 @@ public class RankedCladeSystem {
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-    	newRankedTree = new RankedTree();
+    	newRankedTree = new UnrankedTree();
         addClades(tree.getRoot(), includeTips, nodeHeights, attributeNames);
 
     }
@@ -111,43 +107,36 @@ public class RankedCladeSystem {
     }
 
     private void addClade(BitSet bits, int rank, Node node, Set<String> attributeNames) {
-    	RankedBitSet rbs = new RankedBitSet(bits, rank, node.getNr());
+    	UnrankedBitSet rbs = new UnrankedBitSet(bits, node.getNr());
     	collectAttributesForClade(rbs, node, attributeNames);
     	newRankedTree.addRBS(rbs);
 	}   
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
-        for (RankedTree rankedTree : rankedTrees) {
-
-//            if (rankedTree.getCount() > totalTreesUsed) {
-//
-//                throw new AssertionError("clade.getCount=(" + rankedTree.getCount() +
-//                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")");
-//            }
-
+        for (UnrankedTree rankedTree : unrankedTrees) {
             rankedTree.setCredibility(((double) rankedTree.getCount()) / (double) totalTreesUsed);
         }
     }
     
     public int[] orderRankedTrees() {
-    	int[] order = new int[rankedTrees.size()];
+    	int[] order = new int[unrankedTrees.size()];
     	// get the order of trees by rank
-    	for (int i = 0; i < rankedTrees.size(); i++) {
+    	for (int i = 0; i < unrankedTrees.size(); i++) {
     		int highestCount = -1;
     		int highestIndex = -1;
-        	for (int j = 0; j < rankedTrees.size(); j++) {
-	    		if (rankedTrees.get(j).count>highestCount) {
-	    			highestCount = rankedTrees.get(j).count;
+        	for (int j = 0; j < unrankedTrees.size(); j++) {
+	    		if (unrankedTrees.get(j).count>highestCount) {
+	    			highestCount = unrankedTrees.get(j).count;
 	    			highestIndex = j;
 	    		}
 	    	}
         	order[i] = highestIndex;
-        	rankedTrees.get(highestIndex).count=-1;
+        	unrankedTrees.get(highestIndex).count=-1;
     	}
     	return order;
     }
     
-    private void collectAttributesForClade(RankedBitSet rbs, Node node, Set<String> attributeNames) {
+    private void collectAttributesForClade(UnrankedBitSet rbs, Node node, Set<String> attributeNames) {
         if (rbs.attributeValues == null) {
         	rbs.attributeValues = new ArrayList<>();
         }
@@ -179,9 +168,9 @@ public class RankedCladeSystem {
     }
 
     private void addAttributes(int rtIndex) {
-    	for (RankedBitSet newRBS : newRankedTree.rankedSet) {
-    		int oldRBSindex = rankedTrees.get(rtIndex).rankedSet.indexOf(newRBS);
-    		RankedBitSet rbs = rankedTrees.get(rtIndex).rankedSet.get(oldRBSindex);
+    	for (UnrankedBitSet newRBS : newRankedTree.rankedSet) {
+    		int oldRBSindex = unrankedTrees.get(rtIndex).rankedSet.indexOf(newRBS);
+    		UnrankedBitSet rbs = unrankedTrees.get(rtIndex).rankedSet.get(oldRBSindex);
     		
 	        if (rbs.attributeValues == null) {
 	        	throw new IllegalArgumentException("attributes should not be empty");
@@ -202,12 +191,12 @@ public class RankedCladeSystem {
     }
     
     public Tree compactMetaData(int index, Set<String> attributeNames, boolean useMean) {
-    	Tree tree = new Tree(rankedTrees.get(index).tree.getRoot());
+    	Tree tree = new Tree(unrankedTrees.get(index).tree.getRoot());
     	
     	// build the species number to clade mapping
-    	int[][] oriSpeciesNr = new int[rankedTrees.get(index).rankedSet.size()][];
+    	int[][] oriSpeciesNr = new int[unrankedTrees.get(index).rankedSet.size()][];
     	for (int i = 0; i < oriSpeciesNr.length;i++) {
-            List<Object[]> attributeValues = rankedTrees.get(index).rankedSet.get(i).getAttributeValues();
+            List<Object[]> attributeValues = unrankedTrees.get(index).rankedSet.get(i).getAttributeValues();
             int j=0;
             for (String attributeName : attributeNames) {
          		if (attributeName.contentEquals("species")) {
@@ -222,14 +211,17 @@ public class RankedCladeSystem {
     	}
     	
     	
-    	for (int i = 0; i < rankedTrees.get(index).rankedSet.size();i++) {
-    		int nodeNr = rankedTrees.get(index).rankedSet.get(i).nodeNr;
+    	for (int i = 0; i < unrankedTrees.get(index).rankedSet.size();i++) {
+    		int nodeNr = unrankedTrees.get(index).rankedSet.get(i).nodeNr;
     		Node n = tree.getNode(nodeNr);
     		n.metaDataString = "species=" + oriSpeciesNr[i][0];
     		
             int j=0;
             
-            List<Object[]> attributeValues = rankedTrees.get(index).rankedSet.get(i).getAttributeValues();
+            Integer[][] to = new Integer[0][0];
+            Double[][] allRates = new Double[0][0];
+            
+            List<Object[]> attributeValues = unrankedTrees.get(index).rankedSet.get(i).getAttributeValues();
             for (String attributeName : attributeNames) {
             	// get the height
          		if (attributeName.contentEquals("height")) {
@@ -251,32 +243,41 @@ public class RankedCladeSystem {
          		}    
          		if (attributeName.contentEquals("rates")) {
          			if (!n.isRoot()) {
-         				double[][] allRates = getRates(j, attributeValues);
-	         			// compute posterior support for rates
-	         			n.metaDataString = n.metaDataString + ",rates_mean={" + DiscreteStatistics.mean(allRates[0]);
-	         			for (int k = 1; k < allRates.length;k++)
-	         				n.metaDataString = n.metaDataString + "," +  DiscreteStatistics.mean(allRates[k]);
-	         			n.metaDataString = n.metaDataString + "}";
-	         			
-	         			// compute posterior support for rates
-	         			n.metaDataString = n.metaDataString + ",rates_posterior={" + getPost(allRates[0]);
-	         			for (int k = 1; k < allRates.length;k++)
-	         				n.metaDataString = n.metaDataString + "," + getPost(allRates[k]);
-	         			n.metaDataString = n.metaDataString + "}";
+         				allRates = getRates(j, attributeValues);
          			}
          		}  
          		if (attributeName.contentEquals("to")) {
          			if (!n.isRoot()) {
-	         			Double[] to = (Double[]) attributeValues.get(0)[j];
-	         			// compute posterior support for rates
-	         			n.metaDataString = n.metaDataString + ",rates_to={" + Math.round(to[0]);
-	         			for (int k = 1; k < to.length;k++)
-	         				n.metaDataString = n.metaDataString + "," + Math.round(to[k]);
-	         			n.metaDataString = n.metaDataString + "}";
+	         			to = getTo(j, attributeValues, oriSpeciesNr);
          			}
          		}
             	j++;	
             }
+            
+            // compute the mean rates etc. based on the "to" and "allRates" values
+ 			if (!n.isRoot()) {	
+ 				List<Integer> tovalues = getIntersectionToVals(to);
+ 				Collections.sort(tovalues);
+
+     			// compute posterior support for rates
+     			n.metaDataString = n.metaDataString + ",rates_mean={" + getMean(allRates, tovalues.get(0), to);
+     			for (int k = 1; k < tovalues.size();k++)
+     				n.metaDataString = n.metaDataString + "," + getMean(allRates, tovalues.get(k), to);
+     			n.metaDataString = n.metaDataString + "}";
+
+     			// compute posterior support for rates
+     			n.metaDataString = n.metaDataString + ",rates_posterior={" + getPost(allRates, tovalues.get(0), to);
+     			for (int k = 1; k < tovalues.size();k++)
+     				n.metaDataString = n.metaDataString + "," + getPost(allRates, tovalues.get(k), to);
+     			n.metaDataString = n.metaDataString + "}";
+ 				
+     			
+     			// compute posterior support for rates
+     			n.metaDataString = n.metaDataString + ",rates_to={" + tovalues.get(0);
+     			for (int k = 1; k < tovalues.size();k++)
+     				n.metaDataString = n.metaDataString + "," + tovalues.get(k);
+     			n.metaDataString = n.metaDataString + "}";
+ 			}
     	}
     	return tree;
     }
@@ -304,37 +305,136 @@ public class RankedCladeSystem {
 		return vals;
     }
     
-    private double[][] getRates(int j, List<Object[]> attributeValues) {
-    	Double[] rates = (Double[]) attributeValues.get(0)[j];
+    private Double[][] getRates(int j, List<Object[]> attributeValues) {
+    	// get the maximal size of the rates vector
+    	int max_val = 0;
+    	Double[] rates;
+		for (int i = 0; i < attributeValues.size(); i++) {
+			rates = (Double[]) attributeValues.get(i)[j];
+			max_val = Math.max(max_val, rates.length);
+		} 
 
-    	double[][] allRates = new double[rates.length][attributeValues.size()];
+		Double[][] allRates = new Double[max_val][attributeValues.size()];
     	
 		for (int i = 0; i < attributeValues.size(); i++) {
 	    	rates = (Double[]) attributeValues.get(i)[j];
 	    	for (int k = 0; k < rates.length; k++) {
-	    		allRates[k][i] = (double) rates[k];
+	    		allRates[k][i] = (Double) rates[k];
 	    	}
 		}
 		return allRates;
     }
   
-    private double getPost(double[] rates) {
-	   double c = 0.0;
-	   for (int i = 0; i < rates.length; i++)
-		   if (rates[i]>0)
-			   c++;
+    private Integer[][] getTo(int j, List<Object[]> attributeValues, int[][] oriSpeciesNr) {
+    	// get the maximal size of the rates vector
+    	int max_val = 0;
+    	Double[] to;
+		for (int i = 0; i < attributeValues.size(); i++) {
+			to = (Double[]) attributeValues.get(i)[j];
+			max_val = Math.max(max_val, to.length);
+		} 
+
+		Integer[][] allTo = new Integer[max_val][attributeValues.size()];
+
+		for (int i = 0; i < attributeValues.size(); i++) {
+	    	to = (Double[]) attributeValues.get(i)[j];
+	    	for (int k = 0; k < to.length; k++) {
+	    		allTo[k][i] = getOriSpecies(oriSpeciesNr,i,(int) Math.round(to[k]));
+	    	}
+		}
+		
+
+		return allTo;
+    }
+    
+    private int getOriSpecies(int[][] oriSpeciesNr, int i, int toval) {
+    	for (int k = 0; k < oriSpeciesNr.length; k++) {
+    		if (oriSpeciesNr[k][i]==toval)
+    			return oriSpeciesNr[k][0];
+    	}
+    	return -1;    	
+    }
+  
+    private List<Integer> getIntersectionToVals(Integer[][] to) {
+    	List<Integer> intersectionVals = new ArrayList<>();
+		for (int i = 0; i < to.length; i++) {
+			if (to[i][0]!=null)
+				intersectionVals.add(to[i][0]);
+		}
+		for (int j = 1; j < to[0].length; j++) {
+	    	List<Integer> newVals = new ArrayList<>();
+
+			for (int i = 0; i < to.length; i++) {
+				if (to[i][j]!=null)
+					newVals.add(to[i][j]);
+			}
+			// take the intersection
+			for (int i= intersectionVals.size()-1; i>=0; i--) {
+				if (!newVals.contains(intersectionVals.get(i))) {
+					intersectionVals.remove(i);
+				}
+			}
+
+		}    			
+    	
+    	return intersectionVals;
+    }
+
+    private double getMean(Double[][] allRates, Integer toval, Integer[][] to) {
+        double m = 0;
+        int l = 0;
+    	for (int i=0; i < to[0].length; i++)
+    		for (int j=0; j < to.length;j++)
+    			if (to[j][i]==toval) {
+    				l++;
+    				m+=allRates[j][i];
+    			}		
+        
+
+        return m / l;
+    	
+    }
+    
+    private double getPost(Double[][] allRates, Integer toval, Integer[][] to) {
+        int nonzero = 0;
+        int l = 0;
+    	for (int i=0; i < to[0].length; i++)
+    		for (int j=0; j < to.length;j++)
+    			if (to[j][i]==toval) {
+    				l++;
+    				if (allRates[j][i]>0)
+    					nonzero++;
+    			}		
 			   
-	   return c/rates.length;	   
+	   return nonzero/((double) l);	   
    }
    
     public void printMetaData(PrintStream ps, int index,  Set<String> attributeNames) {
-    	Tree tree = new Tree(rankedTrees.get(index).tree.getRoot());
+    	Tree tree = new Tree(unrankedTrees.get(index).tree.getRoot());
+    	
+    	
+    	// build the species number to clade mapping
+    	int[][] oriSpeciesNr = new int[unrankedTrees.get(index).rankedSet.size()][];
+    	for (int i = 0; i < oriSpeciesNr.length;i++) {
+            List<Object[]> attributeValues = unrankedTrees.get(index).rankedSet.get(i).getAttributeValues();
+            int j=0;
+            for (String attributeName : attributeNames) {
+         		if (attributeName.contentEquals("species")) {
+         			oriSpeciesNr[i] = new int[attributeValues.size()];
+         			for (int k = 0; k< attributeValues.size(); k++) {
+         				Double val = (Double) attributeValues.get(k)[j];
+         				oriSpeciesNr[i][k] = (int) Math.round(val);
+         			}
+         		}
+         		j++;
+            }
+    	}
 
     	// get the species names for tips and ancestral nodes
-    	String[] names = new String[rankedTrees.get(index).rankedSet.size()];
+    	String[] names = new String[unrankedTrees.get(index).rankedSet.size()];
     	List<Double> species = new ArrayList<>();
     	for (int i = 0; i < names.length;i++) {
-    		int nodeNr = rankedTrees.get(index).rankedSet.get(i).nodeNr;
+    		int nodeNr = unrankedTrees.get(index).rankedSet.get(i).nodeNr;
     		Node n = tree.getNode(nodeNr);
     		List<String> childnames = getChildNames(n);
     		String newName = childnames.get(0);
@@ -344,11 +444,14 @@ public class RankedCladeSystem {
     		names[i] = newName;
     		species.add((Double) n.getMetaData("species"));
     	}
+    	
+    	Integer[][][] allTo = new Integer[names.length][][];
+    	
     	// print header for the log file
     	ps.print("sample");
     	for (String attributeName : attributeNames) {
-    		for (int i = 0; i < rankedTrees.get(index).rankedSet.size();i++) {             
-    			List<Object[]> attributeValues = rankedTrees.get(index).rankedSet.get(i).getAttributeValues();	        
+    		for (int i = 0; i < unrankedTrees.get(index).rankedSet.size();i++) {             
+    			List<Object[]> attributeValues = unrankedTrees.get(index).rankedSet.get(i).getAttributeValues();	        
 	     		if (attributeName.contentEquals("height")) {
 	     			ps.print("\theight_" +names[i]);
 	     		}
@@ -363,11 +466,14 @@ public class RankedCladeSystem {
 	     					break;
 	     				}
 	     				tovec++;
-	     			}
+	     			}	     			
 	     			Double[] to = (Double[]) attributeValues.get(0)[tovec];
 	     			if (to!=null) {
-		     			for (int k = 0; k < to.length;k++) {	     
-		     				int toInd = species.indexOf(to[k]);
+	     				allTo[i] = getTo(tovec, attributeValues, oriSpeciesNr);
+	     				List<Integer> tovalues = getIntersectionToVals(allTo[i]);
+	     				Collections.sort(tovalues);
+		     			for (int k = 0; k < tovalues.size();k++) {	     
+		     				int toInd = species.indexOf((double) tovalues.get(k));
 		     				ps.print("\tbmig_"+ names[i] + "_to_" + names[toInd]);
 		     			}	     		
 	     			}
@@ -376,12 +482,13 @@ public class RankedCladeSystem {
         }
     	
     	// print the Data
-    	for (int sample=0;sample<rankedTrees.get(index).rankedSet.get(0).getAttributeValues().size();sample++ ) {
+    	for (int sample=0;sample<unrankedTrees.get(index).rankedSet.get(0).getAttributeValues().size();sample++ ) {
 	    	ps.print("\n"+sample);
 	    	int j=0;
+	    	
 	    	for (String attributeName : attributeNames) {
-	    		for (int i = 0; i < rankedTrees.get(index).rankedSet.size();i++) {             
-	    			List<Object[]> attributeValues = rankedTrees.get(index).rankedSet.get(i).getAttributeValues();	        
+	    		for (int i = 0; i < unrankedTrees.get(index).rankedSet.size();i++) {             
+	    			List<Object[]> attributeValues = unrankedTrees.get(index).rankedSet.get(i).getAttributeValues();	        
 		     		if (attributeName.contentEquals("height")) {
 		     			ps.print("\t" + attributeValues.get(sample)[j]);
 		     		}
@@ -392,9 +499,14 @@ public class RankedCladeSystem {
 		     			// find the to vector
 		     			Double[] rates = (Double[]) attributeValues.get(sample)[j];
 		     			if (rates!=null) {
-			     			for (int k = 0; k < rates.length;k++) {	     
-			     				ps.print("\t" + rates[k]);
-			     			}//k	     		
+		     				List<Integer> tovalues = getIntersectionToVals(allTo[i]);
+		     				Collections.sort(tovalues);
+			     			for (int k = 0; k < tovalues.size();k++) {
+			     				for (int l = 0; l <allTo[i].length; l++) {
+			     					if (allTo[i][l][sample]==tovalues.get(k))
+			     						ps.print("\t" + rates[l]);
+			     				}
+			     			}
 		     			}//if
 		     		}//if
 		        }// i
@@ -415,14 +527,14 @@ public class RankedCladeSystem {
     	return names;
     }
 
-    public class RankedTree {    	
+    public class UnrankedTree {    	
     	
-        public RankedTree() {
+        public UnrankedTree() {
         	rankedSet = new ArrayList<>();
         	count=1;
         }
         
-        public void addRBS(RankedBitSet rbs) {
+        public void addRBS(UnrankedBitSet rbs) {
         	rankedSet.add(rbs);        	
         }
         
@@ -447,12 +559,12 @@ public class RankedCladeSystem {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            final RankedTree rt = (RankedTree) o;
+            final UnrankedTree rt = (UnrankedTree) o;
             
-            for (RankedBitSet rbs :  rt.rankedSet) {
+            for (UnrankedBitSet rbs :  rt.rankedSet) {
             	// compare all vs. all
             	boolean equal=false;
-            	for (RankedBitSet rbs2 : rankedSet) {
+            	for (UnrankedBitSet rbs2 : rankedSet) {
             		if (rbs.equals(rbs2))
             			equal=true;
             	}
@@ -469,17 +581,16 @@ public class RankedCladeSystem {
             return "treeSet " +  count;
         }
 
-        List<RankedBitSet> rankedSet;
+        List<UnrankedBitSet> rankedSet;
         int count;
         double credibility;
         Tree tree;
     }
  
-    public class RankedBitSet {
+    public class UnrankedBitSet {
     	
-        public RankedBitSet(BitSet bits, int rank, int nodeNr) {
+        public UnrankedBitSet(BitSet bits, int nodeNr) {
             this.bits = bits;
-            this.rank = rank;
             this.nodeNr = nodeNr;
         }
         
@@ -492,12 +603,9 @@ public class RankedCladeSystem {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            final RankedBitSet rbs = (RankedBitSet) o;
+            final UnrankedBitSet rbs = (UnrankedBitSet) o;
             
-            // compare ranks
-            if (rbs.rank!=rank)
-            	return false;
-            
+           
             if (!bits.equals(rbs.bits))
             	return false;
             
@@ -513,11 +621,10 @@ public class RankedCladeSystem {
 
         @Override
         public String toString() {
-            return bits.toString() + "r" + rank;
+            return bits.toString();
         }
 
         
-        int rank;
         int species;
         int nodeNr;
         BitSet bits;

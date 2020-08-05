@@ -48,6 +48,7 @@ public class AIMannotator extends TreeAnnotator   {
 //        File targetFile;
         double burninPercentage = 10.0;
         double minTreeSupport = 0.0;
+        boolean useRank = true;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
 
         @Override
@@ -57,7 +58,9 @@ public class AIMannotator extends TreeAnnotator   {
                     "Output file: " + outFile + "\n" +                    
                     "Burn-in percentage: " + burninPercentage + "\n" +
                     "Minimal tree support for output: " + minTreeSupport + "\n" +
-                    "Node height and conv. site summary: " + summaryStrategy + "\n";
+                    "Node height and conv. site summary: " + summaryStrategy + "\n"+
+            		"Whether to consider ranked trees separated: " + useRank + "\n";
+
        }
     }
 
@@ -79,68 +82,165 @@ public class AIMannotator extends TreeAnnotator   {
 
         TreeSet treeSet = new FastTreeSet(options.inFile.toString(), (int) options.burninPercentage);
 
-        // get the clades for each reassortment event in every network
-        RankedCladeSystem rankedCladeSystem = new RankedCladeSystem();
-        
-
-        // read in the tree clades
+        if (options.useRank) {
+	        // get the clades for each reassortment event in every network
+	        RankedCladeSystem rankedCladeSystem = new RankedCladeSystem();
 	        
-        // build the clades
-        treeSet.reset();
-        int totalTrees = 0;
-        while(treeSet.hasNext()) {
-        	rankedCladeSystem.add(treeSet.next(), true, attributeNames);
-        	totalTrees++;
-        }
-        
-        rankedCladeSystem.calculateCladeCredibilities(1);
-        int[] treeOrder = rankedCladeSystem.orderRankedTrees();
-       
-        
-        // print the trees to file
-        System.out.println("\nWriting output to " + options.outFile.getCanonicalPath()
-	    	+ "...");
-        
-    	boolean nowTreePrinted = true;
-
-	    try (PrintStream ps = new PrintStream(options.outFile)) {
-//	    	rankedCladeSystem.rankedTrees.get(0).tree.init(ps);
-	    	ps.println("#NEXUS");
-	    	ps.println("Begin trees;");
-	    	for (int i = 0; i < treeOrder.length; i++) {
-	    		if (rankedCladeSystem.rankedTrees.get(treeOrder[i]).credibility/totalTrees < options.minTreeSupport/100.0) {
-	    			break;
-	    		}else {
-	    			nowTreePrinted = false;
-		    		String base = "STATE_" + i + "_occurances_" + (int) rankedCladeSystem.rankedTrees.get(treeOrder[i]).credibility;
-		    		Tree tree;
-		    		if (options.summaryStrategy == SummaryStrategy.MEAN)
-		    			tree = rankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, true);
-		    		else
-		    			tree = rankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, false);
-		    		
-			    	ps.println("tree " + base + 	" = " + tree.getRoot().toNewick() + ";");
-			    	
-			    	// try to print the meta data to a log file
-			        // make filename for gene flow file
-			    	System.out.println( options.outFile.getName().replace(".tree", ""));
-			        File geneFlowFile = new File(options.outFile + "." + base + ".log");
-			        System.out.println("\nWriting gene flow to " + geneFlowFile.getCanonicalPath() + "...");
-
-			        try (PrintStream gps = new PrintStream(geneFlowFile)){
-		    			rankedCladeSystem.printMetaData(gps, treeOrder[i], attributeNames);
+	
+	        // read in the tree clades
+		        
+	        // build the clades
+	        treeSet.reset();
+	        List<Integer> treeIndex = new ArrayList<>();
+	        int totalTrees = 0;
+	        while(treeSet.hasNext()) {
+	        	treeIndex.add(rankedCladeSystem.add(treeSet.next(), true, attributeNames));
+	        	totalTrees++;
+	        }
+	        
+	        rankedCladeSystem.calculateCladeCredibilities(1);
+	        int[] treeOrder = rankedCladeSystem.orderRankedTrees();
+	       
+	        
+	        // print the trees to file
+	        System.out.println("\nWriting output to " + options.outFile.getCanonicalPath()
+		    	+ "...");
+	        
+	    	boolean nowTreePrinted = true;
+	
+		    try (PrintStream ps = new PrintStream(options.outFile)) {
+	//	    	rankedCladeSystem.rankedTrees.get(0).tree.init(ps);
+		    	ps.println("#NEXUS");
+		    	ps.println("Begin trees;");
+		    	for (int i = 0; i < treeOrder.length; i++) {
+		    		if (rankedCladeSystem.rankedTrees.get(treeOrder[i]).credibility/totalTrees < options.minTreeSupport/100.0) {
+		    			break;
+		    		}else {
+		    			nowTreePrinted = false;
+			    		String base = "STATE_" + i + "_occurances_" + (int) rankedCladeSystem.rankedTrees.get(treeOrder[i]).credibility;
+			    		Tree tree;
+			    		if (options.summaryStrategy == SummaryStrategy.MEAN)
+			    			tree = rankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, true);
+			    		else
+			    			tree = rankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, false);
+			    		
+				    	ps.println("tree " + base + 	" = " + tree.getRoot().toNewick() + ";");
+				    	
+				    	// try to print the meta data to a log file
+				        // make filename for gene flow file
+				    	System.out.println( options.outFile.getName().replace(".tree", ""));
+				        File geneFlowFile = new File(options.outFile + "." + base + ".log");
+				        System.out.println("\nWriting gene flow to " + geneFlowFile.getCanonicalPath() + "...");
+	
+				        try (PrintStream gps = new PrintStream(geneFlowFile)){
+			    			rankedCladeSystem.printMetaData(gps, treeOrder[i], attributeNames);
+			    		}
 		    		}
-	    		}
-	    	}
-	    	
-    		ps.println("End;");
-	    }	
-	    System.out.println("\nDone!");
-	    if (nowTreePrinted) {
-	    	System.err.println("There was no tree that occured more often than " + options.minTreeSupport + " %, no tree was printed");
-	    }
+		    	}
+		    	
+	    		ps.println("End;");
+		    }	
+		    System.out.println("\nDone!");
+		    if (nowTreePrinted) {
+		    	System.err.println("There was no tree that occured more often than " + options.minTreeSupport + " %, no tree was printed");
+		    }
+		    
+	        treeSet.reset();
+		    // print the ranked tree topologies to file
+	        File rankedTreeFile = new File(options.outFile + ".ranked.log");
+	
+		    try (PrintStream ps = new PrintStream(rankedTreeFile)) {
+		    	ps.print("Sample\tRankedTree\t\n");
+		        for (int i = 0; i<treeIndex.size();i++) {
+		        	
+			    	ps.print(i + "\t" + arrayIndexOf(treeOrder, treeIndex.get(i)) + "\t" +"\n");
+		        }
+		    }
+        }else {
+	        // get the clades for each reassortment event in every network
+	        UnrankedCladeSystem unrankedCladeSystem = new UnrankedCladeSystem();
+	        
+	
+	        // read in the tree clades
+		        
+	        // build the clades
+	        treeSet.reset();
+	        List<Integer> treeIndex = new ArrayList<>();
+	        int totalTrees = 0;
+	        while(treeSet.hasNext()) {
+	        	treeIndex.add(unrankedCladeSystem.add(treeSet.next(), true, attributeNames));
+	        	totalTrees++;
+	        }
+	        
+	        unrankedCladeSystem.calculateCladeCredibilities(1);
+	        int[] treeOrder = unrankedCladeSystem.orderRankedTrees();
+	       
+	        
+	        // print the trees to file
+	        System.out.println("\nWriting output to " + options.outFile.getCanonicalPath()
+		    	+ "...");
+	        
+	    	boolean nowTreePrinted = true;
+	
+		    try (PrintStream ps = new PrintStream(options.outFile)) {
+		    	ps.println("#NEXUS");
+		    	ps.println("Begin trees;");
+		    	for (int i = 0; i < treeOrder.length; i++) {
+		    		if (unrankedCladeSystem.unrankedTrees.get(treeOrder[i]).credibility/totalTrees < options.minTreeSupport/100.0) {
+		    			break;
+		    		}else {
+		    			nowTreePrinted = false;
+			    		String base = "STATE_" + i + "_occurances_" + (int) unrankedCladeSystem.unrankedTrees.get(treeOrder[i]).credibility;
+			    		Tree tree;
+			    		System.out.println("cred = " + unrankedCladeSystem.unrankedTrees.get(treeOrder[i]).credibility);
+			    		if (options.summaryStrategy == SummaryStrategy.MEAN)
+			    			tree = unrankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, true);
+			    		else
+			    			tree = unrankedCladeSystem.compactMetaData(treeOrder[i], attributeNames, false);
+			    		
+				    	ps.println("tree " + base +	" = " + tree.getRoot().toNewick() + ";");
+				    	
+				    	// try to print the meta data to a log file
+				        // make filename for gene flow file
+				    	System.out.println( options.outFile.getName().replace(".tree", ""));
+				        File geneFlowFile = new File(options.outFile + "." + base + ".log");
+				        System.out.println("\nWriting gene flow to " + geneFlowFile.getCanonicalPath() + "...");
+	
+				        try (PrintStream gps = new PrintStream(geneFlowFile)){
+				        	unrankedCladeSystem.printMetaData(gps, treeOrder[i], attributeNames);
+			    		}
+		    		}
+		    	}		    	
+	    		ps.println("End;");
+		    }	
+		    
+		    System.out.println("\nDone!");
+		    if (nowTreePrinted) {
+		    	System.err.println("There was no tree that occured more often than " + options.minTreeSupport + " %, no tree was printed");
+		    }
+		    
+	        treeSet.reset();
+		    // print the ranked tree topologies to file
+	        File rankedTreeFile = new File(options.outFile + ".unranked.log");
+	
+		    try (PrintStream ps = new PrintStream(rankedTreeFile)) {
+		    	ps.print("Sample\tTopology\t\n");
+		        for (int i = 0; i<treeIndex.size();i++) {
+		        	
+			    	ps.print(i + "\t" + arrayIndexOf(treeOrder, treeIndex.get(i)) + "\t" +"\n");
+		        }
+		    }
+
+        }
+	    
     }      
     
+    private int arrayIndexOf(int[] array, int val) {
+    	for (int i=0;i< array.length;i++)
+    		if (array[i]==val)
+    			return i;
+    	return -1;
+    }
 
  
     /**
@@ -536,6 +636,20 @@ public class AIMannotator extends TreeAnnotator   {
 
                     i += 1;
                     break;
+                    
+                case "-userank":
+                    if (args.length<=i+1)
+                        printUsageAndError("-userank by true or false");
+
+                    try {
+                        options.useRank = Boolean.parseBoolean(args[i+1]);
+                    } catch (NumberFormatException e) {
+                        printUsageAndError("Error parsing useRank.");
+                    }
+
+                    i += 1;
+                    break;
+
 
                 default:
                     printUsageAndError("Unrecognised command line option '" + args[i] + "'.");
