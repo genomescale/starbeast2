@@ -13,13 +13,11 @@
 	<property name="beast2path" location="../beast2" />
 	<property name="SAPath" location="../sampled-ancestors" />
 	<property name="MMPath" location="../morph-models" />
-	<property name="MascotPath" location="../Mascot" />
 	<property name="libBeast2" location="${beast2path}/lib" />
 	<property name="srcBeast2" location="${beast2path}/src" />
 	<property name="beast2classpath" location="${beast2path}/build" />
 	<property name="SAClasspath" location="${SAPath}/build" />
 	<property name="MMClasspath" location="${MMPath}/build" />
-	<property name="MascotClasspath" location="${MascotPath}/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
 
     <import file="${beast2path}/build.xml" />
@@ -72,16 +70,18 @@
 
 		<mkdir dir="${buildstarbeast2}" />
 
-		<!-- Compile the java code from ${srcstarbeast2} into ${buildstarbeast2} /bin -->
-		<!-- <javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath" debug="true" -->
-		<javac srcdir="${srcstarbeast2}" destdir="${buildstarbeast2}" classpathref="classpath"
-			   source="1.8"
-			   target="1.8"
-			   debug="true"
-		       fork="true"
-		       memoryinitialsize="256m"
-		       memorymaximumsize="1024m"
-			   includeAntRuntime="false">
+		<!-- add the argument bootclasspath="/path/to/java8/jre/lib/rt.jar" setting the path as appropriate for your system -->
+		<javac
+				srcdir="${srcstarbeast2}"
+				destdir="${buildstarbeast2}"
+				classpathref="classpath"
+				source="1.8"
+				target="1.8"
+				debug="true"
+				fork="true"
+				memoryinitialsize="256m"
+				memorymaximumsize="1024m"
+				includeAntRuntime="false">
 			<include name="**/**" />
 		</javac>
 		<echo message="Successfully compiled." />
