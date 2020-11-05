@@ -402,11 +402,13 @@
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="1.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="1.0" speciesTree="@Tree.t:Species"/>
 
-		<operator id="SubtreeSlideAndSwap.t:Species" spec="starbeast2.SubtreeSlideAndSwap" Ne="@popSizes.Species" weight="15.0" gaussian="true" size="0.002" tree="@Tree.t:Species"/>
-		<operator id="WilsonBalding.t:Species" spec="WilsonBalding" weight="15.0" tree="@Tree.t:Species"/>
-		<operator id="Wide.t:Species" spec="Exchange" isNarrow="false" weight="15.0" tree="@Tree.t:Species"/>
-		<operator id="Narrow.t:Species" spec="Exchange" isNarrow="true" weight="15.0" tree="@Tree.t:Species"/>
-		<operator id="UniformOperator.t:Species" spec="Uniform" weight="15.0" tree="@Tree.t:Species"/>
+
+		<operator id="SubtreeSlideAndSwap.t:Species" spec="starbeast2.aimoperator.SubtreeSlideAndSwap" size="0.0001" indicator="@migIndicators.Species" m="@migRates.Species" Ne="@popSizes.Species" optimise="true" tree="@Tree.t:Species" weight="50.0"/>
+		<operator id="WilsonBalding.t:Species" spec="starbeast2.aimoperator.WilsonBaldingAndSwap" indicator="@migIndicators.Species" m="@migRates.Species" tree="@Tree.t:Species" weight="30.0"/>
+		<operator id="Wide.t:Species" spec="starbeast2.aimoperator.ExchangeAndSwap" isNarrow="false" indicator="@migIndicators.Species" m="@migRates.Species" tree="@Tree.t:Species" weight="30.0"/>
+		<operator id="Narrow.t:Species" spec="starbeast2.aimoperator.ExchangeAndSwap" indicator="@migIndicators.Species" m="@migRates.Species" tree="@Tree.t:Species" weight="30.0"/>
+		<operator id="UniformOperator.t:Species" spec="starbeast2.aimoperator.UniformAndSwap" indicator="@migIndicators.Species" m="@migRates.Species" tree="@Tree.t:Species" weight="5.0"/>
+
 		<operator id="TreeRootScaler.t:Species" spec="ScaleOperator" scaleFactor="0.7" weight="3.0" tree="@Tree.t:Species" rootOnly="true"/>
 		<operator id="TreeScaler.t:Species" spec="ScaleOperator" scaleFactor="0.95" weight="3.0" tree="@Tree.t:Species"/>
 
