@@ -55,6 +55,7 @@ public class ConstantPopulationTest {
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
         state.initByName("stateNode", speciesTree);
+        speciesTree.makeMaps();
 
         final int nBranches = nSpecies * 2 - 1;
         popsizeParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nBranches));

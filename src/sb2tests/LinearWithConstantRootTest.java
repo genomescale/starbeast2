@@ -57,6 +57,7 @@ public class LinearWithConstantRootTest {
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
         state.initByName("stateNode", speciesTree);
+        speciesTree.makeMaps();
 
         tipPopSizesParameter.initByName("dimension", String.valueOf(nSpecies), "value", 1.0);
         topPopSizesParameter.initByName("dimension", String.valueOf(nSpecies * 2 - 2), "value", 1.0);

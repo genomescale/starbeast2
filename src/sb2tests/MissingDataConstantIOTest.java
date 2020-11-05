@@ -16,7 +16,7 @@ import starbeast2.MultispeciesCoalescent;
 import starbeast2.GeneTree;
 import starbeast2.SpeciesTreeParser;
 
-public class MissingDataConstantIO {
+public class MissingDataConstantIOTest {
     private String newickSpeciesTree;
     private List<String> newickGeneTrees = new ArrayList<>();
 
@@ -40,7 +40,7 @@ public class MissingDataConstantIO {
     private final double mean = beta / (alpha - 1.0);
     private final int individualsPerSpecies = 2;
 
-    public MissingDataConstantIO() throws Exception {
+    public MissingDataConstantIOTest() throws Exception {
         ploidy = 2.0;
         nSpecies = 4;
         expectedLogP = -10.956285249389675; // haven't checked this is the right answer
@@ -87,6 +87,7 @@ public class MissingDataConstantIO {
     private void initialize(TaxonSet speciesSuperset) throws Exception {
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
+        speciesTree.makeMaps();
 
         for (String geneTreeNewick: newickGeneTrees) {
             TreeParser geneTree = new TreeParser();

@@ -8,8 +8,8 @@ import org.junit.Test;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 
-public class MissingDataCoordinatedExchange extends ExchangeTestHelper {
-    public MissingDataCoordinatedExchange() {
+public class MissingDataCoordinatedExchangeTest extends ExchangeTestHelper {
+    public MissingDataCoordinatedExchangeTest() {
         bTipLabel = "B";
         bIsParent = false;
 

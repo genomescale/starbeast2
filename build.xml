@@ -127,9 +127,14 @@
 				<path location="${buildstarbeast2}" />
 			</classpath>
 
+			<formatter type="plain"/>
 			<formatter type="xml" />
 
-			<test fork="yes" todir="${report}" name="sb2tests.AllTests" />
+			<batchtest fork="yes" todir="${report}">
+				<fileset dir="${srcstarbeast2}">
+					<include name="sb2tests/*Test.java"/>
+				</fileset>
+			</batchtest>
 		</junit>
 		<echo message="JUnit test finished." />
 	</target>
