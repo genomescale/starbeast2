@@ -13,8 +13,7 @@
 \usepackage[normalem]{ulem}
 \usepackage{booktabs}
 % \usepackage{nag}
-\usepackage{natbib}
-% \usepackage{bibtex}
+\usepackage[backend=biber,style=authoryear,maxbibnames=9,maxcitenames=2,uniquelist=false,doi=false,url=false,eprint=false]{biblatex}
 \usepackage{float}
 \usepackage{latexsym}
 \usepackage{hyperref}
@@ -58,6 +57,8 @@
 \def\verbatim@font{\linespread{1}\tiny\ttfamily}
 \makeatother
 
+\addbibresource{StarBEAST2-refs.bib}
+
 \begin{document}
 
 \title{StarBEAST2 v15 tutorial}
@@ -72,13 +73,13 @@
 \label{sec:intro}
 
 StarBEAST2 is a method for multilocus, multispecies coalescent phylogenetic
-inference \citep{Ogilvie2017}. Multilocus methods like StarBEAST2 take as
+inference \parencite{Ogilvie2017}. Multilocus methods like StarBEAST2 take as
 input one or more multiple sequence alignments derived from genomic loci.
 There is assumed to be no recombination within each locus and free
 recombination between loci. Therefore the sequence alignments should be
 relatively short, and relatively distantly spaced along the genome. Genomic
 data sets which are typically a good fit to the StarBEAST2 model include
-RAD-seq loci \citep{Ogilvie2016} or exons \citep{Scornavacca2017}.
+RAD-seq loci \parencite{Ogilvie2016} or exons \parencite{Scornavacca2017}.
 
 StarBEAST2 can be used to estimate species tree topologies and divergence
 times, the topologies and coalescence times of gene trees, the substitution
@@ -149,7 +150,7 @@ respectively.
 \end{figure}
 
 To visualize posterior distributions of trees, we will be using DensiTree
-\citep{Bouckaert2010} which is included with BEAST2. We will also use
+\parencite{Bouckaert2010} which is included with BEAST2. We will also use
 FigTree to view summary trees, and Tracer to check on parameters and
 statistics. FigTree is available from \url{http://tree.bio.ed.ac.uk/software/figtree/}
 and Tracer from \url{http://tree.bio.ed.ac.uk/software/tracer}. Please make sure both are
@@ -303,7 +304,7 @@ Select the Site Model tab, and you will see the site model for the first partiti
 displayed. Change ``JC69'' to ``HKY'', and then set the frequencies to
 empirical (Figure~\ref{fig:hky}).
 HKY is more flexible because it allows nucleotide transitions to have a different
-rate relative to transversions \citep{Hasegawa1985}.
+rate relative to transversions \parencite{Hasegawa1985}.
 
 \begin{figure}[htb!]
 \centering
@@ -330,7 +331,7 @@ to everything else (Figure~\ref{fig:cloneSiteModel}).
 
 In a more serious analysis, you might consider setting the number of gamma
 categories to 4. This allows for different sites to evolve at
-different rates, an obviously more realistic model \citep{Yang1994}. However
+different rates, an obviously more realistic model \parencite{Yang1994}. However
 the phylogenetic likelihood must be calculated once for each category, so 4
 categories will be be $4\times$ slower. That likelihood calculation is a major
 part of the StarBEAST2 algorithm, so more gamma rate categories will require
@@ -557,7 +558,7 @@ You can see that using a fixed clock rate of $10^{-3}$ substitutions per site
 per year, the split between \textit{Canis latrans} (coyotes) and \textit{Canis lupus}
 (wolves) is probably less than 500,000 years ago. The age of the most
 recent common ancestor (MRCA) of extant \textit{Canis} taxa is approximately 2.5 million
-years ago, more recent than the split between humans and chimpanzees \citep{PradoMartinez2013}.
+years ago, more recent than the split between humans and chimpanzees \parencite{PradoMartinez2013}.
 
 \subsection{Generating a summary tree}
 \label{subsec:makeSummaryTree}
@@ -898,8 +899,8 @@ little older, and the age of the MRCA of extant species is a little younger
 
 Open the Tree Annotator app included with BEAST2, and set the burnin
 percentage to 10. Trees inferred by the FBD-MSC model as implemented in
-StarBEAST2 can include sampled ancestors \citep{Gavryushkina2014}, which are
-incompatible with Common Ancestor heights \citep{Heled2013} as implemented in
+StarBEAST2 can include sampled ancestors \parencite{Gavryushkina2014}, which are
+incompatible with Common Ancestor heights \parencite{Heled2013} as implemented in
 Tree Annotator. So in order to generate a summary tree, change ``Node heights'' to
 ``Mean heights'' (Figure~\ref{fig:treeAnnotatorMeanHeights}). Choose the
 ``species.trees'' file as the input file, and specify the output file to be
@@ -932,9 +933,11 @@ The tree topology is similar to the fixed clock analysis
 (Figure~\ref{fig:figtree}), except that \textit{Cuon alpinus} and
 \textit{Lycaon pictus} are now a clade with 100\% support. A disagreement
 between molecular data which contradicts this clade and morphological
-data which supports it has been reported previously \citep{Zrzavy2004}. This shows
+data which supports it has been reported previously \parencite{Zrzavy2004}. This shows
 how morphological characters and fossil data can influence species tree
 estimates.
+
+\clearpage
 
 \section{Wrapping up}
 
@@ -945,7 +948,6 @@ publication, it is a good idea to run at least two MCMC chains. Open both
 chains in Tracer, and check that the traces for the logged statistics and
 parameters have the same distributions.
 
-\bibliographystyle{natbib}
-\bibliography{StarBEAST2-tutorial}
+\printbibliography
 
 \end{document}
