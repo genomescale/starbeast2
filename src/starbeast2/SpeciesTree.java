@@ -20,7 +20,6 @@ public class SpeciesTree extends Tree implements SpeciesTreeInterface {
         super.initAndValidate();
         tipNumberMap = new LinkedHashMap<>();
         numberTipMap = HashMultimap.create();
-        makeMaps(tipNumberMap, numberTipMap);
     }
 
     public Map<String, Integer> getTipNumberMap() {

@@ -23,7 +23,6 @@ public class SpeciesTreeParser extends TreeParser implements SpeciesTreeInterfac
 
         tipNumberMap = new LinkedHashMap<>();
         numberTipMap = HashMultimap.create();
-        makeMaps(tipNumberMap, numberTipMap);
     }
 
     public Map<String, Integer> getTipNumberMap() {

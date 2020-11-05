@@ -21,7 +21,9 @@ public interface SpeciesTreeInterface extends TreeInterface {
     StateNode getCurrent();
 
     // generate map of species tree tip node names to node numbers
-    default void makeMaps(Map<String, Integer> tipNumberMap, Multimap<Integer, String> numberTipMap) {
+    default void makeMaps() {
+        Map<String, Integer> tipNumberMap = getTipNumberMap();
+        Multimap<Integer, String> numberTipMap = getNumberTipMap();
         final Map<String, Integer> speciesNumberMap = new LinkedHashMap<>();
         Node speciesTreeRoot = getRoot();
         for (Node leafNode: speciesTreeRoot.getAllLeafNodes()) {

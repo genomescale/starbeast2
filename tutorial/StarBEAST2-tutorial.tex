@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 
 \usepackage{textcomp}
-\usepackage{fullpage}
+\usepackage[cm]{fullpage}
 \usepackage{amsfonts}
 \usepackage{verbatim}
 \usepackage[english]{babel}
@@ -47,7 +47,9 @@
 \usepackage{lmodern}
 \usepackage{beramono}
 \usepackage{tcolorbox}
+\usepackage{soul}
 
+\setuldepth{after}
 \setlength{\parskip}{1em}
 \renewcommand{\baselinestretch}{2.0}
 \renewcommand\Affilfont{\small}
@@ -58,10 +60,9 @@
 
 \begin{document}
 
-\title{StarBEAST2 v14 tutorial}
-\author[1,2]{Huw A. Ogilvie\thanks{huw.ogilvie@anu.edu.au}}
-\affil[1]{Research School of Biology, Australian National University, Canberra, Australia}
-\affil[2]{Centre for Computational Evolution, University of Auckland, Auckland, New Zealand}
+\title{StarBEAST2 v15 tutorial}
+\author[1]{Huw A. Ogilvie\thanks{huw.a.ogilvie@rice.edu}}
+\affil[1]{Department of Computer Science, Rice University, Houston, Texas}
 
 \maketitle
 
@@ -84,11 +85,11 @@ times, the topologies and coalescence times of gene trees, the substitution
 model rates and base frequencies for those gene trees, per-species population
 sizes and per-species molecular clock rates.
 
-The newest version of StarBEAST2 (v14) supports the integration of molecular
-sequences and morphological characters for so-called ``total evidence'' analyses,
-and the use of fossil data for tip-dating. Fossil data can include ancient
-DNA, morphological characters, and the estimated ages of fossils. Tip-dating calibrates
-the trees in absolute time, typically millions of years.
+Newer versions of StarBEAST2 supports the integration of molecular sequences
+and morphological characters for so-called ``total evidence'' analyses, and
+the use of fossil data for tip-dating. Fossil data can include ancient DNA,
+morphological characters, and the estimated ages of fossils. Tip-dating
+calibrates the trees in absolute time, typically millions of years.
 
 This tutorial will cover using StarBEAST2 to estimate a species tree including
 per-species population sizes of the genus \textit{Canis} from exon sequences
@@ -202,11 +203,7 @@ loci are still allowed to vary and the mean rate among all sites is fixed at 1. 
 by linking the clocks, the average clock rate can be fixed at an \textit{a priori} value
 to calibrate the analysis, or estimated when node-dating or tip-dating is used.
 Select all 16 loci and click the ``Link Clock Models'' button. Now all loci
-should have the same clock model name (Figure~\ref{fig:linkModels}).
-
-Note that linking \textit{site} models in StarBEAST2 v14 will unify the substitution rates of
-the linked partitions. So generally site models should \textbf{not} be linked using BEAUti
-when setting up a StarBEAST2 analysis.
+should have ``APOBS1'' as the clock model name. The site model, clock model and tree names are text fields that you can click on to edit. Change the name of the clock model to ``molecular'' and it should look like Figure~\ref{fig:linkModels}.
 
 \begin{figure}[htb!]
 \centering
@@ -216,12 +213,20 @@ when setting up a StarBEAST2 analysis.
 \label{fig:linkModels}
 \end{figure}
 
+\clearpage{}
+
 \begin{tcolorbox}[colback=green!5,colframe=green!40!black,title=Mixing nuclear and mitochondrial loci]
 StarBEAST2 can be used with a combination of mitochondrial and nuclear loci, but this requires careful thought when specifying the model. One possibility is to link the nuclear loci as above, but not to link the mitochondrial loci. Then when editing the site models, untick ``estimate'' for the substitution rate of each mitochondrial locus. Now separate clock rates will be used for each mitochondrial locus, in addition to the overall clock rate which applies to nuclear loci.
 
 If the species tree is calibrated using an \textit{a priori} nuclear or mitochondrial molecular clock rate, you can set that rate in the Clock Model panel. If the mitochondrial rate is fixed, the nuclear rate should probably be estimated and \textit{vice versa}. If the species tree is calibrated using node or tip dating, then all clock rates should probably be estimated.
 
 Make sure appropriate priors are used for all estimated clock rates. This could be a $1/X$ prior for rates where you genuinely have no prior knowledge. However in most circumstances you will have a general idea of the clock rate, e.g. within an order of magnitude. In that case, you can set a broad prior with a mean based on your prior knowledge. Broad priors include Log Normal with a large standard deviation (up to about 2), or a Gamma distribution with a small $\alpha$ (set ``alpha'' to 1 or 2).
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=purple!5,colframe=purple!40!black,title=Linking site models]
+When clock models are linked as is recommended by this tutorial, linking site models will result in every gene having exactly the same
+clock rate. As this is unrealistic, generally site models should \textbf{not}
+be linked using BEAUti when setting up a StarBEAST2 analysis.
 \end{tcolorbox}
 
 \subsection{Specifying species names}
@@ -247,6 +252,8 @@ so ``Canis\_anthus'' will be the species name for ``Canis\_anthus\_a''.
 {Guessing species names from haplotype names}
 \label{fig:guessTaxonMap}
 \end{figure}
+
+\newpage{}
 
 Now each haplotype (Taxon) should have a corresponding species (Species/Population).
 Based on how we assigned the species names, there should be two haplotypes
@@ -311,6 +318,8 @@ select all of the partitions in the left hand column with the shift key. Then
 click ``OK'' to apply the same site model used for the first locus
 to everything else (Figure~\ref{fig:cloneSiteModel}).
 
+\newpage{}
+
 \begin{figure}[htb!]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/cloneSiteModel.png}
@@ -327,8 +336,6 @@ categories will be be $4\times$ slower. That likelihood calculation is a major
 part of the StarBEAST2 algorithm, so more gamma rate categories will require
 more computer time.
 
-\clearpage
-
 \subsection{Clock Model}
 \label{subsec:clockModel}
 
@@ -338,8 +345,7 @@ $10^{-3}$ substitutions per site per million years. While we don't know
 the average rate across all loci in our data within \textit{Canis}, we can
 use it as a \textbf{very approximate} calibration. Open the clock model panel
 and set the rate to ``0.001'', to match the \textit{a priori} estimate
-(Figure~\ref{fig:strictClockModel}). You can also use the scientific
-notation shorthand, 1e-3, which is equivalent to 0.001.
+(Figure~\ref{fig:strictClockModel}).
 
 \begin{figure}[htb!]
 \centering
@@ -348,6 +354,9 @@ notation shorthand, 1e-3, which is equivalent to 0.001.
 {Using an \textit{a priori} clock rate for calibration}
 \label{fig:strictClockModel}
 \end{figure}
+
+You can also use the scientific notation shorthand, 1e-3, which is equivalent
+to 0.001.
 
 \subsection{Priors and MCMC}
 \label{subsec:MCMC}
@@ -370,6 +379,8 @@ need a bit more for good estimates; change the chain length to 40 million
 {Setting a longer MCMC chain length}
 \label{fig:chainLength}
 \end{figure}
+
+\newpage{}
 
 Save your model as an XML file -- in the folder you created before importing
 alignments -- by clicking Save As in the File menu. Navigate to the folder
@@ -548,8 +559,6 @@ per year, the split between \textit{Canis latrans} (coyotes) and \textit{Canis l
 recent common ancestor (MRCA) of extant \textit{Canis} taxa is approximately 2.5 million
 years ago, more recent than the split between humans and chimpanzees \citep{PradoMartinez2013}.
 
-\clearpage
-
 \subsection{Generating a summary tree}
 \label{subsec:makeSummaryTree}
 
@@ -574,6 +583,8 @@ like ``summary.tree'' and click Run to generate the summary tree
 \label{fig:treeAnnotator}
 \end{figure}
 
+\newpage{}
+
 Now start FigTree and open the summary tree file. Enable Branch Labels,
 and expand the Branch Labels panel. Choose ``dmv1\_95\%\_HPD'', and set
 the number of significant digits to 2. Now the 95\% highest posterior
@@ -588,6 +599,8 @@ effective population sizes will be displayed on each branch
 {Running FigTree}
 \label{fig:figtree}
 \end{figure}
+
+\newpage{}
 
 In StarBEAST2 and many other BEAST packages, effective population sizes are
 scaled by generation time. That means if generation times (the average
@@ -605,6 +618,8 @@ The effective population sizes inferred in this tutorial appear to have
 roughly an order of magnitude of uncertainty, and more precise estimates would require
 a more informative data set. This could be achieved by sampling more
 individuals or more loci.
+
+\clearpage{}
 
 \section{Estimating per-species clock rates}
 \label{sec:relaxedClock}
@@ -631,8 +646,7 @@ of per-species clock rates.
 
 Assign the same species names as in
 subsection~\ref{subsec:speciesNames} (Figure~\ref{fig:guessTaxonMap}, \ref{fig:taxonMap}). This time
-we will keep the default setting for the population model (Analytical Population
-Size Integration), so that our analysis will run slightly faster. Set all
+we will keep the default setting for the population model (Analytical Integration), so that our analysis will run slightly faster. Set all
 the site models to HKY with empirical frequencies as in
 subsection~\ref{subsec:siteModel} (Figure~\ref{fig:hky}, \ref{fig:cloneSiteModel}).
 
@@ -654,6 +668,8 @@ to allow for extinction. Finally, open the MCMC tab and change the length of
 the chain to 40 million, as in subsection~\ref{subsec:MCMC}
 (Figure~\ref{fig:chainLength}). Save the file in the folder you created
 previously for this analysis, and give it a sensible name like ``CanisUCLN.xml''.
+
+\newpage{}
 
 Run the MCMC chain by opening the XML file in BEAST, or running it from
 the command line as in subsection~\ref{subsec:runningBEAST}. This will
@@ -704,26 +720,51 @@ appropriate for this clade. These rates are obviously relative, and
 to get absolute rates in substitutions per site per million years,
 they must be scaled by the \textit{a priori} clock rate of 0.001.
 
+\clearpage{}
+
 \section{Total evidence tip-dating}
 \label{sec:FBD}
 
-The latest version of StarBEAST2 (v14) includes the ability to combine
+The versions of StarBEAST2 from 14 onwards include the ability to combine
 tip-dating using the fossilized birth death (FBD) process with multispecies
-coalescent (MSC) inference of species and gene trees. We call this
-integrative model ``FBD-MSC''.
+coalescent (MSC) inference of species and gene trees. We call this integrative
+model ``FBD-MSC''. To begin your analysis, creat a new folder for this
+purpose with a sensible name, something like ``CanisFBD''.
 
-Create a new folder for this analysis with a sensible name, something like
-``CanisFBD''. Then repeat section~\ref{sec:speciesTree} from
-subsection~\ref{subsec:importingAlignments} to and including
-\ref{subsec:speciesNames}. Leave the population model set at the default
-(Analytical Population Size Integration) to save time, then set all site
-models to HKY with empirical frequencies as in
+\textbf{When setting up an FBD-MSC analysis in BEAUti, it is necessary to
+import morphological data \ul{after} specifying the taxon sets \ul{and} the
+tree model, but \ul{before} specifying the tip dates.} The following steps
+will be consistent with that ordering. First, repeat
+section~\ref{sec:speciesTree} from subsection~\ref{subsec:importingAlignments}
+to and including \ref{subsec:speciesNames}. Leave the population model set at
+the default (Analytical Integration) to save time, then set
+all site models to HKY with empirical frequencies as in
 subsection~\ref{subsec:siteModel}.
+
+Before adding the morphological data, go to the Priors panel and change
+the prior on the species tree from Yule to FBD
+(Figure~\ref{fig:changeTreePrior}). This is necessary because the inclusion of
+fossil taxa means our species tree will be \textit{serially sampled} rather
+than \textit{ultrametric}. StarBEAST2 gives you the option of various
+birth-death models -- Yule, Calibrated Yule, Birth Death and FBD -- but only
+FBD is valid for serially sampled trees.
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/changeTreePrior.png}
+\caption
+{Change the tree model from Yule to FBD.}
+\label{fig:changeTreePrior}
+\end{figure}
+
+\newpage{}
 
 Now go back to the Partitions tab, and from the File menu select
 ``Add Morphology to Species Tree'' (Figure~\ref{fig:addMorphology}).
-It doesn't actually matter too much when the morphological data is added
-in BEAUti, but it must be \textbf{after} configuring the species names.
+Navigate to the data folder of the tutorial and import the
+``morphology\_canis.nex'' file.\footnote{This file contains recorded states for 50
+morphological characters of \textit{Canis} species and some related species,
+taken from \cite{Slater2015}.}
 
 \begin{figure}[htb!]
 \centering
@@ -732,11 +773,6 @@ in BEAUti, but it must be \textbf{after} configuring the species names.
 {The option to add morphological data to the species tree}
 \label{fig:addMorphology}
 \end{figure}
-
-Navigate to the data folder of the tutorial and import the
-``morphology\_canis.nex'' file. This file contains recorded states for 50
-morphological characters of \textit{Canis} species and some related species,
-taken from \cite{Slater2015}.
 
 Select Yes to condition on recording variable characters only (Mkv). Mkv is
 used when only characters that vary between species have been included in the
@@ -757,7 +793,7 @@ states. For example, morphology\_canis2 is for binary characters.
 
 Open the Tip Dates panel and enable ``Use tip dates''. Change
 ``Since some time in the past'' to ``before the present''. Click
-on Auto-configure and select ``read from file''. Select the
+on Auto-configure and select ``read from file''. Choose the
 ``tip\_dates\_canis.txt'' file in the data folder of the tutorial.
 Click OK, and your tip dates should look like Figure~\ref{fig:tipDates}.
 
@@ -786,7 +822,7 @@ are using fossil data to calibrate our tree.
 \end{figure}
 
 Next, open the Priors panel and change the Tree prior from Yule to
-``FBDModel''. Scroll down to the strictClockRate.c:APOBS1 parameter,
+``FBDModel''. Scroll down to the strictClockRate.c:molecular parameter,
 and expand that prior. Change the mean to 0.001, the \textit{a priori}
 molecular clock rate estimate from section~\ref{sec:speciesTree}. Leave
 the standard deviation set at 1, a moderately informative prior that will
@@ -803,6 +839,8 @@ estimated solely from the data.
 {Configuring the clock prior distributions}
 \label{fig:clockPriors}
 \end{figure}
+
+\newpage{}
 
 The FBD-MSC model is quite complex and requires very long chains for
 reliable sampling. Open the MCMC tab and change the chain length to 200
@@ -827,9 +865,9 @@ subsection~\ref{subsec:runningBEAST}. The chain will take about 2 hours to
 finish, depending on the speed of your computer.
 
 After BEAST has finished, open the ``starbeast.log'' file in Tracer to check
-on the ESS values. Select the strictClockRate.c:APOBS1 parameter
+on the ESS values. Select the strictClockRate.c:molecular parameter
 (Figure~\ref{fig:strictClockRate}). The 95\% HPD interval for this parameter
-spans approximately 0.0004 to 0.0013 substitutions per site per million years,
+spans approximately 0.0005 to 0.0013 substitutions per site per million years,
 in agreement with the \textit{a priori} rate of 0.001.
 
 \begin{figure}[htb!]
@@ -875,11 +913,10 @@ something sensible like ``summary.tree'', then click Run.
 \label{fig:treeAnnotatorMeanHeights}
 \end{figure}
 
-Now start FigTree and open the summary tree file. Enable Node Labels,
-and expand the Node Labels panel. Choose ``posterior'', and set
-the number of significant digits to 2. Now the posterior support
-for each clade will be displayed next to each node
-(Figure~\ref{fig:figtreeFBD}).
+Start FigTree and open the summary tree file you have just created. Enable
+Node Labels, and expand the Node Labels panel. Choose ``posterior'', and set
+the number of significant digits to 2. Now the posterior support for each
+clade will be displayed next to each node (Figure~\ref{fig:figtreeFBD}).
 
 \clearpage
 
@@ -899,8 +936,6 @@ data which supports it has been reported previously \citep{Zrzavy2004}. This sho
 how morphological characters and fossil data can influence species tree
 estimates.
 
-\clearpage
-
 \section{Wrapping up}
 
 That concludes the tutorial. One final note; when runnning any MCMC method, it
@@ -908,7 +943,7 @@ is possible than the chain has gotten stuck in a region of parameter space
 with high local probability. So for any kind of analysis intended for
 publication, it is a good idea to run at least two MCMC chains. Open both
 chains in Tracer, and check that the traces for the logged statistics and
-parameters have the same distributions. Happy trails!
+parameters have the same distributions.
 
 \bibliographystyle{natbib}
 \bibliography{StarBEAST2-tutorial}
