@@ -7,6 +7,7 @@ import beast.core.Operator;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
+import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 
 import java.util.ArrayList;
@@ -129,7 +130,7 @@ public class NodeReheight2 extends Operator {
 
         for (int i = 0; i < nodeCount; i++) {
             canonicalOrder[i].setParent(parents[i]);
-
+            canonicalOrder[i].makeDirty(Tree.IS_FILTHY);
             if (i % 2 == 1) { // internal node
                 canonicalOrder[i].setLeft(leftChildren[i]);
                 canonicalOrder[i].setRight(rightChildren[i]);

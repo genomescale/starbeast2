@@ -417,7 +417,7 @@
 		<operator id="branchRateScaler.Species" spec="ScaleOperator" scaleFactor="0.75" parameter="@branchRates.Species" weight="18.0"/>
 		<operator id="indicatorFlipper.Species" spec="BitFlipOperator" parameter="@indicators.Species" weight="9.0"/>
 
-		<operator id="Reheight.t:Species" spec="starbeast2.NodeReheight2" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="75.0"/>
+		<operator id="Reheight.t:Species" spec="starbeast2.NodeReheight2" taxonset="@taxonsuperset" tree="@Tree.t:Species" weight="30.0"/>
 		<operator id="coordinatedUniform.t:Species" spec="starbeast2.CoordinatedUniform" weight="15.0" speciesTree="@Tree.t:Species"/>
 		<operator id="coordinatedExponential.t:Species" spec="starbeast2.CoordinatedExponential" weight="15.0" speciesTree="@Tree.t:Species"/>
 
