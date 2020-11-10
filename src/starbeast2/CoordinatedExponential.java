@@ -11,7 +11,6 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
 /**
@@ -37,7 +36,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
        LEFT_ONLY, RIGHT_ONLY, BOTH, NEITHER
     }
 
-    TreeInterface speciesTree;
+    SpeciesTreeInterface speciesTree;
 
     @Override
     public void initAndValidate() {

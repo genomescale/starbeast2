@@ -17,7 +17,6 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeInterface;
 import beast.util.Randomizer;
 
 /**
@@ -49,7 +48,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
     private int nInternalNodes; // excludes the root node
     private int nSpeciesNodes;
     private int czBranchCount;
-    TreeInterface speciesTree;
+    SpeciesTreeInterface speciesTree;
 
     private List<List<SortedMap<Node, Node>>> movedNodes;
     private List<SetMultimap<Integer, Node>> graftNodes;
