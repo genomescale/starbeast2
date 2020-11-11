@@ -4,14 +4,7 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.Multimap;
 
@@ -101,8 +94,9 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
         boolean geneTreesNeedInit = true;
         if (newick != null) {
-            Log.info.println("StarBEAST2: using initFromNewick to initialize species tree.");
-            initFromNewick(speciesTree, newick);
+            Log.info.println("StarBEAST2: using newick string to initialize species tree.");
+            final TreeParser parser = new TreeParser(newick);
+            copyTreeStructure(parser, speciesTree);
         } else if (method == Method.ALL_RANDOM) {
             Log.info.println("StarBEAST2: using randomInit to initialize species tree.");
             randomInit(speciesTree, calibrations);
@@ -437,27 +431,70 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         rnd.setInputValue("populationModel", pf);
         rnd.initAndValidate();
 
-        speciesTree.assignFromWithoutID(rnd);
-        // System.out.println("BEFORE = " + speciesTree.toString());
-
-        /*final TraitSet speciesTipDates = speciesTree.getDateTrait();
-        if (speciesTree.hasDateTrait()) {
-        	for (Node node: speciesTree.getNodesAsArray()) {
-        		if (node.isLeaf()) {
-        			final String taxonName = node.getID();
-        			final double taxonHeight = speciesTipDates.getValue(taxonName);
-        			node.setHeight(taxonHeight);
-        			
-        		}
-        	}
-            System.out.println("AFTER = " + speciesTree.toString());
-        }*/
+        copyTreeStructure(rnd, speciesTree);
     }
 
-    private void initFromNewick(final Tree speciesTree, final String newick) {
-        final TreeParser parser = new TreeParser(newick);
-        speciesTree.assignFromWithoutID(parser);
-        System.out.println(speciesTree.toString());
+    // copy the structure of the source tree to the destination tree
+    // preserving the leaf node names and numbers
+    private void copyTreeStructure(final Tree src, final Tree dst) {
+        final Node[] dstNodes = dst.getNodesAsArray();
+        final Node[] srcNodes = src.getNodesAsArray();
+
+        final Map<String, Integer> srcTipNumbers = new HashMap<>();
+
+        final int nodeCount = src.getNodeCount();
+        final int leafNodeCount = src.getLeafNodeCount();
+
+        // Clear the children of all internal nodes in the destination tree
+        for (int nodeNumber = leafNodeCount; nodeNumber < nodeCount; nodeNumber++)
+            dstNodes[nodeNumber].removeAllChildren(false);
+
+        // Record the node number of all leaves in the source tree
+        for (int nodeNumber = 0; nodeNumber < leafNodeCount; nodeNumber++) {
+            final String srcName = srcNodes[nodeNumber].getID();
+            srcTipNumbers.put(srcName, nodeNumber);
+        }
+
+        // Set the heights of all nodes to match the source height
+        for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
+            final Node dstNode = dstNodes[nodeNumber];
+            Node srcNode;
+
+            // find the corresponding node from the source tree
+            if (nodeNumber < leafNodeCount) { // if this is a leaf node
+                final String speciesName = dstNode.getID();
+                final int srcTipNumber = srcTipNumbers.get(speciesName);
+
+                srcNode = srcNodes[srcTipNumber];
+            } else { // if this is an internal node
+                srcNode = srcNodes[nodeNumber];
+            }
+
+            // Copy height
+            dstNode.setHeight(srcNode.getHeight());
+
+            // Clear and copy metadata
+            final Set<String> dstMetaDataNames = dstNode.getMetaDataNames();
+            final Set<String> srcMetaDataNames = srcNode.getMetaDataNames();
+            final Set<String> srcLengthMetaDataNames = srcNode.getLengthMetaDataNames();
+
+            for (String metaDataName: dstMetaDataNames) dstNode.removeMetaData(metaDataName);
+
+            for (String metaDataName: srcMetaDataNames)
+                dstNode.setMetaData(metaDataName, srcNode.getMetaData(metaDataName));
+
+            for (String lengthMetaDataName: srcLengthMetaDataNames)
+                dstNode.setMetaData(lengthMetaDataName, srcNode.getLengthMetaData(lengthMetaDataName));
+
+            // if this is not the root node, also set the parent and child
+            // connections to match the source
+            if (nodeNumber != nodeCount - 1) {
+                final int parentNumber = srcNode.getParent().getNr();
+                final Node parentNode = dstNodes[parentNumber];
+                dstNode.setParent(parentNode);
+                parentNode.addChild(dstNode);
+            }
+        }
     }
 
     @Override
