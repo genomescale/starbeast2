@@ -6,8 +6,6 @@ import static java.lang.Math.min;
 
 import java.util.*;
 
-import com.google.common.collect.Multimap;
-
 import beast.core.BEASTInterface;
 import beast.core.Description;
 import beast.core.Function;
@@ -172,7 +170,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
     }
 
     // check if every gene tree has at least one specimen from every species
-    private boolean checkSpeciesAlwaysRepresented() {
+    /* private boolean checkSpeciesAlwaysRepresented() {
         final SpeciesTree speciesTree = speciesTreeInput.get();
         final int nSpecies = speciesTree.getLeafNodeCount();
         final Multimap<Integer, String> numberTipMap = speciesTree.getNumberTipMap();
@@ -185,6 +183,38 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         			speciesRepresented |= speciesTaxa.contains(geneTaxon);
         		if (!speciesRepresented) return false;
         	}
+        }
+
+        return true;
+    } */
+
+    private boolean checkSpeciesAlwaysRepresented() {
+        final SpeciesTree speciesTree = speciesTreeInput.get();
+        final TaxonSet taxonSuperSet = speciesTree.getTaxonset();
+        final Map<String, String> speciesTipMap = new HashMap<>();
+        final List<String> allSpeciesNames = new ArrayList<>();
+
+        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
+            final String speciesName = species.getID();
+            final TaxonSet speciesTaxonSet = (TaxonSet) species;
+
+            allSpeciesNames.add(speciesName);
+
+            for (Taxon tip: speciesTaxonSet.taxonsetInput.get()) {
+                final String tipName = tip.getID();
+                speciesTipMap.put(tipName, speciesName);
+            }
+        }
+
+        for (Tree geneTree: genes.get()) {
+            final String[] allTipNames = geneTree.getTaxaNames();
+
+            for (String speciesName: allSpeciesNames) {
+                boolean speciesRepresented = false;
+                for (String tipName: allTipNames)
+                    speciesRepresented |= speciesTipMap.get(tipName).equals(speciesName);
+                if (!speciesRepresented) return false;
+            }
         }
 
         return true;
