@@ -155,7 +155,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                     ensure compatibility of the trees while preserving user-specified topologies */
                     boostGeneTreeInternalNodeHeights(gtree, rootHeight);
                 } else {
-                    System.out.println("?????????????????????");
                     gtree.makeCaterpillar(rootHeight, rootHeight / gtree.getInternalNodeCount(), true);
                 }
                 // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
