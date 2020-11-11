@@ -67,12 +67,39 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
 
     final public Input<PopulationModel> populationFunctionInput = new Input<>("populationModel", "The species tree population model.");
 
+    private Map<String, String> tipSpeciesMap;
+    private Map<String, Node> speciesNodeMap;
+    private Set<String> allSpeciesNames;
+    private Set<String> allTipNames;
+
     @Override
     public void initStateNodes() {
         final SpeciesTree speciesTree = speciesTreeInput.get();
+        final TaxonSet taxonSuperSet = speciesTree.getTaxonset();
         final Set<BEASTInterface> treeOutputs = speciesTreeInput.get().getOutputs();
         final Method method = initMethod.get();
         final String newick = newickInput.get();
+
+        tipSpeciesMap = new HashMap<>();
+        speciesNodeMap = new HashMap<>();
+        allTipNames = new HashSet<>();
+        allSpeciesNames = new HashSet<>();
+
+        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
+            final String speciesName = species.getID();
+            final TaxonSet speciesTaxonSet = (TaxonSet) species;
+
+            allSpeciesNames.add(speciesName);
+
+            for (Taxon tip: speciesTaxonSet.taxonsetInput.get()) {
+                final String tipName = tip.getID();
+                tipSpeciesMap.put(tipName, speciesName);
+                allTipNames.add(tipName);
+            }
+        }
+
+        for (Node node: speciesTree.getExternalNodes())
+            speciesNodeMap.put(node.getID(), node);
 
         final List<MRCAPrior> calibrations = new ArrayList<>();
         for (final Object plugin : treeOutputs ) {
@@ -128,12 +155,12 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
                     ensure compatibility of the trees while preserving user-specified topologies */
                     boostGeneTreeInternalNodeHeights(gtree, rootHeight);
                 } else {
+                    System.out.println("?????????????????????");
                     gtree.makeCaterpillar(rootHeight, rootHeight / gtree.getInternalNodeCount(), true);
                 }
+                // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
+                resetGeneTreeTipHeights(speciesTree, gtree);
             }
-
-            // make sure the heights of all gene tree tips is equal to the height of corresponding species tree tips
-            resetGeneTreeTipHeights();
         }
 
         // initialize population sizes to equal average branch length
@@ -145,12 +172,11 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final PopulationModel populationModel = populationFunctionInput.get();
         if (populationModel != null) populationModel.initPopSizes(averageBranchLength);
         
-        final Set<String> tipNames = speciesTree.getTipNumberMap().keySet();
         for (Tree geneTree: genes.get()) {
         	for (Node geneNode: geneTree.getNodesAsArray()) {
         		if (geneNode.isLeaf()) {
         			final String tipName = geneNode.getID();
-        			if (!tipNames.contains(tipName)) {
+        			if (!allTipNames.contains(tipName)) {
         	            throw new RuntimeException(String.format("ERROR: Gene tree tip name '%s' is missing from taxon map. "
         	            		+ "This typically occurs when a sequence or sample name is identical to a species name. "
         	            		+ "Make sure all species names are distinct from sequence or sample names.", tipName));
@@ -169,50 +195,14 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         }
     }
 
-    // check if every gene tree has at least one specimen from every species
-    /* private boolean checkSpeciesAlwaysRepresented() {
-        final SpeciesTree speciesTree = speciesTreeInput.get();
-        final int nSpecies = speciesTree.getLeafNodeCount();
-        final Multimap<Integer, String> numberTipMap = speciesTree.getNumberTipMap();
-        for (Tree geneTree: genes.get()) {
-        	final String[] taxaNames = geneTree.getTaxaNames();
-        	for (int speciesNr = 0; speciesNr < nSpecies; speciesNr++) {
-        		final Collection<String> speciesTaxa = numberTipMap.get(speciesNr);
-        		boolean speciesRepresented = false;
-        		for (String geneTaxon: taxaNames)
-        			speciesRepresented |= speciesTaxa.contains(geneTaxon);
-        		if (!speciesRepresented) return false;
-        	}
-        }
-
-        return true;
-    } */
-
     private boolean checkSpeciesAlwaysRepresented() {
-        final SpeciesTree speciesTree = speciesTreeInput.get();
-        final TaxonSet taxonSuperSet = speciesTree.getTaxonset();
-        final Map<String, String> speciesTipMap = new HashMap<>();
-        final List<String> allSpeciesNames = new ArrayList<>();
-
-        for (Taxon species: taxonSuperSet.taxonsetInput.get()) {
-            final String speciesName = species.getID();
-            final TaxonSet speciesTaxonSet = (TaxonSet) species;
-
-            allSpeciesNames.add(speciesName);
-
-            for (Taxon tip: speciesTaxonSet.taxonsetInput.get()) {
-                final String tipName = tip.getID();
-                speciesTipMap.put(tipName, speciesName);
-            }
-        }
-
         for (Tree geneTree: genes.get()) {
             final String[] allTipNames = geneTree.getTaxaNames();
 
             for (String speciesName: allSpeciesNames) {
                 boolean speciesRepresented = false;
                 for (String tipName: allTipNames)
-                    speciesRepresented |= speciesTipMap.get(tipName).equals(speciesName);
+                    speciesRepresented |= tipSpeciesMap.get(tipName).equals(speciesName);
                 if (!speciesRepresented) return false;
             }
         }
@@ -220,23 +210,15 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         return true;
     }
 
-    private void resetGeneTreeTipHeights() {
-    	final SpeciesTreeInterface speciesTree = speciesTreeInput.get();
-        final Map<String, Integer> tipNames = speciesTree.getTipNumberMap();
-        final List<Tree> geneTrees = genes.get();
-
-        for (final Tree gtree : geneTrees) {
-        	final int leafNodeCount = gtree.getLeafNodeCount();
-        	for (int geneLeafNr = 0; geneLeafNr < leafNodeCount; geneLeafNr++) {
-        		final Node geneLeaf = gtree.getNode(geneLeafNr);
-        		if (tipNames.containsKey(geneLeaf.getID())) {
-                    final int speciesLeafNr = tipNames.get(geneLeaf.getID());
-                    final Node speciesLeaf = speciesTree.getNode(speciesLeafNr);
-                    geneLeaf.setHeight(speciesLeaf.getHeight());
-                } else {
-        		    throw new RuntimeException("The taxon " + geneLeaf.getID() + " is missing from the taxonsuperset!");
-                }
-        	}
+    private void resetGeneTreeTipHeights(SpeciesTreeInterface speciesTree, Tree gtree) {
+        for (Node geneLeaf: gtree.getExternalNodes()) {
+            if (allTipNames.contains(geneLeaf.getID())) {
+                final String speciesName = tipSpeciesMap.get(geneLeaf.getID());
+                final Node speciesLeaf = speciesNodeMap.get(speciesName);
+                geneLeaf.setHeight(speciesLeaf.getHeight());
+            } else {
+                throw new RuntimeException("The taxon " + geneLeaf.getID() + " is missing from the taxonsuperset!");
+            }
         }
 	}
 
