@@ -822,16 +822,14 @@ are using fossil data to calibrate our tree.
 \label{fig:estimateMorphClock}
 \end{figure}
 
-Next, open the Priors panel and change the Tree prior from Yule to
-``FBDModel''. Scroll down to the strictClockRate.c:molecular parameter,
-and expand that prior. Change the mean to 0.001, the \textit{a priori}
-molecular clock rate estimate from section~\ref{sec:speciesTree}. Leave
-the standard deviation set at 1, a moderately informative prior that will
-still allow the rate to be informed by the fossil data. Then
-change the prior distribution for the strictClockRate.c:morphology\_canis
-prior to 1/X (Figure~\ref{fig:clockPriors}). This is an improper,
-uninformative prior so the inferred morphological clock rate will be
-estimated solely from the data.
+Next, open the Priors panel, scroll down to the strictClockRate.c:molecular
+parameter, and expand that prior. Change the mean to 0.001, the \textit{a
+priori} molecular clock rate estimate from section~\ref{sec:speciesTree}.
+Leave the standard deviation set at 1, a moderately informative prior that
+will still allow the rate to be informed by the fossil data. Then change the
+prior distribution for the strictClockRate.c:morphology\_canis prior to 1/X
+(Figure~\ref{fig:clockPriors}). This is an improper, uninformative prior so
+the inferred morphological clock rate will be estimated solely from the data.
 
 \begin{figure}[htb!]
 \centering
