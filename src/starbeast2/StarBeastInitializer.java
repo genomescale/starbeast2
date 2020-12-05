@@ -143,8 +143,6 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             geneTreesNeedInit = false;
         }
 
-        speciesTree.makeMaps();
-
         if (geneTreesNeedInit) {
             final double rootHeight = speciesTree.getRoot().getHeight();
             Log.info.println(String.format("StarBEAST2: initializing gene trees with random or user-specified topologies (%f).", rootHeight));

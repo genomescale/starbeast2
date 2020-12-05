@@ -87,7 +87,6 @@ public class ConstantIOTest {
     private void initialize(TaxonSet speciesSuperset) throws Exception {
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
-        speciesTree.makeMaps();
 
         for (String geneTreeNewick: newickGeneTrees) {
             TreeParser geneTree = new TreeParser();

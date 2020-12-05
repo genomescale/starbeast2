@@ -18,8 +18,11 @@ public class SpeciesTree extends Tree implements SpeciesTreeInterface {
 
     public void initAndValidate() {
         super.initAndValidate();
+
         tipNumberMap = new LinkedHashMap<>();
         numberTipMap = HashMultimap.create();
+
+        makeMaps();
     }
 
     public Map<String, Integer> getTipNumberMap() {

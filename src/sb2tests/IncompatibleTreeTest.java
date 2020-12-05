@@ -54,7 +54,6 @@ public class IncompatibleTreeTest {
         TaxonSet speciesSuperset = generateSuperset();
         speciesTree = new SpeciesTreeParser();
         speciesTree.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperset);
-        speciesTree.makeMaps();
 
         final int nBranches = nSpecies * 2 - 1;
         popsizeParameter.initByName("value", String.valueOf(popSize), "dimension", String.valueOf(nBranches));

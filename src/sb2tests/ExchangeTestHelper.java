@@ -103,7 +103,6 @@ abstract class ExchangeTestHelper {
     public void initializeSpeciesTree(TaxonSet speciesSuperSet) throws Exception {
         speciesTreeWrapper = new SpeciesTreeParser();
         speciesTreeWrapper.initByName("newick", newickSpeciesTree, "IsLabelledNewick", true, "taxonset", speciesSuperSet);
-        speciesTreeWrapper.makeMaps();
     }
 
     public void initializeGeneTrees() throws Exception {
