@@ -1,5 +1,7 @@
-<addon name="starbeast2" version="0.15.12">
+<addon name="starbeast2" version="0.15.13">
 	<depends on="beast2" atleast="2.5.0"/>
 	<depends on="SA" atleast="2.0.0"/>
 	<depends on="MM" atleast="1.1.0"/>
+  <addonapp class="starbeast2.aimannotator.AIMannotator"
+            description="AimAnnotator"/>
 </addon>
