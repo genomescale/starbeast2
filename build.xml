@@ -1,7 +1,7 @@
 <!-- Build starbeast2. It is also used by Hudson starbeast2 project. JUnit test is available for this build. -->
 <project basedir="." default="build_jar_all_starbeast2" name="BUILD_starbeast2">
 	<description>
-	    Build starbeast2.
+	    Build StarBEAST2.
 	</description>
 
 	<!-- set global properties for this build -->
@@ -19,6 +19,7 @@
 	<property name="SAClasspath" location="${SAPath}/build" />
 	<property name="MMClasspath" location="${MMPath}/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
+	<property name="version" value="0.15.13" />
 
     <import file="${beast2path}/build.xml" />
     <import file="${SAPath}/build.xml" />
@@ -176,7 +177,7 @@
 			<fileset dir="${diststarbeast2}" includes="starbeast2.src.jar" />
 		</copy>
 
-		<jar jarfile="${diststarbeast2}/starbeast2.addon.zip">
+		<jar jarfile="${diststarbeast2}/StarBEAST2.v${version}.zip">
 			<fileset dir="${Add_on_dir}">
 				<include name="**/*" />
 			</fileset>
