@@ -1,4 +1,4 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions">
+<beast version="2.0" namespace="beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.math.distributions">
 	<!-- population model priors -->
 	<mergewith point="sbPopModelTemplates">
 		<!-- Analytical integration of per-branch effective population sizes -->
@@ -9,12 +9,12 @@
 			<parameter name="alpha" id="popShape.$(n)" lower="0.0" value="3.0" estimate="false"/>
 			<parameter name="mean" id="popMean.$(n)" lower="0.0" value="1.0" estimate="true"/>
 
-			<distribution id="popShapePrior.$(n)" spec="beast.math.distributions.Prior" x="@popShape.$(n)">
-				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			<distribution id="popShapePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@popShape.$(n)">
+				<distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10000.0"/>
 			</distribution>
 
-			<distribution id="popMeanPrior.$(n)" spec="beast.math.distributions.Prior" x="@popMean.$(n)">
-				<distr spec="beast.math.distributions.OneOnX"/>
+			<distribution id="popMeanPrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@popMean.$(n)">
+				<distr spec="beast.base.inference.distribution.OneOnX"/>
 			</distribution>
 
 			<operator id="popShapeScale.$(n)" parameter="@popShape.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>
@@ -48,19 +48,19 @@
 				<parameter dimension="10" name="populationSizes" id="constPopSizes.$(n)" lower="0.0" value="1.0" upper="10.0" estimate="true"/>
 			</plugin>
 
-			<distribution id="constPopSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@constPopSizes.$(n)">
+			<distribution id="constPopSizesPrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@constPopSizes.$(n)">
 				<Gamma name="distr" mode="ShapeMean">
 					<parameter name="alpha" id="constPopShape.$(n)" lower="0.0" value="2.0" estimate="false"/>
 					<parameter name="beta" id="constPopMean.$(n)" lower="0.0" value="1.0" estimate="true"/>
 				</Gamma>
 			</distribution>
 
-			<distribution id="constPopShapePrior.$(n)" spec="beast.math.distributions.Prior" x="@constPopShape.$(n)">
-				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			<distribution id="constPopShapePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@constPopShape.$(n)">
+				<distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10000.0"/>
 			</distribution>
 
-			<distribution id="constPopMeanPrior.$(n)" spec="beast.math.distributions.Prior" x="@constPopMean.$(n)">
-				<distr spec="beast.math.distributions.OneOnX"/>
+			<distribution id="constPopMeanPrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@constPopMean.$(n)">
+				<distr spec="beast.base.inference.distribution.OneOnX"/>
 			</distribution>
 
 			<operator id="constPopSizesSwap.$(n)" parameter="@constPopSizes.$(n)" spec="starbeast2.RealCycle" k="2" optimise="false" weight="3.0"/>
@@ -100,29 +100,29 @@
 				<parameter dimension="10" name="topPopulationSizes" id="topPopSizes.$(n)" lower="0.0" value="1.0" upper="1.0" estimate="true"/>
 			</plugin>
 
-			<distribution id="tipPopSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@tipPopSizes.$(n)">
+			<distribution id="tipPopSizesPrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@tipPopSizes.$(n)">
 				<Gamma name="distr">
 					<parameter name="alpha" id="tipPopShape.$(n)" lower="0.0" value="4.0" estimate="false"/>
 					<parameter name="beta" id="lwcrPopScale.$(n)" lower="0.0" value="1.0" estimate="true"/>
 				</Gamma>
 			</distribution>
 
-			<distribution id="topPopSizesPrior.$(n)" spec="beast.math.distributions.Prior" x="@topPopSizes.$(n)">
+			<distribution id="topPopSizesPrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@topPopSizes.$(n)">
 				<Gamma name="distr" beta="@lwcrPopScale.$(n)">
 					<parameter name="alpha" id="topPopShape.$(n)" lower="0.0" value="2.0" estimate="false"/>
 				</Gamma>
 			</distribution>
 
-			<distribution id="tipPopShapePrior.$(n)" spec="beast.math.distributions.Prior" x="@tipPopShape.$(n)">
-				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			<distribution id="tipPopShapePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@tipPopShape.$(n)">
+				<distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10000.0"/>
 			</distribution>
 
-			<distribution id="topPopShapePrior.$(n)" spec="beast.math.distributions.Prior" x="@topPopShape.$(n)">
-				<distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10000.0"/>
+			<distribution id="topPopShapePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@topPopShape.$(n)">
+				<distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10000.0"/>
 			</distribution>
 
-			<distribution id="lwcrPopScalePrior.$(n)" spec="beast.math.distributions.Prior" x="@lwcrPopScale.$(n)">
-				<distr spec="beast.math.distributions.OneOnX"/>
+			<distribution id="lwcrPopScalePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@lwcrPopScale.$(n)">
+				<distr spec="beast.base.inference.distribution.OneOnX"/>
 			</distribution>
 
 			<operator id="tipPopSizesSwap.$(n)" parameter="@tipPopSizes.$(n)" spec="starbeast2.RealCycle" k="2" optimise="false" weight="3.0"/>
@@ -173,8 +173,8 @@
 				<parameter name="universalSize" id="universalPopSize.$(n)" lower="0.0" value="1.0" upper="10.0" estimate="true"/>
 			</plugin>
 
-			<distribution id="universalPopSizePrior.$(n)" spec="beast.math.distributions.Prior" x="@universalPopSize.$(n)">
-				<distr spec="beast.math.distributions.OneOnX"/>
+			<distribution id="universalPopSizePrior.$(n)" spec="beast.base.inference.distribution.Prior" x="@universalPopSize.$(n)">
+				<distr spec="beast.base.inference.distribution.OneOnX"/>
 			</distribution>
 
 			<operator id="universalPopSizeScale.$(n)" parameter="@universalPopSize.$(n)" scaleFactor="0.75" spec="ScaleOperator" weight="1.0"/>

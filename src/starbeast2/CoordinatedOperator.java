@@ -1,17 +1,16 @@
 package starbeast2;
 
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.Operator;
+import com.google.common.collect.Multimap;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.Multimap;
-
-import beast.core.Input;
-import beast.core.Operator;
-import beast.core.Input.Validate;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
 
 public abstract class CoordinatedOperator extends Operator {
     public Input<SpeciesTreeInterface> speciesTreeInput = new Input<>("speciesTree", "The species tree state node.", Validate.REQUIRED);

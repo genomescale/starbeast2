@@ -1,20 +1,19 @@
 package sb2tests;
 
-import static org.junit.Assert.assertEquals;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.TreeParser;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
+import org.junit.Test;
+import starbeast2.ConstantPopulations;
+import starbeast2.GeneTree;
+import starbeast2.SpeciesTreeParser;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import beast.core.State;
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.util.TreeParser;
-import starbeast2.GeneTree;
-import starbeast2.ConstantPopulations;
-import starbeast2.SpeciesTreeParser;
+import static org.junit.Assert.assertEquals;
 
 public class ConstantPopulationTest {
     private String newickSpeciesTree;

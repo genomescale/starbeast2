@@ -1,8 +1,8 @@
 package starbeast2;
 
-import beast.core.Input;
-import beast.core.Operator;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.inference.Operator;
+import beast.base.util.Randomizer;
 
 /**
  * Common methods for executing the same operator multiple times in one step.

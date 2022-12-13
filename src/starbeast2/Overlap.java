@@ -1,12 +1,11 @@
 package starbeast2;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.parameter.RealParameter;
 
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Overlap extends MigrationModel {
 	

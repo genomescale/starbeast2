@@ -1,8 +1,8 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions">
+<beast version="2.0" namespace="beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.math.distributions">
 
 <mergewith point="sbSubstModelTemplates">
 		<!-- gamma site model -->
-		<subtemplate id="Gamma Site Model" class="beast.evolution.sitemodel.SiteModel" mainid="SiteModel.s:$(n)">
+		<subtemplate id="Gamma Site Model" class="beast.base.evolution.sitemodel.SiteModel" mainid="SiteModel.s:$(n)">
 <![CDATA[
 			<plugin spec="SiteModel" id="SiteModel.s:$(n)" gammaCategoryCount="0">
 				<!--substModel will be automatically detected /-->
@@ -23,7 +23,7 @@
 			</prior>
 
 			<prior id="PropInvariantPrior.s:$(n)" x="@proportionInvariant.s:$(n)">
-				<distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/>
+				<distr spec="beast.base.inference.distribution.Uniform" lower="0" upper="1"/>
 			</prior>
 
 			<operator id="proportionInvariantScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@proportionInvariant.s:$(n)"/>
@@ -31,7 +31,7 @@
 			<operator id="gammaShapeScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@gammaShape.s:$(n)"/>
 ]]>
 
-			<connect method="beast.app.beauti.SiteModelInputEditor.customConnector"/>
+			<connect method="beastfx.app.inputeditor.SiteModelInputEditor.customConnector"/>
 
 <!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
 			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="nooperator(FixMeanMutationRatesOperator) and inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
@@ -64,14 +64,14 @@
 
 		<!-- substitution models -->
 		<!-- JC69 substitution model -->
-		<subtemplate id="JC69" class="beast.evolution.substitutionmodel.JukesCantor" mainid="JC69.s:$(n)">
+		<subtemplate id="JC69" class="beast.base.evolution.substitutionmodel.JukesCantor" mainid="JC69.s:$(n)">
 <![CDATA[
 		<plugin spec="JukesCantor" id="JC69.s:$(n)"/>
 ]]>
 		</subtemplate>
 
 		<!-- HKY substitution model -->
-		<subtemplate id="HKY" class="beast.evolution.substitutionmodel.HKY" mainid="hky.s:$(n)">
+		<subtemplate id="HKY" class="beast.base.evolution.substitutionmodel.HKY" mainid="hky.s:$(n)">
 			<![CDATA[
 		<plugin spec="HKY" id="hky.s:$(n)">
 			<parameter id="kappa.s:$(n)" name="kappa" value="2.0" lower="0.0" estimate="true"/>
@@ -90,7 +90,7 @@
 			</distr>
 		</prior>
 <!--
-		<prior id="FrequenciesPrior.s:$(n)" x="@freqParameter.s:$(n)"><distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/></prior>
+		<prior id="FrequenciesPrior.s:$(n)" x="@freqParameter.s:$(n)"><distr spec="beast.base.inference.distribution.Uniform" lower="0" upper="1"/></prior>
 -->
 
 ]]>
@@ -125,7 +125,7 @@
 
 
 		<!-- TN93 substitution model -->
-		<subtemplate id="TN93" class="beast.evolution.substitutionmodel.TN93" mainid="tn93.s:$(n)">
+		<subtemplate id="TN93" class="beast.base.evolution.substitutionmodel.TN93" mainid="tn93.s:$(n)">
 			<![CDATA[
 		<plugin spec="TN93" id="tn93.s:$(n)">
 			<parameter id="kappa1.s:$(n)" name="kappa1" value="2.0" lower="0.0" estimate="true"/>
@@ -152,7 +152,7 @@
 			</distr>
 	</prior>
 <!--
-		<prior id="FrequenciesPrior.s:$(n)" x="@freqParameter.s:$(n)"><distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/></prior>
+		<prior id="FrequenciesPrior.s:$(n)" x="@freqParameter.s:$(n)"><distr spec="beast.base.inference.distribution.Uniform" lower="0" upper="1"/></prior>
 -->
 
 ]]>
@@ -199,8 +199,8 @@
 
 
 		<!-- GTR substitution model -->
-		<subtemplate id="GTR" class="beast.evolution.substitutionmodel.GTR" mainid="gtr.s:$(n)"
-					 suppressInputs="beast.evolution.substitutionmodel.GTR.eigenSystem">
+		<subtemplate id="GTR" class="beast.base.evolution.substitutionmodel.GTR" mainid="gtr.s:$(n)"
+					 suppressInputs="beast.base.evolution.substitutionmodel.GTR.eigenSystem">
 <![CDATA[
 			<plugin spec="GTR" id="gtr.s:$(n)">
 				<parameter id="rateAC.s:$(n)" name="rateAC" value="1.0" lower="0.001" estimate="true"/>
@@ -222,12 +222,12 @@
 			<operator id="RateGTScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@rateGT.s:$(n)"/>
 			<operator id="FrequenciesExchanger.s:$(n)" spec="DeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
 
-			<prior id="RateACPrior.s:$(n)" x="@rateAC.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
-			<prior id="RateAGPrior.s:$(n)" x="@rateAG.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="20.0" estimate="false"/></distr></prior>
-			<prior id="RateATPrior.s:$(n)" x="@rateAT.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
-			<prior id="RateCGPrior.s:$(n)" x="@rateCG.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
-			<prior id="RateCTPrior.s:$(n)" x="@rateCT.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="20.0" estimate="false"/></distr></prior>
-			<prior id="RateGTPrior.s:$(n)" x="@rateGT.s:$(n)"><distr spec="beast.math.distributions.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
+			<prior id="RateACPrior.s:$(n)" x="@rateAC.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
+			<prior id="RateAGPrior.s:$(n)" x="@rateAG.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="20.0" estimate="false"/></distr></prior>
+			<prior id="RateATPrior.s:$(n)" x="@rateAT.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
+			<prior id="RateCGPrior.s:$(n)" x="@rateCG.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
+			<prior id="RateCTPrior.s:$(n)" x="@rateCT.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="20.0" estimate="false"/></distr></prior>
+			<prior id="RateGTPrior.s:$(n)" x="@rateGT.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
 ]]>
 
 			<connect srcID="freqParameter.s:$(n)" targetID="state" inputName="stateNode"
@@ -316,35 +316,35 @@
 		</subtemplate>
 
 		<!-- empirical amino acid substitution models -->
-		<subtemplate id="Blosum62" class="beast.evolution.substitutionmodel.Blosum62"
-					 suppressInputs="beast.evolution.substitutionmodel.Blosum62.eigenSystem"
+		<subtemplate id="Blosum62" class="beast.base.evolution.substitutionmodel.Blosum62"
+					 suppressInputs="beast.base.evolution.substitutionmodel.Blosum62.eigenSystem"
 					 mainid="Blosum62.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="Blosum62" id="Blosum62.s:$(n)"/>]]></subtemplate>
-		<subtemplate id="Dayhoff" class="beast.evolution.substitutionmodel.Dayhoff"
-					 suppressInputs="beast.evolution.substitutionmodel.Dayhoff.eigenSystem"
+		<subtemplate id="Dayhoff" class="beast.base.evolution.substitutionmodel.Dayhoff"
+					 suppressInputs="beast.base.evolution.substitutionmodel.Dayhoff.eigenSystem"
 					 mainid="Dayhoff.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="Dayhoff" id="Dayhoff.s:$(n)"/>]]></subtemplate>
-		<subtemplate id="JTT" class="beast.evolution.substitutionmodel.JTT"
-					 suppressInputs="beast.evolution.substitutionmodel.JTT.eigenSystem"
+		<subtemplate id="JTT" class="beast.base.evolution.substitutionmodel.JTT"
+					 suppressInputs="beast.base.evolution.substitutionmodel.JTT.eigenSystem"
 					 mainid="JTT.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="JTT" id="JTT.s:$(n)"/>]]></subtemplate>
-		<subtemplate id="cpREV" class="beast.evolution.substitutionmodel.CPREV"
-					 suppressInputs="beast.evolution.substitutionmodel.CPREV.eigenSystem"
+		<subtemplate id="cpREV" class="beast.base.evolution.substitutionmodel.CPREV"
+					 suppressInputs="beast.base.evolution.substitutionmodel.CPREV.eigenSystem"
 					 mainid="CPREV.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="CPREV" id="CPREV.s:$(n)"/>]]></subtemplate>
-		<subtemplate id="mtREV" class="beast.evolution.substitutionmodel.MTREV"
-					 suppressInputs="beast.evolution.substitutionmodel.MTREV.eigenSystem"
+		<subtemplate id="mtREV" class="beast.base.evolution.substitutionmodel.MTREV"
+					 suppressInputs="beast.base.evolution.substitutionmodel.MTREV.eigenSystem"
 					 mainid="MTREV.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="MTREV" id="MTREV.s:$(n)"/>]]></subtemplate>
-		<subtemplate id="WAG" class="beast.evolution.substitutionmodel.WAG"
-					 suppressInputs="beast.evolution.substitutionmodel.WAG.eigenSystem"
+		<subtemplate id="WAG" class="beast.base.evolution.substitutionmodel.WAG"
+					 suppressInputs="beast.base.evolution.substitutionmodel.WAG.eigenSystem"
 					 mainid="WAG.s:$(n)"><!--value spec="XML"-->
 			<![CDATA[<plugin spec="WAG" id="WAG.s:$(n)"/>]]></subtemplate>
 
 		<!-- binary model -->
-		<subtemplate id="MutationDeathModel" class="beast.evolution.substitutionmodel.MutationDeathModel" mainid="MutationDeathModel.s:$(n)" suppressInputs="beast.evolution.substitutionmodel.MutationDeathModel.substmodel,beast.evolution.substitutionmodel.MutationDeathModel.frequencies">
+		<subtemplate id="MutationDeathModel" class="beast.base.evolution.substitutionmodel.MutationDeathModel" mainid="MutationDeathModel.s:$(n)" suppressInputs="beast.base.evolution.substitutionmodel.MutationDeathModel.substmodel,beast.base.evolution.substitutionmodel.MutationDeathModel.frequencies">
 <![CDATA[
-			<plugin id="MutationDeathModel.s:$(n)" spec="beast.evolution.substitutionmodel.MutationDeathModel">
+			<plugin id="MutationDeathModel.s:$(n)" spec="beast.base.evolution.substitutionmodel.MutationDeathModel">
 				<parameter name="deathprob" id="deathprob.s:$(n)" value="0.1" estimate="false"/>
 				<frequencies id="freqs.s:$(n)" spec="Frequencies">
 					<frequencies spec="parameter.RealParameter" value="1 0"/>
@@ -355,7 +355,7 @@
 
 
 		<!-- frequency models -->
-		<subtemplate id="Estimated" class="beast.evolution.substitutionmodel.Frequencies"
+		<subtemplate id="Estimated" class="beast.base.evolution.substitutionmodel.Frequencies"
 					 mainid="estimatedFreqs.s:$(n)">
 			<![CDATA[
 			<frequencies id="estimatedFreqs.s:$(n)" spec="Frequencies">
@@ -371,14 +371,14 @@
 			<connect srcID="freqParameter.s:$(n)" targetID="tracelog" inputName="log" if="inposterior(estimatedFreqs.s:$(n)) and inposterior(freqParameter.s:$(n)) and freqParameter.s:$(n)/estimate=true"/>
 		</subtemplate>
 
-		<subtemplate id="Empirical" class="beast.evolution.substitutionmodel.Frequencies"
+		<subtemplate id="Empirical" class="beast.base.evolution.substitutionmodel.Frequencies"
 					 mainid="empiricalFreqs.s:$(n)">
 <![CDATA[
 			<frequencies id="empiricalFreqs.s:$(n)" spec="Frequencies" data="@$(n)" estimate="true"/>
 ]]>
 		</subtemplate>
 
-		<subtemplate id="AllEqual" class="beast.evolution.substitutionmodel.Frequencies" mainid="equalFreqs.s:$(n)">
+		<subtemplate id="AllEqual" class="beast.base.evolution.substitutionmodel.Frequencies" mainid="equalFreqs.s:$(n)">
 <![CDATA[
 			<frequencies id="equalFreqs.s:$(n)" spec="Frequencies" data="@$(n)" estimate="false"/>
 ]]>

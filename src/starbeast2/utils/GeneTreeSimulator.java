@@ -1,10 +1,10 @@
 package starbeast2.utils;
 
-import beast.core.Input;
-import beast.core.Runnable;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeTraceAnalysis;
+import beast.base.core.Input;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.Runnable;
+import beastfx.app.tools.TreeTraceAnalysis;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

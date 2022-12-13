@@ -1,23 +1,18 @@
 package sb2tests;
 
-import static org.junit.Assert.assertEquals;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.evolution.tree.TreeParser;
+import beast.base.inference.State;
+import beast.base.inference.parameter.RealParameter;
+import org.junit.Test;
+import starbeast2.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import beast.core.State;
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.TreeParser;
-import starbeast2.ConstantPopulations;
-import starbeast2.CoordinatedExchange;
-import starbeast2.GeneTree;
-import starbeast2.MultispeciesCoalescent;
-import starbeast2.SpeciesTreeParser;
+import static org.junit.Assert.assertEquals;
 
 abstract class ExchangeTestHelper {
     String newickSpeciesTree;

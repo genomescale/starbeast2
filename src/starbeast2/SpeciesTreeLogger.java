@@ -1,21 +1,17 @@
 package starbeast2;
 
+import beast.base.core.*;
+import beast.base.core.Input.Validate;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.StateNode;
+import beast.base.inference.parameter.Parameter;
+
 import java.io.PrintStream;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import beast.core.BEASTObject;
-import beast.core.Description;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.Loggable;
-import beast.core.StateNode;
-import beast.core.parameter.Parameter;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.tree.Node;
 
 @Description("Based on the TreeWithMetaDataLogger class, but with support for population sizes")
 public class SpeciesTreeLogger extends BEASTObject implements Loggable {

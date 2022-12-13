@@ -1,12 +1,11 @@
 package starbeast2.utils;
 
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.Randomizer;
 
-import java.io.PrintStream;
 import java.util.*;
 
 /**

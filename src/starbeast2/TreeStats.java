@@ -1,7 +1,7 @@
 package starbeast2;
 
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeInterface;
 
 final public class TreeStats {
     protected static double getLength(TreeInterface tree) {

@@ -1,8 +1,8 @@
 package starbeast2.utils;
 
-import beast.app.tools.SATreeTraceAnalysis;
-import beast.core.util.ESS;
-import beast.evolution.tree.Tree;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.util.ESS;
+import sa.app.tools.SATreeTraceAnalysis;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

@@ -1,8 +1,9 @@
 package beast.math.distributions;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.inference.distribution.InverseGamma;
+import beast.base.inference.parameter.RealParameter;
 
 @Description("Inverse Gamma distribution, used as prior. Parameterized by its mean instead of scale.")
 
@@ -16,7 +17,7 @@ public class AltInverseGamma extends InverseGamma {
         if (alphaInput.get() == null) {
             alpha = 2;
         } else {
-            alpha = alphaInput.get().getValue();
+            alpha = alphaInput.get().getArrayValue();
         }
 
         if (meanInput.get() == null) {

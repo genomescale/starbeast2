@@ -1,7 +1,8 @@
 package starbeast2;
 
+import beast.base.evolution.tree.Node;
+
 import java.text.DecimalFormat;
-import beast.evolution.tree.Node;
 
 public interface PopulationModel {
     // Calculate the truncated coalescent probability for a single species tree branch and gene

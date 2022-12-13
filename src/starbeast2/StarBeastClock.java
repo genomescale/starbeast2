@@ -1,9 +1,10 @@
 package starbeast2;
 
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.evolution.branchratemodel.BranchRateModel;
-import beast.evolution.tree.Node;
+import beast.base.core.Input;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.util.InputUtil;
 
 public class StarBeastClock extends BranchRateModel.Base {
     public Input<GeneTree> geneTreeInput = new Input<>("geneTree", "The gene tree this relaxed clock is associated with.", Input.Validate.REQUIRED);
@@ -20,7 +21,7 @@ public class StarBeastClock extends BranchRateModel.Base {
     
     @Override
     public void initAndValidate() {
-        meanRate = meanRateInput.get();
+        meanRate = (RealParameter) meanRateInput.get();
         speciesTreeRatesX = speciesTreeRatesInput.get();
         geneTree = geneTreeInput.get();
     
@@ -32,7 +33,7 @@ public class StarBeastClock extends BranchRateModel.Base {
 
     @Override
     public boolean requiresRecalculation() {
-        needsUpdate = geneTreeInput.isDirty() || speciesTreeRatesInput.isDirty() || meanRateInput.isDirty();
+        needsUpdate = InputUtil.isDirty(geneTreeInput) || InputUtil.isDirty(speciesTreeRatesInput) || InputUtil.isDirty(meanRateInput);
         return needsUpdate;
     }
 

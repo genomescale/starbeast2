@@ -1,10 +1,10 @@
 package starbeast2.utils;
 
-import beast.app.tools.SATreeTraceAnalysis;
-import beast.core.Input;
-import beast.core.Runnable;
-import beast.evolution.tree.Tree;
-import beast.util.NexusParser;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.Runnable;
+import beast.base.parser.NexusParser;
+import sa.app.tools.SATreeTraceAnalysis;
 
 import java.io.File;
 import java.io.PrintStream;

@@ -1,7 +1,92 @@
-<addon name="starbeast2" version="0.15.13">
-	<depends on="beast2" atleast="2.5.0"/>
-	<depends on="SA" atleast="2.0.0"/>
-	<depends on="MM" atleast="1.1.0"/>
+<package name="starbeast2" version="1.0.0">
+	<depends on='BEAST.base' atleast='2.7.3'/>
+	<depends on='BEAST.app' atleast='2.7.3'/>
+	<depends on="SA" atleast="2.1.0"/>
+	<depends on="MM" atleast="1.2.0"/>
   <addonapp class="starbeast2.aimannotator.AIMannotator"
             description="AimAnnotator"/>
-</addon>
+
+	<service type="beastfx.app.inputeditor.InputEditor">
+		<provider classname="beast.app.beauti.StarBeastAlignmentProvider"/>
+		<provider classname="beast.app.beauti.StarBeastMorphModelAlignmentProvider"/>
+		<provider classname="beast.app.beauti.StarBeastTipDatesInputEditor"/>
+	</service>
+	<service type="beast.base.core.BEASTInterface">
+		<provider classname="beast.math.distributions.AltInverseGamma"/>
+		<provider classname="sb2tests.BigCoordinatedExchangeTest"/>
+		<provider classname="sb2tests.ConstantIOTest"/>
+		<provider classname="sb2tests.ConstantPopulationTest"/>
+		<provider classname="sb2tests.ExchangeTestHelper"/>
+		<provider classname="sb2tests.IncompatibleTreeTest"/>
+		<provider classname="sb2tests.LinearWithConstantRootTest"/>
+		<provider classname="sb2tests.MissingDataConstantIOTest"/>
+		<provider classname="sb2tests.MissingDataCoordinatedExchangeTest"/>
+		<provider classname="sb2tests.SmallCoordinatedExchangeTest"/>
+		<provider classname="sb2tests.StarbeastClockTest"/>
+		<provider classname="sb2tests.TreeLengthLoggerTest"/>
+		<provider classname="sb2tests.UncorrelatedRatesTest"/>
+		<provider classname="sb2tests.WideExchangeTest"/>
+		<provider classname="starbeast2.AdaptiveOperator"/>
+		<provider classname="starbeast2.AllEqual"/>
+		<provider classname="starbeast2.ConstantPopulations"/>
+		<provider classname="starbeast2.ConstantWithGeneFlow"/>
+		<provider classname="starbeast2.CoordinatedExchange"/>
+		<provider classname="starbeast2.CoordinatedExponential"/>
+		<provider classname="starbeast2.CoordinatedOperator"/>
+		<provider classname="starbeast2.CoordinatedUniform"/>
+		<provider classname="starbeast2.DiscreteRateCycle"/>
+		<provider classname="starbeast2.DiscreteRateUniform"/>
+		<provider classname="starbeast2.DummyModel"/>
+		<provider classname="starbeast2.Euler2ndOrderAIM"/>
+		<provider classname="starbeast2.GeneTree"/>
+		<provider classname="starbeast2.GeneTreeWithMigration"/>
+		<provider classname="starbeast2.LinearWithConstantRoot"/>
+		<provider classname="starbeast2.MaximumDouble"/>
+		<provider classname="starbeast2.MigrationModel"/>
+		<provider classname="starbeast2.MinimalBranchLength"/>
+		<provider classname="starbeast2.MinimumDouble"/>
+		<provider classname="starbeast2.MultispeciesCoalescent"/>
+		<provider classname="starbeast2.NetworkRateExchange"/>
+		<provider classname="starbeast2.NodeHeightComparator"/>
+		<provider classname="starbeast2.NodeReheight2"/>
+		<provider classname="starbeast2.Overlap"/>
+		<provider classname="starbeast2.PassthroughModel"/>
+		<provider classname="starbeast2.PopulationModel"/>
+		<provider classname="starbeast2.RandomLocalRates"/>
+		<provider classname="starbeast2.RealCycle"/>
+		<provider classname="starbeast2.SAMau1999"/>
+		<provider classname="starbeast2.STDirectionalLogger"/>
+		<provider classname="starbeast2.SanityChecks"/>
+		<provider classname="starbeast2.SpeciesTree"/>
+		<provider classname="starbeast2.SpeciesTreeInterface"/>
+		<provider classname="starbeast2.SpeciesTreeLogger"/>
+		<provider classname="starbeast2.SpeciesTreeLoggerWithGeneFlow"/>
+		<provider classname="starbeast2.SpeciesTreeParser"/>
+		<provider classname="starbeast2.SpeciesTreeRates"/>
+		<provider classname="starbeast2.StarBeastClock"/>
+		<provider classname="starbeast2.StarBeastInitializer"/>
+		<provider classname="starbeast2.StarBeastTaxonSet"/>
+		<provider classname="starbeast2.TreeLengthLogger"/>
+		<provider classname="starbeast2.TreeStats"/>
+		<provider classname="starbeast2.UncorrelatedRates"/>
+		<provider classname="starbeast2.UniformPopulations"/>
+		<provider classname="starbeast2.aimannotator.AIMannotator"/>
+		<provider classname="starbeast2.aimannotator.RankedCladeSystem"/>
+		<provider classname="starbeast2.aimannotator.UnrankedCladeSystem"/>
+		<provider classname="starbeast2.aimoperator.ExchangeAndSwap"/>
+		<provider classname="starbeast2.aimoperator.RankingAwareOperator"/>
+		<provider classname="starbeast2.aimoperator.SubtreeSlideAndSwap"/>
+		<provider classname="starbeast2.aimoperator.UniformAndSwap"/>
+		<provider classname="starbeast2.aimoperator.WilsonBaldingAndSwap"/>
+		<provider classname="starbeast2.utils.BernoulliDistribution"/>
+		<provider classname="starbeast2.utils.GeneTreeSimulator"/>
+		<provider classname="starbeast2.utils.NodeHeightLogger"/>
+		<provider classname="starbeast2.utils.SimulatedGeneTree"/>
+		<provider classname="starbeast2.utils.SimulatedGeneTreeLogger"/>
+		<provider classname="starbeast2.utils.TreeTopologyDistGenerator"/>
+		<provider classname="starbeast2.utils.TreeTopologyDistLogger"/>
+		<provider classname="starbeast2.utils.TreeTraceAnalysisWithError"/>
+	</service>
+
+
+</package>

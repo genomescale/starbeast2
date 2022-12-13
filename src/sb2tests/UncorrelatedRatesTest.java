@@ -1,20 +1,19 @@
 package sb2tests;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeParser;
+import beast.base.inference.State;
+import beast.base.inference.parameter.IntegerParameter;
+import beast.base.inference.parameter.RealParameter;
+import org.junit.Test;
+import starbeast2.UncorrelatedRates;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
-
-import beast.core.State;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.util.TreeParser;
-import starbeast2.UncorrelatedRates;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class UncorrelatedRatesTest {
     private String newickTree = "((((a1:0.3,a2:0.3):1.6,(b1:1.8,b2:1.8):0.1):0.5,c1:2.4):0.6,c2:3.0)";

@@ -1,11 +1,7 @@
 package starbeast2;
 
 
-import java.util.Arrays;
-
 import org.apache.commons.math3.util.FastMath;
-
-import beast.core.Citation;
 
 public class Euler2ndOrderAIM {
 

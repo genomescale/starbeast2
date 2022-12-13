@@ -1,17 +1,17 @@
 package starbeast2;
 
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.Distribution;
+import beast.base.inference.State;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import beast.core.Distribution;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.State;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeInterface;
 
 /**
 * @author Remco Bouckaert

@@ -49,11 +49,12 @@
 
 package starbeast2.aimoperator;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.util.InputUtil;
+import beast.base.util.Randomizer;
 
 
 /*
@@ -77,8 +78,7 @@ public class ExchangeAndSwap extends RankingAwareOperator {
      */
     @Override
     public double treeProposal() {
-        final Tree tree = treeInput.get(this);
-
+        final Tree tree = (Tree) InputUtil.get(treeInput, this);
 
         double logHastingsRatio = 0;
 

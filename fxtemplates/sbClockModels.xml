@@ -1,8 +1,8 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.core:beast.evolution.branchratemodel:beast.evolution.speciation:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.evolution:beast.math.distributions">
+<beast version="2.0" namespace="beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.math.distributions">
 	<!-- Clock models -->
 	<mergewith point="sbClockModelTemplates">
 		<!-- Plain ol' strict clock -->
-		<subtemplate id="StrictClock" class="beast.evolution.branchratemodel.StrictClockModel" mainid="StrictClock.c:$(n)">
+		<subtemplate id="StrictClock" class="beast.base.evolution.branchratemodel.StrictClockModel" mainid="StrictClock.c:$(n)">
 <![CDATA[
 			<branchRateModel spec="StrictClockModel" id="StrictClock.c:$(n)">
 				<clock.rate id="strictClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
@@ -11,7 +11,7 @@
 			<operator id="clockRateScaler.c:$(n)" spec="ScaleOperator" scaleFactor="0.5" weight="3.0" parameter="@strictClockRate.c:$(n)"/>
 
 			<prior id="clockRatePrior.c:$(n)" x="@strictClockRate.c:$(n)">
-				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+				<distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true">
 					<S id="clockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="clockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
@@ -48,14 +48,14 @@
 			<operator id="uclnBranchRatesUniform.c:$(n)" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@uclnBranchRates.c:$(n)" weight="9.0" />
 
 			<prior id="uclnClockRatePrior.c:$(n)" x="@uclnClockRate.c:$(n)">
-				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+				<distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true">
 					<S id="uclnClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="uclnClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
 
 			<prior id="uclnBranchRatesStdevPrior.c:$(n)" x="@uclnBranchRatesStdev.c:$(n)">
-				<distr spec="beast.math.distributions.Exponential">
+				<distr spec="beast.base.inference.distribution.Exponential">
 					<mean id="uclnBranchRatesStdevPriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
@@ -107,7 +107,7 @@
 			<operator id="ucedBranchRatesUniform.c:$(n)" k="1" optimise="false" spec="starbeast2.DiscreteRateUniform" treeRates="@ucedBranchRates.c:$(n)" weight="9.0" />
 
 			<prior id="ucedClockRatePrior.c:$(n)" x="@ucedClockRate.c:$(n)">
-				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+				<distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true">
 					<S id="ucedClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="ucedClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
@@ -153,22 +153,22 @@
 			<operator id="indicatorFlipper.c:$(n)" spec="BitFlipOperator" parameter="@indicators.c:$(n)" weight="9.0"/>
 
 			<prior id="rlcClockRatePrior.c:$(n)" x="@rlcClockRate.c:$(n)">
-				<distr spec="beast.math.distributions.LogNormalDistributionModel" meanInRealSpace="true">
+				<distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true">
 					<S id="rlcClockRatePriorStdev.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 					<M id="rlcClockRatePriorMean.s:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
 				</distr>
 			</prior>
 
 			<prior id="branchRatePrior.c:$(n)" name="distribution" x="@rlcBranchRates.c:$(n)">
-				<distr spec="beast.math.distributions.Gamma">
+				<distr spec="beast.base.inference.distribution.Gamma">
 					<parameter estimate="false" id="branchRatePriorAlpha.$(n)" name="alpha" lower="0.0" value="0.5"/>
 					<parameter estimate="false" id="branchRatePriorBeta.$(n)" name="beta" lower="0.0" value="2.0"/>
 				</distr>
 			</prior>
 
 			<prior id="indicatorSumPrior.c:$(n)" name="distribution">
-				<x id="indicatorSum.c:$(n)" spec="beast.core.util.Sum" arg="@indicators.c:$(n)"/>
-				<distr spec="beast.math.distributions.Poisson">
+				<x id="indicatorSum.c:$(n)" spec="beast.base.evolution.Sum" arg="@indicators.c:$(n)"/>
+				<distr spec="beast.base.inference.distribution.Poisson">
 					<lambda spec="parameter.RealParameter" estimate="false" value="0.6931471805599453"/>
 				</distr>
 			</prior>

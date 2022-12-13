@@ -1,12 +1,14 @@
 package beast.app.beauti;
 
-import beast.core.BEASTInterface;
-import beast.core.Description;
-import beast.evolution.alignment.Alignment;
-
-import java.util.*;
+import beast.base.core.BEASTInterface;
+import beast.base.core.Description;
+import beast.base.evolution.alignment.Alignment;
+import beastfx.app.inputeditor.BeautiDoc;
+import morphmodels.app.beauti.BeautiMorphModelAlignmentProvider;
 import starbeast2.SpeciesTree;
 import starbeast2.StarBeastTaxonSet;
+
+import java.util.List;
 
 @Description("Class for creating new partitions for morphological data to be edited by AlignmentListInputEditor")
 public class StarBeastMorphModelAlignmentProvider extends BeautiMorphModelAlignmentProvider {

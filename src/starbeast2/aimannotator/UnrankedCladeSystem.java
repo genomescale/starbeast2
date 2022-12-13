@@ -1,16 +1,11 @@
 package starbeast2.aimannotator;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.DiscreteStatistics;
 
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.math.statistic.DiscreteStatistics;
+import java.io.PrintStream;
+import java.util.*;
 
 /**
  * extracted from TreeAnnotator

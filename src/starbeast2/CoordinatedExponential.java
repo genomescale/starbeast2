@@ -1,17 +1,16 @@
 package starbeast2;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.Randomizer;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author Huw Ogilvie
@@ -105,7 +104,7 @@ public class CoordinatedExponential extends CoordinatedOperator {
             final Set<Node> jConnectingNodes = new HashSet<Node>();
             findConnectingNodes(geneTreeRootNode, jConnectingNodes, leftChildDescendants, rightChildDescendants, tipwardFreedom);
             allConnectingNodes.putAll(j, jConnectingNodes);
-            geneTree.startEditing(null); // hack to stop beast.core.State.Trie memory leak
+            geneTree.startEditing(null); // hack to stop beast.base.inference.State.Trie memory leak
         }
 
         return allConnectingNodes;

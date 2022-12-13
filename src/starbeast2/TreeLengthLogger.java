@@ -1,14 +1,14 @@
 package starbeast2;
 
-import java.io.PrintStream;
+import beast.base.core.Description;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.core.Loggable;
+import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.CalculationNode;
 
-import beast.core.CalculationNode;
-import beast.core.Description;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.Loggable;
-import beast.evolution.tree.TreeInterface;
+import java.io.PrintStream;
 
 @Description("Logger to report total length of a tree")
 public class TreeLengthLogger extends CalculationNode implements Loggable, Function {

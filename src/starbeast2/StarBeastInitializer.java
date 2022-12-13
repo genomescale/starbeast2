@@ -1,31 +1,21 @@
 package starbeast2;
 
-import static java.lang.Math.abs;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import beast.base.core.*;
+import beast.base.evolution.alignment.Alignment;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.distance.Distance;
+import beast.base.evolution.distance.JukesCantorDistance;
+import beast.base.evolution.tree.*;
+import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.evolution.tree.coalescent.RandomTree;
+import beast.base.inference.StateNode;
+import beast.base.inference.StateNodeInitialiser;
+import beast.base.inference.parameter.RealParameter;
 
 import java.util.*;
 
-import beast.core.BEASTInterface;
-import beast.core.Description;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
-import beast.core.parameter.RealParameter;
-import beast.core.util.Log;
-import beast.evolution.alignment.Alignment;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.alignment.distance.Distance;
-import beast.evolution.alignment.distance.JukesCantorDistance;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.RandomTree;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.coalescent.ConstantPopulation;
-import beast.math.distributions.MRCAPrior;
-import beast.util.ClusterTree;
-import beast.util.TreeParser;
+import static java.lang.Math.*;
 
 /**
 * @author Joseph Heled
@@ -111,7 +101,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
         final List<Tree> geneTrees = genes.get();
         boolean userSpecifiedGeneTrees = false;
         for (final Tree gtree : geneTrees) {
-            if (gtree instanceof beast.util.TreeParser) {
+            if (gtree instanceof beast.base.evolution.tree.TreeParser) {
                 userSpecifiedGeneTrees = true;
                 break;
             }
@@ -148,7 +138,7 @@ public class StarBeastInitializer extends Tree implements StateNodeInitialiser {
             Log.info.println(String.format("StarBEAST2: initializing gene trees with random or user-specified topologies (%f).", rootHeight));
 
             for (final Tree gtree : geneTrees) {
-                if (gtree instanceof beast.util.TreeParser) {
+                if (gtree instanceof beast.base.evolution.tree.TreeParser) {
                     /* add the height of the species root node to all gene tree node height, to
                     ensure compatibility of the trees while preserving user-specified topologies */
                     boostGeneTreeInternalNodeHeights(gtree, rootHeight);

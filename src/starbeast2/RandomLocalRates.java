@@ -1,12 +1,12 @@
 package starbeast2;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.parameter.BooleanParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
-import beast.evolution.branchratemodel.BranchRateModel;
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.parameter.BooleanParameter;
+import beast.base.inference.parameter.RealParameter;
 
 /**
  * @author Huw Ogilvie
@@ -108,7 +108,7 @@ public class RandomLocalRates extends BranchRateModel.Base implements SpeciesTre
         final double treeHeight = treeRoot.getHeight();
 
         double estimatedMean;
-        final RealParameter estimatedMeanParameter = meanRateInput.get();
+        final RealParameter estimatedMeanParameter = (RealParameter) meanRateInput.get();
         if (estimatedMeanParameter == null) {
             estimatedMean = 1.0;
         } else {

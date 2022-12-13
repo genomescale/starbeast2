@@ -1,12 +1,11 @@
 package sb2tests;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
 import org.junit.Test;
 
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BigCoordinatedExchangeTest extends ExchangeTestHelper {
     final int nSpecies = 7;
