@@ -7,25 +7,12 @@
             description="AimAnnotator"/>
 
 	<service type="beastfx.app.inputeditor.InputEditor">
-		<provider classname="beast.app.beauti.StarBeastAlignmentProvider"/>
-		<provider classname="beast.app.beauti.StarBeastMorphModelAlignmentProvider"/>
-		<provider classname="beast.app.beauti.StarBeastTipDatesInputEditor"/>
+		<provider classname="starbeast2.app.beauti.StarBeastAlignmentProvider"/>
+		<provider classname="starbeast2.app.beauti.StarBeastMorphModelAlignmentProvider"/>
+		<provider classname="starbeast2.app.beauti.StarBeastTipDatesInputEditor"/>
 	</service>
 	<service type="beast.base.core.BEASTInterface">
-		<provider classname="beast.math.distributions.AltInverseGamma"/>
-		<provider classname="sb2tests.BigCoordinatedExchangeTest"/>
-		<provider classname="sb2tests.ConstantIOTest"/>
-		<provider classname="sb2tests.ConstantPopulationTest"/>
-		<provider classname="sb2tests.ExchangeTestHelper"/>
-		<provider classname="sb2tests.IncompatibleTreeTest"/>
-		<provider classname="sb2tests.LinearWithConstantRootTest"/>
-		<provider classname="sb2tests.MissingDataConstantIOTest"/>
-		<provider classname="sb2tests.MissingDataCoordinatedExchangeTest"/>
-		<provider classname="sb2tests.SmallCoordinatedExchangeTest"/>
-		<provider classname="sb2tests.StarbeastClockTest"/>
-		<provider classname="sb2tests.TreeLengthLoggerTest"/>
-		<provider classname="sb2tests.UncorrelatedRatesTest"/>
-		<provider classname="sb2tests.WideExchangeTest"/>
+		<provider classname="starbeast2.math.distributions.AltInverseGamma"/>
 		<provider classname="starbeast2.AdaptiveOperator"/>
 		<provider classname="starbeast2.AllEqual"/>
 		<provider classname="starbeast2.ConstantPopulations"/>

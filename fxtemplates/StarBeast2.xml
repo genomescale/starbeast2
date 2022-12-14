@@ -1,4 +1,11 @@
-<beast version="2.0" namespace="beast.app.beauti:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.pkgmgmt:beast.base.core:beast.base.inference.util:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.evolution:beast.base.math.distributions" templateinfo="StarBEAST2 template for strict or gene tree relaxed clocks.">
+<beast version="2.7" namespace="beastfx.app.beauti:beast.pkgmgmt:beast.base.core:
+                     beast.base.inference:beast.base.evolution.branchratemodel:
+                     beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:
+                     beast.base.inference.util:beast.evolution.nuc:
+                     beast.base.evolution.operator:beast.base.inference.operator:
+                     beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:
+                     beast.base.evolution.likelihood:beast.evolution:beast.base.math.distributions"
+	   templateinfo="StarBEAST2 template for strict or gene tree relaxed clocks.">
 
 <map name="connect" reserved="true">beastfx.app.inputeditor.BeautiConnector</map>
 <map name="subtemplate" reserved="true">beastfx.app.inputeditor.BeautiSubTemplate</map>
@@ -13,7 +20,7 @@
 <map name="InverseGamma">beast.base.inference.distribution.InverseGamma</map>
 <map name="prior">beast.base.inference.distribution.Prior</map>
 
-	<beauticonfig spec="BeautiConfig"
+	<beauticonfig spec="beastfx.app.inputeditor.BeautiConfig"
 		inputLabelMap="beast.base.inference.MCMC.operator=Operators,
 			beast.base.inference.MCMC.logger=Loggers,
 			beast.base.evolution.sitemodel.SiteModel.mutationRate=Substitution Rate,
@@ -101,34 +108,34 @@
 			starbeast2.UniformPopulations.speciesTree"
 		buttonLabelMap="beast.app.beauti.BeautiInitDlg.&gt;&gt; details=Edit parameters">
 
-		<panel spec="BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.base.evolution.alignment.Alignment"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Partitions" tiptext="Data Partitions" path="distribution/distribution[id='likelihood']/distribution/data" hasPartitions="none" icon="2220.pngx" forceExpansion="FALSE" type="beast.base.evolution.alignment.Alignment"/>
 		<mergepoint id="aux-partitions-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Taxon sets" tiptext="Specify taxon sets that make up species" path="operator[id='Reheight.t:Species']/taxonset" hasPartitions="none" icon="1.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Tip Dates" tiptext="Allows to specify date that a taxon was sampled" path="operator[id='coordinatedUniform.t:Species']/speciesTree" hasPartitions="none" icon="2.png.x" forceExpansion="TRUE"/>
 		<!-- <mergepoint id="aux-tipdates-panels"/> -->
 
-		<panel spec="BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Gene Ploidy" tiptext="The ploidy for each gene (locus)" path="distribution/distribution[id='speciescoalescent']/distribution" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init[id='SBI']/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Population Model" tiptext="Settings for the population model" path="init[id='SBI']/populationModel/childModel" hasPartitions="none" icon="2.pngx" forceExpansion="TRUE"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Site Model" tiptext="Site model and substitution model specifications" path="siteModel" hasPartitions="SiteModel" icon="3.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Site Model" tiptext="Site model and substitution model specifications" path="siteModel" hasPartitions="SiteModel" icon="3.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-sitemodel-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Clock Model" tiptext="Clock model" path="branchRateModel" hasPartitions="ClockModel" icon="4.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Clock Model" tiptext="Clock model" path="branchRateModel" hasPartitions="ClockModel" icon="4.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-clockmodel-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Initialization" tiptext="Initial state" path="state/stateNode" hasPartitions="none" icon="6.pngx" forceExpansion="TRUE_START_COLLAPSED" isVisible="false"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Initialization" tiptext="Initial state" path="state/stateNode" hasPartitions="none" icon="6.pngx" forceExpansion="TRUE_START_COLLAPSED" isVisible="false"/>
 		<mergepoint id="aux-initilisation-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Priors" tiptext="Other priors" path="distribution/distribution[id='prior']/distribution" hasPartitions="none" icon="7.pngx" forceExpansion="TRUE_START_COLLAPSED" type="beast.base.inference.Distribution" buttonStatus="ADD_ONLY"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Priors" tiptext="Other priors" path="distribution/distribution[id='prior']/distribution" hasPartitions="none" icon="7.pngx" forceExpansion="TRUE_START_COLLAPSED" type="beast.base.inference.Distribution" buttonStatus="ADD_ONLY"/>
 		<mergepoint id="aux-priors-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="Operators" tiptext="MCMC Operator details" path="operator" hasPartitions="none" icon="8.pngx" forceExpansion="TRUE_START_COLLAPSED" isVisible="false"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="Operators" tiptext="MCMC Operator details" path="operator" hasPartitions="none" icon="8.pngx" forceExpansion="TRUE_START_COLLAPSED" isVisible="false"/>
 		<mergepoint id="aux-operators-panels"/>
 
-		<panel spec="BeautiPanelConfig" panelname="MCMC" tiptext="MCMC parameters" path="" hasPartitions="none" icon="9.pngx" forceExpansion="TRUE"/>
+		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="MCMC" tiptext="MCMC parameters" path="" hasPartitions="none" icon="9.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-panels"/>
 
 		<alignmentProvider id="Import Alignment" spec="StarBeastAlignmentProvider" template="@StarBEASTPartitionTemplate"/>

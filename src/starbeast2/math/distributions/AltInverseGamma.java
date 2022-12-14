@@ -1,4 +1,4 @@
-package beast.math.distributions;
+package starbeast2.math.distributions;
 
 import beast.base.core.Description;
 import beast.base.core.Input;

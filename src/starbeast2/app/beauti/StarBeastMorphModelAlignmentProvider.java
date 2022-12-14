@@ -1,4 +1,4 @@
-package beast.app.beauti;
+package starbeast2.app.beauti;
 
 import beast.base.core.BEASTInterface;
 import beast.base.core.Description;
