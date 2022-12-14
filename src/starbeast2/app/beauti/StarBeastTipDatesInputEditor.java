@@ -7,22 +7,23 @@ import beast.base.evolution.alignment.Taxon;
 import beast.base.evolution.tree.TraitSet;
 import beastfx.app.inputeditor.BEASTObjectInputEditor;
 import beastfx.app.inputeditor.BeautiDoc;
+import beastfx.app.inputeditor.BeautiPanel;
 import beastfx.app.inputeditor.GuessPatternDialog;
 import beastfx.app.util.FXUtils;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import starbeast2.SpeciesTree;
 
-import javax.swing.*;
 import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
 
@@ -42,8 +43,9 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
     ComboBox<TraitSet.Units> unitsComboBox;
     ComboBox<String> relativeToComboBox;
     List<String> taxa;
-    Object[][] tableData;
-    JTable table;
+//    Object[][] tableData;
+    ObservableList<TipDate> tableData;
+    TableView<TipDate> table;
     String m_sPattern = ".*(\\d\\d\\d\\d).*";
     ScrollPane scrollPane;
     List<Taxon> taxonsets;
@@ -112,15 +114,101 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
         }
     } // init
 
-//    private Component createListBox() {
-//        taxa = traitSet.taxaInput.get().asStringList();
-//        String[] columnData = new String[]{"Name", "Date", "Height"};
-//        tableData = new Object[taxa.size()][3];
-//        convertTraitToTableData();
-//        // set up table.
-//        // special features: background shading of rows
-//        // custom editor allowing only Date column to be edited.
-//        table = new JTable(tableData, columnData) {
+    public class TipDate {
+        String taxon;
+        String date;
+        Double age;
+
+        TipDate(String taxon, String date, Double age) {
+            this.taxon = taxon;
+            this.date = date;
+            this.age = age;
+        }
+
+        public String getTaxon() {
+            return taxon;
+        }
+        public void setTaxon(String taxon) {
+            this.taxon = taxon;
+        }
+        public String getDate() {
+            return date;
+        }
+        public void setDate(String date) {
+            this.date = date;
+        }
+        public Double getAge() {
+            return age;
+        }
+        public void setAge(Double age) {
+            this.age = age;
+        }
+    } // class TipDate
+    
+    private Node createListBox() {
+        taxa = traitSet.taxaInput.get().asStringList();
+        List<TipDate> list = new ArrayList<>();
+        for (String taxon : taxa) {
+            list.add(new TipDate(taxon, "0", 0.0));
+        }
+        tableData = FXCollections.observableArrayList(list);
+
+        // String[] columnData = new String[]{"Name", "Date (raw value)", "Height"};
+        // tableData = new Object[taxa.size()][3];
+
+        table = new TableView<>();
+        table.setPrefWidth(800);
+        table.setMinSize(doc.beauti.frame.getWidth()-12, doc.beauti.frame.getHeight()-230);
+        BeautiPanel.resizeList.clear();
+        BeautiPanel.resizeList.add(table);
+
+        table.setEditable(true);
+
+        TableColumn<TipDate,String> col1 = new TableColumn<>("Name");
+        col1.setPrefWidth(500);
+        col1.setEditable(false);
+        col1.setCellValueFactory(
+                new PropertyValueFactory<>("Taxon")
+        );
+        table.getColumns().add(col1);
+
+        TableColumn<TipDate,String> col2 = new TableColumn<>("Date");
+        col2.setPrefWidth(150);
+        col2.setEditable(true);
+        col2.setCellValueFactory(
+                new PropertyValueFactory<>("Date")
+        );
+        table.getColumns().add(col2);
+
+        col2.setCellFactory(TextFieldTableCell.forTableColumn());
+        col2.setOnEditCommit(
+                event -> {
+                    String newValue = event.getNewValue();
+                    TipDate tipDate = event.getRowValue();
+                    tipDate.setDate(newValue);
+                    convertTableDataToTrait();
+                    convertTraitToTableData();
+                }
+        );
+
+        TableColumn<TipDate,Double> col3 = new TableColumn<>("Height");
+        col3.setPrefWidth(150);
+        col3.setEditable(false);
+        col3.setCellValueFactory(
+                new PropertyValueFactory<TipDate,Double>("Age")
+        );
+        table.getColumns().add(col3);
+
+        table.setItems(tableData);
+
+        convertTraitToTableData();
+
+        return table;
+
+        // set up table.
+        // special features: background shading of rows
+        // custom editor allowing only Date column to be edited.
+//        table = new Table(tableData, columnData) {
 //            private static final long serialVersionUID = 1L;
 //
 //            // method that induces table row shading
@@ -205,48 +293,47 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
 //        });
 //        int fontsize = table.getFont().getSize();
 //        table.setRowHeight(24 * fontsize / 13);
-//        scrollPane = new JScrollPane(table);
+//        scrollPane = new ScrollPane(table);
+
+// AJD: This ComponentListener breaks the resizing of the tip dates table, so I have removed it.
+//        scrollPane.addComponentListener(new ComponentListener() {
+//            @Override
+//            public void componentShown(ComponentEvent e) {}
 //
-//// AJD: This ComponentListener breaks the resizing of the tip dates table, so I have removed it.
-////        scrollPane.addComponentListener(new ComponentListener() {
-////            @Override
-////            public void componentShown(ComponentEvent e) {}
-////
-////            @Override
-////            public void componentResized(ComponentEvent e) {
-////                Component c = (Component) e.getSource();
-////                while (c.getParent() != null && !(c.getParent() instanceof JSplitPane)) {
-////                    c = c.getParent();
-////                }
-////                if (c.getParent() != null) {
-////                    Dimension preferredSize = c.getSize();
-////                    preferredSize.height = Math.max(preferredSize.height - 170, 0);
-////                    preferredSize.width = Math.max(preferredSize.width - 25, 0);
-////                    scrollPane.setPreferredSize(preferredSize);
-////                } else if (doc.getFrame() != null) {
-////                    Dimension preferredSize = doc.getFrame().getSize();
-////                    preferredSize.height = Math.max(preferredSize.height - 170, 0);
-////                    preferredSize.width = Math.max(preferredSize.width - 25, 0);
-////                    scrollPane.setPreferredSize(preferredSize);
-////                }
-////            }
-////
-////            @Override
-////            public void componentMoved(ComponentEvent e) {}
-////
-////            @Override
-////            public void componentHidden(ComponentEvent e) {}
-////        });
+//            @Override
+//            public void componentResized(ComponentEvent e) {
+//                Component c = (Component) e.getSource();
+//                while (c.getParent() != null && !(c.getParent() instanceof JSplitPane)) {
+//                    c = c.getParent();
+//                }
+//                if (c.getParent() != null) {
+//                    Dimension preferredSize = c.getSize();
+//                    preferredSize.height = Math.max(preferredSize.height - 170, 0);
+//                    preferredSize.width = Math.max(preferredSize.width - 25, 0);
+//                    scrollPane.setPreferredSize(preferredSize);
+//                } else if (doc.getFrame() != null) {
+//                    Dimension preferredSize = doc.getFrame().getSize();
+//                    preferredSize.height = Math.max(preferredSize.height - 170, 0);
+//                    preferredSize.width = Math.max(preferredSize.width - 25, 0);
+//                    scrollPane.setPreferredSize(preferredSize);
+//                }
+//            }
 //
-//        return scrollPane;
-//    } // createListBox
+//            @Override
+//            public void componentMoved(ComponentEvent e) {}
+//
+//            @Override
+//            public void componentHidden(ComponentEvent e) {}
+//        });
+
+    } // createListBox
 
     /* synchronise table with data from traitSet BEASTObject */
     private void convertTraitToTableData() {
-        for (int i = 0; i < tableData.length; i++) {
-            tableData[i][0] = taxa.get(i);
-            tableData[i][1] = "0";
-            tableData[i][2] = "0";
+        for (int i = 0; i < tableData.size(); i++) {
+            tableData.get(i).setTaxon(taxa.get(i));
+            tableData.get(i).setDate("0");
+            tableData.get(i).setAge(0.0);
         }
         String[] traits = traitSet.traitsInput.get().split(",");
         for (String trait : traits) {
@@ -262,36 +349,37 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
 //                throw new Exception("Trait (" + taxonID + ") is not a known taxon. Spelling error perhaps?");
 //            }
             if (taxonIndex >= 0) {
-                tableData[taxonIndex][1] = normalize(strs[1]);
-                tableData[taxonIndex][0] = taxonID;
+                tableData.get(taxonIndex).setDate(normalize(strs[1]));
+                tableData.get(taxonIndex).setTaxon(taxonID);
             } else {
                 Log.warning.println("WARNING: File contains taxon " + taxonID + " that cannot be found in alignment");
             }
         }
         if (traitSet.traitNameInput.get().equals(TraitSet.DATE_BACKWARD_TRAIT)) {
             Double minDate = Double.MAX_VALUE;
-            for (int i = 0; i < tableData.length; i++) {
-                minDate = Math.min(minDate, parseDate((String) tableData[i][1]));
+            for (int i = 0; i < tableData.size(); i++) {
+                minDate = Math.min(minDate, parseDate(tableData.get(i).getDate()));
             }
-            for (int i = 0; i < tableData.length; i++) {
-                tableData[i][2] = parseDate((String) tableData[i][1]) - minDate;
+            for (int i = 0; i < tableData.size(); i++) {
+                tableData.get(i).setAge( parseDate(tableData.get(i).getDate()) - minDate );
             }
         } else {
             Double maxDate = 0.0;
-            for (int i = 0; i < tableData.length; i++) {
-                maxDate = Math.max(maxDate, parseDate((String) tableData[i][1]));
+            for (int i = 0; i < tableData.size(); i++) {
+                maxDate = Math.max(maxDate, parseDate(tableData.get(i).getDate()));
             }
-            for (int i = 0; i < tableData.length; i++) {
-                tableData[i][2] = maxDate - parseDate((String) tableData[i][1]);
+            for (int i = 0; i < tableData.size(); i++) {
+                tableData.get(i).setAge( maxDate - parseDate(tableData.get(i).getDate()) );
             }
         }
+        table.refresh();
 
-        if (table != null) {
-            for (int i = 0; i < tableData.length; i++) {
-                table.setValueAt(tableData[i][1], i, 1);
-                table.setValueAt(tableData[i][2], i, 2);
-            }
-        }
+//        if (table != null) {
+//            for (int i = 0; i < tableData.length; i++) {
+//                table.setValueAt(tableData.get(i).[1], i, 1);
+//                table.setValueAt(tableData.get(i).[2], i, 2);
+//            }
+//        }
     } // convertTraitToTableData
 
     private double parseDate(String str) {
@@ -356,9 +444,9 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
      */
     private void convertTableDataToTrait() {
         String trait = "";
-        for (int i = 0; i < tableData.length; i++) {
-            trait += taxa.get(i) + "=" + tableData[i][1];
-            if (i < tableData.length - 1) {
+        for (int i = 0; i < tableData.size(); i++) {
+            trait += taxa.get(i) + "=" + tableData.get(i).getDate();
+            if (i < tableData.size() - 1) {
                 trait += ",\n";
             }
         }
@@ -419,8 +507,6 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
         buttonBox.getChildren().add(relativeToComboBox);
 
 //        buttonBox.getChildren().add(Box.createHorizontalGlue());
-        JButton b = new JButton();
-        b.setName("");
         Button guessButton = new Button("Auto-configure");
         guessButton.setTooltip(new Tooltip("Automatically configure dates based on taxon names"));
         guessButton.setId("Guess");
