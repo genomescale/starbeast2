@@ -280,10 +280,10 @@
 		<alignmentProvider id="Add Morphology to Species Tree" spec='StarBeastMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
 
 		<subtemplate id='StarBEASTMKTrait' class='beast.base.evolution.alignment.FilteredAlignment' mainid='$(n)'
-		suppressInputs = 'beast.evolution.substitutionmodel.LewisMK.stateNumber,
-			beast.evolution.substitutionmodel.LewisMK.datatype,
-			beast.evolution.substitutionmodel.LewisMK.frequencies,
-			beast.evolution.substitutionmodel.LewisMK.proportionInvariant'>
+		suppressInputs = 'morphmodels.evolution.substitutionmodel.LewisMK.stateNumber,
+			morphmodels.evolution.substitutionmodel.LewisMK.datatype,
+			morphmodels.evolution.substitutionmodel.LewisMK.frequencies,
+			morphmodels.evolution.substitutionmodel.LewisMK.proportionInvariant'>
 
 <![CDATA[
 			<stateNode id="morphClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>
