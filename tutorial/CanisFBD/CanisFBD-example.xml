@@ -1,4 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='StarBeast2' beautistatus='noAutoSetClockRate' namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood" required="" version="2.6">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast beautitemplate='StarBeast2' beautistatus='noAutoSetClockRate'
+       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:
+       beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:
+       beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:
+       beast.base.inference.operator:beast.base.evolution.sitemodel:
+       beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:
+       morphmodels.evolution.substitutionmodel"
+       required="" version="2.7">
         
     <data
 id="morphology_canis"
