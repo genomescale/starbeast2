@@ -138,7 +138,7 @@
 		<panel spec="beastfx.app.inputeditor.BeautiPanelConfig" panelname="MCMC" tiptext="MCMC parameters" path="" hasPartitions="none" icon="9.pngx" forceExpansion="TRUE"/>
 		<mergepoint id="aux-panels"/>
 
-		<alignmentProvider id="Import Alignment" spec="StarBeastAlignmentProvider" template="@StarBEASTPartitionTemplate"/>
+		<alignmentProvider id="Import Alignment" spec="starbeast2.app.beauti.StarBeastAlignmentProvider" template="@StarBEASTPartitionTemplate"/>
 
 
 		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.base.evolution.likelihood.TreeLikelihood" mainid="mcmc">
@@ -269,13 +269,13 @@
 			<mergepoint id="aux-partitiontemplate"/>
 		</partitiontemplate>
 
-		<alignmentProvider id="Add Morphology to Species Tree" spec='StarBeastMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
+		<alignmentProvider id="Add Morphology to Species Tree" spec='starbeast2.app.beauti.StarBeastMorphModelAlignmentProvider' template='@StarBEASTMKTrait'/>
 
 		<subtemplate id='StarBEASTMKTrait' class='beast.base.evolution.alignment.FilteredAlignment' mainid='$(n)'
-		suppressInputs = 'beast.evolution.substitutionmodel.LewisMK.stateNumber,
-			beast.evolution.substitutionmodel.LewisMK.datatype,
-			beast.evolution.substitutionmodel.LewisMK.frequencies,
-			beast.evolution.substitutionmodel.LewisMK.proportionInvariant'>
+		suppressInputs = 'morphmodels.evolution.substitutionmodel.LewisMK.stateNumber,
+			morphmodels.evolution.substitutionmodel.LewisMK.datatype,
+			morphmodels.evolution.substitutionmodel.LewisMK.frequencies,
+			morphmodels.evolution.substitutionmodel.LewisMK.proportionInvariant'>
 
 <![CDATA[
 			<stateNode id="strictClockRate.c:$(n)" spec="parameter.RealParameter" lower="0.0" value="1.0" estimate="false"/>

@@ -7,11 +7,11 @@
             description="AimAnnotator"/>
 
 	<service type="beastfx.app.inputeditor.InputEditor">
-		<provider classname="starbeast2.app.beauti.StarBeastAlignmentProvider"/>
-		<provider classname="starbeast2.app.beauti.StarBeastMorphModelAlignmentProvider"/>
 		<provider classname="starbeast2.app.beauti.StarBeastTipDatesInputEditor"/>
 	</service>
 	<service type="beast.base.core.BEASTInterface">
+		<provider classname="starbeast2.app.beauti.StarBeastAlignmentProvider"/>
+		<provider classname="starbeast2.app.beauti.StarBeastMorphModelAlignmentProvider"/>
 		<provider classname="starbeast2.math.distributions.AltInverseGamma"/>
 		<provider classname="starbeast2.AdaptiveOperator"/>
 		<provider classname="starbeast2.AllEqual"/>
