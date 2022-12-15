@@ -40,6 +40,7 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
     }
     SpeciesTree tree;
     TraitSet traitSet;
+    CheckBox useTipDates;
     ComboBox<TraitSet.Units> unitsComboBox;
     ComboBox<String> relativeToComboBox;
     List<String> taxa;
@@ -55,7 +56,6 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
         m_bAddButtons = addButtons;
         this.itemNr = itemNr;
 
-        
         pane = FXUtils.newHBox();
         //pane.getChildren().clear();
 
@@ -75,10 +75,8 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
             traitSet = tree.getDateTrait();
 
             VBox box = FXUtils.newVBox();
-            
-            
 
-            CheckBox useTipDates = new CheckBox("Use tip dates");
+            useTipDates = new CheckBox("Use tip dates");
             useTipDates.setSelected(traitSet != null);
             useTipDates.selectedProperty().addListener(new ChangeListener<>() {
                 @Override
@@ -111,7 +109,7 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
 
             if (traitSet != null) {
                 box.getChildren().add(createButtonBox());
-//                box.getChildren().add(createListBox());
+                box.getChildren().add(createListBox());
             }
             pane.getChildren().add(box);
         }
