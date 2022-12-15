@@ -11,11 +11,13 @@
 	<property name="release_dir" value="release" />
 	<property name="diststarbeast2" location="${buildstarbeast2}/dist" />
 	<property name="beast2path" location="../beast2" />
+	<property name="BFXPath" location="../BeastFX" />
 	<property name="SAPath" location="../sampled-ancestors" />
 	<property name="MMPath" location="../morph-models" />
 	<property name="libBeast2" location="${beast2path}/lib" />
 	<property name="srcBeast2" location="${beast2path}/src" />
 	<property name="beast2classpath" location="${beast2path}/build" />
+	<property name="BFXClassPath" location="${BFXPath}/build" />
 	<property name="SAClasspath" location="${SAPath}/build" />
 	<property name="MMClasspath" location="${MMPath}/build" />
 	<property name="Add_on_dir" value="${release_dir}/add-on" />
@@ -31,8 +33,10 @@
 	<path id="classpath">
         <pathelement path="${buildstarbeast2}"/>
 		<fileset dir="${libBeast2}" includes="*.jar"/>
+		<fileset dir="${libBeast2}/junit" includes="*.jar"/>
 		<fileset dir="${libstarbeast2}" includes="*.jar"/>
         <pathelement path="${beast2classpath}"/>
+        <pathelement path="${BFXClassPath}"/>
         <pathelement path="${SAClasspath}"/>
         <pathelement path="${MMClasspath}"/>
 <!-- Mascot ???	-->
@@ -159,7 +163,7 @@
 		<mkdir dir="${Add_on_dir}" />
 		<mkdir dir="${Add_on_dir}/lib" />
 		<!--<mkdir dir="${Add_on_dir}/examples" />-->
-		<mkdir dir="${Add_on_dir}/templates" />
+		<mkdir dir="${Add_on_dir}/fxtemplates" />
 
 		<copy todir="${Add_on_dir}">
 			<fileset file="version.xml"/>
@@ -167,7 +171,7 @@
 		<!--<copy todir="${Add_on_dir}/examples">
 			<fileset dir="examples" />
 		</copy>-->
-		<copy todir="${Add_on_dir}/templates">
+		<copy todir="${Add_on_dir}/fxtemplates">
 			<fileset dir="fxtemplates" />
 		</copy>
 		<copy todir="${Add_on_dir}/lib">
