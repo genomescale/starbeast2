@@ -74,6 +74,8 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
             traitSet = tree.getDateTrait();
 
             VBox box = FXUtils.newVBox();
+            
+            
 
             CheckBox useTipDates = new CheckBox("Use tip dates");
             useTipDates.setSelected(traitSet != null);

@@ -1,7 +1,5 @@
 package starbeast2.utils;
 
-import beast.base.evolution.tree.Tree;
-import beast.base.inference.util.ESS;
 import sa.app.tools.SATreeTraceAnalysis;
 
 import java.io.PrintStream;
@@ -10,6 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.util.ESS;
 
 /**
  * Simple extension to TTA which adds error estimates of topology probabilities to results
