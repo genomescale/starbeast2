@@ -110,8 +110,9 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
                 box.getChildren().add(createButtonBox());
 //                box.getChildren().add(createListBox());
             }
-            getChildren().add(box);
+            pane.getChildren().add(box);
         }
+        getChildren().add(pane);
     } // init
 
     public class TipDate {
