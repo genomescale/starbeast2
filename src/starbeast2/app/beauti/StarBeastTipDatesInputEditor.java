@@ -55,8 +55,9 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
         m_bAddButtons = addButtons;
         this.itemNr = itemNr;
 
-        pane.getChildren().clear();
+        
         pane = FXUtils.newHBox();
+        //pane.getChildren().clear();
 
         if (itemNr >= 0) {
             tree = (SpeciesTree) ((List<?>) input.get()).get(itemNr);
