@@ -31,8 +31,9 @@
 			<operator id="gammaShapeScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@gammaShape.s:$(n)"/>
 ]]>
 
+			<!--
 			<connect method="beastfx.app.inputeditor.SiteModelInputEditor.customConnector"/>
-
+			-->
 <!-- when FixMeanMutationRatesOperator, the prior is uniform due to the operator -->
 			<connect srcID="MutationRatePrior.s:$(n)" targetID="prior" inputName="distribution" if="nooperator(FixMeanMutationRatesOperator) and inposterior(mutationRate.s:$(n)) and mutationRate.s:$(n)/estimate=true"/>
 
@@ -81,7 +82,7 @@
 		</plugin>
 
 		<plugin id="KappaScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@kappa.s:$(n)"/>
-		<plugin id="FrequenciesExchanger.s:$(n)" spec="DeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
+		<plugin id="FrequenciesExchanger.s:$(n)" spec="beast.base.inference.operator.kernel.BactrianDeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
 
 		<prior id="KappaPrior.s:$(n)" x="@kappa.s:$(n)">
 			<distr spec="LogNormalDistributionModel" meanInRealSpace="false">
@@ -137,7 +138,7 @@
 
 		<plugin id="kappa1Scaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@kappa1.s:$(n)"/>
 		<plugin id="kappa2Scaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@kappa2.s:$(n)"/>
-		<plugin id="FrequenciesExchanger.s:$(n)" spec="DeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
+		<plugin id="FrequenciesExchanger.s:$(n)" spec="beast.base.inference.operator.kernel.BactrianDeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
 
 		<prior id="kappa1Prior.s:$(n)" x="@kappa1.s:$(n)">
 			<distr spec="LogNormalDistributionModel" meanInRealSpace="false">
@@ -220,7 +221,7 @@
 			<operator id="RateCGScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@rateCG.s:$(n)"/>
 			<operator id="RateCTScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@rateCT.s:$(n)"/>
 			<operator id="RateGTScaler.s:$(n)" spec="ScaleOperator" scaleFactor="0.75" weight="1.0" parameter="@rateGT.s:$(n)"/>
-			<operator id="FrequenciesExchanger.s:$(n)" spec="DeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
+			<operator id="FrequenciesExchanger.s:$(n)" spec="beast.base.inference.operator.kernel.BactrianDeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
 
 			<prior id="RateACPrior.s:$(n)" x="@rateAC.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="10.0" estimate="false"/></distr></prior>
 			<prior id="RateAGPrior.s:$(n)" x="@rateAG.s:$(n)"><distr spec="beast.base.inference.distribution.Gamma"><parameter name="alpha" value="0.05" estimate="false"/><parameter name="beta" value="20.0" estimate="false"/></distr></prior>
@@ -362,7 +363,7 @@
 				<frequencies id="freqParameter.s:$(n)" spec="parameter.RealParameter" dimension="4" value="0.25" lower="0" upper="1"/>
 			</frequencies>
 
-			<plugin id="FrequenciesExchanger.s:$(n)" spec="DeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
+			<plugin id="FrequenciesExchanger.s:$(n)" spec="beast.base.inference.operator.kernel.BactrianDeltaExchangeOperator" delta="0.2" weight="1.5" parameter="@freqParameter.s:$(n)"/>
 ]]>
 			<connect srcID="freqParameter.s:$(n)" targetID="state" inputName="stateNode" if="inposterior(estimatedFreqs.s:$(n)) and inposterior(freqParameter.s:$(n)) and freqParameter.s:$(n)/estimate=true"/>
 			<connect srcID="FrequenciesExchanger.s:$(n)" targetID="mcmc" inputName="operator" if="inposterior(estimatedFreqs.s:$(n)) and inposterior(freqParameter.s:$(n)) and freqParameter.s:$(n)/estimate=true">

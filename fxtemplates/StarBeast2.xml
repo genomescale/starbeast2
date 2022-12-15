@@ -41,13 +41,13 @@
 			beast.base.evolution.speciation.BirthDeathGernhard08Model.type,
 			beast.base.evolution.speciation.BirthDeathGernhard08Model.sampleProbability,
 			beast.base.evolution.speciation.BirthDeathGernhard08Model.tree,
-			beast.evolution.speciation.SABirthDeathModel.removalProbability,
-			beast.evolution.speciation.SABirthDeathModel.treeIntervals,
-			beast.evolution.speciation.SABirthDeathModel.birthRate,
-			beast.evolution.speciation.SABirthDeathModel.deathRate,
-			beast.evolution.speciation.SABirthDeathModel.samplingRate,
-			beast.evolution.speciation.SABirthDeathModel.conditioningOnRoot,
-			beast.evolution.speciation.SABirthDeathModel.tree,
+			sa.evolution.speciation.SABirthDeathModel.removalProbability,
+			sa.evolution.speciation.SABirthDeathModel.treeIntervals,
+			sa.evolution.speciation.SABirthDeathModel.birthRate,
+			sa.evolution.speciation.SABirthDeathModel.deathRate,
+			sa.evolution.speciation.SABirthDeathModel.samplingRate,
+			sa.evolution.speciation.SABirthDeathModel.conditioningOnRoot,
+			sa.evolution.speciation.SABirthDeathModel.tree,
 			beast.base.evolution.tree.Tree,
 			beast.base.evolution.tree.Tree.trait,
 			beast.base.evolution.tree.Tree.taxa,
@@ -141,7 +141,7 @@
 		<alignmentProvider id="Import Alignment" spec="starbeast2.app.beauti.StarBeastAlignmentProvider" template="@StarBEASTPartitionTemplate"/>
 
 
-		<partitiontemplate id="StarBEASTPartitionTemplate" spec="BeautiSubTemplate" class="beast.base.evolution.likelihood.TreeLikelihood" mainid="mcmc">
+		<partitiontemplate id="StarBEASTPartitionTemplate" spec="beastfx.app.inputeditor.BeautiSubTemplate" class="beast.base.evolution.likelihood.TreeLikelihood" mainid="mcmc">
 <![CDATA[
 			<geneTree id="geneTree.t:$(n)" ploidy="2.0" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:$(n)"/>
 
