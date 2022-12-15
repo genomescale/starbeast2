@@ -50,19 +50,19 @@
 package starbeast2.aimoperator;
 
 
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.parameter.Parameter;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.util.InputUtil;
+import beast.base.util.Randomizer;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.Parameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.operators.TreeOperator;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
 
 
 /**
@@ -101,7 +101,7 @@ public class SubtreeSlideAndSwap extends RankingAwareOperator {
      */
     @Override
     public double treeProposal() {
-        final Tree tree = treeInput.get(this);
+        final Tree tree = (Tree) InputUtil.get(treeInput, this);
 
         double logq;
 

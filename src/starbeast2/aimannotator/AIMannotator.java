@@ -16,28 +16,28 @@
  */
 
 package starbeast2.aimannotator;
-import beast.app.treeannotator.CladeSystem;
-import beast.app.treeannotator.TreeAnnotator;
-import beast.app.treeannotator.TreeAnnotator.*;
-import beast.app.treeannotator.TreeAnnotator.TreeSet;
-import beast.core.util.Log;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.NexusParser;
-import beast.util.TreeParser;
+
+import beast.base.core.Log;
+import beast.base.evolution.tree.Tree;
+import beastfx.app.treeannotator.TreeAnnotator;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** 
  * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
-public class AIMannotator extends TreeAnnotator   {
+public class AIMannotator extends TreeAnnotator {
 
     private enum SummaryStrategy { MEAN, MEDIAN }
 

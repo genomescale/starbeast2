@@ -1,20 +1,13 @@
 package starbeast2.utils;
 
-import beast.app.tools.SATreeTraceAnalysis;
-import beast.core.BEASTObject;
-import beast.core.Input;
-import beast.core.Loggable;
-import beast.core.Logger;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.TreeTraceAnalysis;
-import beast.util.FrequencySet;
+import beast.base.core.BEASTObject;
+import beast.base.core.Input;
+import beast.base.core.Loggable;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.Logger;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Computes the frequency distribution over topologies.

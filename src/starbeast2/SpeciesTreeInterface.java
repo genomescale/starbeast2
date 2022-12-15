@@ -1,15 +1,17 @@
 package starbeast2;
 
-import java.io.PrintStream;
-import java.util.*;
-
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.StateNode;
 import com.google.common.collect.Multimap;
 
-import beast.core.StateNode;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
+import java.io.PrintStream;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public interface SpeciesTreeInterface extends TreeInterface {
     Map<String, Integer> getTipNumberMap();

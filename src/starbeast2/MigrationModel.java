@@ -1,9 +1,8 @@
 package starbeast2;
 
-import beast.core.CalculationNode;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.CalculationNode;
 
 public abstract class MigrationModel extends CalculationNode {
 	

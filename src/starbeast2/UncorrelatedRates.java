@@ -1,17 +1,17 @@
 package starbeast2;
 
+import beast.base.core.Input;
+import beast.base.evolution.branchratemodel.BranchRateModel;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeInterface;
+import beast.base.inference.parameter.IntegerParameter;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.util.InputUtil;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ExponentialDistribution;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
 import org.apache.commons.math.distribution.NormalDistribution;
 import org.apache.commons.math.distribution.NormalDistributionImpl;
-
-import beast.core.Input;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TreeInterface;
-import beast.evolution.branchratemodel.BranchRateModel;
 
 public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTreeRates {
     final public Input<TreeInterface> treeInput = new Input<>("tree", "(Species) tree to apply per-branch rates to.", Input.Validate.REQUIRED);
@@ -48,7 +48,7 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
             }
         }
 
-        needsUpdate = binRatesNeedsUpdate || branchRatesInput.isDirty() || meanRateInput.isDirty();
+        needsUpdate = binRatesNeedsUpdate || InputUtil.isDirty(branchRatesInput) || InputUtil.isDirty(meanRateInput);
         return needsUpdate;
     }
 
@@ -145,7 +145,7 @@ public class UncorrelatedRates extends BranchRateModel.Base implements SpeciesTr
         }
 
         Double estimatedMean;
-        final RealParameter estimatedMeanParameter = meanRateInput.get();
+        final RealParameter estimatedMeanParameter = (RealParameter) meanRateInput.get();
         if (estimatedMeanParameter == null) {
             estimatedMean = 1.0;
         } else {

@@ -1,23 +1,15 @@
 package starbeast2;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.Randomizer;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
 * @author Remco Bouckaert
@@ -106,7 +98,7 @@ public class CoordinatedExchange extends CoordinatedOperator {
             pruneAndRegraft(yNode, cNode, bNode);
         }
 
-        for (final Tree geneTree: geneTreeInput.get()) geneTree.startEditing(null); // hack to stop beast.core.State.Trie memory leak
+        for (final Tree geneTree: geneTreeInput.get()) geneTree.startEditing(null); // hack to stop beast.base.inference.State.Trie memory leak
 
         for (int i = 0; i < czBranchCount; i++) {
             final List<SortedMap<Node, Node>> perBranchMovedNodes = movedNodes.get(i);

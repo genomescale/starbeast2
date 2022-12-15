@@ -1,4 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='StarBeast2' beautistatus='noAutoSetClockRate' namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="starbeast2 v0.14.0" version="2.4">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast beautitemplate='StarBeast2' beautistatus='noAutoSetClockRate'
+       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:
+       beast.base.evolution.alignment:beast.base.evolution.tree.coalescent:
+       beast.base.util:beast.base.math:beast.evolution.nuc:beast.base.evolution.operator:
+       beast.base.inference.operator:beast.base.evolution.sitemodel:
+       beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood"
+       required="starbeast2 v1.0.0" version="2.7">
 
 
     <data
@@ -330,16 +337,16 @@ name="alignment">
 
 
     
-<map name="Uniform" >beast.math.distributions.Uniform</map>
-<map name="Exponential" >beast.math.distributions.Exponential</map>
-<map name="LogNormal" >beast.math.distributions.LogNormalDistributionModel</map>
-<map name="Normal" >beast.math.distributions.Normal</map>
-<map name="Beta" >beast.math.distributions.Beta</map>
-<map name="Gamma" >beast.math.distributions.Gamma</map>
-<map name="LaplaceDistribution" >beast.math.distributions.LaplaceDistribution</map>
-<map name="prior" >beast.math.distributions.Prior</map>
-<map name="InverseGamma" >beast.math.distributions.InverseGamma</map>
-<map name="OneOnX" >beast.math.distributions.OneOnX</map>
+<map name="Uniform" >beast.base.inference.distribution.Uniform</map>
+<map name="Exponential" >beast.base.inference.distribution.Exponential</map>
+<map name="LogNormal" >beast.base.inference.distribution.LogNormalDistributionModel</map>
+<map name="Normal" >beast.base.inference.distribution.Normal</map>
+<map name="Beta" >beast.base.inference.distribution.Beta</map>
+<map name="Gamma" >beast.base.inference.distribution.Gamma</map>
+<map name="LaplaceDistribution" >beast.base.inference.distribution.LaplaceDistribution</map>
+<map name="prior" >beast.base.inference.distribution.Prior</map>
+<map name="InverseGamma" >beast.base.inference.distribution.InverseGamma</map>
+<map name="OneOnX" >beast.base.inference.distribution.OneOnX</map>
 
 
 <run id="mcmc" spec="MCMC" chainLength="40000000" storeEvery="5000">
@@ -520,7 +527,7 @@ name="alignment">
         </populationModel>
     </init>
 
-    <distribution id="posterior" spec="util.CompoundDistribution">
+    <distribution id="posterior" spec="beast.base.inference.CompoundDistribution">
         <distribution id="speciescoalescent" spec="starbeast2.MultispeciesCoalescent">
             <distribution id="geneTree.t:APOBS1" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:APOBS1"/>
             <distribution id="geneTree.t:APOBS2" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:APOBS2"/>
@@ -539,8 +546,8 @@ name="alignment">
             <distribution id="geneTree.t:VANGL2" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:VANGL2"/>
             <distribution id="geneTree.t:VWF" spec="starbeast2.GeneTree" populationModel="@popModelBridge.Species" speciesTree="@Tree.t:Species" tree="@Tree.t:VWF"/>
         </distribution>
-        <distribution id="prior" spec="util.CompoundDistribution">
-            <distribution id="BirthDeathModel.t:Species" spec="beast.evolution.speciation.BirthDeathGernhard08Model" birthDiffRate="@netDiversificationRate.t:Species" relativeDeathRate="@ExtinctionFraction.t:Species" tree="@Tree.t:Species"/>
+        <distribution id="prior" spec="beast.base.inference.CompoundDistribution">
+            <distribution id="BirthDeathModel.t:Species" spec="beast.base.evolution.speciation.BirthDeathGernhard08Model" birthDiffRate="@netDiversificationRate.t:Species" relativeDeathRate="@ExtinctionFraction.t:Species" tree="@Tree.t:Species"/>
             <prior id="ExtinctionFractionPrior.t:Species" name="distribution" x="@ExtinctionFraction.t:Species">
                 <Uniform id="Uniform.19" name="distr"/>
             </prior>
@@ -652,7 +659,7 @@ name="alignment">
                 <Uniform id="Uniform.18" name="distr" upper="10000.0"/>
             </prior>
         </distribution>
-        <distribution id="likelihood" spec="util.CompoundDistribution">
+        <distribution id="likelihood" spec="beast.base.inference.CompoundDistribution">
             <distribution id="treeLikelihood.APOBS1" spec="TreeLikelihood" data="@APOBS1" tree="@Tree.t:APOBS1">
                 <siteModel id="SiteModel.s:APOBS1" spec="SiteModel" mutationRate="@mutationRate.s:APOBS1">
                     <parameter id="gammaShape.s:APOBS1" estimate="false" name="shape">1.0</parameter>
@@ -661,7 +668,7 @@ name="alignment">
                         <frequencies id="empiricalFreqs.s:APOBS1" spec="Frequencies" data="@APOBS1"/>
                     </substModel>
                 </siteModel>
-                <branchRateModel id="StrictClock.c:molecular" spec="beast.evolution.branchratemodel.StrictClockModel">
+                <branchRateModel id="StrictClock.c:molecular" spec="beast.base.evolution.branchratemodel.StrictClockModel">
                     <parameter id="strictClockRate.c:molecular" estimate="false" lower="0.0" name="clock.rate">0.001</parameter>
                 </branchRateModel>
             </distribution>
@@ -1254,55 +1261,55 @@ name="alignment">
         <log idref="likelihood"/>
         <log idref="prior"/>
         <log idref="speciescoalescent"/>
-        <log id="TreeHeight.Species" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
+        <log id="TreeHeight.Species" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:Species"/>
         <log id="TreeLength.Species" spec="starbeast2.TreeLengthLogger" tree="@Tree.t:Species"/>
         <log idref="treeLikelihood.CHST12"/>
-        <log id="TreeHeight.t:CHST12" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:CHST12"/>
+        <log id="TreeHeight.t:CHST12" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:CHST12"/>
         <log idref="mutationRate.s:CHST12"/>
         <log idref="treeLikelihood.Ch24"/>
-        <log id="TreeHeight.t:Ch24" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch24"/>
+        <log id="TreeHeight.t:Ch24" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch24"/>
         <log idref="mutationRate.s:Ch24"/>
         <log idref="treeLikelihood.TMEM20"/>
-        <log id="TreeHeight.t:TMEM20" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:TMEM20"/>
+        <log id="TreeHeight.t:TMEM20" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:TMEM20"/>
         <log idref="mutationRate.s:TMEM20"/>
         <log idref="treeLikelihood.APOBS1"/>
-        <log id="TreeHeight.t:APOBS1" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:APOBS1"/>
+        <log id="TreeHeight.t:APOBS1" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:APOBS1"/>
         <log idref="mutationRate.s:APOBS1"/>
         <log idref="treeLikelihood.Ch21"/>
-        <log id="TreeHeight.t:Ch21" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch21"/>
+        <log id="TreeHeight.t:Ch21" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch21"/>
         <log idref="mutationRate.s:Ch21"/>
         <log idref="treeLikelihood.APOBS2"/>
-        <log id="TreeHeight.t:APOBS2" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:APOBS2"/>
+        <log id="TreeHeight.t:APOBS2" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:APOBS2"/>
         <log idref="mutationRate.s:APOBS2"/>
         <log idref="treeLikelihood.Ch14"/>
-        <log id="TreeHeight.t:Ch14" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch14"/>
+        <log id="TreeHeight.t:Ch14" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:Ch14"/>
         <log idref="mutationRate.s:Ch14"/>
         <log idref="treeLikelihood.BDNF"/>
-        <log id="TreeHeight.t:BDNF" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:BDNF"/>
+        <log id="TreeHeight.t:BDNF" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:BDNF"/>
         <log idref="mutationRate.s:BDNF"/>
         <log idref="treeLikelihood.VANGL2"/>
-        <log id="TreeHeight.t:VANGL2" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:VANGL2"/>
+        <log id="TreeHeight.t:VANGL2" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:VANGL2"/>
         <log idref="mutationRate.s:VANGL2"/>
         <log idref="treeLikelihood.RAG1"/>
-        <log id="TreeHeight.t:RAG1" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:RAG1"/>
+        <log id="TreeHeight.t:RAG1" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:RAG1"/>
         <log idref="mutationRate.s:RAG1"/>
         <log idref="treeLikelihood.BRCA1S2"/>
-        <log id="TreeHeight.t:BRCA1S2" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:BRCA1S2"/>
+        <log id="TreeHeight.t:BRCA1S2" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:BRCA1S2"/>
         <log idref="mutationRate.s:BRCA1S2"/>
         <log idref="treeLikelihood.CMKOR1"/>
-        <log id="TreeHeight.t:CMKOR1" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:CMKOR1"/>
+        <log id="TreeHeight.t:CMKOR1" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:CMKOR1"/>
         <log idref="mutationRate.s:CMKOR1"/>
         <log idref="treeLikelihood.BRCA1S1"/>
-        <log id="TreeHeight.t:BRCA1S1" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:BRCA1S1"/>
+        <log id="TreeHeight.t:BRCA1S1" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:BRCA1S1"/>
         <log idref="mutationRate.s:BRCA1S1"/>
         <log idref="treeLikelihood.FGFR3"/>
-        <log id="TreeHeight.t:FGFR3" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:FGFR3"/>
+        <log id="TreeHeight.t:FGFR3" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:FGFR3"/>
         <log idref="mutationRate.s:FGFR3"/>
         <log idref="treeLikelihood.VWF"/>
-        <log id="TreeHeight.t:VWF" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:VWF"/>
+        <log id="TreeHeight.t:VWF" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:VWF"/>
         <log idref="mutationRate.s:VWF"/>
         <log idref="treeLikelihood.GHRex09"/>
-        <log id="TreeHeight.t:GHRex09" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:GHRex09"/>
+        <log id="TreeHeight.t:GHRex09" spec="beast.base.evolution.tree.TreeHeightLogger" tree="@Tree.t:GHRex09"/>
         <log idref="mutationRate.s:GHRex09"/>
         <log idref="constPopMean.Species"/>
         <log idref="kappa.s:APOBS1"/>
@@ -1338,67 +1345,67 @@ name="alignment">
     </logger>
 
     <logger id="treelog.t:CHST12" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:CHST12" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:CHST12"/>
+        <log id="TreeWithMetaDataLogger.t:CHST12" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:CHST12"/>
     </logger>
 
     <logger id="treelog.t:Ch24" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:Ch24" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:Ch24"/>
+        <log id="TreeWithMetaDataLogger.t:Ch24" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:Ch24"/>
     </logger>
 
     <logger id="treelog.t:TMEM20" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:TMEM20" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:TMEM20"/>
+        <log id="TreeWithMetaDataLogger.t:TMEM20" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:TMEM20"/>
     </logger>
 
     <logger id="treelog.t:APOBS1" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:APOBS1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:APOBS1"/>
+        <log id="TreeWithMetaDataLogger.t:APOBS1" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:APOBS1"/>
     </logger>
 
     <logger id="treelog.t:Ch21" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:Ch21" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:Ch21"/>
+        <log id="TreeWithMetaDataLogger.t:Ch21" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:Ch21"/>
     </logger>
 
     <logger id="treelog.t:APOBS2" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:APOBS2" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:APOBS2"/>
+        <log id="TreeWithMetaDataLogger.t:APOBS2" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:APOBS2"/>
     </logger>
 
     <logger id="treelog.t:Ch14" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:Ch14" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:Ch14"/>
+        <log id="TreeWithMetaDataLogger.t:Ch14" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:Ch14"/>
     </logger>
 
     <logger id="treelog.t:BDNF" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:BDNF" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:BDNF"/>
+        <log id="TreeWithMetaDataLogger.t:BDNF" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:BDNF"/>
     </logger>
 
     <logger id="treelog.t:VANGL2" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:VANGL2" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:VANGL2"/>
+        <log id="TreeWithMetaDataLogger.t:VANGL2" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:VANGL2"/>
     </logger>
 
     <logger id="treelog.t:RAG1" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:RAG1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:RAG1"/>
+        <log id="TreeWithMetaDataLogger.t:RAG1" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:RAG1"/>
     </logger>
 
     <logger id="treelog.t:BRCA1S2" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:BRCA1S2" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:BRCA1S2"/>
+        <log id="TreeWithMetaDataLogger.t:BRCA1S2" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:BRCA1S2"/>
     </logger>
 
     <logger id="treelog.t:CMKOR1" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:CMKOR1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:CMKOR1"/>
+        <log id="TreeWithMetaDataLogger.t:CMKOR1" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:CMKOR1"/>
     </logger>
 
     <logger id="treelog.t:BRCA1S1" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:BRCA1S1" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:BRCA1S1"/>
+        <log id="TreeWithMetaDataLogger.t:BRCA1S1" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:BRCA1S1"/>
     </logger>
 
     <logger id="treelog.t:FGFR3" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:FGFR3" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:FGFR3"/>
+        <log id="TreeWithMetaDataLogger.t:FGFR3" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:FGFR3"/>
     </logger>
 
     <logger id="treelog.t:VWF" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:VWF" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:VWF"/>
+        <log id="TreeWithMetaDataLogger.t:VWF" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:VWF"/>
     </logger>
 
     <logger id="treelog.t:GHRex09" fileName="$(tree).trees" logEvery="5000" mode="tree">
-        <log id="TreeWithMetaDataLogger.t:GHRex09" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:GHRex09"/>
+        <log id="TreeWithMetaDataLogger.t:GHRex09" spec="beast.base.evolution.TreeWithMetaDataLogger" tree="@Tree.t:GHRex09"/>
     </logger>
 
     <operatorschedule id="operatorSchedule" spec="OperatorSchedule">

@@ -1,11 +1,11 @@
 package starbeast2;
 
+import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.parameter.RealParameter;
+
 import java.util.ArrayList;
 import java.util.Collections;
-
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 
 public class MinimalBranchLength extends MigrationModel {
 	

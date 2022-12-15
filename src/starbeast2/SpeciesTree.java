@@ -1,12 +1,11 @@
 package starbeast2;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import beast.base.evolution.tree.Tree;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import beast.evolution.tree.Tree;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
 * @author Huw Ogilvie

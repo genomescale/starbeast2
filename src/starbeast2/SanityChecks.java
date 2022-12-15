@@ -1,8 +1,8 @@
 package starbeast2;
 
-import java.util.List;
+import beast.base.evolution.tree.Node;
 
-import beast.evolution.tree.Node;
+import java.util.List;
 
 final class SanityChecks {
     protected static boolean checkTreeSanity(Node node) {

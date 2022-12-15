@@ -1,8 +1,8 @@
 package starbeast2;
 
-import java.util.Comparator;
+import beast.base.evolution.tree.Node;
 
-import beast.evolution.tree.Node;
+import java.util.Comparator;
 
 // unambiguous, so only identical nodes are considered equal
 // if height is equal, consider distance from root (depth)

@@ -1,26 +1,25 @@
 package sb2tests;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TreeParser;
+import beast.base.inference.State;
+import beast.base.inference.parameter.IntegerParameter;
+import beast.base.inference.parameter.RealParameter;
+import org.junit.Test;
+import starbeast2.GeneTree;
+import starbeast2.SpeciesTreeParser;
+import starbeast2.StarBeastClock;
+import starbeast2.UncorrelatedRates;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Test;
-
-import beast.core.State;
-import beast.core.parameter.IntegerParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
-import beast.util.TreeParser;
-import starbeast2.UncorrelatedRates;
-import starbeast2.GeneTree;
-import starbeast2.SpeciesTreeParser;
-import starbeast2.StarBeastClock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class StarbeastClockTest {
     private String newickSpeciesTree;

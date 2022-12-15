@@ -1,10 +1,10 @@
 package starbeast2;
 
 
-import java.text.DecimalFormat;
+import beast.base.evolution.tree.Node;
+import beast.base.inference.CalculationNode;
 
-import beast.core.CalculationNode;
-import beast.evolution.tree.Node;
+import java.text.DecimalFormat;
 
 /**
 * @author Huw Ogilvie

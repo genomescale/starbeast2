@@ -1,10 +1,13 @@
-package beast.app.beauti;
+package starbeast2.app.beauti;
+
+import beast.base.core.BEASTInterface;
+import beast.base.inference.operator.DeltaExchangeOperator;
+import beast.base.inference.operator.kernel.BactrianDeltaExchangeOperator;
+import beastfx.app.inputeditor.BeautiAlignmentProvider;
+import beastfx.app.inputeditor.BeautiDoc;
 
 import java.io.File;
 import java.util.List;
-
-import beast.core.BEASTInterface;
-import beast.evolution.operators.DeltaExchangeOperator;
 
 public class StarBeastAlignmentProvider extends BeautiAlignmentProvider {
 
@@ -14,13 +17,13 @@ public class StarBeastAlignmentProvider extends BeautiAlignmentProvider {
 		final int alignmentCount = newAlignments.size();
 
 		doc.autoSetClockRate = false;
-		doc.beauti.autoSetClockRate.setSelected(false);
+		doc.beauti.autoSetClockRate(false);
 
 		System.out.println(String.format("N_ALIGNMENTS = %d", doc.alignments.size()));
 		// initialize delta exchange operator in order to increase weight to something more sensible
-		DeltaExchangeOperator operator = (DeltaExchangeOperator) doc.pluginmap.get("FixMeanMutationRatesOperator");
+		BactrianDeltaExchangeOperator operator = (BactrianDeltaExchangeOperator) doc.pluginmap.get("FixMeanMutationRatesOperator");
 		if (operator == null) {
-			operator = new DeltaExchangeOperator();
+			operator = new BactrianDeltaExchangeOperator();
 			try {
 				operator.setID("FixMeanMutationRatesOperator");
 				operator.initByName("weight", (double) alignmentCount, "delta", 0.75);

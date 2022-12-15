@@ -1,13 +1,13 @@
 package starbeast2;
 
 
-import beast.core.BEASTInterface;
-import beast.core.Description;
-import beast.evolution.alignment.Taxon;
-import beast.evolution.alignment.Sequence;
-import beast.evolution.alignment.TaxonSet;
+import beast.base.core.Description;
+import beast.base.evolution.alignment.Taxon;
+import beast.base.evolution.alignment.TaxonSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 @Description("A TaxonSet is an ordered set of taxa. The order on the taxa is provided at the time of construction" +

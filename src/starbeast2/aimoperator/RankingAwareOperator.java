@@ -1,21 +1,21 @@
 package starbeast2.aimoperator;
 
+import beast.base.core.Description;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.evolution.operator.TreeOperator;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import beast.base.inference.parameter.BooleanParameter;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.util.InputUtil;
+import beast.base.util.Randomizer;
+import starbeast2.NodeHeightComparator;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import beast.core.Description;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.BooleanParameter;
-import beast.core.parameter.RealParameter;
-import beast.evolution.operators.TreeOperator;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
-import starbeast2.ConstantWithGeneFlow;
-import starbeast2.NodeHeightComparator;
 
 @Description("Randomly selects true internal tree node (i.e. not the root) and move node height uniformly in interval "
 		+ "restricted by the nodes parent and children.")
@@ -59,7 +59,7 @@ public class RankingAwareOperator extends TreeOperator {
 	public double proposal() {
 
 		double HR = 0.0;
-		final Tree tree = treeInput.get(this);
+		final Tree tree = (Tree) InputUtil.get(treeInput, this);
 
 		Node[] speciesNodesTmp = tree.getNodesAsArray();
 		Node[] speciesNodes = new Node[speciesNodesTmp.length];

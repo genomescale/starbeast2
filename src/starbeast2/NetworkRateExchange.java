@@ -1,9 +1,9 @@
 package starbeast2;
 
-import beast.core.Input;
-import beast.core.parameter.RealParameter;
-import beast.core.Input.Validate;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.util.Randomizer;
 
 /**
  * Changes value of any tree branch rate by magnitude delta,
