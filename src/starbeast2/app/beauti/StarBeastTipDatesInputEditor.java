@@ -116,6 +116,21 @@ public class StarBeastTipDatesInputEditor extends BEASTObjectInputEditor {
         getChildren().add(pane);
     } // init
 
+    public void refreshPanel() {
+        VBox box = (VBox) pane.getChildren().get(0);
+        if (useTipDates.isSelected()) {
+            if (box.getChildren().size() == 1) {
+                box.getChildren().add(createButtonBox());
+                box.getChildren().add(createListBox());
+            }
+        } else {
+            while (box.getChildren().size() > 1) {
+                box.getChildren().remove(box.getChildren().size()-1);
+            }
+        }
+        convertTraitToTableData();
+    }
+
     public class TipDate {
         String taxon;
         String date;
