@@ -2,7 +2,7 @@
 	<depends on='BEAST.base' atleast='2.7.3'/>
 	<depends on='BEAST.app' atleast='2.7.3'/>
 	<depends on="SA" atleast="2.1.0"/>
-	<depends on="MM" atleast="1.2.0"/>
+	<depends on="MM" atleast="1.2.1"/>
 
   <packageapp class="starbeast2.aimannotator.AIMannotator"
             description="AimAnnotator"/>
