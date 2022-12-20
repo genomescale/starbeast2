@@ -387,7 +387,7 @@
 
 		<subtemplate id="LewisMK" class="morphmodels.evolution.substitutionmodel.LewisMK" mainid="LewisMK.s:$(n)">
 <![CDATA[
-			<plugin spec="LewisMK" id="LewisMK.s:$(n)"/>
+			<plugin spec="morphmodels.evolution.substitutionmodel.LewisMK" id="LewisMK.s:$(n)"/>
 ]]>
 		</subtemplate>
 	</mergewith>

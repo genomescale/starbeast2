@@ -285,7 +285,7 @@
 					<userDataType spec="beast.base.evolution.datatype.StandardData" id="morphDataType.$(n)" />
 				</data>
 				<siteModel spec="SiteModel" id="morphSiteModel.s:$(n)" gammaCategoryCount="0">
-					<substModel spec="LewisMK" id="LewisMK.s:$(n)" datatype="@morphDataType.$(n)"/>
+					<substModel spec="morphmodels.evolution.substitutionmodel.LewisMK" id="LewisMK.s:$(n)" datatype="@morphDataType.$(n)"/>
 					<mutationRate spec="parameter.RealParameter" id="mutationRate.s:$(n)" value="1.0" estimate="false"/>
 					<shape spec="parameter.RealParameter" id="gammaShape.s:$(n)" value="1.0" estimate="false"/>
 				</siteModel>
