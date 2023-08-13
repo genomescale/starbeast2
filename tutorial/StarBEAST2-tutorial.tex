@@ -64,6 +64,8 @@
 
 \maketitle
 
+\clearpage
+
 \section{Introduction}
 \label{sec:intro}
 
@@ -114,6 +116,8 @@ any BEAST2 package), open the File menu and select Manage Packages (Figure~\ref{
 {Opening the package manager}
 \label{fig:managePackages}
 \end{figure}
+
+\clearpage
 
 Select StarBEAST2 from the list of available packages and click the install button, which will take
 care of the installation for you (Figure~\ref{fig:installStarBEAST2}). After the installation of StarBEAST2 is finished, just like for any BEAST2 package, you
@@ -172,7 +176,7 @@ which is for the total evidence study.
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.7\textwidth]{figures/fastaFileImport.png}
+\includegraphics[width=0.8\textwidth]{figures/fastaFileImport.png}
 \caption
 {Importing \textit{Canis} multiple sequence alignments}
 \label{fig:fastaFileImport}
@@ -239,10 +243,6 @@ so ``Canis\_anthus'' will be the species name for ``Canis\_anthus\_a''.
 \label{fig:guessTaxonMap}
 \end{figure}
 
-Now each haplotype (Taxon) should have a corresponding species (Species/Population).
-Based on how we assigned the species names, there should be two haplotypes
-``a'' and ``b'' for each species (Figure~\ref{fig:taxonMap}).
-
 \begin{figure}[htb!]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/taxonMap.png}
@@ -250,6 +250,10 @@ Based on how we assigned the species names, there should be two haplotypes
 {The assignment of haplotypes to species}
 \label{fig:taxonMap}
 \end{figure}
+
+Now each haplotype (Taxon) should have a corresponding species (Species/Population).
+Based on how we assigned the species names, there should be two haplotypes
+``a'' and ``b'' for each species (Figure~\ref{fig:taxonMap}).
 
 \subsection{Gene Ploidy and Population Model}
 \label{subsec:ploidyAndPopModel}
@@ -274,6 +278,8 @@ sizes to the species tree output (Figure~\ref{fig:constantPopulations}).
 {Changing the population model}
 \label{fig:constantPopulations}
 \end{figure}
+
+\clearpage
 
 \subsection{Site Model}
 \label{subsec:siteModel}
@@ -550,13 +556,13 @@ like ``summary.tree'' and click Run to generate the summary tree
 \label{fig:treeAnnotator}
 \end{figure}
 
-Load \url{http://icytree.org/} in your web browser and open the summary tree file using the ``Load from file'' option in the File menu. In the Style menu, under ``Node height error bars,'' choose ``CAheight\_95\%\_HPD'' to display 95\% highest posterior density (HPD) intervals of species divergence times on each branch. Also in the Style menu, under ``Internal node text,'' choose ``dmv1'' to display estimates of ancestral effective population size (Figure~\ref{fig:icytree}).
+Load \url{http://icytree.org/} in your web browser and open the summary tree file using the ``Load from file'' option in the File menu. In the Style menu, under ``Node height error bars,'' choose ``CAheight\_95\%\_HPD'' to display 95\% highest posterior density (HPD) intervals of species divergence times on each branch. Also in the Style menu, under ``Internal node text,'' choose ``dmv1'' to display estimates of ancestral effective population size. Enable the time axis by typing the letter ``a'' or by going through the Style menu again (Figure~\ref{fig:icytree}).
 
 \begin{figure}[htb!]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/icytree.png}
 \caption
-{Running IcyTree. This tree been made more legible by increasing font size and limiting numbers to two significant figures, both options under IcyTree's ``Style'' menu.}
+{Running IcyTree. This tree been made more legible by increasing font size and limiting numbers to two significant figures, further options under IcyTree's ``Style'' menu.}
 \label{fig:icytree}
 \end{figure}
 
@@ -696,6 +702,8 @@ taken from \cite{Slater2015}.}
 \label{fig:addMorphology}
 \end{figure}
 
+\clearpage
+
 Select Yes to condition on recording variable characters only (Mkv). Mkv is
 used when only characters that vary between species have been included in the
 character matrix, as is the case for this tutorial's data set. You
@@ -758,6 +766,8 @@ the inferred morphological clock rate will be estimated solely from the data.
 \label{fig:clockPriors}
 \end{figure}
 
+\clearpage
+
 The FBD-MSC model is quite complex and requires very long chains for
 reliable sampling. Open the MCMC tab and change the chain length to 200
 million. We will need to reduce the sampling rate so that the output files remain
@@ -774,6 +784,12 @@ samples to 4,000 in each log file (Figure~\ref{fig:samplingRate}).
 \label{fig:samplingRate}
 \end{figure}
 
+Save the XML file in the folder you created for this analysis, and name it
+something like ``CanisFBD.xml''. Run the MCMC chain by opening the XML file in
+BEAST, or running it from the command line as in
+subsection~\ref{subsec:runningBEAST}. The chain should take between 1 and 2 hours to
+finish, depending on the speed of your computer.
+
 \begin{tcolorbox}[colback=orange!5,colframe=orange!40!black,title=Editing BEAST XML files]
 BEAUti is a wonderful tool, but sometimes it can be faster to edit XML files directly rather than using BEAUti to configure every aspect of your model. Setting the sampling rate for gene tree log files one at a time is a pain, especially if you have 100 or more loci in your analysis!
 
@@ -782,25 +798,38 @@ Instead of changing the sampling rates in BEAUti, you can leave them at their de
 You may even want to design a model in a way that is impossible to configure with BEAUti, in which case you \textit{must} edit the XML file directly. However, that sort of thing is beyond the scope of this tutorial.
 \end{tcolorbox}
 
-Save the XML file in the folder you created for this analysis, and name it
-something like ``CanisFBD.xml''. Run the MCMC chain by opening the XML file in
-BEAST, or running it from the command line as in
-subsection~\ref{subsec:runningBEAST}. The chain should take between 1 and 2 hours to
-finish, depending on the speed of your computer.
-
 After BEAST has finished, open the ``starbeast.log'' file in Tracer to check
-on the ESS values. Select the strictClockRate.c:molecular parameter
-(Figure~\ref{fig:strictClockRate}). The 95\% HPD interval for this parameter
+on the ESS values. These values are likely insufficient given a chain length
+of only 200 million for such a complex model, and a real analysis might require
+around 2 billion states, possibly spread across multiple chains.
+
+Select the strictClockRate.c:molecular parameter
+(Figure~\ref{fig:clockRateHistogram}). The 95\% HPD interval for this parameter
 spans approximately 0.0005 to 0.0013 substitutions per site per million years,
 in agreement with the \textit{a priori} rate of 0.001.
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/strictClockRate.png}
+\includegraphics[width=0.8\textwidth]{figures/clockRateHistogram.png}
 \caption
-{The posterior estimate of the molecular clock rate}
-\label{fig:strictClockRate}
+{The estimated posterior distribution of the molecular clock rate}
+\label{fig:clockRateHistogram}
 \end{figure}
+
+Now open the ``Trace'' tab to see how this value wandered around over the
+course of the MCMC chain. With only 200 million states this is unlikely
+to look like the ideal ``hairy catepillar,'' and will instead exhibit slow
+transitions between modes of the distribution (Figure~\ref{fig:clockRateTrace}).
+
+\begin{figure}[htb!]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/clockRateTrace.png}
+\caption
+{The MCMC trace of the molecular clock rate}
+\label{fig:clockRateTrace}
+\end{figure}
+
+\clearpage
 
 Start the DensiTree app again, and then open the ``species.trees'' file. Under
 the Show panel, enable the Root Canal tree to get an idea of the most
@@ -808,14 +837,14 @@ plausible species tree. Then open the Grid panel, and enable the full grid.
 Compared with the fixed clock analysis (Figure~\ref{fig:densitree}), the
 divergence time between \textit{Canis lupus} and \textit{Canis latrans} is a
 little older, and the age of the MRCA of extant species is a little younger
-(Figure~\ref{fig:densitreeSA}).
+(Figure~\ref{fig:sampledAncestorsDensitree}).
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/densitreeSA.png}
+\includegraphics[width=0.8\textwidth]{figures/sampledAncestorsDensitree.png}
 \caption
 {Cloud of FBD-MSC species trees}
-\label{fig:densitreeSA}
+\label{fig:sampledAncestorsDensitree}
 \end{figure}
 
 Open the Tree Annotator app included with BEAST2, and set the burnin
@@ -835,17 +864,21 @@ something sensible like ``summary.tree'', then click Run.
 \label{fig:treeAnnotatorMeanHeights}
 \end{figure}
 
-Start FigTree and open the summary tree file you have just created. Enable
-Node Labels, and expand the Node Labels panel. Choose ``posterior'', and set
-the number of significant digits to 2. Now the posterior support for each
-clade will be displayed next to each node (Figure~\ref{fig:figtreeFBD}).
+Go back to IcyTree (\url{http://icytree.org/}) in your web browser and open
+the summary tree file using the ``Load from file'' option in the File menu.
+In the Style menu, under ``Node height error bars,'' choose
+``height\_95\%\_HPD'' to display 95\% highest posterior density
+(HPD) intervals of species divergence times on each branch. This time show
+the posterior support of each clade by choosing ``posterior'' in ``Internal node text''
+from the Style menu. Enable the time axis again through the Style menu or by typing the
+letter ``a'' (Figure~\ref{fig:sampledAncestorsIcyTree}).
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/figtreeFBD.png}
+\includegraphics[width=0.8\textwidth]{figures/sampledAncestorsIcyTree.png}
 \caption
-{Showing posterior support for clades in FigTree}
-\label{fig:figtreeFBD}
+{Showing posterior support for clades in IcyTree}
+\label{fig:sampledAncestorsIcyTree}
 \end{figure}
 
 The tree topology is similar to the fixed clock analysis
@@ -864,6 +897,8 @@ with high local probability. So for any kind of analysis intended for
 publication, it is a good idea to run at least two MCMC chains. Open both
 chains in Tracer, and check that the traces for the logged statistics and
 parameters have the same distributions.
+
+\clearpage
 
 \printbibliography
 
