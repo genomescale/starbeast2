@@ -5,7 +5,7 @@
 \usepackage{amsfonts}
 \usepackage{verbatim}
 \usepackage[english]{babel}
-\usepackage{pifont}
+\usepackage{csquotes}
 \usepackage{color}
 \usepackage{setspace}
 \usepackage{lscape}
@@ -42,9 +42,6 @@
 \usepackage{ragged2e}
 \usepackage{authblk}
 \usepackage{multirow}
-\usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage{beramono}
 \usepackage{tcolorbox}
 \usepackage{soul}
 
@@ -54,20 +51,18 @@
 \renewcommand\Affilfont{\small}
 
 \makeatletter
-\def\verbatim@font{\linespread{1}\tiny\ttfamily}
+\def\verbatim@font{\linespread{1}\scriptsize\ttfamily}
 \makeatother
 
 \addbibresource{StarBEAST2-refs.bib}
 
 \begin{document}
 
-\title{StarBEAST2 v15 tutorial}
+\title{StarBEAST2 v1.0.0 tutorial}
 \author[1]{Huw A. Ogilvie\thanks{huw.a.ogilvie@rice.edu}}
 \affil[1]{Department of Computer Science, Rice University, Houston, Texas}
 
 \maketitle
-
-\clearpage
 
 \section{Introduction}
 \label{sec:intro}
@@ -88,9 +83,10 @@ sizes and per-species molecular clock rates.
 
 Newer versions of StarBEAST2 supports the integration of molecular sequences
 and morphological characters for so-called ``total evidence'' analyses, and
-the use of fossil data for tip-dating. Fossil data can include ancient DNA,
-morphological characters, and the estimated ages of fossils. Tip-dating
-calibrates the trees in absolute time, typically millions of years.
+the use of fossil data for tip-dating \parencite{Ogilvie2021}. Fossil data
+can include ancient DNA, morphological characters, and the estimated ages of
+fossils. Tip-dating calibrates the trees in absolute time, typically millions
+of years.
 
 This tutorial will cover using StarBEAST2 to estimate a species tree including
 per-species population sizes of the genus \textit{Canis} from exon sequences
@@ -104,9 +100,8 @@ and to conduct a total evidence tip-dating study
 \label{sec:prelim}
 
 Before doing anything, we need to install StarBEAST2, which is available as a package for
-the phylogenetic software platform BEAST2. If you have not yet installed BEAST2,
-or if you have an older version, you can download the latest version from \url{http://beast2.org}.
-Make sure you have the latest version before proceeding.
+the phylogenetic software platform BEAST2. This tutorial is for version 2.7 of the platform, which you can download from \url{http://beast2.org}.
+Make sure you have the latest update to BEAST2 version 2.7 before proceeding.
 
 After downloading and installing BEAST2 on your computer, open BEAUti ---
 the graphical user interface for BEAST2. To install StarBEAST2 (or
@@ -150,13 +145,7 @@ respectively.
 \end{figure}
 
 To visualize posterior distributions of trees, we will be using DensiTree
-\parencite{Bouckaert2010} which is included with BEAST2. We will also use
-FigTree to view summary trees, and Tracer to check on parameters and
-statistics. FigTree is available from \url{http://tree.bio.ed.ac.uk/software/figtree/}
-and Tracer from \url{http://tree.bio.ed.ac.uk/software/tracer}. Please make sure both are
-installed before proceeding.
-
-\clearpage
+\parencite{Bouckaert2010} which is included with BEAST2. We will also use the web application IcyTree to view summary trees, which is available at \url{http://icytree.org/}. To analyze continuous parameters we will use Tracer, which can be downloaded from \url{https://beast.community/tracer}.
 
 \section{Reconstructing the species tree of \textit{Canis}}
 \label{sec:speciesTree}
@@ -194,8 +183,6 @@ As all 16 files are MSAs of nucleotide sequences, select ``all are nucleotide''
 and click OK again to continue. There should now be 16 partitions listed in
 BEAUti.
 
-\clearpage
-
 \subsection{Linking models}
 \label{subsec:linkingModels}
 
@@ -212,9 +199,7 @@ should have ``APOBS1'' as the clock model name. The site model, clock model and 
 \caption
 {Linking clock models}
 \label{fig:linkModels}
-\end{figure}
-
-\clearpage{}
+\end{figure}{}
 
 \begin{tcolorbox}[colback=green!5,colframe=green!40!black,title=Mixing nuclear and mitochondrial loci]
 StarBEAST2 can be used with a combination of mitochondrial and nuclear loci, but this requires careful thought when specifying the model. One possibility is to link the nuclear loci as above, but not to link the mitochondrial loci. Then when editing the site models, untick ``estimate'' for the substitution rate of each mitochondrial locus. Now separate clock rates will be used for each mitochondrial locus, in addition to the overall clock rate which applies to nuclear loci.
@@ -248,13 +233,11 @@ so ``Canis\_anthus'' will be the species name for ``Canis\_anthus\_a''.
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.4\textwidth]{figures/guessTaxonMap.png}
+\includegraphics[width=0.8\textwidth]{figures/guessTaxonMap.png}
 \caption
 {Guessing species names from haplotype names}
 \label{fig:guessTaxonMap}
 \end{figure}
-
-\newpage{}
 
 Now each haplotype (Taxon) should have a corresponding species (Species/Population).
 Based on how we assigned the species names, there should be two haplotypes
@@ -268,8 +251,6 @@ Based on how we assigned the species names, there should be two haplotypes
 \label{fig:taxonMap}
 \end{figure}
 
-\clearpage
-
 \subsection{Gene Ploidy and Population Model}
 \label{subsec:ploidyAndPopModel}
 
@@ -278,8 +259,7 @@ section~\ref{sec:FBD} of the tutorial. Open the Gene Ploidy tab, and observe tha
 for all loci is 2.0. This is because there are two copies of a locus in each
 individual for diploid populations, so we scale the effective population sizes
 by 2.0. If you use any mitochondrial or Y/W chromosomal loci, you should
-change their ploidy to 0.5, because there is on average only 0.5 copies per
-individual. The ploidy of X/Z chromosomal loci should be set to 1.5 for the
+change their ploidy to 0.5, because there is effectively only half as many copies of those molecules as there are individuals (male mitochondrial genomes do not count, as they are not inherited by offspring). The ploidy of X/Z chromosomal loci should be set to 1.5 for the
 same reason.
 
 Select the Population Model tab. By default analytical integration is used,
@@ -294,8 +274,6 @@ sizes to the species tree output (Figure~\ref{fig:constantPopulations}).
 {Changing the population model}
 \label{fig:constantPopulations}
 \end{figure}
-
-\clearpage
 
 \subsection{Site Model}
 \label{subsec:siteModel}
@@ -314,12 +292,10 @@ rate relative to transversions \parencite{Hasegawa1985}.
 \label{fig:hky}
 \end{figure}
 
-Now to change the site model for all loci to HKY with empirical base frequencies,
-select all of the partitions in the left hand column with the shift key. Then
+Now to change the site model for \textit{all} loci to HKY with empirical base frequencies,
+select all of the partitions in the left hand column with the shift key. Choose to clone the site model you just configured (presumably for APOBS1), then
 click ``OK'' to apply the same site model used for the first locus
 to everything else (Figure~\ref{fig:cloneSiteModel}).
-
-\newpage{}
 
 \begin{figure}[htb!]
 \centering
@@ -377,11 +353,9 @@ need a bit more for good estimates; change the chain length to 40 million
 \centering
 \includegraphics[width=0.8\textwidth]{figures/chainLength.png}
 \caption
-{Setting a longer MCMC chain length}
+{Setting a longer MCMC chain length of 40 million iterations}
 \label{fig:chainLength}
 \end{figure}
-
-\newpage{}
 
 Save your model as an XML file -- in the folder you created before importing
 alignments -- by clicking Save As in the File menu. Navigate to the folder
@@ -395,30 +369,20 @@ from the command line, first navigate to the folder you saved the XML file into.
 Then run ``/path/to/beast/bin/beast CanisPhylogeny.xml''. Make sure to change
 /path/to/beast to match the folder where BEAST is installed on your computer.
 
-BEAST should take about 10 to 15 minutes to finish the chain. Sampled statistics
+BEAST should take about 5 to 10 minutes to finish the chain. Sampled statistics
 and various parameters will be saved to ``starbeast.log'', species trees to
 ``species.trees'', and separate gene tree files will be created for each locus. The command line
 output should start off looking something like what follows:
 
 
-\begin{verbatim}Checking out /home/huey/.beast/2.4/BEAST/lib
-Loaded URL file:/home/huey/.beast/2.4/BEAST/lib/beast.jar
-jardir = /home/huey/beast/lib/launcher.jar
-Loading package BEAST v2.4.7
-Loading package MM v1.0.5
-Loading package SA v1.1.7
-Loading package BEAST v2.4.7
-Loading package starbeast2 v0.14.0
-Loading package BEASTLabs v1.7.1
-
-                   BEAST v2.4.7 Prerelease, 2002-2017
+\begin{verbatim}                   BEAST v2.7.5 Prerelease, 2002-2023
              Bayesian Evolutionary Analysis Sampling Trees
                        Designed and developed by
  Remco Bouckaert, Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
                                     
-                     Department of Computer Science
+                   Centre for Computational Evolution
                          University of Auckland
-                        remco@cs.auckland.ac.nz
+                       r.bouckaert@auckland.ac.nz
                         alexei@cs.auckland.ac.nz
                                     
                    Institute of Evolutionary Biology
@@ -439,61 +403,63 @@ Loading package BEASTLabs v1.7.1
    Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, 
  Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, 
 Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, 
-                 Oliver Pybus, Chieh-Hsi Wu, Walter Xie
+          Oliver Pybus, Tim Vaughan, Chieh-Hsi Wu, Walter Xie
                                     
                                Thanks to:
           Roald Forsberg, Beth Shapiro and Korbinian Strimmer
 
-Random number seed: 1512645447217
+Random number seed: 1691867441007
 
-File: CanisPhylogeny.xml seed: 1512645447217 threads: 1\end{verbatim}
+File: Canis-Phylogeny.xml seed: 1691867441007 threads: 1
+Loading package BEAST.app v2.7.5 SA v2.1.1 MM v1.2.1 ORC v1.1.2
+starbeast2 v1.0.0 BEAST.base v2.7.5 BEASTLabs v2.0.1 starbeast3 v1.1.7\end{verbatim}
 
-It will end with a bunch of statistics describing the performance of the MCMC operators:
+At the end of the output will be statistics describing the performance of all the MCMC operators. This will look something like below, except I needed to replace some of the output with ellipses so it would fit in this document:
 
-\begin{verbatim}Operator                                                                Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
-UpDownOperator(clockUpDownOperator.c:BRCA1S1)                           0.8522      18169      50825     0.0019     0.2633 
-ScaleOperator(TreeScaler.t:BRCA1S1)                                     0.8682      19465      49496     0.0019     0.2823 
-ScaleOperator(TreeRootScaler.t:BRCA1S1)                                 0.4248      14918      54203     0.0019     0.2158 
-Uniform(UniformOperator.t:BRCA1S1)                                           -     146565     198613     0.0094     0.4246 
-SubtreeSlide(SubtreeSlide.t:BRCA1S1)                                    0.7795     120013     225596     0.0094     0.3473 
-Exchange(Narrow.t:BRCA1S1)                                                   -     109470     235681     0.0094     0.3172 
-Exchange(Wide.t:BRCA1S1)                                                     -       8117     336186     0.0094     0.0236 
-WilsonBalding(WilsonBalding.t:BRCA1S1)                                       -      10344     335125     0.0094     0.0299 
-[...]
-DeltaExchangeOperator(FixMeanMutationRatesOperator)                     2.0294      88056     648890     0.0201     0.1195 
-ScaleOperator(KappaScaler.s:APOBS1)                                     0.1987       7059      15949     0.0006     0.3068 
-ScaleOperator(KappaScaler.s:APOBS2)                                     0.2034       7243      15463     0.0006     0.3190 
-ScaleOperator(KappaScaler.s:BDNF)                                       0.1660       6783      16531     0.0006     0.2909 
-ScaleOperator(KappaScaler.s:BRCA1S1)                                    0.1857       6903      15965     0.0006     0.3019 
-ScaleOperator(KappaScaler.s:BRCA1S2)                                    0.1976       6794      16280     0.0006     0.2944 
-ScaleOperator(KappaScaler.s:CHST12)                                     0.1751       6930      16559     0.0006     0.2950 
-ScaleOperator(KappaScaler.s:CMKOR1)                                     0.1976       7162      15697     0.0006     0.3133 
-ScaleOperator(KappaScaler.s:Ch14)                                       0.2973       6333      16470     0.0006     0.2777 
-ScaleOperator(KappaScaler.s:Ch21)                                       0.2553       7159      15909     0.0006     0.3103 
-ScaleOperator(KappaScaler.s:Ch24)                                       0.2272       6810      16334     0.0006     0.2942 
-ScaleOperator(KappaScaler.s:FGFR3)                                      0.2009       7028      15842     0.0006     0.3073 
-ScaleOperator(KappaScaler.s:GHRex09)                                    0.1926       7244      15595     0.0006     0.3172 
-ScaleOperator(KappaScaler.s:RAG1)                                       0.2242       7336      15792     0.0006     0.3172 
-ScaleOperator(KappaScaler.s:TMEM20)                                     0.2046       7077      15773     0.0006     0.3097 
-ScaleOperator(KappaScaler.s:VANGL2)                                     0.1901       6838      15992     0.0006     0.2995 
-ScaleOperator(KappaScaler.s:VWF)                                        0.2174       7618      15565     0.0006     0.3286 
-starbeast2.NodeReheight2(Reheight.t:Species)                                 -     190932    2793110     0.0471     0.0640 
-starbeast2.CoordinatedUniform(coordinatedUniform.t:Species)                  -     277295     318958     0.0094     0.4651 
-starbeast2.CoordinatedExponential(coordinatedExponential.t:Species)     0.0724     357000     240475     0.0094     0.5975 
-UpDownOperator(updownAll:Species)                                       0.6391      50943     186734     0.0038     0.2143 
-starbeast2.RealCycle(constPopSizesSwap.Species)                         2.0000      23521      95986     0.0019     0.1968 k = 2
-ScaleOperator(constPopSizesScale.Species)                               0.2694      28048      91487     0.0019     0.2346 
-ScaleOperator(constPopMeanScale.Species)                                0.4184      11724      27838     0.0006     0.2963 
-ScaleOperator(netDiversificationRateScale.t:Species)                    0.2074      10390      29138     0.0006     0.2629 
-ScaleOperator(ExtinctionFractionScale.t:Species)                        0.1502       5748      14261     0.0003     0.2873 
-UniformOperator(ExtinctionFractionUniform.t:Species)                         -      10374       9609     0.0003     0.5191 
-SubtreeSlide(bdSubtreeSlide.t:Species)                                  0.0697     177124     419681     0.0094     0.2968 
-WilsonBalding(bdWilsonBalding.t:Species)                                     -        371     597396     0.0094     0.0006 
-Exchange(bdWide.t:Species)                                                   -       3255     594405     0.0094     0.0054 
-Exchange(bdNarrow.t:Species)                                                 -      29181     567726     0.0094     0.0489 
-Uniform(bdUniformOperator.t:Species)                                         -      45371     551315     0.0094     0.0760 
-ScaleOperator(bdTreeRootScaler.t:Species)                               0.9259       9555     109831     0.0019     0.0800
-ScaleOperator(bdTreeScaler.t:Species)                                   0.9876      21203      98760     0.0019     0.1767 
+\begin{verbatim}Operator                                                         ...  Tuning    #accept    #reject      Pr(m)  Pr(acc|m)
+...
+beast.base.inference.operator.UpDownOperator(clockUpDownOperator ... 0.80611      18039      52115    0.00174    0.25713 
+ScaleOperator(TreeScaler.t:Ch14)                                 ... 0.81774      18037      51748    0.00174    0.25847 
+ScaleOperator(TreeRootScaler.t:Ch14)                             ... 0.52148      14234      55718    0.00174    0.20348 
+Uniform(UniformOperator.t:Ch14)                                  ...       -     121376     228556    0.00872    0.34686 
+SubtreeSlide(SubtreeSlide.t:Ch14)                                ... 0.65112     117291     232591    0.00872    0.33523 
+Exchange(Narrow.t:Ch14)                                          ...       -      21860     326864    0.00872    0.06269 
+Exchange(Wide.t:Ch14)                                            ...       -        804     347965    0.00872    0.00231 
+WilsonBalding(WilsonBalding.t:Ch14)                              ...       -       1394     347821    0.00872    0.00399 
+beast.base.inference.operator.kernel.BactrianDeltaExchangeOperat ... 0.39628      86822     284324    0.00930    0.23393 
+ScaleOperator(KappaScaler.s:APOBS1)                              ... 0.18949       6789      16652    0.00058    0.28962 
+ScaleOperator(KappaScaler.s:APOBS2)                              ... 0.21016       7722      15778    0.00058    0.32860 
+ScaleOperator(KappaScaler.s:BDNF)                                ... 0.18970       7620      15658    0.00058    0.32735 
+ScaleOperator(KappaScaler.s:BRCA1S1)                             ... 0.18986       7245      15817    0.00058    0.31415 
+ScaleOperator(KappaScaler.s:BRCA1S2)                             ... 0.19130       6763      16591    0.00058    0.28959 
+ScaleOperator(KappaScaler.s:Ch14)                                ... 0.30988       6979      16290    0.00058    0.29993 
+ScaleOperator(KappaScaler.s:Ch21)                                ... 0.25278       6882      16419    0.00058    0.29535 
+ScaleOperator(KappaScaler.s:Ch24)                                ... 0.23802       7303      16019    0.00058    0.31314 
+ScaleOperator(KappaScaler.s:CHST12)                              ... 0.18101       7118      16184    0.00058    0.30547 
+ScaleOperator(KappaScaler.s:CMKOR1)                              ... 0.18940       7070      16249    0.00058    0.30319 
+ScaleOperator(KappaScaler.s:FGFR3)                               ... 0.20670       7454      15770    0.00058    0.32096 
+ScaleOperator(KappaScaler.s:GHRex09)                             ... 0.19213       7583      15839    0.00058    0.32376 
+ScaleOperator(KappaScaler.s:RAG1)                                ... 0.22845       7414      15823    0.00058    0.31906 
+ScaleOperator(KappaScaler.s:TMEM20)                              ... 0.21491       7438      15926    0.00058    0.31835 
+ScaleOperator(KappaScaler.s:VANGL2)                              ... 0.19990       7590      15886    0.00058    0.32331 
+ScaleOperator(KappaScaler.s:VWF)                                 ... 0.21476       7301      16098    0.00058    0.31202 
+starbeast2.NodeReheight2(Reheight.t:Species)                     ...       -      98775    1438750    0.03846    0.06424 
+starbeast2.CoordinatedUniform(coordinatedUniform.t:Species)      ...       -     354356     415005    0.01923    0.46058 
+starbeast2.CoordinatedExponential(coordinatedExponential.t:Speci ... 0.07335     453543     315251    0.01923    0.58994 
+beast.base.inference.operator.UpDownOperator(updownAll:Species)  ... 0.66322      74117     233719    0.00769    0.24077 
+starbeast2.RealCycle(constPopSizesSwap.Species)                  ... 2.00000      30178     123980    0.00385    0.19576 k = 2
+ScaleOperator(constPopSizesScale.Species)                        ... 0.28757      37835     115633    0.00385    0.24653 
+ScaleOperator(constPopMeanScale.Species)                         ... 0.44194      16611      34495    0.00128    0.32503 
+ScaleOperator(netDiversificationRateScale.t:Species)             ... 0.20702      13692      37872    0.00128    0.26553 
+ScaleOperator(ExtinctionFractionScale.t:Species)                 ... 0.11933       5801      19945    0.00064    0.22532 
+beast.base.inference.operator.UniformOperator(ExtinctionFraction ...       -      13197      12145    0.00064    0.52076 
+SubtreeSlide(bdSubtreeSlide.t:Species)                           ... 0.06648     236813     532106    0.01923    0.30798 
+WilsonBalding(bdWilsonBalding.t:Species)                         ...       -        495     770580    0.01923    0.00064 
+Exchange(bdWide.t:Species)                                       ...       -       4258     764403    0.01923    0.00554 
+Exchange(bdNarrow.t:Species)                                     ...       -      38229     730568    0.01923    0.04973 
+Uniform(bdUniformOperator.t:Species)                             ...       -      59042     710796    0.01923    0.07669 
+ScaleOperator(bdTreeRootScaler.t:Species)                        ... 0.87763       7185     147379    0.00385    0.04649
+ScaleOperator(bdTreeScaler.t:Species)                            ... 0.98773      27551     126232    0.00385    0.17916 
 
      Tuning: The value of the operator's tuning parameter, or '-' if the operator can't be optimized.
     #accept: The total number of times a proposal by this operator has been accepted.
@@ -502,9 +468,9 @@ ScaleOperator(bdTreeScaler.t:Species)                                   0.9876  
   Pr(acc|m): The acceptance probability (#accept as a fraction of the total proposals for this operator).
 
 
-Total calculation time: 756.696 seconds
-End likelihood: -16953.439185360676\end{verbatim}
-
+Total calculation time: 375.843 seconds
+End likelihood: -16950.572066013454
+Done!\end{verbatim}
 
 \subsection{Checking the log file}
 \label{subsec:checkLog}
@@ -584,24 +550,15 @@ like ``summary.tree'' and click Run to generate the summary tree
 \label{fig:treeAnnotator}
 \end{figure}
 
-\newpage{}
-
-Now start FigTree and open the summary tree file. Enable Branch Labels,
-and expand the Branch Labels panel. Choose ``dmv1\_95\%\_HPD'', and set
-the number of significant digits to 2. Now the 95\% highest posterior
-density (HPD) intervals of
-effective population sizes will be displayed on each branch
-(Figure~\ref{fig:figtree}).
+Load \url{http://icytree.org/} in your web browser and open the summary tree file using the ``Load from file'' option in the File menu. In the Style menu, under ``Node height error bars,'' choose ``CAheight\_95\%\_HPD'' to display 95\% highest posterior density (HPD) intervals of species divergence times on each branch. Also in the Style menu, under ``Internal node text,'' choose ``dmv1'' to display estimates of ancestral effective population size (Figure~\ref{fig:icytree}).
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/figtree.png}
+\includegraphics[width=0.8\textwidth]{figures/icytree.png}
 \caption
-{Running FigTree}
-\label{fig:figtree}
+{Running IcyTree. This tree been made more legible by increasing font size and limiting numbers to two significant figures, both options under IcyTree's ``Style'' menu.}
+\label{fig:icytree}
 \end{figure}
-
-\newpage{}
 
 In StarBEAST2 and many other BEAST packages, effective population sizes are
 scaled by generation time. That means if generation times (the average
@@ -613,14 +570,7 @@ If the average generation time is 5 years, and our tree is scaled in millions
 of years, then the generation time is $5\times10^{-6}$. To get effective
 population sizes in numbers of individuals, divide each value by the
 generation time. So if the scaled effective population size is 1, that
-will correspond to 200,000 individuals.
-
-The effective population sizes inferred in this tutorial appear to have
-roughly an order of magnitude of uncertainty, and more precise estimates would require
-a more informative data set. This could be achieved by sampling more
-individuals or more loci.
-
-\clearpage{}
+will correspond to 200,000 individuals.{}
 
 \section{Estimating per-species clock rates}
 \label{sec:relaxedClock}
@@ -668,13 +618,11 @@ Open the Priors tab and change the species tree prior from Yule to Birth-Death
 to allow for extinction. Finally, open the MCMC tab and change the length of
 the chain to 40 million, as in subsection~\ref{subsec:MCMC}
 (Figure~\ref{fig:chainLength}). Save the file in the folder you created
-previously for this analysis, and give it a sensible name like ``CanisUCLN.xml''.
-
-\newpage{}
+previously for this analysis, and give it a sensible name like ``Canis-UCLN.xml''.
 
 Run the MCMC chain by opening the XML file in BEAST, or running it from
 the command line as in subsection~\ref{subsec:runningBEAST}. This will
-take about twice as long (20 to 30 minutes) as the fixed clock analysis,
+take about twice as long (10 to 20 minutes) as the fixed clock analysis,
 because relaxed clocks are more computationally intensive.
 
 After BEAST has finished, open the ``starbeast.log'' file in Tracer to
@@ -696,37 +644,12 @@ parameter has a mean of about 0.2. This means that the data is pulling this
 parameter lower, probably because there is very little variation in clock
 rates between species. Indeed the mode of the posterior distribution is about
 zero, suggesting that a strict clock may be more appropriate
-(Figure~\ref{fig:tracerUCLN}).
-
-Now create a summary tree from the ``species.trees'' file using Tree
-Annotator, as in subsection~\ref{subsec:makeSummaryTree}
-(Figure~\ref{fig:treeAnnotator}). Again give it a sensible name like
-``summary.tree''. Open up the summary tree file in FigTree. Enable Branch Labels,
-and expand the Branch Labels panel. Choose ``rate\_95\%\_HPD'', and set
-the number of significant digits to 2. Now the 95\% HPD intervals of
-relative clock rates will be displayed on each branch
-(Figure~\ref{fig:figtreeUCLN}).
-
-\begin{figure}[htb!]
-\centering
-\includegraphics[width=0.8\textwidth]{figures/figtreeUCLN.png}
-\caption
-{Checking the species tree relaxed clock analysis in FigTree}
-\label{fig:figtreeUCLN}
-\end{figure}
-
-All of the species tree branches have clock rate HPD intervals
-that include 1, further suggesting that a strict clock may be more
-appropriate for this clade. These rates are obviously relative, and
-to get absolute rates in substitutions per site per million years,
-they must be scaled by the \textit{a priori} clock rate of 0.001.
-
-\clearpage{}
+(Figure~\ref{fig:tracerUCLN}).{}
 
 \section{Total evidence tip-dating}
 \label{sec:FBD}
 
-The versions of StarBEAST2 from 14 onwards include the ability to combine
+StarBEAST is able to combine
 tip-dating using the fossilized birth death (FBD) process with multispecies
 coalescent (MSC) inference of species and gene trees. We call this integrative
 model ``FBD-MSC''. To begin your analysis, creat a new folder for this
@@ -758,8 +681,6 @@ FBD is valid for serially sampled trees.
 \label{fig:changeTreePrior}
 \end{figure}
 
-\newpage{}
-
 Now go back to the Partitions tab, and from the File menu select
 ``Add Morphology to Species Tree'' (Figure~\ref{fig:addMorphology}).
 Navigate to the data folder of the tutorial and import the
@@ -790,12 +711,10 @@ states. For example, morphology\_canis2 is for binary characters.
 \label{fig:morphologyPartitions}
 \end{figure}
 
-\clearpage
-
 Open the Tip Dates panel and enable ``Use tip dates''. Change
 ``Since some time in the past'' to ``before the present''. Click
 on Auto-configure and select ``read from file''. Choose the
-``tip\_dates\_canis.txt'' file in the data folder of the tutorial.
+``tip\_dates\_canis.dat'' file in the data folder of the tutorial.
 Click OK, and your tip dates should look like Figure~\ref{fig:tipDates}.
 
 \begin{figure}[htb!]
@@ -822,11 +741,11 @@ are using fossil data to calibrate our tree.
 \label{fig:estimateMorphClock}
 \end{figure}
 
-Next, open the Priors panel, scroll down to the strictClockRate.c:molecular
+Next, go back to the Priors panel, scroll down to the strictClockRate.c:molecular
 parameter, and expand that prior. Change the mean to 0.001, the \textit{a
 priori} molecular clock rate estimate from section~\ref{sec:speciesTree}.
 Leave the standard deviation set at 1, a moderately informative prior that
-will still allow the rate to be informed by the fossil data. Then change the
+will still allow the rate to be guided by the fossil data. Then change the
 prior distribution for the strictClockRate.c:morphology\_canis prior to 1/X
 (Figure~\ref{fig:clockPriors}). This is an improper, uninformative prior so
 the inferred morphological clock rate will be estimated solely from the data.
@@ -839,28 +758,34 @@ the inferred morphological clock rate will be estimated solely from the data.
 \label{fig:clockPriors}
 \end{figure}
 
-\newpage{}
-
 The FBD-MSC model is quite complex and requires very long chains for
 reliable sampling. Open the MCMC tab and change the chain length to 200
 million. We will need to reduce the sampling rate so that the output files remain
 managably small, so change the Store Every value to 50,000. Expand the
 tracelog, speciesTreeLogger, screenlog and every gene tree log, and set the
 Log Every value to 50,000 for each of them. This will limit the number of
-samples to 4,000 in each log file (Figure~\ref{fig:fbdChainLength}).
+samples to 4,000 in each log file (Figure~\ref{fig:samplingRate}).
 
 \begin{figure}[htb!]
 \centering
-\includegraphics[width=0.8\textwidth]{figures/fbdChainLength.png}
+\includegraphics[width=0.8\textwidth]{figures/samplingRate.png}
 \caption
-{Setting a very long chain length}
-\label{fig:fbdChainLength}
+{Changing the sampling rates after settting a chain length of 200 million}
+\label{fig:samplingRate}
 \end{figure}
+
+\begin{tcolorbox}[colback=orange!5,colframe=orange!40!black,title=Editing BEAST XML files]
+BEAUti is a wonderful tool, but sometimes it can be faster to edit XML files directly rather than using BEAUti to configure every aspect of your model. Setting the sampling rate for gene tree log files one at a time is a pain, especially if you have 100 or more loci in your analysis!
+
+Instead of changing the sampling rates in BEAUti, you can leave them at their default values, and use a text editor to change them all at once. After opening your XML file in the editor, find-and-replace all occurences of the sampling rate attribute and its default value, e.g. \texttt{logEvery="5000"}, with the value changed to the one desired, e.g. \texttt{logEvery="50000"}.
+
+You may even want to design a model in a way that is impossible to configure with BEAUti, in which case you \textit{must} edit the XML file directly. However, that sort of thing is beyond the scope of this tutorial.
+\end{tcolorbox}
 
 Save the XML file in the folder you created for this analysis, and name it
 something like ``CanisFBD.xml''. Run the MCMC chain by opening the XML file in
 BEAST, or running it from the command line as in
-subsection~\ref{subsec:runningBEAST}. The chain will take about 2 hours to
+subsection~\ref{subsec:runningBEAST}. The chain should take between 1 and 2 hours to
 finish, depending on the speed of your computer.
 
 After BEAST has finished, open the ``starbeast.log'' file in Tracer to check
@@ -893,8 +818,6 @@ little older, and the age of the MRCA of extant species is a little younger
 \label{fig:densitreeSA}
 \end{figure}
 
-\clearpage
-
 Open the Tree Annotator app included with BEAST2, and set the burnin
 percentage to 10. Trees inferred by the FBD-MSC model as implemented in
 StarBEAST2 can include sampled ancestors \parencite{Gavryushkina2014}, which are
@@ -917,8 +840,6 @@ Node Labels, and expand the Node Labels panel. Choose ``posterior'', and set
 the number of significant digits to 2. Now the posterior support for each
 clade will be displayed next to each node (Figure~\ref{fig:figtreeFBD}).
 
-\clearpage
-
 \begin{figure}[htb!]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/figtreeFBD.png}
@@ -928,14 +849,12 @@ clade will be displayed next to each node (Figure~\ref{fig:figtreeFBD}).
 \end{figure}
 
 The tree topology is similar to the fixed clock analysis
-(Figure~\ref{fig:figtree}), except that \textit{Cuon alpinus} and
+(Figure~\ref{fig:icytree}), except that \textit{Cuon alpinus} and
 \textit{Lycaon pictus} are now a clade with 100\% support. A disagreement
 between molecular data which contradicts this clade and morphological
 data which supports it has been reported previously \parencite{Zrzavy2004}. This shows
 how morphological characters and fossil data can influence species tree
 estimates.
-
-\clearpage
 
 \section{Wrapping up}
 
