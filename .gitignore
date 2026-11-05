@@ -10,4 +10,5 @@
 /examples/validation/**/*.trees
 /examples/validation/**/*.state
 /bin/
+/target/
 /examples/*.*

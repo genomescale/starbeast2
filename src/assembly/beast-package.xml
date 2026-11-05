@@ -1,0 +1,38 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 http://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>beast-package</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <!-- version.xml from project root -->
+    <files>
+        <file>
+            <source>${project.basedir}/version.xml</source>
+            <outputDirectory>/</outputDirectory>
+        </file>
+        <!-- Source JAR at top level (BEAST convention: PKG_NAME.src.jar) -->
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}-sources.jar</source>
+            <destName>${beast.pkg.name}.src.jar</destName>
+            <outputDirectory>/</outputDirectory>
+        </file>
+    </files>
+
+    <!-- Module JAR only (BEAST core, JavaFX, and their transitive deps are provided by the runtime) -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/lib</outputDirectory>
+            <useProjectArtifact>true</useProjectArtifact>
+            <scope>runtime</scope>
+            <includes>
+                <include>io.github.compevol:starbeast2</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+
+    <!-- fxtemplates/ inside jar now: bundled via src/main/resources/starbeast2/fxtemplates
+         (module-namespaced, matching beast-fx), so no separate zip copy is needed. -->
+</assembly>

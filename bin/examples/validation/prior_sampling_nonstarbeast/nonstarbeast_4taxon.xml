@@ -1,13 +1,6 @@
-<beast version="2.0"
-       namespace="starbeast2
-                 :starbeast2.utils
-                 :beast.core
-                 :beast.util
-                 :beast.core.util
-                 :beast.evolution.tree
-                 :beast.evolution.speciation
-                 :beast.evolution.alignment
-                 :beast.evolution.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:sa.evolution.speciation:sa.evolution.operators:starbeast2.utils">
 
     <taxonSet spec="TaxonSet" id="taxonSet">
         <taxon spec="Taxon" id="A"/>
@@ -18,18 +11,16 @@
 
     <run chainLength="100000000" id="mcmc" spec="MCMC" storeEvery="5000">
         <state id="state" storeEvery="1000">
-            <stateNode id="speciesTree" spec="TreeParser"
-                       newick="(((A:1.0,B:1.0):0.5,C:1.0):1.0,D:0.5)"
-                       adjustTipHeights="false" IsLabelledNewick="true"/>
+            <stateNode id="speciesTree" spec="TreeParser" newick="(((A:1.0,B:1.0):0.5,C:1.0):1.0,D:0.5)" adjustTipHeights="false" IsLabelledNewick="true"/>
         </state>
 
-        <distribution spec="SABirthDeathModel" id="probability" tree="@speciesTree" >
-            <parameter name="origin" value ="3.0"/>
-            <parameter name="birthRate" value ="1.0"/>
-            <parameter name="deathRate" value ="0.5"/>
-            <parameter name="removalProbability" value="0.0"/>
-            <parameter name="samplingRate" value="0.1"/>
-            <parameter name="rho" value="0.1"/>
+        <distribution spec="SABirthDeathModel" id="probability" tree="@speciesTree">
+            <parameter name="origin" value="3.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <parameter name="birthRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <parameter name="deathRate" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <parameter name="removalProbability" value="0.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <parameter name="samplingRate" value="0.1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <parameter name="rho" value="0.1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
         </distribution>
 
         <operator spec="LeafToSampledAncestorJump" tree="@speciesTree" weight="10.0"/>
@@ -37,12 +28,12 @@
         <operator spec="SAExchange" isNarrow="false" tree="@speciesTree" weight="10.0"/>
         <operator spec="SAExchange" tree="@speciesTree" weight="10.0"/>
         <operator spec="SAUniform" tree="@speciesTree" weight="20.0"/>
-        <operator spec="SAScaleOperator" rootOnly="true" scaleFactor="0.98" tree="@speciesTree" weight="1.0"/>
-        <operator spec="SAScaleOperator" scaleFactor="0.95" tree="@speciesTree" weight="3.0"/>
+        <operator rootOnly="true" scaleFactor="0.98" tree="@speciesTree" weight="1.0" spec="beast.base.spec.evolution.operator.ScaleTreeOperator"/>
+        <operator scaleFactor="0.95" tree="@speciesTree" weight="3.0" spec="beast.base.spec.evolution.operator.ScaleTreeOperator"/>
 
         <logger logEvery="1000">
             <log idref="probability"/>
-            <log spec="ESS" arg="@probability"/>
+            <log spec="beast.base.spec.inference.util.ESS" arg="@probability"/>
         </logger>
 
         <logger fileName="$(filebase).species.trees" logEvery="1000" mode="tree">
@@ -51,8 +42,7 @@
 
         <logger fileName="$(filebase).gene.trees" logEvery="1000" mode="tree">
             <log spec="SimulatedGeneTreeLogger">
-                <simulatedGeneTree id="geneTree" spec="SimulatedGeneTree"
-                                   speciesTree="@speciesTree">
+                <simulatedGeneTree id="geneTree" spec="SimulatedGeneTree" speciesTree="@speciesTree">
                     <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">
                         A=2,
                         B=1,
@@ -63,11 +53,9 @@
             </log>
         </logger>
 
-        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000"
-                tree="@geneTree" burninSamples="10000" />
+        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).gene.report" logEvery="1000" tree="@geneTree" burninSamples="10000"/>
 
-        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000"
-                tree="@speciesTree" burninSamples="10000" />
+        <logger spec="TreeTopologyDistLogger" fileName="$(filebase).species.report" logEvery="1000" tree="@speciesTree" burninSamples="10000"/>
 
         <logger fileName="$(filebase).speciesNodeHeights.log" logEvery="1000">
             <log spec="NodeHeightLogger" tree="@speciesTree" excludeSANodes="true"/>

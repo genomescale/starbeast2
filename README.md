@@ -9,3 +9,8 @@ tree. This enables accurate estimates of between-species molecular clock rates.
 Before running StarBEAST2, it is a good idea to complete the latest [tutorial](https://github.com/genomescale/starbeast2/releases/tag/v1.0.0). The tutorial
 covers setting up and analysing the results of different kinds of StarBEAST2 analyses using an
 example data set.
+
+## For developer
+
+Build and `bin/beast` usage instructions are in
+[bin/README.md](bin/README.md).

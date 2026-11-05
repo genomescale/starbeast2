@@ -1,14 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<beast version="2.0"
-       namespace="starbeast2
-                 :starbeast2.utils
-                 :beast.core
-                 :beast.util
-                 :beast.core.util
-                 :beast.evolution.tree
-                 :beast.evolution.speciation
-                 :beast.evolution.alignment
-                 :beast.evolution.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:starbeast2.utils">
 
     <run spec="TreeTopologyDistGenerator" logFileName="species.trees" reportFileName="species.report"/>
 

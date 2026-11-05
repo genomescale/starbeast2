@@ -1,9 +1,6 @@
-<beast version="2.0"
-       namespace="starbeast2
-                 :starbeast2.utils
-                 :beast.util
-                 :beast.evolution.tree
-                 :beast.evolution.alignment">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:sa.evolution.speciation:sa.evolution.operators:starbeast2.utils">
 
     <taxonSet spec="TaxonSet" id="taxonSet">
         <taxon spec="Taxon" id="A"/>
@@ -11,10 +8,8 @@
         <taxon spec="Taxon" id="C"/>
     </taxonSet>
 
-    <run spec="GeneTreeSimulator" nSims="100000" fileName="$(filebase).$(seed).trees"
-         reportFileName="$(filebase).$(seed).report" credibilityThreshold="1.0">
-        <speciesTree spec="TreeParser" newick="((A:1.5,B:0):0.5,C:1)"
-                     adjustTipHeights="false" IsLabelledNewick="true"/>
+    <run spec="GeneTreeSimulator" nSims="100000" fileName="$(filebase).$(seed).trees" reportFileName="$(filebase).$(seed).report" credibilityThreshold="1.0">
+        <speciesTree spec="TreeParser" newick="((A:1.5,B:0):0.5,C:1)" adjustTipHeights="false" IsLabelledNewick="true"/>
 
         <sampleCounts spec="TraitSet" traitname="sampleCounts" taxa="@taxonSet">
             A=2,
